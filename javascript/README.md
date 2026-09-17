@@ -11,7 +11,8 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [02-functions-and-scope/](file:///d:/my-project/revision-document/javascript/02-functions-and-scope/README.md) | Function Declarations vs Expressions, Parameters & Rest, Arrow Functions & `this`, Closures & Scope Chain | Hoàn thành |
 | [03-data-structures/](file:///d:/my-project/revision-document/javascript/03-data-structures/README.md) | Mảng (V8 Elements, Holes, Length), Array Methods, Set & WeakSet, ES2024 Set Logic | Hoàn thành |
 | [04-error-handling-and-debugging/](file:///d:/my-project/revision-document/javascript/04-error-handling-and-debugging/README.md) | Built-in Errors, Silent Errors, try-catch-finally, Error Hierarchy, DevTools Debugging | Hoàn thành |
-| [05-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/05-dom-and-web-apis/) | DOM Manipulation, Event Bubbling/Capturing, Web Storage | Khởi tạo |
+| [05-style-guide-and-best-practices/](file:///d:/my-project/revision-document/javascript/05-style-guide-and-best-practices/README.md) | Quy ước viết mã, ASI, Best Practices, Lỗi sai số thực, Tối ưu hóa V8 | Hoàn thành |
+| [06-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/06-dom-and-web-apis/) | DOM Manipulation, Event Bubbling/Capturing, Web Storage | Khởi tạo |
 
 ---
 
