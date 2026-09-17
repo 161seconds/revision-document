@@ -172,7 +172,36 @@ assert.strictEqual(sortedEmployees[2].name, "Adam"); // IT lương 2000 tên Ada
 assert.strictEqual(sortedEmployees[3].name, "Charlie"); // IT lương 2000 tên Charlie
 console.log("✅ Bài 7 passed: Sắp xếp đa tiêu chí Multi-Sort thành công!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 8: Gom nhóm mảng theo tiêu chí (Array Grouping)
+// Tự cài đặt thuật toán tương tự Object.groupBy() bằng reduce
+// ------------------------------------------------------------
+function customGroupBy(arr, keySelector) {
+  return arr.reduce((acc, item) => {
+    const key = keySelector(item);
+    acc[key] ??= [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+}
+
+const inventory = [
+  { name: "asparagus", type: "vegetables" },
+  { name: "bananas",   type: "fruit" },
+  { name: "goat",      type: "meat" },
+  { name: "cherries",  type: "fruit" },
+  { name: "fish",      type: "meat" }
+];
+
+const grouped = customGroupBy(inventory, item => item.type);
+assert.strictEqual(grouped.vegetables.length, 1);
+assert.strictEqual(grouped.fruit.length, 2);
+assert.strictEqual(grouped.meat.length, 2);
+assert.deepStrictEqual(grouped.fruit.map(f => f.name), ["bananas", "cherries"]);
+console.log("✅ Bài 8 passed: Gom nhóm mảng customGroupBy() thành công!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
+
 
 
 
