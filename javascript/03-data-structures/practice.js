@@ -135,6 +135,44 @@ assert.deepStrictEqual(found, userList[1]);
 assert.strictEqual(findByNestedPath(userList, "user.profile.id", 999), undefined);
 console.log("✅ Bài 6 passed: Tìm kiếm theo Nested Property chính xác!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 7: Sắp xếp theo nhiều tiêu chí (Multi-Criteria Sorting)
+// Kết hợp nhiều hàm so sánh ưu tiên từ trái sang phải
+// ------------------------------------------------------------
+function multiSort(arr, ...comparators) {
+  return arr.toSorted((a, b) => {
+    for (const cmp of comparators) {
+      const result = cmp(a, b);
+      if (result !== 0) return result;
+    }
+    return 0;
+  });
+}
+
+const employees = [
+  { dept: "IT", salary: 2000, name: "Charlie" },
+  { dept: "HR", salary: 1500, name: "Alice" },
+  { dept: "IT", salary: 2500, name: "Bob" },
+  { dept: "IT", salary: 2000, name: "Adam" }
+];
+
+// Ưu tiên 1: Theo phòng ban (A-Z)
+// Ưu tiên 2: Theo lương giảm dần
+// Ưu tiên 3: Theo tên (A-Z)
+const sortedEmployees = multiSort(
+  employees,
+  (a, b) => a.dept.localeCompare(b.dept),
+  (a, b) => b.salary - a.salary,
+  (a, b) => a.name.localeCompare(b.name)
+);
+
+assert.strictEqual(sortedEmployees[0].dept, "HR"); // HR đứng đầu
+assert.strictEqual(sortedEmployees[1].name, "Bob"); // IT lương 2500
+assert.strictEqual(sortedEmployees[2].name, "Adam"); // IT lương 2000 tên Adam
+assert.strictEqual(sortedEmployees[3].name, "Charlie"); // IT lương 2000 tên Charlie
+console.log("✅ Bài 7 passed: Sắp xếp đa tiêu chí Multi-Sort thành công!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
+
 
 

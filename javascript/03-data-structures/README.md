@@ -42,6 +42,8 @@ graph TD
 - [03-array-methods-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/03-array-methods-demo.js): Code thực nghiệm giá trị trả về của `push/pop/shift/unshift`, `splice` vs `toSpliced`, `slice()`, và `flat()`.
 - [04-array-search-and-predicates.md](file:///d:/my-project/revision-document/javascript/03-data-structures/04-array-search-and-predicates.md): Tìm kiếm trong mảng, `indexOf` vs `includes` (SameValueZero), bẫy tìm kiếm Object theo tham chiếu, và `findLast` (ES2023).
 - [04-array-search-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/04-array-search-demo.js): Code thực nghiệm `indexOf` vs `includes` với NaN, bẫy truthy của -1, bẫy tìm object, và duyệt ngược bằng `findLast`/`findLastIndex`.
+- [05-array-sort-and-timsort.md](file:///d:/my-project/revision-document/javascript/03-data-structures/05-array-sort-and-timsort.md): Thuật toán sắp xếp TimSort, cạm bẫy sắp xếp chuỗi mặc định, `toSorted`/`toReversed` (ES2023), `localeCompare("vi")`, và xáo trộn Fisher-Yates.
+- [05-array-sort-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/05-array-sort-demo.js): Code thực nghiệm bẫy Unicode sort, `toSorted`, TimSort stability, sắp xếp tiếng Việt có dấu, và Fisher-Yates shuffle.
 - [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra `compact()`, `chunk()`, `flatten()` đệ quy, và `unique()`.
 
 ---
