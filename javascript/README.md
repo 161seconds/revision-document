@@ -16,6 +16,7 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [07-practical-projects/](file:///d:/my-project/revision-document/javascript/07-practical-projects/README.md) | 5 Dự án ứng dụng thực tế: Interactive Counter, Event Playground, Production Todo App, Accessible Modal Dialog, Enterprise Form Validation | Hoàn thành |
 | [08-language-reference/](file:///d:/my-project/revision-document/javascript/08-language-reference/README.md) | Tra cứu toàn diện cú pháp ECMAScript: Statements vs Expressions, Completion Records, Reserved Words, Operators, Precedence 18 Levels | Hoàn thành |
 | [09-asynchronous-javascript/](file:///d:/my-project/revision-document/javascript/09-asynchronous-javascript/README.md) | Lập trình bất đồng bộ: Event Loop, Microtasks vs Macrotasks, Bộ tứ Combinators, Async/Await Coroutine, Fetch API & AbortController | Hoàn thành |
+| [10-oop-and-prototypes/](file:///d:/my-project/revision-document/javascript/10-oop-and-prototypes/README.md) | Lập trình hướng đối tượng: Chuỗi Prototype, Kế thừa, ES6 Classes, Trường riêng tư #field, 4 bước của toán tử new, con trỏ this | Hoàn thành |
 
 ---
 
