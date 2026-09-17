@@ -48,6 +48,8 @@ graph TD
 - [06-array-iteration-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/06-array-iteration-demo.js): Code thực nghiệm `reduce` TypeError, `flatMap` filter+map, chân lý rỗng `[].every()`, `arr.with()`, và compose bằng `reduceRight`.
 - [07-array-reference-cheatsheet.md](file:///d:/my-project/revision-document/javascript/03-data-structures/07-array-reference-cheatsheet.md): Bảng tra cứu toàn tập (Master Cheatsheet), ma trận độ phức tạp Big-O, và danh sách 5 cạm bẫy lớn nhất.
 - [07-array-reference-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/07-array-reference-demo.js): Code thực nghiệm duyệt Iterators (`entries`, `keys`, `values`), bộ tứ ES2023 Change-by-Copy, và `copyWithin()`.
+- [08-const-arrays-and-immutability.md](file:///d:/my-project/revision-document/javascript/03-data-structures/08-const-arrays-and-immutability.md): Mảng `const`, Immutable Binding vs Value, Block Scope Shadowing, `Object.freeze` nông, và `deepFreeze` đệ quy.
+- [08-const-arrays-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/08-const-arrays-demo.js): Code thực nghiệm gán lại const ném TypeError, mutate nội dung, block scope shadowing, và hàm `deepFreeze`.
 - [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra `compact()`, `chunk()`, `flatten()` đệ quy, và `unique()`.
 
 ---
