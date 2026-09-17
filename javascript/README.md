@@ -9,8 +9,8 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [summary.md](file:///d:/my-project/revision-document/javascript/summary.md) | Bảng tóm tắt toàn diện (Cheat Sheet) một file | Hoàn thành |
 | [01-fundamentals/](file:///d:/my-project/revision-document/javascript/01-fundamentals/README.md) | Biến (`var`/`let`/`const`), Scope, Kiểu dữ liệu, Ép kiểu, Toán tử, Rẽ nhánh, Vòng lặp, Chuỗi, Số, Date | Hoàn thành |
 | [02-functions-and-scope/](file:///d:/my-project/revision-document/javascript/02-functions-and-scope/README.md) | Function Declarations vs Expressions, Parameters & Rest, Arrow Functions & `this`, Closures & Scope Chain | Hoàn thành |
-| [03-data-structures/](file:///d:/my-project/revision-document/javascript/03-data-structures/README.md) | Mảng (V8 Elements, Holes, Length), Array Methods, Objects, Set & Map | Sẵn sàng |
-| [04-async-javascript/](file:///d:/my-project/revision-document/javascript/04-async-javascript/) | Event Loop, Callbacks, Promises, Async/Await, Fetch API | Khởi tạo |
+| [03-data-structures/](file:///d:/my-project/revision-document/javascript/03-data-structures/README.md) | Mảng (V8 Elements, Holes, Length), Array Methods, Set & WeakSet, ES2024 Set Logic | Hoàn thành |
+| [04-error-handling-and-debugging/](file:///d:/my-project/revision-document/javascript/04-error-handling-and-debugging/README.md) | Built-in Errors, Silent Errors, try-catch-finally, Error Hierarchy, DevTools Debugging | Hoàn thành |
 | [05-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/05-dom-and-web-apis/) | DOM Manipulation, Event Bubbling/Capturing, Web Storage | Khởi tạo |
 
 ---
