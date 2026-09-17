@@ -102,6 +102,20 @@ assert.strictEqual(safeList[0].profile.theme, "dark");
 console.log("safeList[0].profile.theme được bảo toàn vĩnh viễn:", safeList[0].profile.theme);
 console.log("-> Kiểm chứng deepFreeze đệ quy: Hoàn toàn chính xác!\n");
 
+console.log("=== DEMO 5: KIỂM TRA BẮT BUỘC KHỞI TẠO & TÁI KHAI BÁO CÙNG SCOPE ===");
+// 1. const bắt buộc khởi tạo -> ném SyntaxError nếu thiếu:
+assert.throws(() => {
+  new Function("const brokenArray;");
+}, SyntaxError);
+console.log("Khai báo const không khởi tạo ném SyntaxError đúng chuẩn.");
+
+// 2. Tái khai báo const trong cùng scope -> ném SyntaxError:
+assert.throws(() => {
+  new Function("const list = [1]; const list = [2];");
+}, SyntaxError);
+console.log("Tái khai báo const trong cùng scope ném SyntaxError đúng chuẩn.");
+console.log("-> Kiểm chứng cú pháp ES6 const Array: Hoàn toàn chính xác!\n");
+
 console.log("==========================================");
 console.log(" Tất cả các kiểm tra const Array đã vượt qua thành công! ");
 console.log("==========================================");

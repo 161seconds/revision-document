@@ -39,7 +39,35 @@ cars.length = 0;       // Dọn sạch mảng
 cars = ["Toyota"];     // TypeError: Assignment to constant variable
 ```
 
-### 2. Block Scope & Variable Shadowing Của `const`
+### 2. Bắt Buộc Khởi Tạo Giá Trị Khi Khai Báo (Must be Assigned when Declared)
+Không giống `var` hay `let` có thể khai báo trước rồi gán sau:
+- Khai báo `const` mảng bắt buộc phải gán giá trị khởi tạo ngay tại thời điểm khai báo.
+- Nếu không gán, JavaScript Engine sẽ dừng lại ở giai đoạn parse cú pháp và ném lỗi cú pháp:
+
+```javascript
+// HỢP LỆ (var, let):
+var a;
+a = [1, 2];
+
+let b;
+b = [3, 4];
+
+// KHÔNG HỢP LỆ (const):
+const c; // SyntaxError: Missing initializer in const declaration
+c = [5, 6];
+```
+
+### 3. Ma Trận Tái Khai Báo (Redeclaration) & Gán Lại (Reassignment)
+
+| Tiêu chí | `var` | `let` | `const` |
+| :--- | :--- | :--- | :--- |
+| **Gán lại (Reassign)** | Cho phép | Cho phép | **Bị cấm** (`TypeError`) |
+| **Khai báo lại trong cùng scope** | Cho phép | **Bị cấm** (`SyntaxError`) | **Bị cấm** (`SyntaxError`) |
+| **Khai báo lại trong block scope con (Shadowing)** | Ghi đè biến ngoài | Cho phép (Độc lập) | Cho phép (Độc lập) |
+| **Bắt buộc khởi tạo khi khai báo** | Không (Mặc định `undefined`) | Không (Mặc định `undefined`) | **Bắt buộc** (`SyntaxError`) |
+| **Phạm vi (Scope)** | Function / Global | Block Scope `{}` | Block Scope `{}` |
+
+### 4. Block Scope & Variable Shadowing Của `const`
 - Mảng khai báo với `const` có phạm vi **Block Scope** (giới hạn trong cặp ngoặc `{}`).
 - Không thể tái khai báo trong cùng một scope.
 - Nhưng có thể **Shadowing (che bóng)** ở scope con lồng nhau mà không ảnh hưởng tới mảng ngoài:
@@ -52,7 +80,7 @@ cars = ["Toyota"];     // TypeError: Assignment to constant variable
   console.log(fruits);   // ["Apple"] (Vẫn giữ nguyên!)
   ```
 
-### 3. Đóng Băng Mảng Thực Sự: `Object.freeze()` vs `deepFreeze()`
+### 5. Đóng Băng Mảng Thực Sự: `Object.freeze()` vs `deepFreeze()`
 Muốn ngăn chặn tuyệt đối việc thêm, sửa, xóa phần tử trong mảng:
 - **`Object.freeze(arr)` (Shallow Freeze - Đóng băng nông):**
   - Biến các phần tử cấp 1 thành `read-only` (`writable: false`, `configurable: false`).
