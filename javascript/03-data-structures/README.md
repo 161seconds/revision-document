@@ -52,6 +52,8 @@ graph TD
 - [08-const-arrays-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/08-const-arrays-demo.js): Code thực nghiệm gán lại const ném TypeError, mutate nội dung, block scope shadowing, và hàm `deepFreeze`.
 - [09-sets-and-weaksets.md](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-and-weaksets.md): Tập hợp duy nhất Set & WeakSet, cấu trúc `OrderedHashSet` V8, thuật toán `SameValueZero`, các phương thức đại số tập hợp ES2024 (`union`, `intersection`, `difference`), và phòng ngừa rò rỉ bộ nhớ với WeakSet.
 - [09-sets-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-demo.js): Code thực nghiệm thao tác Set, SameValueZero, các phép toán ES2024, bẫy tham chiếu object, và Brand Checking với WeakSet.
+- [10-set-methods-and-iteration.md](file:///d:/my-project/revision-document/javascript/03-data-structures/10-set-methods-and-iteration.md): Phương thức và cơ chế duyệt Set, giải mã `forEach` song trùng `val === key`, Living Iterators (đột biến khi duyệt), và chuẩn Set-like objects trong ES2024.
+- [10-set-methods-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/10-set-methods-demo.js): Code thực nghiệm chaining `add()`, giá trị trả về `delete`/`clear`, Living Iterator của V8, và tương thích Set-like object.
 - [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra 9 bài toán cấu trúc dữ liệu cốt lõi.
 
 ---
