@@ -14,6 +14,7 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [05-style-guide-and-best-practices/](file:///d:/my-project/revision-document/javascript/05-style-guide-and-best-practices/README.md) | Quy ước viết mã, ASI, Best Practices, Lỗi sai số thực, Tối ưu hóa V8 | Hoàn thành |
 | [06-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/06-dom-and-web-apis/README.md) | Cấu trúc DOM Tree, Selectors, Thao tác phần tử & chống XSS, 3 pha sự kiện, Event Delegation, HTML-First & Constraint Validation, rAF & Rendering Pipeline, AbortController | Hoàn thành |
 | [07-practical-projects/](file:///d:/my-project/revision-document/javascript/07-practical-projects/README.md) | 5 Dự án ứng dụng thực tế: Interactive Counter, Event Playground, Production Todo App, Accessible Modal Dialog, Enterprise Form Validation | Hoàn thành |
+| [08-language-reference/](file:///d:/my-project/revision-document/javascript/08-language-reference/README.md) | Tra cứu toàn diện cú pháp ECMAScript: Statements vs Expressions, Completion Records, Reserved Words, Operators, Precedence 18 Levels | Hoàn thành |
 
 ---
 
