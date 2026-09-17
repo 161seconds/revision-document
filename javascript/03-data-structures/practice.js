@@ -91,5 +91,23 @@ function unique(arr) {
 const duplicates = [1, 2, 2, 3, 4, 4, 5, 1];
 assert.deepStrictEqual(unique(duplicates), [1, 2, 3, 4, 5]);
 console.log("✅ Bài 4 passed: Hàm unique() khử trùng lặp O(n) thành công!");
+// ------------------------------------------------------------
+// BÀI TẬP 5: Thao tác cập nhật mảng bất biến (Immutable Array Operations)
+// Chèn phần tử vào vị trí bất kỳ mà không làm thay đổi mảng gốc
+// ------------------------------------------------------------
+function insertImmutable(arr, index, ...items) {
+  if (typeof arr.toSpliced === "function") {
+    return arr.toSpliced(index, 0, ...items);
+  }
+  return [...arr.slice(0, index), ...items, ...arr.slice(index)];
+}
+
+const baseArray = ["a", "b", "e"];
+const inserted = insertImmutable(baseArray, 2, "c", "d");
+
+assert.deepStrictEqual(baseArray, ["a", "b", "e"], "Mảng gốc không được phép thay đổi!");
+assert.deepStrictEqual(inserted, ["a", "b", "c", "d", "e"]);
+console.log("✅ Bài 5 passed: Chèn phần tử bất biến thành công!");
 
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
+
