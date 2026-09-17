@@ -63,6 +63,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [02-console-tools.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-console-tools.js): Kỹ thuật dùng console chuyên nghiệp (`table`, `time`, `count`).
 - [03-syntax-and-rules.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/03-syntax-and-rules.md): Quy tắc cú pháp, Expressions vs Statements, Identifier rules, và bẫy ASI.
 - [03-syntax-rules-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/03-syntax-rules-demo.js): Minh họa phân biệt hoa thường, biểu thức và kiểm chứng bẫy ASI.
+- [04-statements-and-blocks.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/04-statements-and-blocks.md): Câu lệnh (Statements), ranh giới dấu chấm phẩy, khối lệnh `{}` và Block Scope.
+- [04-statements-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/04-statements-demo.js): Minh họa nhiều câu lệnh trên 1 dòng, khối lệnh độc lập và kiểm chứng scope.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.
