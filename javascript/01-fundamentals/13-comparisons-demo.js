@@ -71,8 +71,14 @@ assert.strictEqual([1] == true, true);    // [1] -> "1" -> 1; true -> 1 => 1 == 
 assert.strictEqual([1, 2] == "1,2", true); // [1, 2].toString() -> "1,2"
 
 // Reference equality (so sánh địa chỉ ô nhớ)
-assert.strictEqual({} === {}, false);
-assert.strictEqual([] === [], false);
+const objA = {};
+const objB = {};
+assert.strictEqual(objA === objB, false);
+
+const arrA = [];
+const arrB = [];
+assert.strictEqual(arrA === arrB, false);
+
 const refA = {};
 const refB = refA;
 assert.strictEqual(refA === refB, true);
