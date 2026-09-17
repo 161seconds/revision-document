@@ -17,6 +17,8 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [08-language-reference/](file:///d:/my-project/revision-document/javascript/08-language-reference/README.md) | Tra cứu toàn diện cú pháp ECMAScript: Statements vs Expressions, Completion Records, Reserved Words, Operators, Precedence 18 Levels | Hoàn thành |
 | [09-asynchronous-javascript/](file:///d:/my-project/revision-document/javascript/09-asynchronous-javascript/README.md) | Lập trình bất đồng bộ: Event Loop, Microtasks vs Macrotasks, Bộ tứ Combinators, Async/Await Coroutine, Fetch API & AbortController | Hoàn thành |
 | [10-oop-and-prototypes/](file:///d:/my-project/revision-document/javascript/10-oop-and-prototypes/README.md) | Lập trình hướng đối tượng: Chuỗi Prototype, Kế thừa, ES6 Classes, Trường riêng tư #field, 4 bước của toán tử new, con trỏ this | Hoàn thành |
+| [11-meta-programming-and-es-next/](file:///d:/my-project/revision-document/javascript/11-meta-programming-and-es-next/README.md) | Siêu lập trình & ES Next: Proxy & Reflect API, Symbol & Well-Known Symbols, Web Storage & Quản lý trạng thái bền vững | Hoàn thành |
+
 
 ---
 
