@@ -71,6 +71,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [06-variables-strict-mode-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/06-variables-strict-mode-demo.js): Minh họa khai báo nhiều biến, tính chất của const/let và tác dụng của "use strict".
 - [07-let-and-block-scope.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/07-let-and-block-scope.md): Chuyên sâu về `let`, Block Scope, Temporal Dead Zone (TDZ), và cơ chế Loop Scope Binding.
 - [07-let-loop-closure-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/07-let-loop-closure-demo.js): Code thực nghiệm chứng minh bẫy closure `var` vs `let` trong vòng lặp và Variable Shadowing.
+- [08-const-and-immutability.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/08-const-and-immutability.md): Chuyên sâu về `const`, tham chiếu bất biến, giới hạn của `Object.freeze` và giải pháp `deepFreeze`.
+- [08-const-immutability-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/08-const-immutability-demo.js): Code thực nghiệm mutate mảng/object const, kiểm chứng shallow freeze và deepFreeze đệ quy.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.
