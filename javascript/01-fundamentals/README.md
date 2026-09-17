@@ -54,7 +54,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 
 ## 4. Danh Sách Code Thực Hành
 
-Chạy trực tiếp bằng Node.js:
+- [00-introduction.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/00-introduction.md): Lý thuyết tổng quan & năng lực của JavaScript trong trình duyệt.
+- [00-intro-demo.html](file:///d:/my-project/revision-document/javascript/01-fundamentals/00-intro-demo.html): Demo trực quan 4 khả năng thao tác DOM căn bản.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.

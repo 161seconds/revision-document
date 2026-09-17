@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>00 - JavaScript Capabilities Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+      background-color: #f9fafb;
+      color: #1f2937;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: #f59e0b;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>JavaScript Trong Trình Duyệt: 4 Khả Năng Cốt Lõi</h1>
+
+  <!-- 1. Đổi nội dung -->
+  <div class="card">
+    <h3>1. Thay đổi nội dung (HTML / Text Content)</h3>
+    <p id="demo-text">Nội dung ban đầu của thẻ p.</p>
+    <button onclick="changeText()">Thay Đổi Nội Dung</button>
+  </div>
+
+  <!-- 2. Đổi thuộc tính -->
+  <div class="card">
+    <h3>2. Thay đổi thuộc tính phần tử (Attributes)</h3>
+    <p id="status-badge" style="display: inline-block; padding: 4px 10px; border-radius: 4px; background: #ef4444; color: white;">
+      Trạng thái: Tắt
+    </p><br><br>
+    <button onclick="toggleLight(true)">Bật Đèn</button>
+    <button onclick="toggleLight(false)">Tắt Đèn</button>
+  </div>
+
+  <!-- 3. Đổi CSS Styles -->
+  <div class="card">
+    <h3>3. Thay đổi định dạng giao diện (CSS Style)</h3>
+    <p id="style-text">Văn bản mẫu để thay đổi kích thước và màu sắc.</p>
+    <button onclick="changeStyle()">Phóng To & Đổi Màu Xanh</button>
+    <button onclick="resetStyle()">Khôi Phục Ban Đầu</button>
+  </div>
+
+  <!-- 4. Ẩn / Hiện phần tử -->
+  <div class="card">
+    <h3>4. Ẩn và Hiện phần tử (Display none/block)</h3>
+    <div id="secret-box" class="box">Hộp Bí Mật</div>
+    <br>
+    <button onclick="hideBox()">Ẩn Hộp</button>
+    <button onclick="showBox()">Hiện Hộp</button>
+  </div>
+
+  <script>
+    // 1. Đổi nội dung an toàn với textContent
+    function changeText() {
+      const el = document.getElementById("demo-text");
+      el.textContent = "Nội dung đã được cập nhật thành công bởi JavaScript!";
+    }
+
+    // 2. Đổi thuộc tính & trạng thái
+    function toggleLight(isOn) {
+      const badge = document.getElementById("status-badge");
+      if (isOn) {
+        badge.textContent = "Trạng thái: Bật Sáng";
+        badge.style.backgroundColor = "#10b981";
+      } else {
+        badge.textContent = "Trạng thái: Tắt";
+        badge.style.backgroundColor = "#ef4444";
+      }
+    }
+
+    // 3. Đổi CSS Style
+    function changeStyle() {
+      const el = document.getElementById("style-text");
+      el.style.fontSize = "22px";
+      el.style.color = "#2563eb";
+      el.style.fontWeight = "bold";
+    }
+
+    function resetStyle() {
+      const el = document.getElementById("style-text");
+      el.style.fontSize = "16px";
+      el.style.color = "#1f2937";
+      el.style.fontWeight = "normal";
+    }
+
+    // 4. Ẩn / Hiện
+    function hideBox() {
+      document.getElementById("secret-box").style.display = "none";
+    }
+
+    function showBox() {
+      document.getElementById("secret-box").style.display = "flex";
+    }
+  </script>
+</body>
+</html>
