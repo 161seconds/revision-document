@@ -77,6 +77,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [09-data-types-anomalies-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/09-data-types-anomalies-demo.js): Kiểm chứng 8 kiểu dữ liệu, typeof null/NaN/Array, Number.EPSILON, và getExactType().
 - [10-operators-and-precedence.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/10-operators-and-precedence.md): Toàn tập toán tử, thứ tự ưu tiên, short-circuit `&&`/`||`, và Nullish Coalescing `??`.
 - [10-operators-precedence-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/10-operators-precedence-demo.js): Minh họa Prefix/Postfix, ép kiểu chuỗi vs toán tử trừ, và toán tử gán logic `??=`.
+- [11-arithmetic-and-math-quirks.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/11-arithmetic-and-math-quirks.md): Số học và dị biệt: chia cho 0, unary casting, modulo số âm và vượt ngưỡng MAX_SAFE_INTEGER.
+- [11-arithmetic-quirks-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/11-arithmetic-quirks-demo.js): Code thực nghiệm chia cho 0, unary +/-, cạm bẫy modulo số âm trong mảng vòng, mất độ chính xác và BigInt.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.

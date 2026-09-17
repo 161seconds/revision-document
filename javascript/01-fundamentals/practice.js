@@ -49,4 +49,17 @@ copy.user.profile.id = 999;
 assert.strictEqual(original.user.profile.id, 42, "Fail: Dữ liệu gốc không được thay đổi!");
 console.log("✅ Bài 3 passed: Deep Clone thành công!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 4: Thuật toán modulo chuẩn cho mảng vòng (Circular Buffer)
+// Tránh lỗi index âm khi lùi chỉ số qua 0
+// ------------------------------------------------------------
+function safeCircularIndex(index, length) {
+  return ((index % length) + length) % length;
+}
+
+assert.strictEqual(safeCircularIndex(-1, 5), 4, "Fail: Chỉ số lùi từ 0 trong mảng 5 phần tử phải là 4");
+assert.strictEqual(safeCircularIndex(5, 5), 0, "Fail: Chỉ số tiến vượt ngưỡng phải quay về 0");
+console.log("✅ Bài 4 passed: Modulo mảng vòng an toàn!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 01-FUNDAMENTALS!");
+
