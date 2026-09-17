@@ -61,5 +61,25 @@ assert.strictEqual(safeCircularIndex(-1, 5), 4, "Fail: Chỉ số lùi từ 0 tr
 assert.strictEqual(safeCircularIndex(5, 5), 0, "Fail: Chỉ số tiến vượt ngưỡng phải quay về 0");
 console.log("✅ Bài 4 passed: Modulo mảng vòng an toàn!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 5: Thiết lập options mặc định không làm mất giá trị 0 hoặc false
+// Sử dụng toán tử gán Nullish Coalescing Assignment (??=)
+// ------------------------------------------------------------
+function mergeDefaultConfig(userConfig) {
+  const config = { ...userConfig };
+  config.retries ??= 3;
+  config.verbose ??= true;
+  config.cacheDir ??= "/tmp/cache";
+  return config;
+}
+
+const customSettings = { retries: 0, verbose: false };
+const resolved = mergeDefaultConfig(customSettings);
+
+assert.strictEqual(resolved.retries, 0, "Fail: retries = 0 bị đè!");
+assert.strictEqual(resolved.verbose, false, "Fail: verbose = false bị đè!");
+assert.strictEqual(resolved.cacheDir, "/tmp/cache", "Fail: cacheDir chưa nhận giá trị mặc định!");
+console.log("✅ Bài 5 passed: Merge Default Config bằng ??= an toàn tuyệt đối!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 01-FUNDAMENTALS!");
 

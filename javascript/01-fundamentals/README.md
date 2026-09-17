@@ -79,6 +79,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [10-operators-precedence-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/10-operators-precedence-demo.js): Minh họa Prefix/Postfix, ép kiểu chuỗi vs toán tử trừ, và toán tử gán logic `??=`.
 - [11-arithmetic-and-math-quirks.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/11-arithmetic-and-math-quirks.md): Số học và dị biệt: chia cho 0, unary casting, modulo số âm và vượt ngưỡng MAX_SAFE_INTEGER.
 - [11-arithmetic-quirks-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/11-arithmetic-quirks-demo.js): Code thực nghiệm chia cho 0, unary +/-, cạm bẫy modulo số âm trong mảng vòng, mất độ chính xác và BigInt.
+- [12-assignment-operators.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/12-assignment-operators.md): Toán tử gán & gán logic ES2021: chuỗi gán, bẫy ||= vs ??=, và cơ chế short-circuit tránh kích hoạt setter thừa.
+- [12-assignment-operators-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/12-assignment-operators-demo.js): Code thực nghiệm chuỗi gán, bẫy setter trong Proxy/Object, kiểm chứng ||= vs ??= và toán tử gán bitwise.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.
