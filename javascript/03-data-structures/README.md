@@ -36,6 +36,8 @@ graph TD
 
 - [01-arrays-fundamentals.md](file:///d:/my-project/revision-document/javascript/03-data-structures/01-arrays-fundamentals.md): Mảng cơ bản, bản chất Object, V8 Packed vs Holey, cạm bẫy `delete`, và thao tác với `length`.
 - [01-arrays-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/01-arrays-demo.js): Code thực nghiệm `Array.isArray`, cạm bẫy `delete`, so sánh holes vs undefined, `Array.of`/`Array.from`, và `arr.at()`.
+- [02-array-constructor-and-type-checking.md](file:///d:/my-project/revision-document/javascript/03-data-structures/02-array-constructor-and-type-checking.md): Hàm tạo `Array()`, `RangeError`, bẫy `map()` trên empty slots, bẫy tham chiếu `.fill({})`, và nhận diện kiểu Cross-Realm.
+- [02-array-constructor-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/02-array-constructor-demo.js): Code thực nghiệm phân nhánh `new Array`, bẫy `map()` trên holes, bẫy tham chiếu `.fill({})`, và mô phỏng Iframe/Cross-Realm bằng Node.js `vm`.
 - [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra `compact()`, `chunk()`, `flatten()` đệ quy, và `unique()`.
 
 ---
