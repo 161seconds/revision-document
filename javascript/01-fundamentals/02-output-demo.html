@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 - Demo Các Phương Thức Xuất Dữ Liệu</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+      background: #f9fafb;
+      color: #1f2937;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .danger-zone {
+      background: #fef2f2;
+      border: 1px solid #f87171;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .btn-danger {
+      background-color: #dc2626;
+    }
+    .btn-danger:hover {
+      background-color: #b91c1c;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .badge-safe { background: #dcfce7; color: #166534; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+
+  <h1>4 Phương Thức Xuất Dữ Liệu Trong JavaScript</h1>
+
+  <!-- 1. textContent / innerHTML -->
+  <div class="card">
+    <span class="badge badge-safe">Khuyến nghị Production</span>
+    <h3>1. Ghi vào phần tử HTML (DOM)</h3>
+    <p id="dom-target" style="padding: 10px; background: #f3f4f6; border-radius: 4px;">Nội dung ban đầu...</p>
+    <button onclick="writeToDom()">Ghi Dữ Liệu Vào DOM</button>
+  </div>
+
+  <!-- 2. Console DevTools -->
+  <div class="card">
+    <span class="badge badge-safe">Khuyến nghị Debugging</span>
+    <h3>2. Xuất ra Browser Console (F12)</h3>
+    <p>Bấm F12 và chuyển sang tab <strong>Console</strong> để xem dữ liệu xuất ra mà không làm thay đổi giao diện trang web.</p>
+    <button onclick="logToConsole()">Xuất Bảng & Log</button>
+  </div>
+
+  <!-- 3. window.alert() -->
+  <div class="card">
+    <span class="badge badge-warn">Cảnh báo: Chặn luồng (Blocking)</span>
+    <h3>3. Hộp thoại Popup (window.alert)</h3>
+    <p>Hiển thị hộp thoại cảnh báo. Lưu ý: Làm đơ toàn bộ tương tác giao diện cho tới khi bấm OK.</p>
+    <button onclick="showAlert()">Bật Alert</button>
+  </div>
+
+  <!-- 4. window.print() -->
+  <div class="card">
+    <span class="badge badge-safe">Tiện ích Trình duyệt</span>
+    <h3>4. In trang web (window.print)</h3>
+    <p>Mở trực tiếp hộp thoại in ấn của trình duyệt.</p>
+    <button onclick="window.print()">In Trang Web</button>
+  </div>
+
+  <!-- 5. Thảm họa document.write() -->
+  <div class="card danger-zone">
+    <span class="badge badge-danger">Nguy hiểm: Đừng bấm nếu không muốn mất trang</span>
+    <h3>5. document.write() sau khi tải trang</h3>
+    <p>Bấm nút này sẽ minh họa việc toàn bộ trang web bị <strong>xóa sổ sạch sẽ</strong> và bị ghi đè hoàn toàn.</p>
+    <button class="btn-danger" onclick="dangerousWrite()">Bấm Để Thử Nghiệm Xóa Trang</button>
+  </div>
+
+  <script>
+    function writeToDom() {
+      const target = document.getElementById("dom-target");
+      target.textContent = "Dữ liệu được cập nhật an toàn bằng textContent lúc: " + new Date().toLocaleTimeString();
+    }
+
+    function logToConsole() {
+      console.log("=== THÔNG BÁO TỪ NÚT BẤM ===");
+      console.info("Thời gian:", new Date());
+      console.table([
+        { Framework: "React", Language: "JavaScript/TypeScript", Popularity: "Rất cao" },
+        { Framework: "Vue", Language: "JavaScript/TypeScript", Popularity: "Cao" },
+        { Framework: "Angular", Language: "TypeScript", Popularity: "Trung bình" }
+      ]);
+      alert("Đã xuất dữ liệu ra Console! Hãy bấm F12 để kiểm tra.");
+    }
+
+    function showAlert() {
+      window.alert("Đây là hộp thoại window.alert(). Bạn phải bấm OK thì trang mới tiếp tục chạy!");
+    }
+
+    function dangerousWrite() {
+      // document.write được gọi sau khi trang đã load xong -> Xóa sạch trang!
+      document.write("<h1>Trang web cũ đã bị xóa sổ hoàn toàn bởi document.write()!</h1><p>Hãy tải lại trang (F5) để khôi phục.</p>");
+    }
+  </script>
+</body>
+</html>
