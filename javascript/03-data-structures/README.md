@@ -50,7 +50,9 @@ graph TD
 - [07-array-reference-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/07-array-reference-demo.js): Code thực nghiệm duyệt Iterators (`entries`, `keys`, `values`), bộ tứ ES2023 Change-by-Copy, và `copyWithin()`.
 - [08-const-arrays-and-immutability.md](file:///d:/my-project/revision-document/javascript/03-data-structures/08-const-arrays-and-immutability.md): Mảng `const`, Immutable Binding vs Value, Block Scope Shadowing, `Object.freeze` nông, và `deepFreeze` đệ quy.
 - [08-const-arrays-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/08-const-arrays-demo.js): Code thực nghiệm gán lại const ném TypeError, mutate nội dung, block scope shadowing, và hàm `deepFreeze`.
-- [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra `compact()`, `chunk()`, `flatten()` đệ quy, và `unique()`.
+- [09-sets-and-weaksets.md](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-and-weaksets.md): Tập hợp duy nhất Set & WeakSet, cấu trúc `OrderedHashSet` V8, thuật toán `SameValueZero`, các phương thức đại số tập hợp ES2024 (`union`, `intersection`, `difference`), và phòng ngừa rò rỉ bộ nhớ với WeakSet.
+- [09-sets-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-demo.js): Code thực nghiệm thao tác Set, SameValueZero, các phép toán ES2024, bẫy tham chiếu object, và Brand Checking với WeakSet.
+- [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra 9 bài toán cấu trúc dữ liệu cốt lõi.
 
 ---
 

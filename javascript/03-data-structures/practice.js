@@ -200,6 +200,35 @@ assert.strictEqual(grouped.meat.length, 2);
 assert.deepStrictEqual(grouped.fruit.map(f => f.name), ["bananas", "cherries"]);
 console.log("✅ Bài 8 passed: Gom nhóm mảng customGroupBy() thành công!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 9: Giao đa tập hợp tối ưu & Hiệu đối xứng (Set Operations)
+// Tìm các phần tử chung xuất hiện trong TẤT CẢ các mảng đầu vào với O(n)
+// ------------------------------------------------------------
+function multiIntersection(...arrays) {
+  if (arrays.length === 0) return [];
+  // Bắt đầu bằng tập hợp các phần tử duy nhất của mảng đầu tiên:
+  let currentSet = new Set(arrays[0]);
+
+  for (let i = 1; i < arrays.length; i++) {
+    const targetSet = new Set(arrays[i]);
+    // Sử dụng phép giao intersection ES2024 hoặc lọc O(1) has:
+    currentSet = currentSet.intersection(targetSet);
+  }
+
+  return [...currentSet];
+}
+
+const list1 = [1, 2, 2, 3, 4, 5];
+const list2 = [2, 3, 5, 6];
+const list3 = [3, 5, 7, 8, 2];
+
+const commonElements = multiIntersection(list1, list2, list3);
+assert.deepStrictEqual(commonElements.sort(), [2, 3, 5]);
+
+// Kiểm tra với trường hợp không có phần tử chung:
+assert.deepStrictEqual(multiIntersection([1, 2], [3, 4]), []);
+console.log("✅ Bài 9 passed: Giao đa tập hợp multiIntersection() thành công!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
 
 
