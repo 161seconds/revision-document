@@ -109,5 +109,32 @@ assert.deepStrictEqual(baseArray, ["a", "b", "e"], "Mảng gốc không được
 assert.deepStrictEqual(inserted, ["a", "b", "c", "d", "e"]);
 console.log("✅ Bài 5 passed: Chèn phần tử bất biến thành công!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 6: Tìm kiếm đối tượng theo đường dẫn lồng nhau (Nested Property Search)
+// ------------------------------------------------------------
+function findByNestedPath(arr, path, targetValue) {
+  const keys = path.split(".");
+  return arr.find(item => {
+    let current = item;
+    for (const key of keys) {
+      if (current == null) return false;
+      current = current[key];
+    }
+    return Object.is(current, targetValue);
+  });
+}
+
+const userList = [
+  { user: { profile: { id: 101, name: "Alice" } } },
+  { user: { profile: { id: 102, name: "Bob" } } },
+  { user: null }
+];
+
+const found = findByNestedPath(userList, "user.profile.id", 102);
+assert.deepStrictEqual(found, userList[1]);
+assert.strictEqual(findByNestedPath(userList, "user.profile.id", 999), undefined);
+console.log("✅ Bài 6 passed: Tìm kiếm theo Nested Property chính xác!");
+
 console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
+
 
