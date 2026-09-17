@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 - Vị Trí Nhúng Script & Defer vs Async</title>
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.6;
+      background: #f9fafb;
+      color: #1f2937;
+    }
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .badge-blue { background: #dbeafe; color: #1e40af; }
+    .badge-green { background: #dcfce7; color: #166534; }
+  </style>
+
+  <!-- VÍ DỤ 1: Nhúng trong <head> với thuộc tính defer -->
+  <!-- defer tải file song song và chạy SAU KHI toàn bộ HTML đã được parse xong -->
+  <script src="external-demo.js" defer></script>
+
+  <script>
+    // Thử truy cập DOM trong <head> khi chưa có defer
+    // Lưu ý: Nếu không bọc trong DOMContentLoaded, lệnh dưới đây sẽ nhận null!
+    document.addEventListener("DOMContentLoaded", () => {
+      const headCheck = document.getElementById("head-status");
+      if (headCheck) {
+        headCheck.textContent = "Script trong <head> chạy an toàn nhờ lắng nghe sự kiện DOMContentLoaded!";
+      }
+    });
+  </script>
+</head>
+<body>
+
+  <h1>Demo: Vị Trí Nhúng Script Trong HTML</h1>
+
+  <div class="card">
+    <span class="badge badge-blue">Kỹ thuật 1: Head Script + DOMContentLoaded</span>
+    <h3>Thực thi từ thẻ &lt;head&gt;</h3>
+    <p id="head-status">Đang tải...</p>
+  </div>
+
+  <div class="card">
+    <span class="badge badge-green">Kỹ thuật 2: External Script với defer</span>
+    <h3>Gọi hàm từ tập tin rời (external-demo.js)</h3>
+    <p id="external-output">Chưa gọi hàm nào từ file ngoài.</p>
+    <button onclick="triggerExternalMessage()">Gọi Hàm Ngoài</button>
+  </div>
+
+  <div class="card">
+    <span class="badge badge-blue">Kỹ thuật 3: Script đặt cuối &lt;body&gt;</span>
+    <h3>Nội dung được xử lý ngay tại cuối body</h3>
+    <p id="body-status">Chờ script cuối body cập nhật...</p>
+  </div>
+
+  <!-- VÍ DỤ 3: Script đặt ở cuối <body> -->
+  <!-- DOM phía trên đã sẵn sàng, script truy cập trực tiếp không cần chờ sự kiện -->
+  <script>
+    document.getElementById("body-status").textContent = 
+      "Script cuối <body> chạy trực tiếp và truy xuất DOM thành công (không bị lỗi null)!";
+  </script>
+
+</body>
+</html>
