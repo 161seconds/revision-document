@@ -61,6 +61,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [02-output-methods.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-output-methods.md): 4 phương thức xuất dữ liệu, bẫy `document.write` và kỹ thuật DevTools Console.
 - [02-output-demo.html](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-output-demo.html): Demo tương tác các cách xuất dữ liệu và thí nghiệm xóa trang.
 - [02-console-tools.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-console-tools.js): Kỹ thuật dùng console chuyên nghiệp (`table`, `time`, `count`).
+- [03-syntax-and-rules.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/03-syntax-and-rules.md): Quy tắc cú pháp, Expressions vs Statements, Identifier rules, và bẫy ASI.
+- [03-syntax-rules-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/03-syntax-rules-demo.js): Minh họa phân biệt hoa thường, biểu thức và kiểm chứng bẫy ASI.
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.
