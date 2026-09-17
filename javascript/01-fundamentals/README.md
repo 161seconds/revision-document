@@ -67,6 +67,8 @@ Tài liệu ôn tập chuyên sâu về cơ chế biến, vùng nhớ, kiểu d�
 - [04-statements-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/04-statements-demo.js): Minh họa nhiều câu lệnh trên 1 dòng, khối lệnh độc lập và kiểm chứng scope.
 - [05-comments-and-jsdoc.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/05-comments-and-jsdoc.md): Chú thích, bẫy lồng comment, quy tắc Clean Code và chuẩn JSDoc.
 - [05-jsdoc-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/05-jsdoc-demo.js): Minh họa các thẻ JSDoc (@param, @returns, @typedef, @deprecated) cung cấp gợi ý kiểu.
+- [06-variables-declaration-rules.md](file:///d:/my-project/revision-document/javascript/01-fundamentals/06-variables-declaration-rules.md): 4 cách khai báo biến, tính bất biến tham chiếu của `const`, và Strict Mode.
+- [06-variables-strict-mode-demo.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/06-variables-strict-mode-demo.js): Minh họa khai báo nhiều biến, tính chất của const/let và tác dụng của "use strict".
 - [01-variables-scope.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/01-variables-scope.js): Minh họa Scope, Hoisting và TDZ.
 - [02-data-types.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/02-data-types.js): Phân biệt Primitive vs Reference, sao chép nông vs sâu.
 - [practice.js](file:///d:/my-project/revision-document/javascript/01-fundamentals/practice.js): Bài tập tự luyện kèm assertions kiểm tra kết quả.
