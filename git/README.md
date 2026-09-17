@@ -7,6 +7,8 @@ Lộ trình và tài liệu ôn tập Git Version Control toàn diện từ ki�
 | Thư mục | Nội dung trọng tâm | Trạng thái |
 | :--- | :--- | :--- |
 | [summary.md](file:///d:/my-project/revision-document/git/summary.md) | Bảng tóm tắt toàn diện (Cheat Sheet) một file bao quát 46 chủ đề W3Schools | Hoàn thành |
+| [git-co-ban.md](file:///d:/my-project/revision-document/git/git-co-ban.md) | Cẩm nang Git căn bản thực chiến (Cấu hình, Init, Status, Staging, Commit, Push GitHub) | Hoàn thành |
+| [git-nang-cao.md](file:///d:/my-project/revision-document/git/git-nang-cao.md) | Cẩm nang Git nâng cao thực chiến (Branching, Merge, Rebase, Stash, Reset, Revert) | Hoàn thành |
 | [01-basics-and-architecture/](file:///d:/my-project/revision-document/git/01-basics-and-architecture/README.md) | Kiến trúc 3 cây (Working Tree, Index, HEAD), 4 Objects (`blob`, `tree`, `commit`, `tag`), Lệnh cơ bản, Staging, Phân nhánh, Stash, Tagging, `.gitignore`, `.gitattributes` | Hoàn thành |
 | [02-remotes-and-collaboration/](file:///d:/my-project/revision-document/git/02-remotes-and-collaboration/README.md) | Máy chủ từ xa, SSH Ed25519 vs HTTPS PAT, Tracking branch (`-u`), `fetch` vs `pull`, `pull --rebase`, `push --force-with-lease`, Fork & Upstream, Shallow Clone (`--depth 1`), GitHub Flow | Hoàn thành |
 | [03-undo-and-history-recovery/](file:///d:/my-project/revision-document/git/03-undo-and-history-recovery/README.md) | Hoàn tác an toàn `commit --amend`, Forward undo `git revert`, Hoàn tác merge commit (`revert -m 1`), Ma trận Reset (`--soft`, `--mixed`, `--hard`), `git restore`, Cứu hộ dữ liệu khẩn cấp qua `git reflog` | Hoàn thành |
