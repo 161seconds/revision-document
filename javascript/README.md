@@ -12,7 +12,7 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | [03-data-structures/](file:///d:/my-project/revision-document/javascript/03-data-structures/README.md) | Mảng (V8 Elements, Holes, Length), Array Methods, Set & WeakSet, ES2024 Set Logic | Hoàn thành |
 | [04-error-handling-and-debugging/](file:///d:/my-project/revision-document/javascript/04-error-handling-and-debugging/README.md) | Built-in Errors, Silent Errors, try-catch-finally, Error Hierarchy, DevTools Debugging | Hoàn thành |
 | [05-style-guide-and-best-practices/](file:///d:/my-project/revision-document/javascript/05-style-guide-and-best-practices/README.md) | Quy ước viết mã, ASI, Best Practices, Lỗi sai số thực, Tối ưu hóa V8 | Hoàn thành |
-| [06-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/06-dom-and-web-apis/) | DOM Manipulation, Event Bubbling/Capturing, Web Storage | Khởi tạo |
+| [06-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/06-dom-and-web-apis/README.md) | Cấu trúc DOM Tree, Selectors, Thao tác phần tử & chống XSS, 3 pha sự kiện, Event Delegation, HTML-First & Constraint Validation, rAF & Rendering Pipeline, AbortController | Hoàn thành |
 
 ---
 
