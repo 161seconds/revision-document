@@ -7,8 +7,8 @@ Lộ trình và tài liệu ôn tập JavaScript từ nền tảng đến chuyê
 | Thư mục | Nội dung trọng tâm | Trạng thái |
 | :--- | :--- | :--- |
 | [summary.md](file:///d:/my-project/revision-document/javascript/summary.md) | Bảng tóm tắt toàn diện (Cheat Sheet) một file | Hoàn thành |
-| [01-fundamentals/](file:///d:/my-project/revision-document/javascript/01-fundamentals/README.md) | Biến (`var`/`let`/`const`), Scope, Kiểu dữ liệu, Ép kiểu, Toán tử | Sẵn sàng |
-| [02-functions-and-scope/](file:///d:/my-project/revision-document/javascript/02-functions-and-scope/) | Closures, Context `this`, Arrow Functions, Currying | Khởi tạo |
+| [01-fundamentals/](file:///d:/my-project/revision-document/javascript/01-fundamentals/README.md) | Biến (`var`/`let`/`const`), Scope, Kiểu dữ liệu, Ép kiểu, Toán tử, Rẽ nhánh, Vòng lặp, Chuỗi, Số, Date | Hoàn thành |
+| [02-functions-and-scope/](file:///d:/my-project/revision-document/javascript/02-functions-and-scope/README.md) | Function Declarations vs Expressions, Parameters & Rest, Arrow Functions & `this`, Closures & Scope Chain | Hoàn thành |
 | [03-data-structures/](file:///d:/my-project/revision-document/javascript/03-data-structures/) | Array Methods (`map`, `filter`, `reduce`), Object, Set, Map | Khởi tạo |
 | [04-async-javascript/](file:///d:/my-project/revision-document/javascript/04-async-javascript/) | Event Loop, Callbacks, Promises, Async/Await, Fetch API | Khởi tạo |
 | [05-dom-and-web-apis/](file:///d:/my-project/revision-document/javascript/05-dom-and-web-apis/) | DOM Manipulation, Event Bubbling/Capturing, Web Storage | Khởi tạo |
