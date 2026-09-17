@@ -229,8 +229,73 @@ assert.deepStrictEqual(commonElements.sort(), [2, 3, 5]);
 assert.deepStrictEqual(multiIntersection([1, 2], [3, 4]), []);
 console.log("✅ Bài 9 passed: Giao đa tập hợp multiIntersection() thành công!");
 
-console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ BÀI TẬP 03-DATA-STRUCTURES!");
+// ------------------------------------------------------------
+// BÀI TẬP 10: Tần suất từ bằng Map (Map Frequency Counter)
+// Đếm số lần xuất hiện của từ với O(N), không bị dính prototype pollution
+// ------------------------------------------------------------
+function wordFrequencyCounter(text) {
+  const words = text.toLowerCase().match(/\b[a-z0-9_]+\b/g) || [];
+  const map = new Map();
+  for (const word of words) {
+    map.set(word, (map.get(word) || 0) + 1);
+  }
+  return map;
+}
 
+const freqMap = wordFrequencyCounter("JS is great. JS is fast. Is JS great?");
+assert.strictEqual(freqMap.get("js"), 3);
+assert.strictEqual(freqMap.get("is"), 3);
+assert.strictEqual(freqMap.get("great"), 2);
+assert.strictEqual(freqMap.get("fast"), 1);
+console.log("✅ Bài 10 passed: Đếm tần suất từ bằng Map thành công!");
 
+// ------------------------------------------------------------
+// BÀI TẬP 11: Pipeline lười biếng với Generator (Lazy Pipeline)
+// Lấy N số chẵn bình phương đầu tiên từ một chuỗi vô hạn
+// ------------------------------------------------------------
+function* naturalNumbers() {
+  let n = 1;
+  while (true) {
+    yield n++;
+  }
+}
 
+function* takeEvenSquares(sourceIterable, count) {
+  let taken = 0;
+  for (const num of sourceIterable) {
+    if (num % 2 === 0) {
+      yield num * num;
+      taken++;
+      if (taken >= count) break;
+    }
+  }
+}
 
+const lazyResults = [...takeEvenSquares(naturalNumbers(), 4)];
+// Các số chẵn đầu tiên: 2, 4, 6, 8 -> Bình phương: 4, 16, 36, 64
+assert.deepStrictEqual(lazyResults, [4, 16, 36, 64]);
+console.log("✅ Bài 11 passed: Lazy Stream Pipeline bằng Generator thành công!");
+
+// ------------------------------------------------------------
+// BÀI TẬP 12: Phân tích URL Query String bằng Regex Named Groups
+// ------------------------------------------------------------
+function parseQueryString(queryString) {
+  const params = {};
+  const regex = /(?:[?&])(?<key>[^=&#]+)=(?<val>[^&#]*)/g;
+  let match;
+  while ((match = regex.exec(queryString)) !== null) {
+    const { key, val } = match.groups;
+    params[decodeURIComponent(key)] = decodeURIComponent(val);
+  }
+  return params;
+}
+
+const parsedParams = parseQueryString("?category=tech&id=42&tag=javascript");
+assert.deepStrictEqual(parsedParams, {
+  category: "tech",
+  id: "42",
+  tag: "javascript",
+});
+console.log("✅ Bài 12 passed: Phân tích URL Query bằng RegExp Named Groups thành công!");
+
+console.log("\n🎉 CHÚC MỪNG! BẠN ĐÃ VƯỢT QUA TOÀN BỘ 12 BÀI TẬP 03-DATA-STRUCTURES!");

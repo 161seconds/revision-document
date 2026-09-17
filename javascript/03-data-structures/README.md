@@ -53,8 +53,15 @@ graph TD
 - [09-sets-and-weaksets.md](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-and-weaksets.md): Tập hợp duy nhất Set & WeakSet, cấu trúc `OrderedHashSet` V8, thuật toán `SameValueZero`, các phương thức đại số tập hợp ES2024 (`union`, `intersection`, `difference`), và phòng ngừa rò rỉ bộ nhớ với WeakSet.
 - [09-sets-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/09-sets-demo.js): Code thực nghiệm thao tác Set, SameValueZero, các phép toán ES2024, bẫy tham chiếu object, và Brand Checking với WeakSet.
 - [10-set-methods-and-iteration.md](file:///d:/my-project/revision-document/javascript/03-data-structures/10-set-methods-and-iteration.md): Phương thức và cơ chế duyệt Set, giải mã `forEach` song trùng `val === key`, Living Iterators (đột biến khi duyệt), và chuẩn Set-like objects trong ES2024.
-- [10-set-methods-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/10-set-methods-demo.js): Code thực nghiệm chaining `add()`, giá trị trả về `delete`/`clear`, Living Iterator của V8, và tương thích Set-like object.
-- [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra 9 bài toán cấu trúc dữ liệu cốt lõi.
+- [11-set-logic-and-mathematical-operations.md](file:///d:/my-project/revision-document/javascript/03-data-structures/11-set-logic-and-mathematical-operations.md): Đại số tập hợp ES2024: `union()`, `intersection()`, `difference()`, `symmetricDifference()`, `isSubsetOf()`, `isSupersetOf()`, `isDisjointFrom()`.
+- [11-set-logic-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/11-set-logic-demo.js): Code thực nghiệm 7 phương thức toán học của Set ES2024 và so sánh hiệu năng.
+- [12-maps-and-weakmaps.md](file:///d:/my-project/revision-document/javascript/03-data-structures/12-maps-and-weakmaps.md): Bảng ánh xạ Map & WeakMap, khóa là đối tượng/hàm, SameValueZero, bảo toàn Insertion Order, và dọn rác GC.
+- [12-maps-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/12-maps-demo.js): Code thực nghiệm Map vs Object, WeakMap Garbage Collection và Private Data Pattern.
+- [13-iterators-and-generators.md](file:///d:/my-project/revision-document/javascript/03-data-structures/13-iterators-and-generators.md): Giao thức Iterable `[Symbol.iterator]`, Iterator `.next()`, Hàm sinh `function*`, `yield`, `yield*` và giao tiếp 2 chiều.
+- [13-iterators-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/13-iterators-demo.js): Code thực nghiệm Custom Iterable Range, dãy số Fibonacci vô hạn, Generator delegation và dọn dẹp try..finally.
+- [14-regular-expressions.md](file:///d:/my-project/revision-document/javascript/03-data-structures/14-regular-expressions.md): Biểu thức chính quy RegExp, cờ `g/i/m/s/u/y/d`, Named Capture Groups, Lookaround assertions, bẫy `lastIndex` và ReDoS.
+- [14-regexp-demo.js](file:///d:/my-project/revision-document/javascript/03-data-structures/14-regexp-demo.js): Code thực nghiệm bẫy stateful regex.test(), Lookahead/Lookbehind, Sticky flag và String.matchAll().
+- [practice.js](file:///d:/my-project/revision-document/javascript/03-data-structures/practice.js): Bộ bài tập tổng hợp tự động kiểm tra toàn diện cấu trúc dữ liệu cốt lõi.
 
 ---
 
