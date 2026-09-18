@@ -1,0 +1,86 @@
+# ============================================================================
+# KUBERNETES NETWORKING & STORAGE INTEGRATED MANIFEST
+# ============================================================================
+
+# 1. CONFIGURATION: Application ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: production
+data:
+  APP_ENV: "production"
+  CACHE_ENABLED: "true"
+  DEFAULT_TIMEOUT_MS: "3000"
+---
+# 2. SECURITY: Application Secret (Base64 Encoded)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secret
+  namespace: production
+type: Opaque
+data:
+  # Base64 for: postgresql://admin:SafePass2026!@postgres:5432/appdb
+  DATABASE_URL: "cG9zdGdyZXNxbDovL2FkbWluOlNhZmVQYXNzMjAyNiFAcG9zdGdyZXM6NTQzMi9hcHBkYg=="
+  # Base64 for: JWT_SUPER_SECRET_KEY_9988
+  JWT_SECRET: "SldUX1NVUEVSX1NFQ1JFVF9LRVlfOTk4OA=="
+---
+# 3. STORAGE: PersistentVolumeClaim (RWO 10Gi)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+  namespace: production
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: standard-rwo
+  resources:
+    requests:
+      storage: 10Gi
+---
+# 4. NETWORKING: ClusterIP Service with TargetPort Mapping
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: production
+  labels:
+    app.kubernetes.io/name: order-api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: order-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+---
+# 5. INGRESS: Layer 7 Routing with SSL/TLS Termination
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: production
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.example.com
+    secretName: api-tls-cert
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /api/v1
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
