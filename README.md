@@ -19,6 +19,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | **DevOps** | Docker, Multi-Stage Builds, Compose, Kubernetes Architecture, Workloads, Networking, Probes, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
 | **AWS Cloud** | IAM, VPC Networking, EC2, ALB/NLB, Lambda, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
 | **System Design** | Scalability, CAP/PACELC, Caching (Redis), Sharding, Dynamo Quorum, Kafka Streams, Saga Pattern, Rate Limiting | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
+| **Web Security** | OWASP Top 10 (SQLi, XSS, CSRF, SSRF, IDOR), Passwords (Argon2id/bcrypt), OAuth2 & PKCE, OIDC, JWT, Cryptography (AES-GCM, RSA, ECC, TLS 1.3) | [security/](file:///d:/my-project/revision-document/security/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/security/summary.md) |
 
 ---
 
