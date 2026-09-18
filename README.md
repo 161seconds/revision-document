@@ -14,7 +14,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | **Database** | SQL Querying, Joins, Full Functions Catalog, Schema, B-Tree Index, ACID, SQLi Defense | [database/](file:///d:/my-project/revision-document/database/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/database/summary.md) |
 | **.NET / C#** | C# Fundamentals, OOP, LINQ, Entity Framework Core | [dotnet/](file:///d:/my-project/revision-document/dotnet/README.md) |
 | **Java** | Core Java, JVM Memory, OOP, Collections, I/O Streams, Exceptions, Advanced | [java/](file:///d:/my-project/revision-document/java/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/java/summary.md) |
-| **C / C++** | Con trỏ (Pointers), Quản lý bộ nhớ Heap/Stack, Structs | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) |
+| **C / C++** | Con trỏ (Pointers), Quản lý bộ nhớ Heap/Stack, Structs, File I/O, C++ Core | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/c-cpp/summary.md) |
 | **Git** | Kiến trúc 3-Tree, Branching, Rebase, Xử lý xung đột, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
 
 ---
