@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Production-Grade S3 Storage, RDS Multi-AZ & DynamoDB NoSQL Architecture
+
+Parameters:
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private Subnet in AZ1 for RDS
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private Subnet in AZ2 for RDS
+  DatabaseSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group allowing port 5432 from backend services
+
+Resources:
+  # ============================================================================
+  # 1. AMAZON S3: SECURE BUCKET WITH LIFECYCLE MANAGEMENT
+  # ============================================================================
+  EnterpriseDocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub enterprise-docs-${AWS::AccountId}-${AWS::Region}
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      LifecycleConfiguration:
+        Rules:
+          - Id: TierAndArchiveLogFiles
+            Status: Enabled
+            Prefix: archives/
+            Transitions:
+              - TransitionInDays: 30
+                StorageClass: STANDARD_IA
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+            ExpirationInDays: 365
+            NoncurrentVersionExpirationInDays: 60
+
+  # ============================================================================
+  # 2. AMAZON RDS: MULTI-AZ POSTGRESQL RELATIONAL DATABASE
+  # ============================================================================
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: High Availability DB Subnet Group across 2 AZs
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+
+  ProductionPostgresDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: prod-postgres-ha
+      Engine: postgres
+      EngineVersion: '16.1'
+      DBInstanceClass: db.m6i.large
+      AllocatedStorage: '50'
+      StorageType: gp3
+      MultiAZ: true # Enforces Synchronous Multi-AZ Replication for Disaster Recovery
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DatabaseSecurityGroupId
+      BackupRetentionPeriod: 14
+      PubliclyAccessible: false
+      StorageEncrypted: true
+      DeletionProtection: true
+
+  # ============================================================================
+  # 3. AMAZON DYNAMODB: COMPOSITE PRIMARY KEY & GLOBAL SECONDARY INDEX
+  # ============================================================================
+  OrdersDynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: enterprise-orders
+      BillingMode: PAY_PER_REQUEST # Serverless On-Demand Mode
+      AttributeDefinitions:
+        - AttributeName: TenantId
+          AttributeType: S
+        - AttributeName: OrderId
+          AttributeType: S
+        - AttributeName: CustomerEmail
+          AttributeType: S
+        - AttributeName: OrderDate
+          AttributeType: S
+      KeySchema:
+        - AttributeName: TenantId
+          KeyType: HASH # Partition Key
+        - AttributeName: OrderId
+          KeyType: RANGE # Sort Key
+      GlobalSecondaryIndexes:
+        - IndexName: CustomerEmailIndex
+          KeySchema:
+            - AttributeName: CustomerEmail
+              KeyType: HASH
+            - AttributeName: OrderDate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES # Realtime CDC for Lambda triggers
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
