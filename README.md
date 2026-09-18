@@ -17,6 +17,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | **C / C++** | Con trỏ (Pointers), Quản lý bộ nhớ Heap/Stack, Structs, File I/O, C++ Core | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/c-cpp/summary.md) |
 | **Git** | Kiến trúc 3-Tree, Branching, Rebase, Xử lý xung đột, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
 | **DevOps** | Docker, Multi-Stage Builds, Compose, Kubernetes Architecture, Workloads, Networking, Probes, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
+| **AWS Cloud** | IAM, VPC Networking, EC2, ALB/NLB, Lambda, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
 
 ---
 
