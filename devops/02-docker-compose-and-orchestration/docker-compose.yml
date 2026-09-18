@@ -1,0 +1,87 @@
+version: '3.8'
+
+# ============================================================================
+# PRODUCTION-GRADE MULTI-TIER MICROSERVICES STACK
+# ============================================================================
+
+services:
+  # 1. FRONTEND TIER: Reverse Proxy & Ingress Gateway
+  gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - frontend-net
+
+  # 2. APPLICATION TIER: Backend API Service
+  api:
+    image: node:20-alpine
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=${APP_ENV:-production}
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-microservice_db}
+      - DB_USER=${POSTGRES_USER:-db_admin}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required!}
+      - REDIS_HOST=cache
+    depends_on:
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    networks:
+      - frontend-net
+      - backend-net
+
+  # 3. DATA TIER: PostgreSQL Relational Database
+  database:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-microservice_db}
+      POSTGRES_USER: ${POSTGRES_USER:-db_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required!}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-db_admin} -d ${POSTGRES_DB:-microservice_db}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend-net
+
+  # 4. DATA TIER: Redis In-Memory Cache
+  cache:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+    networks:
+      - backend-net
+
+# ============================================================================
+# NETWORK SEGMENTATION (Zero-Trust Multi-tier Isolation)
+# ============================================================================
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+
+# ============================================================================
+# PERSISTENT VOLUMES
+# ============================================================================
+volumes:
+  pg_data:
