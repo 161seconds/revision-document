@@ -20,6 +20,8 @@ Bảng tổng hợp toàn diện hơn 80+ chủ đề Java theo chuẩn giáo tr
 12. [Java Nâng Cao: Generics, Concurrency & Lambdas](#12-java-nâng-cao-generics-concurrency--lambdas)
 13. [Từ Điển Từ Khóa (Java Keywords Catalog)](#13-từ-điển-từ-khóa-java-keywords-catalog)
 14. [Bẫy Phỏng Vấn Kinh Điển (Top Java Gotchas)](#14-bẫy-phỏng-vấn-kinh-điển-top-java-gotchas)
+15. [Bảng Tra Cứu Toàn Bộ Phương Thức Tham Chiếu (Java Reference Catalog)](#15-bảng-tra-cứu-toàn-bộ-phương-thức-tham-chiếu-java-reference-catalog)
+
 
 ---
 
@@ -742,3 +744,152 @@ BigDecimal b1 = new BigDecimal("0.1");
 BigDecimal b2 = new BigDecimal("0.2");
 System.out.println(b1.add(b2)); // 0.3 chuẩn xác
 ```
+
+---
+
+## 15. Bảng Tra Cứu Toàn Bộ Phương Thức Tham Chiếu (Java Reference Catalog)
+
+Tổng hợp chi tiết toàn bộ các phương thức cốt lõi theo đúng danh mục W3Schools Reference:
+
+### 15.1. String Methods
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `charAt(int index)` | Lấy ký tự tại vị trí chỉ định. |
+| `contains(CharSequence s)` | Kiểm tra chuỗi có chứa chuỗi con hay không. |
+| `equals(Object anObject)` | So sánh bằng giá trị logic của chuỗi. |
+| `equalsIgnoreCase(String s)` | So sánh không phân biệt hoa thường. |
+| `indexOf(String str)` / `lastIndexOf()` | Tìm vị trí xuất hiện đầu tiên / cuối cùng của chuỗi con. |
+| `isEmpty()` / `isBlank()` (Java 11+) | Kiểm tra chuỗi rỗng (`length == 0`) / rỗng hoặc toàn khoảng trắng. |
+| `length()` | Trả về tổng số ký tự trong chuỗi. |
+| `replace(CharSequence target, replacement)` | Thay thế tất cả chuỗi con khớp mẫu. |
+| `split(String regex)` | Cắt chuỗi thành mảng `String[]` theo biểu thức chính quy. |
+| `substring(int beginIndex, int endIndex)` | Cắt chuỗi con từ `beginIndex` đến `endIndex - 1`. |
+| `toLowerCase()` / `toUpperCase()` | Đổi sang chữ in thường / in hoa. |
+| `trim()` / `strip()` (Java 11+) | Cắt bỏ khoảng trắng ở 2 đầu (strip hỗ trợ chuẩn Unicode). |
+| `String.join(delimiter, elements)` | Nối các phần tử thành một chuỗi với dấu phân cách. |
+
+### 15.2. Math Methods (`java.lang.Math`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `Math.abs(x)` | Trả về giá trị tuyệt đối của số $x$. |
+| `Math.max(x, y)` / `Math.min(x, y)` | Trả về giá trị lớn nhất / nhỏ nhất giữa 2 số. |
+| `Math.sqrt(x)` / `Math.cbrt(x)` | Căn bậc hai / Căn bậc ba của $x$. |
+| `Math.pow(base, exponent)` | Lũy thừa $base^{exponent}$. |
+| `Math.round(x)` | Làm tròn số thực đến số nguyên gần nhất. |
+| `Math.ceil(x)` / `Math.floor(x)` | Làm tròn lên / Làm tròn xuống. |
+| `Math.random()` | Sinh số thực ngẫu nhiên trong khoảng $[0.0, 1.0)$. |
+
+### 15.3. Output Methods (`System.out`)
+| Phương thức | Cú pháp | Ghi chú |
+| :--- | :--- | :--- |
+| `print(x)` | `System.out.print("Text");` | In ra console và giữ con trỏ tại dòng đó. |
+| `println(x)` | `System.out.println("Text");` | In ra console và tự động ngắt xuống dòng mới. |
+| `printf(format, args)` | `System.out.printf("Tên: %s, Điểm: %.2f%n", name, score);` | In có định dạng (`%d` số nguyên, `%s` chuỗi, `%f` số thực, `%b` boolean, `%n` xuống dòng độc lập nền tảng). |
+
+### 15.4. Arrays Methods (`java.util.Arrays`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `Arrays.sort(arr)` | Sắp xếp mảng tăng dần tại chỗ (Dual-Pivot Quicksort cho primitive, Timsort cho Object). |
+| `Arrays.binarySearch(arr, key)` | Tìm kiếm nhị phân $O(\log N)$ trên mảng đã sắp xếp. |
+| `Arrays.equals(arr1, arr2)` | So sánh bằng 1 chiều giữa 2 mảng. |
+| `Arrays.deepEquals(arr1, arr2)` | So sánh bằng đa chiều cho mảng lồng nhau. |
+| `Arrays.fill(arr, val)` | Điền giá trị `val` vào toàn bộ các phần tử mảng. |
+| `Arrays.copyOf(arr, newLen)` | Sao chép mảng với kích thước mới (mở rộng hoặc cắt bớt). |
+| `Arrays.toString(arr)` | Chuyển mảng 1D thành chuỗi `[a, b, c]`. |
+| `Arrays.deepToString(arr)` | Chuyển mảng đa chiều thành chuỗi hiển thị trực quan. |
+
+### 15.5. ArrayList & LinkedList Methods
+| Phương thức | `ArrayList` | `LinkedList` | Chức năng |
+| :--- | :---: | :---: | :--- |
+| `add(E e)` | $O(1)$ | $O(1)$ | Thêm phần tử vào cuối danh sách. |
+| `add(int index, E e)` | $O(N)$ | $O(N)$ | Chèn phần tử vào vị trí chỉ định. |
+| `get(int index)` | $O(1)$ | $O(N)$ | Lấy phần tử tại vị trí index. |
+| `remove(int index)` | $O(N)$ | $O(N)$ | Xóa phần tử tại vị trí index. |
+| `size()` / `isEmpty()` | $O(1)$ | $O(1)$ | Kích thước / Kiểm tra rỗng. |
+| `addFirst()` / `addLast()` | ❌ | $O(1)$ | Thêm phần tử vào đầu / đuôi danh sách. |
+| `removeFirst()` / `removeLast()`| ❌ | $O(1)$ | Xóa và lấy phần tử ở đầu / đuôi danh sách. |
+| `peek()` / `poll()` / `offer()` | ❌ | $O(1)$ | Các thao tác của hàng đợi `Queue`. |
+
+### 15.6. HashMap Methods (`java.util.HashMap`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `put(K key, V value)` | Thêm hoặc cập nhật cặp key-value ($O(1)$). |
+| `get(Object key)` | Lấy value theo key ($O(1)$). |
+| `getOrDefault(key, defaultVal)` | Lấy value theo key, nếu không có trả về `defaultVal`. |
+| `containsKey(key)` / `containsValue(val)` | Kiểm tra tồn tại key ($O(1)$) / value ($O(N)$). |
+| `remove(key)` | Xóa phần tử theo key. |
+| `keySet()` / `values()` / `entrySet()` | Lấy tập hợp Key / Danh sách Value / Tập hợp các cặp `Map.Entry`. |
+| `putIfAbsent(key, val)` | Chỉ chèn nếu key chưa tồn tại hoặc đang nhận giá trị null. |
+| `merge(key, val, BiFunction)` | Hợp nhất dữ liệu (rất hay dùng để đếm tần suất xuất hiện). |
+
+### 15.7. Scanner Methods (`java.util.Scanner`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `next()` | Đọc 1 từ tiếp theo (dừng lại khi gặp khoảng trắng). |
+| `nextLine()` | Đọc toàn bộ dòng cho đến khi gặp ký tự xuống dòng `\n`. |
+| `nextInt()` / `nextLong()` | Đọc số nguyên tiếp theo. |
+| `nextDouble()` / `nextFloat()` | Đọc số thực tiếp theo. |
+| `nextBoolean()` | Đọc giá trị logic ("true"/"false"). |
+| `hasNext()` / `hasNextInt()` | Kiểm tra phía trước có còn dữ liệu hợp lệ hay không. |
+| `close()` | Đóng Scanner và giải phóng tài nguyên luồng input. |
+
+### 15.8. File & I/O Methods
+| Lớp | Phương thức chính | Chức năng |
+| :--- | :--- | :--- |
+| **`java.io.File`** | `createNewFile()`, `delete()`, `exists()`, `getName()`, `getAbsolutePath()`, `length()`, `listFiles()`, `mkdir()`, `mkdirs()`, `canRead()`, `canWrite()` | Quản lý siêu dữ liệu đường dẫn tập tin và thư mục trên hệ điều hành. |
+| **`FileInputStream`** | `read()`, `read(byte[] b)`, `close()`, `skip(long n)` | Đọc dữ liệu nhị phân cấp byte thô. |
+| **`FileOutputStream`** | `write(int b)`, `write(byte[] b, int off, int len)`, `flush()`, `close()` | Ghi dữ liệu nhị phân cấp byte thô xuống đĩa. |
+| **`BufferedReader`** | `readLine()`, `read()`, `close()` | Đọc luồng văn bản theo khối đệm RAM 8KB, trả về từng dòng. |
+| **`BufferedWriter`** | `write(String s)`, `newLine()`, `flush()`, `close()` | Ghi văn bản có đệm RAM, thêm ký tự xuống dòng độc lập hệ điều hành. |
+
+### 15.9. Iterator Methods (`java.util.Iterator`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `hasNext()` | Kiểm tra xem phía trước còn phần tử nào hay không (trả về true/false). |
+| `next()` | Nhảy con trỏ tới phần tử tiếp theo và trả về giá trị của phần tử đó. |
+| `remove()` | Xóa an toàn phần tử vừa được duyệt qua mà không gây ra lỗi `ConcurrentModificationException`. |
+| `forEachRemaining(Consumer)` | Tiêu thụ toàn bộ các phần tử còn lại bằng Lambda. |
+
+### 15.10. Collections Methods (`java.util.Collections`)
+| Phương thức | Chức năng |
+| :--- | :--- |
+| `Collections.sort(List)` | Sắp xếp danh sách theo thứ tự tự nhiên hoặc theo `Comparator`. |
+| `Collections.binarySearch(List, key)` | Tìm kiếm nhị phân trên danh sách đã sắp xếp. |
+| `Collections.reverse(List)` | Đảo ngược thứ tự các phần tử trong danh sách tại chỗ in-place. |
+| `Collections.shuffle(List)` | Xáo trộn ngẫu nhiên danh sách (Fisher-Yates). |
+| `Collections.min(Collection)` / `max()` | Tìm phần tử nhỏ nhất / lớn nhất. |
+| `Collections.frequency(c, obj)` | Đếm số lần xuất hiện của đối tượng trong collection. |
+| `Collections.unmodifiableList(List)` | Bọc danh sách thành chế độ chỉ đọc (Read-only view). |
+| `Collections.synchronizedList(List)` | Bọc danh sách thành phiên bản đồng bộ hóa an toàn đa luồng. |
+
+### 15.11. System Methods (`java.lang.System`)
+| Phương thức / Trường | Chức năng |
+| :--- | :--- |
+| `System.out` / `System.err` / `System.in` | 3 luồng chuẩn: Standard Output, Standard Error, Standard Input. |
+| `System.currentTimeMillis()` | Trả về thời gian hiện tại tính bằng mili-giây (Unix Epoch timestamp). |
+| `System.nanoTime()` | Đo khoảng thời gian thực thi với độ chính xác nano-giây (cho benchmark). |
+| `System.arraycopy(src, sOff, dst, dOff, len)` | Sao chép mảng tốc độ cao ở cấp độ bộ nhớ hệ điều hành C/C++. |
+| `System.exit(int status)` | Tiêu diệt tiến trình JVM ngay lập tức (status 0: thành công, khác 0: lỗi). |
+| `System.gc()` | Gửi tín hiệu gợi ý JVM kích hoạt Garbage Collector (không đảm bảo GC chạy ngay). |
+| `System.getenv(String name)` | Đọc biến môi trường hệ điều hành. |
+| `System.getProperty(String key)` | Đọc thuộc tính JVM (`os.name`, `java.version`, `user.home`). |
+
+### 15.12. Danh Mục Các Ngoại Lệ & Lỗi Phổ Biến (Common Errors & Exceptions)
+| Tên Exception / Error | Loại | Nguyên nhân điển hình |
+| :--- | :--- | :--- |
+| **`NullPointerException` (NPE)** | Unchecked | Gọi phương thức hoặc truy cập thuộc tính trên một tham chiếu đang là `null`. |
+| **`ArrayIndexOutOfBoundsException`** | Unchecked | Truy cập chỉ số mảng âm hoặc $\ge \text{length}$. |
+| **`ClassCastException`** | Unchecked | Ép kiểu đối tượng sang một class không có quan hệ kế thừa tương thích. |
+| **`IllegalArgumentException`** | Unchecked | Tham số truyền vào phương thức không hợp lệ. |
+| **`IllegalStateException`** | Unchecked | Phương thức được gọi vào thời điểm trạng thái đối tượng không cho phép. |
+| **`NumberFormatException`** | Unchecked | Chuyển chuỗi không phải định dạng số sang số (`Integer.parseInt("abc")`). |
+| **`ArithmeticException`** | Unchecked | Phép tính toán học bất khả thi (kinh điển: chia số nguyên cho 0). |
+| **`ConcurrentModificationException`** | Unchecked | Sửa đổi cấu trúc Collection trực tiếp trong khi đang duyệt bằng for-each. |
+| **`IOException`** | Checked | Lỗi kết nối luồng nhập xuất tập tin hoặc mạng gián đoạn. |
+| **`FileNotFoundException`** | Checked | File mở để đọc không tồn tại trên đường dẫn chỉ định. |
+| **`SQLException`** | Checked | Lỗi cú pháp SQL, rớt mạng hoặc vi phạm ràng buộc cơ sở dữ liệu. |
+| **`ClassNotFoundException`** | Checked | ClassLoader không tìm thấy bytecode của class (thường do thiếu file `.jar`). |
+| **`OutOfMemoryError` (OOM)** | Error | Vùng nhớ Heap hoặc Metaspace bị đầy, Garbage Collector không thể dọn thêm. |
+| **`StackOverflowError`** | Error | Ngăn xếp Call Stack bị tràn (do gọi hàm đệ quy vô tận không có điều kiện dừng). |
+| **`NoClassDefFoundError`** | Error | Class có mặt lúc biên dịch nhưng lúc chạy JVM lại không tìm thấy. |
+
