@@ -18,6 +18,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | **Git** | Kiến trúc 3-Tree, Branching, Rebase, Xử lý xung đột, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
 | **DevOps** | Docker, Multi-Stage Builds, Compose, Kubernetes Architecture, Workloads, Networking, Probes, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
 | **AWS Cloud** | IAM, VPC Networking, EC2, ALB/NLB, Lambda, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
+| **System Design** | Scalability, CAP/PACELC, Caching (Redis), Sharding, Dynamo Quorum, Kafka Streams, Saga Pattern, Rate Limiting | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
 
 ---
 
