@@ -10,7 +10,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | :--- | :--- | :--- |
 | **JavaScript** | Nền tảng JS, Scope, Closures, Async/Await, DOM, ES6+ | [javascript/](file:///d:/my-project/revision-document/javascript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/javascript/summary.md) |
 | **TypeScript** | Type System, Interfaces, Generics, Utility Types | [typescript/](file:///d:/my-project/revision-document/typescript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/typescript/summary.md) |
-| **React** | Component Lifecycle, Modern Hooks, State Management | [react/](file:///d:/my-project/revision-document/react/README.md) |
+| **React** | Component Lifecycle, Modern Hooks, State Management | [react/](file:///d:/my-project/revision-document/react/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/react/summary.md) |
 | **Database** | SQL Querying, Joins, Full Functions Catalog, Schema, B-Tree Index, ACID, SQLi Defense | [database/](file:///d:/my-project/revision-document/database/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/database/summary.md) |
 | **.NET / C#** | C# Fundamentals, OOP, LINQ, Entity Framework Core | [dotnet/](file:///d:/my-project/revision-document/dotnet/README.md) |
 | **Java** | Core Java, JVM Memory, OOP, Collections, I/O Streams, Exceptions, Advanced | [java/](file:///d:/my-project/revision-document/java/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/java/summary.md) |
