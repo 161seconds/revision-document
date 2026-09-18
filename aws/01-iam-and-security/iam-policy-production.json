@@ -1,0 +1,64 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowScopedS3ReportsAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::enterprise-reports-2026",
+        "arn:aws:s3:::enterprise-reports-2026/*"
+      ]
+    },
+    {
+      "Sid": "AllowKmsDecryptForS3",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey"
+      ],
+      "Resource": "arn:aws:kms:ap-southeast-1:123456789012:key/c4b8e210-9f12-4c3a-b892-01a2b3c4d5e6",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "s3.ap-southeast-1.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "DenySensitiveActionsWithoutMFA",
+      "Effect": "Deny",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:DeleteBucket",
+        "kms:ScheduleKeyDeletion"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "BoolIfExists": {
+          "aws:MultiFactorAuthPresent": "false"
+        }
+      }
+    },
+    {
+      "Sid": "DenyOutsideCorporateCIDR",
+      "Effect": "Deny",
+      "Action": [
+        "s3:*",
+        "kms:*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "NotIpAddress": {
+          "aws:SourceIp": [
+            "198.51.100.0/24",
+            "203.0.113.0/24"
+          ]
+        }
+      }
+    }
+  ]
+}
