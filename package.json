@@ -1,0 +1,27 @@
+{
+  "name": "revision-document",
+  "version": "1.0.0",
+  "description": "Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và bài tập thực hành từ cơ bản đến nâng cao.",
+  "main": "index.js",
+  "scripts": {
+    "test:ts": "tsc --noEmit",
+    "test:ts:practice": "node --no-warnings=ExperimentalWarning --experimental-transform-types typescript/01-types-and-interfaces/practice.ts && node --no-warnings=ExperimentalWarning --experimental-transform-types typescript/02-functions-and-classes/practice.ts && node --no-warnings=ExperimentalWarning --experimental-transform-types typescript/03-generics-and-utility-types/practice.ts && node --no-warnings=ExperimentalWarning --experimental-transform-types typescript/04-advanced-and-configuration/practice.ts",
+    "test:react:practice": "node react/01-components-and-props/practice.mjs && node react/02-hooks-and-state/practice.mjs && node react/03-state-management-and-context/practice.mjs && node react/04-performance-and-advanced/practice.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/161seconds/revision-document.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/161seconds/revision-document/issues"
+  },
+  "homepage": "https://github.com/161seconds/revision-document#readme",
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "typescript": "^7.0.2"
+  }
+}
