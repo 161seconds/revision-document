@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Production Messaging, Event-Driven Fanout, DLQ, and Observability Architecture
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues: [staging, production]
+    Description: Deployment environment tier.
+
+  QueueBacklogThreshold:
+    Type: Number
+    Default: 100
+    Description: Max number of visible unprocessed messages before triggering backlog alert.
+
+Resources:
+  # ----------------------------------------------------------------------
+  # SQS: Dead Letter Queue (DLQ)
+  # ----------------------------------------------------------------------
+  OrdersDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub orders-dlq-${Environment}
+      MessageRetentionPeriod: 1209600 # 14 days maximum retention
+
+  # ----------------------------------------------------------------------
+  # SQS: Primary Asynchronous Processing Queue with RedrivePolicy
+  # ----------------------------------------------------------------------
+  OrdersPrimaryQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub orders-queue-${Environment}
+      VisibilityTimeout: 300 # 5 minutes processing buffer
+      ReceiveMessageWaitTimeSeconds: 20 # Long polling enabled
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt OrdersDeadLetterQueue.Arn
+        maxReceiveCount: 3
+
+  # ----------------------------------------------------------------------
+  # SNS: Fanout Event Broadcast Topic
+  # ----------------------------------------------------------------------
+  OrdersTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub orders-fanout-topic-${Environment}
+      DisplayName: E-commerce Order Events Topic
+
+  # ----------------------------------------------------------------------
+  # SQS Queue Policy: Allow SNS to Send Messages to Primary Queue
+  # ----------------------------------------------------------------------
+  OrdersQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref OrdersPrimaryQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSNSSendMessages
+            Effect: Allow
+            Principal:
+              Service: sns.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt OrdersPrimaryQueue.Arn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !Ref OrdersTopic
+
+  # ----------------------------------------------------------------------
+  # SNS Subscription: Fanout with Attribute Filter Policy
+  # ----------------------------------------------------------------------
+  OrdersQueueSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref OrdersTopic
+      Protocol: sqs
+      Endpoint: !GetAtt OrdersPrimaryQueue.Arn
+      RawMessageDelivery: true
+      FilterPolicy:
+        eventType:
+          - ORDER_CREATED
+          - ORDER_PAID
+
+  # ----------------------------------------------------------------------
+  # CloudWatch Metric Alarm: Queue Backlog Detection
+  # ----------------------------------------------------------------------
+  OrdersBacklogAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub orders-queue-backlog-alarm-${Environment}
+      AlarmDescription: Trigger when unprocessed visible messages in queue exceed threshold
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt OrdersPrimaryQueue.QueueName
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: !Ref QueueBacklogThreshold
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref OrdersTopic
+
+  # ----------------------------------------------------------------------
+  # SQS FIFO Queue: Strictly Ordered Financial Transactions
+  # ----------------------------------------------------------------------
+  FifoTransactionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: transactions-stream.fifo
+      FifoQueue: true
+      ContentBasedDeduplication: true
+      VisibilityTimeout: 120
+
+Outputs:
+  PrimaryQueueArn:
+    Description: ARN of primary processing queue
+    Value: !GetAtt OrdersPrimaryQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-PrimaryQueueArn
+
+  DLQArn:
+    Description: ARN of Dead Letter Queue
+    Value: !GetAtt OrdersDeadLetterQueue.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-DLQArn
+
+  TopicArn:
+    Description: ARN of SNS broadcast topic
+    Value: !Ref OrdersTopic
+    Export:
+      Name: !Sub ${AWS::StackName}-TopicArn
+
+  FifoQueueUrl:
+    Description: URL of FIFO Transaction Queue
+    Value: !Ref FifoTransactionQueue
