@@ -1,0 +1,47 @@
+# ==========================================
+# STAGE 1: Build & Dependency Resolution
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /usr/src/app
+
+# Tối ưu Cache: Copy file định nghĩa package trước
+COPY package*.json tsconfig.json ./
+
+# Cài đặt sạch các dependency cho build
+RUN npm ci
+
+# Copy toàn bộ mã nguồn và biên dịch TypeScript sang JS
+COPY src/ ./src/
+RUN npm run build
+
+# Loại bỏ devDependencies để thu gọn node_modules
+RUN npm prune --production
+
+# ==========================================
+# STAGE 2: Minimal Production Image
+# ==========================================
+FROM node:20-alpine AS runner
+
+WORKDIR /usr/src/app
+
+# Bảo mật: Thiết lập môi trường Production
+ENV NODE_ENV=production
+
+# Tạo Non-root user & group chuyên dụng
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S appuser -u 1001 -G nodejs
+
+# Chỉ copy sản phẩm biên dịch và production modules từ builder
+COPY --from=builder --chown=appuser:nodejs /usr/src/app/dist ./dist
+COPY --from=builder --chown=appuser:nodejs /usr/src/app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:nodejs /usr/src/app/package.json ./package.json
+
+# Chuyển quyền thực thi sang user phi đặc quyền
+USER appuser
+
+# Khai báo port cung cấp (chỉ mang tính tài liệu)
+EXPOSE 3000
+
+# Exec form đảm bảo node là PID 1 nhận đúng tín hiệu SIGTERM
+CMD ["node", "dist/server.js"]
