@@ -2,18 +2,29 @@
 
 ---
 
-## 1. Phân Tích Thực Tế Từ Đề Thi RMIT Hackathon 2025 Trên Kaggle
-> **Nguồn chính thức**: [kaggle.com/competitions/rmit-hackathon-2025](https://www.kaggle.com/competitions/rmit-hackathon-2025/overview)  
-> **Host**: Bowen (`@aisuko` - Nhà sáng lập SkywardAI Labs, RMIT PhD Candidate)  
-> **Các đối tác lớn**: NAB Innovation Centre Vietnam, BNA Education, HCL Tech, KMS Technology.
+## 1. Bức Tranh Toàn Cảnh Tiến Hóa Qua 3 Mùa Thi (2024 - 2025 - 2026)
+> **Nguồn chính thức từ Kaggle**:  
+> • Mùa 2024: [rmit-gen-ai-and-cyber-security-hackathon](https://www.kaggle.com/competitions/rmit-gen-ai-and-cyber-security-hackathon/overview)  
+> • Mùa 2025: [rmit-hackathon-2025](https://www.kaggle.com/competitions/rmit-hackathon-2025/overview)  
+> • Host: Bowen (`@aisuko` - Founder SkywardAI Labs, RMIT PhD Candidate)
 
-### Cấu Trúc & Tỷ Trọng Điểm Của Đề Thi 2025 (Rất Quan Trọng!):
+```mermaid
+timeline
+    title Sự Tiến Hóa Đề Thi Của SkywardAI Labs Qua 3 Mùa
+    2024 (Season 1) : Hạ tầng & Mạng : Deploy API OpenAI trên AWS EC2 : Mã hóa AES/RSA chống MITM : Phân loại Web Traffic & Bonus LLM Red-Teaming
+    2025 (Season 2) : Tập trung vào LLM Safety : Jailbreak Detection (70% - ROC AUC) : The Attacker Red-Teaming (15% - PKL) : Vibe Coding Web App (15%)
+    2026 (Season 3) : Kỷ nguyên Đa Ngôn Ngữ : Security x GenAI x Low-Resource Langs : 4 Tasks kết nối nhau : Tấn công/Phòng thủ Tiếng Việt & Mã Lai : RAG Grounding chống ảo giác
+```
 
-| Phần Thi | Tên Thử Thách | Tỷ Trọng Điểm | Mục Tiêu & Yêu Cầu Kỹ Thuật | Định Dạng File Nộp & Metric |
-| :--- | :--- | :---: | :--- | :--- |
-| **Thử thách 1 & 2** | **Jailbreak Detection (Phát Hiện Tấn Công)** | **70%** | Phân loại nhị phân dự đoán một prompt là `jailbreak` (đối kháng/độc hại) hay `benign` (an toàn). Tập dữ liệu gồm **5.000 prompts** (4.000 train, 1.000 test). | File `submission.csv` (`id`, `target` là xác suất từ 0.0 đến 1.0).<br>Metric: **ROC AUC** (Đội Top 1 đạt **0.99824**). |
-| **Thử thách 3** | **Vibe Coding: Play to Impact** | **15%** | Xây dựng một mini-game tương tác trên web có ứng dụng AI nhằm giải quyết một vấn đề xã hội tại Việt Nam hoặc Úc. | Web demo, GitHub repo, Prompt log và tài liệu giải trình. |
-| **Thử thách 4** | **The Attacker (Tấn Công Bẻ Khóa)** | **15%** | Đóng vai Red Team thiết kế các prompt bẻ khóa an toàn của LLM, vượt qua bộ lọc an toàn của ban tổ chức. | File `.pkl` chứa danh sách các mẫu: `prompt`, `result` (câu trả lời của LLM), `result_code` (mã trạng thái, ví dụ `400` nếu bị chặn).<br>Chấm bằng **Jailbreak Benchmark Tool**. |
+### Bảng So Sánh Chi Tiết Đề Thi Cả 3 Mùa:
+
+| Tiêu Chí | Mùa 2024 (Season 1) | Mùa 2025 (Season 2) | Mùa 2026 (Season 3 - Năm Nay) |
+| :--- | :--- | :--- | :--- |
+| **Trọng tâm đề bài** | Hạ tầng Cloud (AWS EC2), Mã hóa Python (AES/RSA) & Phân loại Traffic mạng. | Bảo mật LLM: Phát hiện Jailbreak (Jailbreak Detection) & Tấn công bẻ khóa. | **Security × Generative AI × Low-Resource Languages** (Việt, Mã Lai). |
+| **Cấu trúc thử thách** | 4 Thử thách riêng lẻ (EC2 API, Cryptography, Model Fine-tuning, Bedrock Attack). | 3 Thử thách (Jailbreak Detection 70%, The Attacker 15%, Vibe Coding 15%). | **4 Tasks kết nối thành 1 bài toán lớn** (Red Team $\rightarrow$ Blue Team $\rightarrow$ Grounded RAG $\rightarrow$ Pipeline). |
+| **Dữ liệu đề bài** | `network_vulnerability_dataset.csv` (1.09 MB). | `train.csv` (4.000 prompts) và `test.csv` (1.000 prompts). | Kho văn bản đa ngôn ngữ (Vi/Ms/En) + tập test prompt hiểm hóc. |
+| **Thước đo đánh giá** | Accuracy Score, Tính ổn định của API & Mã hóa. | **ROC AUC** (Binary Classification) & **Jailbreak Benchmark Tool**. | **ROC AUC / F1-Score**, **ASR (Attack Success Rate)**, & **Hallucination Penalty**. |
+| **Điểm nhấn cốt lõi** | Quản trị tài nguyên Cloud AWS & Python Crypto. | Phân loại prompt độc hại tiếng Anh đạt ROC AUC 0.998+. | **Lỗ hổng an toàn trên ngôn ngữ hiếm, băm vụn Token & RAG chống ảo giác.** |
 
 ---
 
