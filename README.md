@@ -21,6 +21,7 @@ Kho tài liệu ôn tập kiến thức lập trình cốt lõi, cheat sheet và
 | **System Design** | Scalability, CAP/PACELC, Caching (Redis), Sharding, Dynamo Quorum, Kafka Streams, Saga Pattern, Rate Limiting | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
 | **Web Security** | OWASP Top 10 (SQLi, XSS, CSRF, SSRF, IDOR), Passwords (Argon2id/bcrypt), OAuth2 & PKCE, OIDC, JWT, Cryptography (AES-GCM, RSA, ECC, TLS 1.3) | [security/](file:///d:/my-project/revision-document/security/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/security/summary.md) |
 | **Rust** | Ownership, Borrowing & Lifetimes, Structs & Enums, Generics & Traits, Fearless Concurrency (Send/Sync, Arc/Mutex), Smart Pointers | [rust/](file:///d:/my-project/revision-document/rust/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/rust/summary.md) |
+| **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Attack/Defense, RAG, SLMs) | [hackathon-rmit-2026/](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md) \| [Cẩm Nang Toàn Thư](file:///d:/my-project/revision-document/hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
 
 ---
 
