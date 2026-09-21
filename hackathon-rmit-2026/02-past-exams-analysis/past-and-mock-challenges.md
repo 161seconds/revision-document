@@ -2,29 +2,26 @@
 
 ---
 
-## 1. Phân Tích Đề Thi Các Mùa Trước (2024 & 2025)
+## 1. Phân Tích Thực Tế Từ Đề Thi RMIT Hackathon 2025 Trên Kaggle
+> **Nguồn chính thức**: [kaggle.com/competitions/rmit-hackathon-2025](https://www.kaggle.com/competitions/rmit-hackathon-2025/overview)  
+> **Host**: Bowen (`@aisuko` - Nhà sáng lập SkywardAI Labs, RMIT PhD Candidate)  
+> **Các đối tác lớn**: NAB Innovation Centre Vietnam, BNA Education, HCL Tech, KMS Technology.
 
-### Mùa 2024: RMIT GenAI and Cyber Security Hackathon (Host: SkywardAI Labs)
-* **Trọng tâm đề bài**:
-  * **Model-Based Attacks**: Tấn công vào các mô hình ngôn ngữ lớn (Jailbreaking, Prompt Injection) để ép mô hình tiết lộ thông tin mật hoặc hướng dẫn hành vi độc hại.
-  * **Data Poisoning & Security Breaches**: Phát hiện dữ liệu bị đầu độc trong tập huấn luyện hoặc trong ngữ cảnh RAG.
-  * **Network Vulnerability & Social Engineering**: Phân tích log mạng và dùng GenAI để mô phỏng / ngăn chặn các cuộc tấn công phi kỹ thuật (lừa đảo/phishing).
-* **Format trên Kaggle**:
-  * Thí sinh được cung cấp một tập prompt hoặc log mạng, dự đoán nhãn (An toàn / Tấn công) hoặc sinh ra prompt vượt qua bộ lọc an toàn của ban tổ chức.
-  * Đánh giá bằng **F1-Score** (cho bài toán phân loại) và **ASR (Attack Success Rate)** (cho bài toán Red-Teaming).
+### Cấu Trúc & Tỷ Trọng Điểm Của Đề Thi 2025 (Rất Quan Trọng!):
 
-### Mùa 2025: Mở Rộng Cộng Đồng & Bài Toán Bảo Mật Ứng Dụng
-* Đưa vào các bài toán thực tế hơn: Bảo vệ ứng dụng hỏi đáp nội bộ (Chatbot), ngăn chặn việc rò rỉ prompt hệ thống (System Prompt Extraction).
-* Bắt đầu xuất hiện các trường hợp thử nghiệm với ngôn ngữ địa phương nhưng chưa có quy chuẩn chính thức.
+| Phần Thi | Tên Thử Thách | Tỷ Trọng Điểm | Mục Tiêu & Yêu Cầu Kỹ Thuật | Định Dạng File Nộp & Metric |
+| :--- | :--- | :---: | :--- | :--- |
+| **Thử thách 1 & 2** | **Jailbreak Detection (Phát Hiện Tấn Công)** | **70%** | Phân loại nhị phân dự đoán một prompt là `jailbreak` (đối kháng/độc hại) hay `benign` (an toàn). Tập dữ liệu gồm **5.000 prompts** (4.000 train, 1.000 test). | File `submission.csv` (`id`, `target` là xác suất từ 0.0 đến 1.0).<br>Metric: **ROC AUC** (Đội Top 1 đạt **0.99824**). |
+| **Thử thách 3** | **Vibe Coding: Play to Impact** | **15%** | Xây dựng một mini-game tương tác trên web có ứng dụng AI nhằm giải quyết một vấn đề xã hội tại Việt Nam hoặc Úc. | Web demo, GitHub repo, Prompt log và tài liệu giải trình. |
+| **Thử thách 4** | **The Attacker (Tấn Công Bẻ Khóa)** | **15%** | Đóng vai Red Team thiết kế các prompt bẻ khóa an toàn của LLM, vượt qua bộ lọc an toàn của ban tổ chức. | File `.pkl` chứa danh sách các mẫu: `prompt`, `result` (câu trả lời của LLM), `result_code` (mã trạng thái, ví dụ `400` nếu bị chặn).<br>Chấm bằng **Jailbreak Benchmark Tool**. |
 
 ---
 
-## 2. Bước Đột Phá Năm 2026: Đưa Vào "Low-Resource Languages"
-
-Năm 2026, ban tổ chức đặt trọng tâm vào: **Security × Generative AI × Low-Resource Languages**.  
-Lý do: Các mô hình an toàn chuẩn của thế giới (như Llama Guard của Meta, NeMo của Nvidia) gần như "mù" trước tiếng Việt không dấu, tiếng lóng, tiếng Việt pha tiếng Anh (code-switching), hoặc tiếng Mã Lai.
-
-Ban tổ chức sẽ khai thác chính "vùng tối" này để ra đề!
+## 2. Bước Đột Phá Của Mùa 2026: Tích Hợp "Low-Resource Languages"
+Từ cấu trúc của năm 2025, mùa 2026 nâng cấp thành **4 Tasks kết nối nhau** với sự xuất hiện của biến số thứ 3: **Low-Resource Languages (Ngôn ngữ nghèo tài nguyên: Tiếng Việt, Tiếng Mã Lai)**:
+1. **Phần Tấn Công (The Attacker - Task 1)**: Thay vì chỉ jailbreak bằng tiếng Anh như 2025, năm 2026 thí sinh bắt buộc phải khai thác lỗ hổng bằng tiếng Việt, tiếng Mã Lai, code-switching và phương ngữ.
+2. **Phần Phòng Thủ (Jailbreak Detection - Task 2)**: Vẫn là bài toán chiếm trọng số điểm lớn nhất (tính bằng ROC AUC), nhưng tập test sẽ tràn ngập các mẫu tiếng lóng, tiếng Việt không dấu, ký tự vô hình và bẫy dương tính giả.
+3. **Phần Grounded GenAI / RAG (Task 3 & 4)**: Thay thế phần mini-game bằng bài toán thực tế hơn: Tích hợp RAG truy xuất tài liệu bản địa và xử lý pipeline an toàn chạy offline 100% trên Kaggle.
 
 ---
 
