@@ -14,6 +14,7 @@ Lộ trình và kho tài liệu ôn tập .NET Platform toàn diện từ cú ph
 | **[03-generics-and-collections/](file:///d:/my-project/revision-document/dotnet/03-generics-and-collections/README.md)** | Generics & Ràng buộc (`where T : ...`), Collections (`List`, `Dictionary`, `HashSet`), `yield return`, Delegates (`Action`, `Func`), Events, Xử lý ngoại lệ & `IDisposable` | Sẵn sàng |
 | **[04-linq-and-functional/](file:///d:/my-project/revision-document/dotnet/04-linq-and-functional/README.md)** | LINQ Method vs Query Syntax, Thực thi trễ (Deferred Execution), Lọc & Chiếu (`Where`, `Select`, `SelectMany`), Gom nhóm & Sắp xếp, Phép toán tập hợp & Joins | Sẵn sàng |
 | **[05-async-memory-and-advanced/](file:///d:/my-project/revision-document/dotnet/05-async-memory-and-advanced/README.md)** | `async`/`await` & `Task`/`ValueTask`, `CancellationToken`, Kiến trúc CLR & Garbage Collection (Gen 0/1/2, LOH), Dependency Injection Lifetimes, Reflection & Attributes | Sẵn sàng |
+| **[csharp-from-zero-to-hero/](file:///d:/my-project/revision-document/dotnet/csharp-from-zero-to-hero/README.md)** | **Toàn bộ giáo trình C# Từ Zero Đến Hero (Bootcamp Almantas Karpavicius)**: 8 Module từ Căn bản, OOP, Intermediate, TDD/Testing, SOLID, Design Patterns, EF Core đến Phỏng vấn | Hoàn thành |
 
 ---
 

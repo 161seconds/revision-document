@@ -50,6 +50,9 @@ graph TD
    - Thiết kế Real-Time Chat & Notification System (WebSockets, Presence Server, Pub/Sub Fanout).
    - Thiết kế Video Streaming Service (Transcoding Pipeline, Adaptive Bitrate HLS/DASH, CDN Edge Caching).
 
+6. **[bytebytego-101/](file:///d:/my-project/revision-document/system-design/bytebytego-101/README.md)**:
+   - **ByteByteGo System Design 101 Toàn Tập (Alex Xu)**: Trực quan hóa kiến trúc hệ thống phân tán, Giao thức mạng (REST/GraphQL/gRPC/WebSocket, HTTP/3), Cơ sở dữ liệu (B-Tree vs LSM-Tree), Caching, Đồng thuận phân tán (CAP, Raft, 2PC/Saga), Microservices Patterns (Rate Limiting, Circuit Breaker, Outbox), Bảo mật & Mổ xẻ hệ thống thực tế (Netflix, Uber, Discord, Snowflake).
+
 ---
 
 ## ⚡ Tiêu Chuẩn Thực Hành
