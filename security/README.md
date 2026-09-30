@@ -1,17 +1,20 @@
 # Web Security, Authentication & Cryptography Revision Guide
 
-Chào mừng bạn đến với kho tài liệu ôn tập và thực hành chuyên sâu **Web Security, Authentication & Cryptography**. Kho tài liệu được thiết kế nhằm trang bị tư duy phòng thủ chiều sâu (Defense-in-Depth), kiến trúc xác thực hiện đại và mật mã học thực chiến.
+Chào mừng bạn đến với kho tài liệu ôn tập và thực hành chuyên sâu **Web Security, Authentication & Cryptography**. Kho tài liệu được thiết kế nhằm trang bị tư duy phòng thủ chiều sâu (Defense-in-Depth), kiến trúc xác thực hiện đại (OAuth2, OIDC, WebAuthn), bảo vệ API (OWASP API Top 10, ReBAC Zanzibar, mTLS), chuỗi cung ứng mã nguồn (DevSecOps, SBOM, SLSA, IMDSv2), và quy trình ứng phó sự cố chuẩn quốc tế (STRIDE, DREAD, NIST SP 800-61).
 
 ---
 
-## 🗺️ Lộ Trình 5 Module Chuyên Sâu
+## 🗺️ Lộ Trình 8 Module Chuyên Sâu
 
 ```mermaid
 graph TD
-    M1[Module 01: Web Vulnerabilities & OWASP Top 10] --> M2[Module 02: Authentication & Modern Session Protocols]
-    M2 --> M3[Module 03: OAuth 2.0 & OpenID Connect OIDC]
-    M3 --> M4[Module 04: JWT Deep Dive & Token Security]
-    M4 --> M5[Module 05: Cryptography, PKI & Transport Security]
+    M1["Module 01: Web Vulnerabilities & OWASP Top 10"] --> M2["Module 02: Authentication & Modern Sessions"]
+    M2 --> M3["Module 03: OAuth 2.0 & OpenID Connect"]
+    M3 --> M4["Module 04: JWT Deep Dive & Token Security"]
+    M4 --> M5["Module 05: Cryptography, PKI & Transport Security"]
+    M5 --> M6["Module 06: API Security, Authorization & Zero Trust"]
+    M6 --> M7["Module 07: DevSecOps, Supply Chain & Cloud Hardening"]
+    M7 --> M8["Module 08: Threat Modeling, Defense-in-Depth & Incident Response"]
 ```
 
 ### Chi Tiết Từng Module
@@ -48,11 +51,29 @@ graph TD
    - Public Key Infrastructure (PKI): Chứng chỉ X.509, Certificate Authority (CA), Chain of Trust, OCSP Stapling.
    - Giao thức TLS 1.3: 1-RTT Handshake, Perfect Forward Secrecy (PFS via ECDHE), HTTP Strict Transport Security (HSTS).
 
+6. **[06-api-security-and-zero-trust/](file:///d:/my-project/revision-document/security/06-api-security-and-zero-trust/README.md)**:
+   - OWASP API Security Top 10 (2023 edition): BOLA, BFLA, Mass Assignment, Zombie/Shadow APIs.
+   - Mô hình phân quyền hiện đại: So sánh RBAC (Vai trò), ABAC (Ngữ cảnh), ReBAC (Google Zanzibar Relation Tuples).
+   - Kiến trúc Zero Trust: Verify Explicitly, Least Privilege, Assume Breach; Mutual TLS (mTLS) giữa các Microservices với SPIFFE/SPIRE.
+   - Bảo mật Webhook bằng chữ ký HMAC-SHA256, Timestamp Replay Window, và cấu hình CORS Whitelist chống bypass.
+
+7. **[07-devsecops-and-cloud-security/](file:///d:/my-project/revision-document/security/07-devsecops-and-cloud-security/README.md)**:
+   - An ninh chuỗi cung ứng phần mềm: Dependency Confusion, Typosquatting, SBOM (CycloneDX, SPDX), SLSA Framework, Sigstore/Cosign.
+   - Quản trị khóa bí mật (Secrets Management): Quét entropy và regex (Gitleaks), Khử khóa tĩnh bằng GitHub Actions OIDC Federation (`AssumeRoleWithWebIdentity`).
+   - Hardening Container & Kubernetes: Linux Namespaces, cgroups, Seccomp, `cap-drop=ALL`, Rootless Pods, NetworkPolicy Default-Deny.
+   - Củng cố an ninh Cloud: AWS IMDSv2 (Session Token & Hop Limit = 1) triệt tiêu SSRF, Cloud IAM PoLP, Mã hóa Phong Bì (Envelope Encryption).
+
+8. **[08-threat-modeling-and-incident-response/](file:///d:/my-project/revision-document/security/08-threat-modeling-and-incident-response/README.md)**:
+   - Mô hình hóa mối đe dọa: Sơ đồ luồng dữ liệu (DFDs), Ranh giới tin cậy, STRIDE Model, Thang lượng hóa rủi ro DREAD.
+   - Tường lửa WAF & Phòng thủ DDoS: Phân biệt L3/L4 vs L7 (Slowloris), Nhận diện bot tự động qua TLS JA3/JA4 Fingerprinting.
+   - HTTP Security Headers sản xuất: Nonce-based CSP (`'strict-dynamic'`), Tiền tố cookie an toàn `__Host-` và `__Secure-`.
+   - Quy trình ứng phó sự cố an ninh NIST SP 800-61 4 bước, Nhật ký kiểm toán WORM và Móc xích băm SHA-256 (Hash Chaining), Chuẩn điểm CVSS v3.1.
+
 ---
 
 ## ⚡ Tiêu Chuẩn Thực Hành
 
-Mỗi module bao gồm:
-- Toàn bộ lý thuyết an ninh chuyên sâu.
-- File code phòng thủ / cryptography algorithms chạy trực tiếp trên Node.js.
-- File `practice.mjs` với 5 bài kiểm tra assertions tự động chấm đạt/hỏng.
+Mỗi module từ 01 đến 08 bao gồm:
+- Toàn bộ lý thuyết an ninh chuyên sâu bằng tiếng Việt chuẩn mực kèm thuật ngữ công nghiệp quốc tế.
+- File code phòng thủ / cryptography algorithms chạy trực tiếp trên Node.js ES Modules.
+- File `practice.mjs` với 5 bài kiểm tra assertions tự động chấm đạt/hỏng (tổng cộng 40 bài test tự động cho toàn bộ giáo trình).
