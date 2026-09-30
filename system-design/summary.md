@@ -152,3 +152,92 @@ Breaks a distributed transaction into a sequence of local transactions:
 | **Read 1 MB sequentially from SSD** | 1 ms | 11.6 days |
 | **HDD seek time** | 10 ms | 3.8 months |
 | **Round trip packet: CA to Netherlands** | 150 ms | 4.8 years |
+
+---
+
+## 10. Geospatial Indexing: Geohash vs QuadTree vs Google S2
+
+| Cơ chế | Cấu trúc dữ liệu | Điểm mạnh | Trường hợp sử dụng tối ưu |
+| :--- | :--- | :--- | :--- |
+| **Geohash** | Base32 hierarchical string | Tìm kiếm theo tiền tố (Prefix query), lưu trữ key-value cực nhẹ | Yelp, Foursquare, caching vị trí tĩnh trong Redis |
+| **QuadTree** | Cây 4 nhánh phân cấp 2D | Tự động chia nhỏ theo mật độ dân số (Đô thị ô nhỏ, Sa mạc ô to) | Hệ thống lưu trữ trong RAM, bản đồ tùy biến động |
+| **Google S2** | Chiếu hình cầu lên Cube + Hilbert Curve | Biểu diễn bằng số nguyên 64-bit (`uint64`), phép toán bitwise cực nhanh | Uber (ghép cuốc xe), Google Maps, phân chia vùng địa lý |
+
+---
+
+## 11. Payment Systems & Double-Entry Bookkeeping
+
+1. **Nguyên tắc kế toán kép:** $\sum \text{Debit} = \sum \text{Credit}$. Mọi giao dịch phải có ít nhất 2 dòng đối ứng (tổng đại số các thay đổi bằng 0).
+2. **Khóa bất biến Idempotency Key:** Client gửi UUID duy nhất trong Header. Server dùng `SETNX` trong Redis / DB UNIQUE constraint để chặn các yêu cầu gửi lại (Retry) khi mạng timeout.
+3. **Đối soát (Reconciliation):** Worker chạy định kỳ so sánh tệp sao kê của cổng thanh toán (PSP settlement file) với bảng `ledger_entries` để phát hiện chênh lệch và kích hoạt bù trừ tự động.
+
+---
+
+## 12. Distributed Search & Object Storage
+
+- **Inverted Index (Lucene / Elasticsearch):** Ánh xạ từ `Term -> Postings List (DocIDs)`. Sử dụng FST nén trong RAM, phân đoạn bất biến (Immutable Segments), và công thức chấm điểm độ phù hợp **Okapi BM25**.
+- **S3 Object Storage (Erasure Coding):**
+  - **3-Way Replication:** Tốn $300\%$ dung lượng, cho phép hỏng tối đa 2 ổ đĩa.
+  - **Reed-Solomon $8+4$ Erasure Coding:** Chỉ tốn $150\%$ dung lượng ($1.5\times$), cho phép hỏng bất kỳ 4 ổ đĩa cùng lúc mà không mất dữ liệu. Tối ưu cho lưu trữ Cold Data dài hạn.
+
+---
+
+## 13. Resilience & Fault Tolerance Patterns
+
+```mermaid
+graph LR
+    R1["Circuit Breaker<br/>Closed -> Open -> HalfOpen"] --> R2["Bulkhead<br/>Thread / Semaphore Isolation"]
+    R2 --> R3["Full Jitter Backoff<br/>t = rand(0, min(M, B * 2^attempt))"]
+    R3 --> R4["Load Shedding<br/>CPU > 90% -> Drop low-pri"]
+```
+
+- **Giao thức SWIM (Gossip):** Thay thế Heartbeat $O(N^2)$ bằng Direct Ping + Indirect Ping-Req qua $k$ node trung gian + Cơ chế Nghi ngờ (Suspicion mechanism), loại bỏ hoàn toàn báo động giả do giật mạng cục bộ.
+- **Fencing Tokens:** Số Epoch tăng dần bảo vệ bộ nhớ chia sẻ khỏi Master cũ trong kịch bản Não phân đôi (Split-Brain).
+
+---
+
+## 14. Distributed Tracing & W3C Trace Context
+
+Tiêu đề HTTP chuẩn W3C:
+$$\text{traceparent: 00-}\{\text{Trace ID: 32 hex}\}\text{-}\{\text{Parent Span ID: 16 hex}\}\text{-}\{\text{Trace Flags: 01 (Sampled)}\}$$
+
+- **Head-Based Sampling:** Quyết định lấy mẫu tại API Gateway ($1-5\%$). Rất nhẹ nhưng có rủi ro bỏ lọt lỗi nghiêm trọng.
+- **Tail-Based Sampling:** Collector lưu tạm thời toàn bộ Span vào bộ đệm và chỉ giữ lại $100\%$ các Trace có lỗi (HTTP $\ge 500$) hoặc độ trễ cao (p99).
+
+---
+
+## 15. Disaster Recovery (DR) & Multi-Region Synchronization
+
+| Cấp độ DR | RPO (Mất dữ liệu) | RTO (Thời gian chết) | Chi phí |
+| :--- | :--- | :--- | :--- |
+| **Backup & Restore** | Hàng giờ / Hàng ngày | Hàng giờ / Hàng ngày | $\$$ |
+| **Pilot Light** | Vài chục giây / Phút | 10 - 30 phút | $\$ \$$ |
+| **Warm Standby** | Dưới 1 phút | Dưới 5 phút | $\$ \$ \$$ |
+| **Multi-Region Active-Active** | Gần bằng 0 (Zero RPO) | Gần bằng 0 (Zero RTO) | $\$ \$ \$ \$ \$$ |
+
+- **CRDT (Conflict-free Replicated Data Types):** Cấu trúc dữ liệu có phép toán hợp nhất (Merge) mang tính giao hoán, kết hợp, và lũy nhược (ví dụ: PN-Counter lấy $\max(P_1, P_2)$ và $\max(N_1, N_2)$), tự động hội tụ dữ liệu đa vùng mà không cần khóa phân tán.
+
+---
+
+## 16. Back-of-the-Envelope Estimation Master Formulae
+
+1. **Hằng số vàng:** $1\text{ ngày} = 86{,}400\text{ giây} \approx 10^5\text{ giây}$.
+   - $100\text{ QPS} \approx 8.64\text{M / ngày}$ ($\approx 10\text{M}$)
+   - $1{,}000\text{ QPS} \approx 86.4\text{M / ngày}$ ($\approx 100\text{M}$)
+   - $10{,}000\text{ QPS} \approx 864\text{M / ngày}$ ($\approx 1\text{B}$)
+2. $\text{Average QPS} = \frac{\text{DAU} \times \text{Requests per user}}{86{,}400}$
+3. $\text{Peak QPS} = \text{Average QPS} \times (2 \to 5)$
+4. $\text{5-Year Storage} = \text{Daily Writes} \times \text{Payload Size} \times 365 \times 5 \times \text{Replication Factor (3)} \times \text{Headroom (1.3)}$
+5. $\text{Cache RAM (Pareto 80/20)} = \text{Daily Read Data Volume} \times 20\%$
+
+---
+
+## 17. The 4-Step Interview Framework Blueprint
+
+```
+[Phút 0 - 8]   Bước 1: Làm Rõ Đề Bài & Giới Hạn (Scope, Functional, Non-Functional, Scale QPS)
+[Phút 8 - 20]  Bước 2: Thiết Kế Tổng Thể (API Design, Schema, High-Level Diagram)
+[Phút 20 - 38] Bước 3: Đào Sâu Nút Thắt (Bottlenecks: Sharding, Fanout, Caching, Concurrency)
+[Phút 38 - 45] Bước 4: Tổng Kết & Phòng Vệ (SPOF, Observability, Load Shedding, Future Scale)
+```
+
