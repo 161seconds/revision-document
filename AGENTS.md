@@ -2,8 +2,12 @@
 @HEADROOM.md
 @CAVEMAN.md
 @PONYTAIL.md
+@ECC.md
 
 @.agents/skills/caveman/SKILL.md
+@.agents/skills/tdd-workflow/SKILL.md
+@.agents/skills/security-review/SKILL.md
+@.agents/skills/code-review/SKILL.md
 
 # AGENTS.md
 

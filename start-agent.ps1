@@ -9,23 +9,24 @@ param(
 $ErrorActionPreference = 'Stop'
 
 Write-Host "==================================================" -ForegroundColor Cyan
-Write-Host "  KHỞI ĐỘNG AI AGENT (CODEX & ANTIGRAVITY)" -ForegroundColor Green
-Write-Host "  [1] Headroom: Nén Context & Input (Wrap Proxy)   " -ForegroundColor Yellow
-Write-Host "  [2] RTK:      Nén Output Lệnh Terminal (Hook)   " -ForegroundColor Yellow
-Write-Host "  [3] Caveman:  Nén Lời Văn Phản Hồi (AGENTS.md)  " -ForegroundColor Yellow
-Write-Host "  [4] Ponytail: Nén Code Sinh Ra (Rules/YAGNI)    " -ForegroundColor Yellow
+Write-Host "  KHOI DONG AI AGENT (CODEX & ANTIGRAVITY)" -ForegroundColor Green
+Write-Host "  [1] Headroom: Nen Context & Input (Wrap Proxy)   " -ForegroundColor Yellow
+Write-Host "  [2] RTK:      Nen Output Lenh Terminal (Hook)   " -ForegroundColor Yellow
+Write-Host "  [3] Caveman:  Nen Van Phong Phan Hoi (AGENTS.md)" -ForegroundColor Yellow
+Write-Host "  [4] Ponytail: Nen Code Sinh Ra (Rules/YAGNI)    " -ForegroundColor Yellow
+Write-Host "  [5] ECC:      Chuan Hoa Quy Trinh & Skills (TDD)" -ForegroundColor Yellow
 Write-Host "==================================================" -ForegroundColor Cyan
 
-# Tắt telemetry nền
+# Tat telemetry nen
 $env:HEADROOM_BEACON = 'off'
 $env:RTK_TELEMETRY_DISABLED = '1'
 
 if ($Agent -eq "codex") {
-    # Khởi động Codex bọc qua Headroom
+    # Khoi dong Codex boc qua Headroom
     headroom wrap codex --code-memory none -- @AgentArgs
 } elseif ($Agent -eq "antigravity") {
-    # Bật Headroom proxy ngầm cho Antigravity nếu chưa chạy
-    Write-Host "Bật Headroom proxy trên cổng 8787..." -ForegroundColor Green
+    # Bat Headroom proxy ngam cho Antigravity neu chua chay
+    Write-Host "Bat Headroom proxy tren cong 8787..." -ForegroundColor Green
     headroom proxy --port 8787
 } else {
     headroom wrap $Agent -- @AgentArgs
