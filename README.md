@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](file:///d:/my-project/revision-document/LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 16 Domains](https://img.shields.io/badge/Knowledge%20Base-16%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-16-lĩnh-vực)
+[![Topics: 17 Domains](https://img.shields.io/badge/Knowledge%20Base-17%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-17-lĩnh-vực)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](file:///d:/my-project/revision-document/README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Tổng Quan Dự Án](#-tổng-quan-dự-án)
 2. [Điểm Nổi Bật (Key Highlights)](#-điểm-nổi-bật-key-highlights)
-3. [Danh Mục Tài Liệu Chuyên Sâu (16 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-16-lĩnh-vực)
+3. [Danh Mục Tài Liệu Chuyên Sâu (17 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-17-lĩnh-vực)
 4. [Cấu Trúc Thống Nhất Trong Mỗi Thư Mục](#-cấu-trúc-thống-nhất-trong-mỗi-thư-mục)
 5. [Cây Thư Mục Toàn Dự Án](#-cây-thư-mục-toàn-dự-án)
 6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
@@ -36,7 +36,7 @@
 
 ## ⭐ Điểm Nổi Bật (Key Highlights)
 
-- 🧩 **16 Lĩnh vực công nghệ hoàn chỉnh**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka).
+- 🧩 **17 Lĩnh vực công nghệ hoàn chỉnh**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka) và Full-Stack hiện đại (Next.js, RSC).
 - 🧪 **Kiểm thử tự động thực tế (TDD & Assertions)**: Mọi bài tập thực hành đều đi kèm bộ test case tự chấm đúng/sai ngay trên terminal.
 - 🛡️ **Bảo mật chuyên sâu theo chuẩn Quốc tế**: Tích hợp OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, DevSecOps.
 - ⚡ **Tiết kiệm 50% - 80% Token cho AI Agent**: Bộ ngũ công cụ tích hợp sẵn `RTK`, `Headroom`, `Caveman`, `Ponytail` và khung quy trình `ECC`.
@@ -44,26 +44,27 @@
 
 ---
 
-## 📚 Danh Mục Tài Liệu Chuyên Sâu (16 Lĩnh Vực)
+## 📚 Danh Mục Tài Liệu Chuyên Sâu (17 Lĩnh Vực)
 
 | # | Chủ Đề & Công Nghệ | Nội Dung Trọng Tâm | Tài Liệu & Cheat Sheet |
 | :-: | :--- | :--- | :--- |
 | **01** | **JavaScript** | Nền tảng JS, Scope & Closures, Async/Await & Event Loop, DOM & Web APIs, ES6+ đến ES.Next, OOP & Prototypes, Meta-programming | [javascript/](file:///d:/my-project/revision-document/javascript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/javascript/summary.md) |
 | **02** | **TypeScript** | Type System, Interfaces & Types, Generics, Utility Types, Decorators, TSConfig Tuning, Type Narrowing | [typescript/](file:///d:/my-project/revision-document/typescript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/typescript/summary.md) |
 | **03** | **React** | Component Lifecycle, Hooks hiện đại (`useId`, `useTransition`), Context, State Management, Profiler & Performance Optimization | [react/](file:///d:/my-project/revision-document/react/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/react/summary.md) |
-| **04** | **Database & SQL** | SQL Querying, Aggregations, Complex Joins, Subqueries & Window Functions, B-Tree Indexes, ACID & Isolation Levels, SQLi Defense | [database/](file:///d:/my-project/revision-document/database/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/database/summary.md) |
-| **05** | **.NET / C#** | C# Core, OOP & Pattern Matching, Generics, LINQ to Objects, Memory Management (`Span<T>`, `ref struct`), Async/Await, C# Zero to Hero | [dotnet/](file:///d:/my-project/revision-document/dotnet/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/dotnet/summary.md) |
-| **06** | **Java & JVM** | Java Core, JVM Architecture & Memory Model (Heap/Stack/Metaspace), OOP, Exception Handling, I/O Streams, Collections, Concurrency | [java/](file:///d:/my-project/revision-document/java/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/java/summary.md) |
-| **07** | **C / C++** | Con trỏ (Pointers Arithmetic), Stack vs Heap, Quản lý bộ nhớ động, Structs & Data Structures, File I/O, Modern C++ (RAII, Smart Pointers) | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/c-cpp/summary.md) |
-| **08** | **Git & VCS** | Kiến trúc 3 Cây (HEAD, Index, Working Directory), Branching & Merge, Interactive Rebase, Conflict Resolution, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
-| **09** | **DevOps & Cloud Native** | Docker Multi-Stage Builds, Docker Compose, Kubernetes Architecture, Pods/Deployments/Services/Ingress, PVC/PV, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
-| **10** | **AWS Cloud Architecture** | IAM Least Privilege, VPC Networking (Subnets, NAT, IGW), EC2 & Auto-Scaling, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
-| **11** | **System Design** | Scalability, Caching Patterns, CAP & PACELC, Sharding, Kafka & Event-Driven, ByteByteGo Vol 1 & 2, Geohash, Double-Entry Ledger, 4-Step Framework | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
-| **12** | **Web & API Security** | OWASP Top 10, Authentication & Session Hijacking, OAuth2 & PKCE, OIDC, JWT Security, Cryptography (AES-GCM, TLS 1.3), DevSecOps, STRIDE/DREAD | [security/](file:///d:/my-project/revision-document/security/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/security/summary.md) |
-| **13** | **Rust Systems** | Ownership, Borrowing & Lifetimes, Structs & Enums, Pattern Matching, Generics & Traits, Fearless Concurrency (Send/Sync, Arc/Mutex), Smart Pointers | [rust/](file:///d:/my-project/revision-document/rust/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/rust/summary.md) |
-| **14** | **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Red/Blue Teaming, RAG Triad, Quantization NF4, Pitching 5 Phút) | [hackathon-rmit-2026/](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md) \| [Cẩm Nang Toàn Thư](file:///d:/my-project/revision-document/hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
-| **15** | **SWT301 - Software Testing** | Nghiên cứu ứng dụng LLM trong sinh Test Cases tự động, Prompting kiểm thử phần mềm, kịch bản thuyết trình bảo vệ 2 slides | [swt301/](file:///d:/my-project/revision-document/swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Script Thuyết Trình](file:///d:/my-project/revision-document/swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
-| **16** | **Matt Pocock Agent Skills** | Bộ kỹ năng agent chuẩn mực (TDD, Code Review, Refactoring, Best Practices) từ Matt Pocock dành cho AI Coding Assistant | [mattpocock-skills/](file:///d:/my-project/revision-document/mattpocock-skills/README.md) \| [Scope & Rules](file:///d:/my-project/revision-document/mattpocock-skills/SCOPE.md) |
+| **04** | **Next.js & Modern Full-Stack** | App Router, React Server Components (RSC), Rendering (SSR/SSG/ISR/Streaming), Server Actions, 4 Tầng Caching, Web Vitals | [nextjs/](file:///d:/my-project/revision-document/nextjs/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/nextjs/summary.md) |
+| **05** | **Database & SQL** | SQL Querying, Aggregations, Complex Joins, Subqueries & Window Functions, B-Tree Indexes, ACID & Isolation Levels, SQLi Defense | [database/](file:///d:/my-project/revision-document/database/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/database/summary.md) |
+| **06** | **.NET / C#** | C# Core, OOP & Pattern Matching, Generics, LINQ to Objects, Memory Management (`Span<T>`, `ref struct`), Async/Await, C# Zero to Hero | [dotnet/](file:///d:/my-project/revision-document/dotnet/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/dotnet/summary.md) |
+| **07** | **Java & JVM** | Java Core, JVM Architecture & Memory Model (Heap/Stack/Metaspace), OOP, Exception Handling, I/O Streams, Collections, Concurrency | [java/](file:///d:/my-project/revision-document/java/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/java/summary.md) |
+| **08** | **C / C++** | Con trỏ (Pointers Arithmetic), Stack vs Heap, Quản lý bộ nhớ động, Structs & Data Structures, File I/O, Modern C++ (RAII, Smart Pointers) | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/c-cpp/summary.md) |
+| **09** | **Git & VCS** | Kiến trúc 3 Cây (HEAD, Index, Working Directory), Branching & Merge, Interactive Rebase, Conflict Resolution, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
+| **10** | **DevOps & Cloud Native** | Docker Multi-Stage Builds, Docker Compose, Kubernetes Architecture, Pods/Deployments/Services/Ingress, PVC/PV, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
+| **11** | **AWS Cloud Architecture** | IAM Least Privilege, VPC Networking (Subnets, NAT, IGW), EC2 & Auto-Scaling, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
+| **12** | **System Design** | Scalability, Caching Patterns, CAP & PACELC, Sharding, Kafka & Event-Driven, ByteByteGo Vol 1 & 2, Geohash, Double-Entry Ledger, 4-Step Framework | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
+| **13** | **Web & API Security** | OWASP Top 10, Authentication & Session Hijacking, OAuth2 & PKCE, OIDC, JWT Security, Cryptography (AES-GCM, TLS 1.3), DevSecOps, STRIDE/DREAD | [security/](file:///d:/my-project/revision-document/security/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/security/summary.md) |
+| **14** | **Rust Systems** | Ownership, Borrowing & Lifetimes, Structs & Enums, Pattern Matching, Generics & Traits, Fearless Concurrency (Send/Sync, Arc/Mutex), Smart Pointers | [rust/](file:///d:/my-project/revision-document/rust/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/rust/summary.md) |
+| **15** | **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Red/Blue Teaming, RAG Triad, Quantization NF4, Pitching 5 Phút) | [hackathon-rmit-2026/](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md) \| [Cẩm Nang Toàn Thư](file:///d:/my-project/revision-document/hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
+| **16** | **SWT301 - Software Testing** | Nghiên cứu ứng dụng LLM trong sinh Test Cases tự động, Prompting kiểm thử phần mềm, kịch bản thuyết trình bảo vệ 2 slides | [swt301/](file:///d:/my-project/revision-document/swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Script Thuyết Trình](file:///d:/my-project/revision-document/swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
+| **17** | **Matt Pocock Agent Skills** | Bộ kỹ năng agent chuẩn mực (TDD, Code Review, Refactoring, Best Practices) từ Matt Pocock dành cho AI Coding Assistant | [mattpocock-skills/](file:///d:/my-project/revision-document/mattpocock-skills/README.md) \| [Scope & Rules](file:///d:/my-project/revision-document/mattpocock-skills/SCOPE.md) |
 
 ---
 
@@ -122,6 +123,7 @@ revision-document/
 ├── java/                         # 5 Module Java Core, JVM & Concurrency
 ├── javascript/                   # 11 Module JavaScript từ nền tảng tới Meta-programming
 ├── mattpocock-skills/            # Kho công cụ & kỹ năng Agent của Matt Pocock
+├── nextjs/                       # 4 Module Next.js App Router, RSC & Server Actions
 ├── react/                        # 4 Module React hiện đại, Hooks, State & Profiler
 ├── rust/                         # 5 Module Rust Systems Programming
 ├── security/                     # 8 Module Web Security, OWASP & DevSecOps
@@ -170,6 +172,9 @@ npm run test:ts:practice
 
 # 3. Chạy toàn bộ bài tập thực hành React
 npm run test:react:practice
+
+# 4. Chạy toàn bộ bài tập thực hành Next.js App Router & Server Actions
+npm run test:nextjs:practice
 ```
 
 ---
