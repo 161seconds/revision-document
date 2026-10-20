@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](file:///d:/my-project/revision-document/LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 23 Domains](https://img.shields.io/badge/Knowledge%20Base-23%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-23-lĩnh-vực)
+[![Topics: 24 Domains](https://img.shields.io/badge/Knowledge%20Base-24%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-24-lĩnh-vực)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](file:///d:/my-project/revision-document/README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Tổng Quan Dự Án](#-tổng-quan-dự-án)
 2. [Điểm Nổi Bật (Key Highlights)](#-điểm-nổi-bật-key-highlights)
-3. [Danh Mục Tài Liệu Chuyên Sâu (23 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-23-lĩnh-vực)
+3. [Danh Mục Tài Liệu Chuyên Sâu (24 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-24-lĩnh-vực)
 4. [Cấu Trúc Thống Nhất Trong Mỗi Thư Mục](#-cấu-trúc-thống-nhất-trong-mỗi-thư-mục)
 5. [Cây Thư Mục Toàn Dự Án](#-cây-thư-mục-toàn-dự-án)
 6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
@@ -37,7 +37,7 @@
 
 ## ⭐ Điểm Nổi Bật (Key Highlights)
 
-- 🧩 **23 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
+- 🧩 **24 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
 - 🧪 **Kiểm thử tự động thực tế (TDD & Assertions)**: Mọi bài tập thực hành đều đi kèm bộ test case tự chấm đúng/sai ngay trên terminal.
 - 🛡️ **Bảo mật chuyên sâu theo chuẩn Quốc tế**: Tích hợp OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, DevSecOps.
 - ⚡ **Tiết kiệm 50% - 80% Token cho AI Agent**: Bộ ngũ công cụ tích hợp sẵn `RTK`, `Headroom`, `Caveman`, `Ponytail` và khung quy trình `ECC`.
@@ -45,7 +45,7 @@
 
 ---
 
-## 📚 Danh Mục Tài Liệu Chuyên Sâu (23 Lĩnh Vực)
+## 📚 Danh Mục Tài Liệu Chuyên Sâu (24 Lĩnh Vực)
 
 | # | Chủ Đề & Công Nghệ | Nội Dung Trọng Tâm | Tài Liệu & Cheat Sheet |
 | :-: | :--- | :--- | :--- |
@@ -72,6 +72,7 @@
 | **21** | **PostgreSQL concurrency** | MVCC, isolation, conditional write, row lock, deadlock, retry và lab PostgreSQL thật | [postgresql-concurrency/](postgresql-concurrency/README.md) \| [Cheat Sheet](postgresql-concurrency/summary.md) |
 | **22** | **Integration testing .NET** | API–Service–Repository, xUnit, WebApplicationFactory, Testcontainers, DB isolation và kiểm tra lưu trữ thật | [dotnet-integration-testing/](dotnet-integration-testing/README.md) \| [Cheat Sheet](dotnet-integration-testing/summary.md) |
 | **23** | **DDD và modular monolith** | Context map, aggregate, invariant, ownership, module contract, event và lab Ordering–Billing | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
+| **24** | **Webhook và payment tin cậy** | Signature, idempotency, inbox/outbox, retry, reconciliation và lab rollback/replay PostgreSQL | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
 
 ---
 
@@ -113,6 +114,7 @@ revision-document/
 ├── aws/                          # 5 Module AWS Cloud & Solutions Architect
 ├── c-cpp/                        # 5 Module C/C++ từ con trỏ tới C++20
 ├── clean-architecture/           # 8 bài kiến trúc ứng dụng, nguồn gốc và ví dụ .NET
+├── reliable-payments/           # Webhook, inbox/outbox, idempotency và recovery lab
 ├── ddd-modular-monolith/         # Context, aggregate, ownership và contract giữa module
 ├── dotnet-integration-testing/   # xUnit, WebApplicationFactory và PostgreSQL Testcontainers
 ├── postgresql-concurrency/       # MVCC, lock, version và lab race trên PostgreSQL thật

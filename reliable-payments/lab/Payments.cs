@@ -27,7 +27,7 @@ try
         CREATE TABLE payments (provider text NOT NULL, reference text NOT NULL, order_id uuid NOT NULL UNIQUE REFERENCES orders, PRIMARY KEY(provider,reference));
         CREATE TABLE inbox (provider text NOT NULL, event_id text NOT NULL, fingerprint bytea NOT NULL, PRIMARY KEY(provider,event_id));
         CREATE TABLE outbox (id uuid PRIMARY KEY, order_id uuid NOT NULL REFERENCES orders, event_type text NOT NULL, dispatched_at timestamptz, UNIQUE(order_id,event_type));
-        CREATE TABLE consumed_messages (id uuid PRIMARY KEY);
+        CREATE TABLE consumed_messages (id uuid PRIMARY KEY, order_id uuid NOT NULL);
         CREATE TABLE fulfilments (order_id uuid PRIMARY KEY, message_id uuid NOT NULL UNIQUE);
         """);
     var orderId = Guid.NewGuid();
@@ -41,6 +41,8 @@ try
     var tampered = raw.ToArray();
     tampered[^2] ^= 1;
     await Throws<UnauthorizedAccessException>(() => Receive(tampered, now, signature));
+    await Throws<UnauthorizedAccessException>(() => Receive(raw, now, new byte[1]));
+    await Throws<ArgumentException>(() => Receive(new byte[65537], now, signature));
     await Throws<UnauthorizedAccessException>(() => Receive(raw, now - 301, Sign(raw, now - 301)));
     await Throws<UnauthorizedAccessException>(() => Receive(raw, now + 301, Sign(raw, now + 301)));
     var malformed = Encoding.UTF8.GetBytes("{");
@@ -67,6 +69,8 @@ try
     // Simulate a publisher crash here: consumer committed, producer checkpoint not written.
     Check((long)(await Scalar(connection, "SELECT count(*) FROM outbox WHERE dispatched_at IS NULL"))! == 1, "Unacknowledged outbox row must remain recoverable");
     Check(!await Deliver(outboxId, orderId), "Delivery after restart must be deduplicated");
+    await Throws<InvalidOperationException>(() => Deliver(outboxId, otherOrder));
+    await Throws<ArgumentException>(() => Deliver(Guid.Empty, orderId));
     Check((long)(await Scalar(connection, "SELECT count(*) FROM fulfilments"))! == 1, "Replay must not repeat the business effect");
     await Exec(connection, "UPDATE outbox SET dispatched_at=now() WHERE id=@id", ("id", outboxId));
     Check((long)(await Scalar(connection, "SELECT count(*) FROM outbox WHERE dispatched_at IS NULL"))! == 0, "Mark sent only after consumer completion");
@@ -78,8 +82,66 @@ try
         var bytes = JsonSerializer.SerializeToUtf8Bytes(body, PaymentJsonContext.Default.PaymentEvent);
         return Receive(bytes, now, Sign(bytes, now));
     }
-    Task<string> Receive(byte[] body, long timestamp, byte[] suppliedSignature, bool failBeforeCommit = false) => Task.FromResult("applied");
-    Task<bool> Deliver(Guid messageId, Guid targetOrder) => Task.FromResult(true);
+    async Task<string> Receive(byte[] body, long timestamp, byte[] suppliedSignature, bool failBeforeCommit = false)
+    {
+        ArgumentNullException.ThrowIfNull(body);
+        if (body.Length > 65536) throw new ArgumentException("Body exceeds the lab limit");
+        if (timestamp < now - 300 || timestamp > now + 300 || suppliedSignature is null || suppliedSignature.Length != 32 ||
+            !CryptographicOperations.FixedTimeEquals(Sign(body, timestamp), suppliedSignature))
+            throw new UnauthorizedAccessException("Invalid signature or timestamp");
+        var input = JsonSerializer.Deserialize(body, PaymentJsonContext.Default.PaymentEvent) ?? throw new JsonException("Missing event");
+        bool Identifier(string? value) => value is { Length: >= 1 and <= 128 } && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '_' or '-');
+        if (!Identifier(input.EventId) || !Identifier(input.Reference) || input.OrderId == Guid.Empty || input.AmountMinor <= 0 || input.Currency != "USD" || input.Kind != "payment.succeeded")
+            throw new ArgumentException("Invalid payment event");
+        var fingerprint = SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(input, PaymentJsonContext.Default.PaymentEvent));
+        await using var c = await data.OpenConnectionAsync();
+        await using var transaction = await c.BeginTransactionAsync();
+        string state;
+        await using (var command = Command(c, "SELECT o.amount_minor,o.currency,o.status FROM payments p JOIN orders o ON o.id=p.order_id WHERE p.provider='fake' AND p.reference=@reference AND o.id=@id FOR UPDATE OF o", [("reference", input.Reference), ("id", input.OrderId)]))
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            if (!await reader.ReadAsync() || reader.GetInt64(0) != input.AmountMinor || reader.GetString(1) != input.Currency)
+                throw new InvalidOperationException("Payment reference, amount or currency mismatch");
+            state = reader.GetString(2);
+        }
+        var inserted = await Scalar(c, "INSERT INTO inbox VALUES ('fake',@event,@fingerprint) ON CONFLICT DO NOTHING RETURNING event_id", ("event", input.EventId), ("fingerprint", fingerprint));
+        if (inserted is null)
+        {
+            var saved = (byte[])(await Scalar(c, "SELECT fingerprint FROM inbox WHERE provider='fake' AND event_id=@event", ("event", input.EventId)))!;
+            if (!saved.SequenceEqual(fingerprint)) throw new InvalidOperationException("Event ID reused with different financial fields");
+            await transaction.CommitAsync();
+            return "duplicate";
+        }
+        if (state == "paid")
+        {
+            await transaction.CommitAsync();
+            return "already-paid";
+        }
+        if (await Exec(c, "UPDATE orders SET status='paid' WHERE id=@id AND status='pending'", ("id", input.OrderId)) != 1)
+            throw new InvalidOperationException("Unexpected payment transition");
+        await Exec(c, "INSERT INTO outbox(id,order_id,event_type) VALUES (@message,@id,'order.paid')", ("message", Guid.NewGuid()), ("id", input.OrderId));
+        if (failBeforeCommit) throw new InvalidOperationException("Simulated failure before commit");
+        await transaction.CommitAsync();
+        return "applied";
+    }
+
+    async Task<bool> Deliver(Guid messageId, Guid targetOrder)
+    {
+        if (messageId == Guid.Empty || targetOrder == Guid.Empty) throw new ArgumentException("Message and order IDs are required");
+        await using var c = await data.OpenConnectionAsync();
+        await using var transaction = await c.BeginTransactionAsync();
+        var inserted = await Scalar(c, "INSERT INTO consumed_messages VALUES (@message,@order) ON CONFLICT DO NOTHING RETURNING id", ("message", messageId), ("order", targetOrder));
+        if (inserted is null)
+        {
+            if ((Guid)(await Scalar(c, "SELECT order_id FROM consumed_messages WHERE id=@message", ("message", messageId)))! != targetOrder)
+                throw new InvalidOperationException("Message ID reused with a different order");
+            await transaction.CommitAsync();
+            return false;
+        }
+        await Exec(c, "INSERT INTO fulfilments VALUES (@order,@message)", ("order", targetOrder), ("message", messageId));
+        await transaction.CommitAsync();
+        return true;
+    }
 }
 finally
 {
