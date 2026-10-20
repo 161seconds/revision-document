@@ -12,6 +12,8 @@ Lộ trình này thiên về backend/.NET, database và kiến trúc ứng dụn
 
 **[PostgreSQL concurrency](postgresql-concurrency/README.md)**: MVCC, conditional write, row lock, retry và lab cạnh tranh trên PostgreSQL thật.
 
+**[Integration testing .NET](dotnet-integration-testing/README.md)**: test boundaries, host/DB fixture, dữ liệu cách ly, xUnit, WebApplicationFactory và Testcontainers.
+
 **[Clean Architecture](clean-architecture/README.md)**: 8 bài, cheat sheet, 18 nguồn tham khảo và ví dụ .NET có 8 self-check. Bao gồm phần nhập môn DDD/CQRS, transaction, kiểm thử ranh giới, ADR và migration; chưa thay thế giáo trình chuyên sâu cho từng chủ đề.
 
 ## Thứ tự ưu tiên
@@ -21,7 +23,7 @@ Lộ trình này thiên về backend/.NET, database và kiến trúc ứng dụn
 | P1 | **DDD và modular monolith thực chiến** | [Nhập môn trong Clean Architecture](clean-architecture/04-ddd-cqrs-and-vertical-slices.md) | Context map, aggregate design, ownership dữ liệu, contract giữa module và bài refactor một feature. |
 | P1 | **Thiết kế API và quản lý contract** | [Bộ API contract và lab HTTP](api-contracts/README.md) | Mở rộng spec diff tự động và consumer contract theo từng sản phẩm thực tế. |
 | P1 | **PostgreSQL chuyên sâu** | [Bộ concurrency và lab race](postgresql-concurrency/README.md), [SQL nền tảng](database/README.md) | Lab `EXPLAIN (ANALYZE, BUFFERS)`, deadlock, indexing, migration không gián đoạn, backup và phục hồi thực tế. |
-| P1 | **Testing backend với tài nguyên thật** | [Unit/integration testing nhập môn](dotnet/csharp-from-zero-to-hero/04-testing-and-tdd/README.md) | xUnit, `WebApplicationFactory`, Testcontainers, test dữ liệu cách ly, transaction và race có lịch chạy kiểm soát. |
+| P1 | **Testing backend với tài nguyên thật** | [Bộ integration testing và lab API/DB](dotnet-integration-testing/README.md), [race có lịch kiểm soát](postgresql-concurrency/05-lab.md) | Bổ sung application rollback với audit/outbox, auth thật và migration trên dữ liệu nâng cấp. |
 | P1 | **Tích hợp tin cậy và payment workflow** | [Outbox/idempotency](system-design/04-messaging-and-event-driven/03-delivery-guarantees-outbox-and-idempotency.md), [webhook security](security/06-api-security-and-zero-trust/04-secure-api-design-cors-and-webhooks.md) | Inbox/outbox lab, duplicate webhook, replay, reconciliation, retry và recovery sau crash. |
 | P2 | **Observability có thể vận hành** | [Tracing và reliability](system-design/07-reliability-resilience-observability/README.md) | Trace xuyên API–DB–worker, correlation, redaction, dashboard, SLO và runbook điều tra một incident. |
 | P2 | **Deploy và migration an toàn cho .NET** | [Docker/Kubernetes/CI](devops/README.md) | Health/readiness, graceful shutdown, cấu hình/secrets, rollout/rollback và tương thích schema giữa hai phiên bản. |
