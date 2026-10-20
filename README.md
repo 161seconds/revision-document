@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](file:///d:/my-project/revision-document/LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 17 Domains](https://img.shields.io/badge/Knowledge%20Base-17%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-17-lĩnh-vực)
+[![Topics: 18 Domains](https://img.shields.io/badge/Knowledge%20Base-18%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-18-lĩnh-vực)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](file:///d:/my-project/revision-document/README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md)
 
@@ -15,12 +15,13 @@
 
 1. [Tổng Quan Dự Án](#-tổng-quan-dự-án)
 2. [Điểm Nổi Bật (Key Highlights)](#-điểm-nổi-bật-key-highlights)
-3. [Danh Mục Tài Liệu Chuyên Sâu (17 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-17-lĩnh-vực)
+3. [Danh Mục Tài Liệu Chuyên Sâu (18 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-18-lĩnh-vực)
 4. [Cấu Trúc Thống Nhất Trong Mỗi Thư Mục](#-cấu-trúc-thống-nhất-trong-mỗi-thư-mục)
 5. [Cây Thư Mục Toàn Dự Án](#-cây-thư-mục-toàn-dự-án)
 6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
 7. [Hệ Thống Tối Ưu Hóa & Chuẩn Hóa AI Agent (ECC + Token Stack)](#-hệ-thống-tối-ưu-hóa--chuẩn-hóa-ai-agent-ecc--token-stack)
-8. [Đóng Góp & Giấy Phép](#-đóng-góp--giấy-phép)
+8. [Lộ Trình Mở Rộng Tài Liệu](#lộ-trình-mở-rộng-tài-liệu)
+9. [Đóng Góp & Giấy Phép](#-đóng-góp--giấy-phép)
 
 ---
 
@@ -36,7 +37,7 @@
 
 ## ⭐ Điểm Nổi Bật (Key Highlights)
 
-- 🧩 **17 Lĩnh vực công nghệ hoàn chỉnh**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka) và Full-Stack hiện đại (Next.js, RSC).
+- 🧩 **18 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
 - 🧪 **Kiểm thử tự động thực tế (TDD & Assertions)**: Mọi bài tập thực hành đều đi kèm bộ test case tự chấm đúng/sai ngay trên terminal.
 - 🛡️ **Bảo mật chuyên sâu theo chuẩn Quốc tế**: Tích hợp OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, DevSecOps.
 - ⚡ **Tiết kiệm 50% - 80% Token cho AI Agent**: Bộ ngũ công cụ tích hợp sẵn `RTK`, `Headroom`, `Caveman`, `Ponytail` và khung quy trình `ECC`.
@@ -44,7 +45,7 @@
 
 ---
 
-## 📚 Danh Mục Tài Liệu Chuyên Sâu (17 Lĩnh Vực)
+## 📚 Danh Mục Tài Liệu Chuyên Sâu (18 Lĩnh Vực)
 
 | # | Chủ Đề & Công Nghệ | Nội Dung Trọng Tâm | Tài Liệu & Cheat Sheet |
 | :-: | :--- | :--- | :--- |
@@ -65,6 +66,7 @@
 | **15** | **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Red/Blue Teaming, RAG Triad, Quantization NF4, Pitching 5 Phút) | [hackathon-rmit-2026/](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md) \| [Cẩm Nang Toàn Thư](file:///d:/my-project/revision-document/hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
 | **16** | **SWT301 - Software Testing** | Nghiên cứu ứng dụng LLM trong sinh Test Cases tự động, Prompting kiểm thử phần mềm, kịch bản thuyết trình bảo vệ 2 slides | [swt301/](file:///d:/my-project/revision-document/swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Script Thuyết Trình](file:///d:/my-project/revision-document/swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
 | **17** | **Matt Pocock Agent Skills** | Bộ kỹ năng agent chuẩn mực (TDD, Code Review, Refactoring, Best Practices) từ Matt Pocock dành cho AI Coding Assistant | [mattpocock-skills/](file:///d:/my-project/revision-document/mattpocock-skills/README.md) \| [Scope & Rules](file:///d:/my-project/revision-document/mattpocock-skills/SCOPE.md) |
+| **18** | **Clean Architecture & Application Architecture** | Dependency Rule, ranh giới .NET, Hexagonal, DDD/CQRS, Vertical Slice, transaction, kiểm thử kiến trúc, ADR và migration | [clean-architecture/](clean-architecture/README.md) \| [Cheat Sheet](clean-architecture/summary.md) \| [18 nguồn](clean-architecture/sources.md) |
 
 ---
 
@@ -105,6 +107,7 @@ revision-document/
 │   └── workflows/                # Quy trình kiểm tra mã nguồn (code-review.md)
 ├── aws/                          # 5 Module AWS Cloud & Solutions Architect
 ├── c-cpp/                        # 5 Module C/C++ từ con trỏ tới C++20
+├── clean-architecture/           # 8 bài kiến trúc ứng dụng, nguồn gốc và ví dụ .NET
 ├── database/                     # 6 Module Cơ sở dữ liệu & SQL chuyên sâu
 ├── devops/                       # 5 Module Docker, Kubernetes, CI/CD, GitOps
 ├── dotnet/                       # 5 Module .NET, C# & C# Zero to Hero
@@ -132,6 +135,7 @@ revision-document/
 ├── typescript/                   # 4 Module TypeScript chuyên sâu
 ├── AGENTS.md                     # Điều hướng ngữ cảnh cho AI Agents
 ├── CAVEMAN.md                    # Nén token output (lược bỏ từ ngữ thừa)
+├── DOCUMENTATION-ROADMAP.md      # Chủ đề nên bổ sung, khoảng trống và lab ưu tiên
 ├── ECC.md                        # Khung chuẩn hóa quy trình kỹ thuật & TDD
 ├── HEADROOM.md                   # Nén ngữ cảnh đầu vào (Context compression)
 ├── PONYTAIL.md                   # Nén code sinh ra (ngăn over-engineering)
@@ -213,6 +217,12 @@ flowchart TD
 👉 Xem hướng dẫn kích hoạt tự động và thiết lập chi tiết tại: **[AI Agent Optimization Guide](file:///d:/my-project/revision-document/README-AI-TOOLS.md)**.
 
 Các skill bổ sung về harness, context, tool, evaluation, debug và xác minh có tại [HARNESS.md](HARNESS.md), kèm nguồn, commit cố định và giấy phép MIT.
+
+---
+
+## Lộ Trình Mở Rộng Tài Liệu
+
+Xem [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) để chọn chủ đề tiếp theo. Ưu tiên DDD/modular monolith, API contract, PostgreSQL chuyên sâu, integration testing và tích hợp có retry; mỗi nhóm có phần đã có, khoảng trống và lab đề xuất.
 
 ---
 
