@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](file:///d:/my-project/revision-document/LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 18 Domains](https://img.shields.io/badge/Knowledge%20Base-18%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-18-lĩnh-vực)
+[![Topics: 19 Domains](https://img.shields.io/badge/Knowledge%20Base-19%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-19-lĩnh-vực)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](file:///d:/my-project/revision-document/README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Tổng Quan Dự Án](#-tổng-quan-dự-án)
 2. [Điểm Nổi Bật (Key Highlights)](#-điểm-nổi-bật-key-highlights)
-3. [Danh Mục Tài Liệu Chuyên Sâu (18 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-18-lĩnh-vực)
+3. [Danh Mục Tài Liệu Chuyên Sâu (19 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-19-lĩnh-vực)
 4. [Cấu Trúc Thống Nhất Trong Mỗi Thư Mục](#-cấu-trúc-thống-nhất-trong-mỗi-thư-mục)
 5. [Cây Thư Mục Toàn Dự Án](#-cây-thư-mục-toàn-dự-án)
 6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
@@ -37,7 +37,7 @@
 
 ## ⭐ Điểm Nổi Bật (Key Highlights)
 
-- 🧩 **18 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
+- 🧩 **19 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
 - 🧪 **Kiểm thử tự động thực tế (TDD & Assertions)**: Mọi bài tập thực hành đều đi kèm bộ test case tự chấm đúng/sai ngay trên terminal.
 - 🛡️ **Bảo mật chuyên sâu theo chuẩn Quốc tế**: Tích hợp OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, DevSecOps.
 - ⚡ **Tiết kiệm 50% - 80% Token cho AI Agent**: Bộ ngũ công cụ tích hợp sẵn `RTK`, `Headroom`, `Caveman`, `Ponytail` và khung quy trình `ECC`.
@@ -45,7 +45,7 @@
 
 ---
 
-## 📚 Danh Mục Tài Liệu Chuyên Sâu (18 Lĩnh Vực)
+## 📚 Danh Mục Tài Liệu Chuyên Sâu (19 Lĩnh Vực)
 
 | # | Chủ Đề & Công Nghệ | Nội Dung Trọng Tâm | Tài Liệu & Cheat Sheet |
 | :-: | :--- | :--- | :--- |
@@ -67,6 +67,7 @@
 | **16** | **SWT301 - Software Testing** | Nghiên cứu ứng dụng LLM trong sinh Test Cases tự động, Prompting kiểm thử phần mềm, kịch bản thuyết trình bảo vệ 2 slides | [swt301/](file:///d:/my-project/revision-document/swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Script Thuyết Trình](file:///d:/my-project/revision-document/swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
 | **17** | **Matt Pocock Agent Skills** | Bộ kỹ năng agent chuẩn mực (TDD, Code Review, Refactoring, Best Practices) từ Matt Pocock dành cho AI Coding Assistant | [mattpocock-skills/](file:///d:/my-project/revision-document/mattpocock-skills/README.md) \| [Scope & Rules](file:///d:/my-project/revision-document/mattpocock-skills/SCOPE.md) |
 | **18** | **Clean Architecture & Application Architecture** | Dependency Rule, ranh giới .NET, Hexagonal, DDD/CQRS, Vertical Slice, transaction, kiểm thử kiến trúc, ADR và migration | [clean-architecture/](clean-architecture/README.md) \| [Cheat Sheet](clean-architecture/summary.md) \| [18 nguồn](clean-architecture/sources.md) |
+| **19** | **Harness thực chiến** | Chọn skill, giới hạn phạm vi, prompt debug/verify, tool/evaluation, handoff và lab RED/GREEN | [harness-practice/](harness-practice/README.md) \| [Cheat Sheet](harness-practice/summary.md) |
 
 ---
 
@@ -112,6 +113,7 @@ revision-document/
 ├── devops/                       # 5 Module Docker, Kubernetes, CI/CD, GitOps
 ├── dotnet/                       # 5 Module .NET, C# & C# Zero to Hero
 ├── git/                          # 4 Module Git & Sổ tay Git cơ bản/nâng cao
+├── harness-practice/             # Hướng dẫn harness theo task, prompt và lab RED/GREEN
 ├── hackathon-rmit-2026/          # Cẩm nang toàn thư RMIT Hackathon 2026
 │   ├── 01-roadmap-leader/        # Lộ trình 4 tuần cho Team Leader
 │   ├── 02-past-exams-analysis/   # Phân tích đề thi cũ & Barem SkywardAI

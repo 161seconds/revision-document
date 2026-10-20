@@ -1,5 +1,7 @@
 # Open-source Agent Harness Skills
 
+Hướng dẫn sử dụng theo task, prompt mẫu và lab RED/GREEN: [Harness thực chiến](harness-practice/README.md).
+
 Bổ sung 6 skill vào `.agents/skills/`, chọn từ hai dự án MIT. `AGENTS.md` nạp bảng định tuyến này; chỉ đọc `SKILL.md` phù hợp với công việc, không nạp toàn bộ bộ sưu tập.
 
 ## Định tuyến

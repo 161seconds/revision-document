@@ -6,6 +6,8 @@ Lộ trình này thiên về backend/.NET, database và kiến trúc ứng dụn
 
 ## Đã bổ sung
 
+**[Harness thực chiến](harness-practice/README.md)**: chọn skill, khóa phạm vi, prompt debug/verify, tool/evaluation, handoff và lab sửa JSON generator bằng các test có sẵn.
+
 **[Clean Architecture](clean-architecture/README.md)**: 8 bài, cheat sheet, 18 nguồn tham khảo và ví dụ .NET có 8 self-check. Bao gồm phần nhập môn DDD/CQRS, transaction, kiểm thử ranh giới, ADR và migration; chưa thay thế giáo trình chuyên sâu cho từng chủ đề.
 
 ## Thứ tự ưu tiên
