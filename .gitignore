@@ -19,6 +19,9 @@ lerna-debug.log*
 *.pem
 
 # Build & Cache
+bin/
+obj/
+TestResults/
 dist/
 build/
 out/

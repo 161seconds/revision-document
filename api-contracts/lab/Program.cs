@@ -8,11 +8,37 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 var selfTest = args.Contains("--self-test");
 var builder = WebApplication.CreateBuilder(args.Where(a => a != "--self-test").ToArray());
 builder.Services.AddProblemDetails();
-if (selfTest) builder.WebHost.UseUrls("http://127.0.0.1:0");
+if (selfTest)
+{
+    builder.WebHost.UseUrls("http://127.0.0.1:0");
+    builder.Logging.ClearProviders();
+}
 var app = builder.Build();
 app.UseExceptionHandler();
 
-app.MapGet("/api/v1/orders", () => Results.Json(new { items = Array.Empty<Order>(), nextCursor = (int?)null }));
+// shortcut: fixed public fixture; add persistence and authorization before using customer data.
+Order[] orders = [new(1, "pending"), new(2, "pending"), new(3, "shipped"), new(4, "cancelled"), new(5, "pending")];
+app.MapGet("/api/v1/orders", (HttpContext context) =>
+{
+    var query = context.Request.Query;
+    bool Number(string key, int fallback, out int value)
+    {
+        var raw = query[key];
+        value = fallback;
+        return raw.Count == 0 || (raw.Count == 1 && int.TryParse(raw[0], NumberStyles.None, CultureInfo.InvariantCulture, out value));
+    }
+    var status = query["status"];
+    if (!Number("limit", 2, out var limit) || limit is < 1 or > 100 ||
+        !Number("after", 0, out var after) || after < 0 || status.Count > 1 ||
+        (status.Count == 1 && status[0] is not ("pending" or "shipped" or "cancelled")))
+        return Results.Problem(statusCode: 400, title: "Invalid query", type: "urn:revision-document:problem:invalid-query",
+            detail: "limit must be 1..100; after must be non-negative; status must be known.");
+
+    var batch = orders.Where(o => o.Id > after && (status.Count == 0 || o.Status == status[0]))
+        .OrderBy(o => o.Id).Take(limit + 1).ToArray();
+    var items = batch.Take(limit).ToArray();
+    return Results.Json(new { items, nextCursor = batch.Length > limit ? (int?)items[^1].Id : null });
+});
 
 if (!selfTest)
 {
