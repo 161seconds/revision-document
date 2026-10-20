@@ -81,6 +81,8 @@ graph TD
 
 ## ⚡ Tiêu Chuẩn Thực Hành
 
+Phần tổ chức nghiệp vụ bên trong một ứng dụng có tại [Clean Architecture](../clean-architecture/README.md): ranh giới dependency, so sánh kiến trúc, DDD/CQRS, transaction và kiểm thử. Phần này bổ sung cho nội dung hệ thống phân tán bên trên.
+
 Mỗi module từ 01 đến 08 bao gồm:
 - Toàn bộ lý thuyết kiến trúc chuyên sâu bằng tiếng Việt chuẩn mực kèm thuật ngữ công nghiệp quốc tế.
 - File code mô phỏng / implementation chạy trực tiếp trên Node.js ES Modules.

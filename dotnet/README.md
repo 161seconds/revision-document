@@ -29,5 +29,7 @@ Mỗi module trong hệ thống ôn tập bao gồm:
 ---
 
 ## Bản Đồ Liên Kết
+
+- **Kiến trúc ứng dụng:** [Clean Architecture](../clean-architecture/README.md) — Dependency Rule, ranh giới .NET, DDD/CQRS, transaction, kiểm thử và refactor từng use case.
 - **Tiên quyết:** Lập trình hướng đối tượng (OOP), Nền tảng tư duy lập trình.
 - **Liên quan:** [Database & SQL](file:///d:/my-project/revision-document/database/), [Java Revision Guide](file:///d:/my-project/revision-document/java/) (so sánh CLR vs JVM).
