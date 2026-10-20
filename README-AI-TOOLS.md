@@ -333,6 +333,14 @@ Do đó, dự án này áp dụng phương pháp **Trích xuất chọn lọc (S
 
 ---
 
+## Skill Harness Mã Nguồn Mở
+
+Bổ sung 6 skill chọn lọc từ [Superpowers](https://github.com/obra/superpowers) và [Agent Skills for Context Engineering](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering): `harness-engineering`, `context-compression`, `tool-design`, `evaluation`, `systematic-debugging`, `verification-before-completion`.
+
+Xem [HARNESS.md](HARNESS.md) để chọn skill, tra commit nguồn, giấy phép MIT và giới hạn script mẫu. `AGENTS.md` chỉ nạp bảng định tuyến; nội dung từng skill được đọc khi cần.
+
+---
+
 ## Cấu Hình Định Tuyến Dự Án ([AGENTS.md](file:///d:/my-project/revision-document/AGENTS.md))
 
 File gốc cấu hình context của dự án hiện tại tích hợp đầy đủ 5 trụ cột:
@@ -343,6 +351,7 @@ File gốc cấu hình context của dự án hiện tại tích hợp đầy đ
 @CAVEMAN.md
 @PONYTAIL.md
 @ECC.md
+@HARNESS.md
 
 @.agents/skills/caveman/SKILL.md
 @.agents/skills/tdd-workflow/SKILL.md

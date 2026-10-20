@@ -101,7 +101,7 @@ graph LR
 revision-document/
 ├── .agents/                      # AI Agent Skills, Rules & Workflows
 │   ├── rules/                    # Quy tắc điều hướng ngữ cảnh
-│   ├── skills/                   # Bộ kỹ năng: caveman, tdd-workflow, security-review, code-review
+│   ├── skills/                   # Kỹ năng cốt lõi và 6 skill harness mã nguồn mở
 │   └── workflows/                # Quy trình kiểm tra mã nguồn (code-review.md)
 ├── aws/                          # 5 Module AWS Cloud & Solutions Architect
 ├── c-cpp/                        # 5 Module C/C++ từ con trỏ tới C++20
@@ -211,6 +211,8 @@ flowchart TD
 | **ECC** | [ECC.md](file:///d:/my-project/revision-document/ECC.md) | Development Lifecycle | Chuẩn hóa 100% quy trình TDD, Security và Code Review |
 
 👉 Xem hướng dẫn kích hoạt tự động và thiết lập chi tiết tại: **[AI Agent Optimization Guide](file:///d:/my-project/revision-document/README-AI-TOOLS.md)**.
+
+Các skill bổ sung về harness, context, tool, evaluation, debug và xác minh có tại [HARNESS.md](HARNESS.md), kèm nguồn, commit cố định và giấy phép MIT.
 
 ---
 

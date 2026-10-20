@@ -3,6 +3,7 @@
 @CAVEMAN.md
 @PONYTAIL.md
 @ECC.md
+@HARNESS.md
 
 @.agents/skills/caveman/SKILL.md
 @.agents/skills/tdd-workflow/SKILL.md
