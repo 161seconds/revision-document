@@ -14,13 +14,15 @@ Lộ trình này thiên về backend/.NET, database và kiến trúc ứng dụn
 
 **[Integration testing .NET](dotnet-integration-testing/README.md)**: test boundaries, host/DB fixture, dữ liệu cách ly, xUnit, WebApplicationFactory và Testcontainers.
 
+**[DDD và modular monolith](ddd-modular-monolith/README.md)**: context map, invariant, ownership, contract/event, refactor dần và lab Ordering–Billing.
+
 **[Clean Architecture](clean-architecture/README.md)**: 8 bài, cheat sheet, 18 nguồn tham khảo và ví dụ .NET có 8 self-check. Bao gồm phần nhập môn DDD/CQRS, transaction, kiểm thử ranh giới, ADR và migration; chưa thay thế giáo trình chuyên sâu cho từng chủ đề.
 
 ## Thứ tự ưu tiên
 
 | Ưu tiên | Chủ đề nên thêm | Kho hiện có | Phần còn thiếu nên viết |
 | --- | --- | --- | --- |
-| P1 | **DDD và modular monolith thực chiến** | [Nhập môn trong Clean Architecture](clean-architecture/04-ddd-cqrs-and-vertical-slices.md) | Context map, aggregate design, ownership dữ liệu, contract giữa module và bài refactor một feature. |
+| P1 | **DDD và modular monolith thực chiến** | [Bộ DDD và lab aggregate/module](ddd-modular-monolith/README.md) | Bài refactor trên app nhiều assembly, enforce dependency và transaction xuyên module theo nghiệp vụ thật. |
 | P1 | **Thiết kế API và quản lý contract** | [Bộ API contract và lab HTTP](api-contracts/README.md) | Mở rộng spec diff tự động và consumer contract theo từng sản phẩm thực tế. |
 | P1 | **PostgreSQL chuyên sâu** | [Bộ concurrency và lab race](postgresql-concurrency/README.md), [SQL nền tảng](database/README.md) | Lab `EXPLAIN (ANALYZE, BUFFERS)`, deadlock, indexing, migration không gián đoạn, backup và phục hồi thực tế. |
 | P1 | **Testing backend với tài nguyên thật** | [Bộ integration testing và lab API/DB](dotnet-integration-testing/README.md), [race có lịch kiểm soát](postgresql-concurrency/05-lab.md) | Bổ sung application rollback với audit/outbox, auth thật và migration trên dữ liệu nâng cấp. |

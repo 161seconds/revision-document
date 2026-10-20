@@ -38,6 +38,7 @@ Check(invalid.Confirm().AmountMinor == 100, "Rejected writes must not partially 
 Throws<ArgumentException>(() => Billing.BillingModule.CreateDraft(new(Guid.Empty, 100, "USD")));
 Throws<ArgumentException>(() => Billing.BillingModule.CreateDraft(new(Guid.NewGuid(), 0, "USD")));
 Throws<ArgumentException>(() => Billing.BillingModule.CreateDraft(new(Guid.NewGuid(), 100, "BAD")));
+Throws<ArgumentNullException>(() => Billing.BillingModule.CreateDraft(null!));
 var vnd = new Order(Guid.NewGuid(), "VND");
 vnd.AddLine(product, 1, 50000);
 Check(vnd.Confirm().Currency == "VND", "Supported currency must retain its own minor-unit convention");
@@ -53,8 +54,26 @@ namespace Ordering
 {
     public sealed class Order(Guid id, string currency)
     {
-        public void AddLine(Guid productId, int quantity, long unitPriceMinor) { }
-        public OrderConfirmed Confirm() => new(id, 0, currency);
+        private readonly Guid orderId = id != Guid.Empty ? id : throw new ArgumentException("Order ID is required");
+        private readonly string currencyCode = currency is "USD" or "VND" ? currency : throw new ArgumentException("Unsupported currency");
+        // shortcut: total only; model persisted lines, tax and quotes when real ordering requires them.
+        private long totalMinor;
+        private bool confirmed;
+
+        public void AddLine(Guid productId, int quantity, long unitPriceMinor)
+        {
+            if (confirmed) throw new InvalidOperationException("Confirmed orders cannot change");
+            if (productId == Guid.Empty || quantity <= 0 || unitPriceMinor <= 0)
+                throw new ArgumentException("Product, positive quantity and positive price are required");
+            totalMinor = checked(totalMinor + checked(unitPriceMinor * quantity));
+        }
+
+        public OrderConfirmed Confirm()
+        {
+            if (confirmed || totalMinor == 0) throw new InvalidOperationException("Only a non-empty draft can be confirmed");
+            confirmed = true;
+            return new(orderId, totalMinor, currencyCode);
+        }
     }
 }
 
@@ -62,6 +81,12 @@ namespace Billing
 {
     public static class BillingModule
     {
-        public static InvoiceDraft CreateDraft(OrderConfirmed message) => new(message.OrderId, message.AmountMinor, message.Currency);
+        public static InvoiceDraft CreateDraft(OrderConfirmed message)
+        {
+            ArgumentNullException.ThrowIfNull(message);
+            if (message.OrderId == Guid.Empty || message.AmountMinor <= 0 || message.Currency is not ("USD" or "VND"))
+                throw new ArgumentException("Invalid confirmed order snapshot");
+            return new(message.OrderId, message.AmountMinor, message.Currency);
+        }
     }
 }
