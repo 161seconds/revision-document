@@ -333,9 +333,13 @@ Do đó, dự án này áp dụng phương pháp **Trích xuất chọn lọc (S
 
 ---
 
-## Skill Harness Mã Nguồn Mở
+## Skill Mã Nguồn Mở
 
-Bổ sung 6 skill chọn lọc từ [Superpowers](https://github.com/obra/superpowers) và [Agent Skills for Context Engineering](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering): `harness-engineering`, `context-compression`, `tool-design`, `evaluation`, `systematic-debugging`, `verification-before-completion`.
+Bổ sung 7 skill chọn lọc từ [Superpowers](https://github.com/obra/superpowers), [Agent Skills for Context Engineering](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering) và [Cloudflare](https://github.com/cloudflare/security-audit-skill): `harness-engineering`, `context-compression`, `tool-design`, `evaluation`, `systematic-debugging`, `verification-before-completion`, `security-audit`.
+
+Thêm 5 skill từ [wshobson/agents](https://github.com/wshobson/agents): [`dotnet-backend-patterns`](.agents/skills/dotnet-backend-patterns/SKILL.md), [`postgresql-table-design`](.agents/skills/postgresql-table-design/SKILL.md), [`sql-optimization-patterns`](.agents/skills/sql-optimization-patterns/SKILL.md), [`github-actions-templates`](.agents/skills/github-actions-templates/SKILL.md), [`openapi-spec-generation`](.agents/skills/openapi-spec-generation/SKILL.md). Gọi trực tiếp bằng tên, ví dụ `$postgresql-table-design`; bản nhập giữ đầy đủ tài liệu, template và LICENSE MIT.
+
+[`security-audit`](.agents/skills/security-audit/SKILL.md) bổ sung audit bảo mật 6 pha với coverage ledger, xác minh độc lập và báo cáo có schema. Gọi `$security-audit` kèm phạm vi audit; câu hỏi bảo mật thông thường chỉ dùng chế độ hướng dẫn. Validator CLI cần Node.js hỗ trợ `O_NOFOLLOW`/`O_NONBLOCK`; trên Windows dùng Linux/WSL phù hợp.
 
 Xem [HARNESS.md](HARNESS.md) để chọn skill, tra commit nguồn, giấy phép MIT và giới hạn script mẫu. `AGENTS.md` chỉ nạp bảng định tuyến; nội dung từng skill được đọc khi cần.
 

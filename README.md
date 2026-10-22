@@ -109,7 +109,7 @@ graph LR
 revision-document/
 ├── .agents/                      # AI Agent Skills, Rules & Workflows
 │   ├── rules/                    # Quy tắc điều hướng ngữ cảnh
-│   ├── skills/                   # Kỹ năng cốt lõi và 6 skill harness mã nguồn mở
+│   ├── skills/                   # Kỹ năng cốt lõi và 12 skill bổ sung từ nguồn mở
 │   └── workflows/                # Quy trình kiểm tra mã nguồn (code-review.md)
 ├── aws/                          # 5 Module AWS Cloud & Solutions Architect
 ├── c-cpp/                        # 5 Module C/C++ từ con trỏ tới C++20
