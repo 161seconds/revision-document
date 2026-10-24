@@ -2,7 +2,7 @@
 
 Hướng dẫn sử dụng theo task, prompt mẫu và lab RED/GREEN: [Harness thực chiến](harness-practice/README.md).
 
-Bổ sung 12 skill vào `.agents/skills/`, chọn từ bốn dự án MIT. `AGENTS.md` nạp bảng định tuyến này; chỉ đọc `SKILL.md` phù hợp với công việc, không nạp toàn bộ bộ sưu tập.
+Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT. `AGENTS.md` nạp bảng định tuyến này; chỉ đọc `SKILL.md` phù hợp với công việc, không nạp toàn bộ bộ sưu tập.
 
 ## Định tuyến
 
@@ -15,19 +15,21 @@ Bổ sung 12 skill vào `.agents/skills/`, chọn từ bốn dự án MIT. `AGEN
 | [systematic-debugging](.agents/skills/systematic-debugging/SKILL.md) | Điều tra nguyên nhân gốc khi gặp bug, test thất bại hoặc hành vi bất thường. |
 | [verification-before-completion](.agents/skills/verification-before-completion/SKILL.md) | Kiểm tra bằng chứng hiện tại trước khi báo hoàn thành, sửa xong hoặc kiểm thử đạt. |
 | [security-audit](.agents/skills/security-audit/SKILL.md) | Điều tra lỗ hổng theo ranh giới tin cậy; audit 6 pha với coverage ledger, verifier độc lập và báo cáo JSON/Markdown khi được yêu cầu rõ ràng. |
+| [reverse-engineer-anything](.agents/skills/reverse-engineer-anything/SKILL.md) | Dịch ngược mã nguồn và phân tích binary native, .NET, Electron, APK, firmware và web bằng REA; trích xuất bằng chứng kỹ thuật. |
+| [ruflo](.agents/skills/ruflo/SKILL.md) | Điều phối multi-agent swarm, bộ nhớ thích ứng HNSW/AgentDB, 314+ MCP tools và plugin ecosystem bằng Ruflo meta-harness. |
 | [dotnet-backend-patterns](.agents/skills/dotnet-backend-patterns/SKILL.md) | Phát triển/review backend C#: async/await, DI, EF Core, Dapper, caching và xUnit. |
 | [postgresql-table-design](.agents/skills/postgresql-table-design/SKILL.md) | Thiết kế/review schema PostgreSQL: kiểu dữ liệu, khóa, constraints, index và partitioning. |
 | [sql-optimization-patterns](.agents/skills/sql-optimization-patterns/SKILL.md) | Điều tra truy vấn chậm bằng EXPLAIN, tối ưu index, N+1 và pagination theo workload thực tế. |
 | [github-actions-templates](.agents/skills/github-actions-templates/SKILL.md) | Tạo/sửa GitHub Actions: test/build, matrix, reusable workflow, cache và permissions. |
 | [openapi-spec-generation](.agents/skills/openapi-spec-generation/SKILL.md) | Sinh/kiểm tra OpenAPI 3.1, tài liệu API, SDK và tính tương thích của contract. |
 
-Có thể gọi trực tiếp bằng tên, ví dụ `$systematic-debugging`, `$harness-engineering` hoặc `$dotnet-backend-patterns`. Skill mới có thể được nhận diện từ lượt chat tiếp theo.
+Có thể gọi trực tiếp bằng tên, ví dụ `$systematic-debugging`, `$harness-engineering`, `$reverse-engineer-anything` hoặc `$ruflo`. Skill mới có thể được nhận diện từ lượt chat tiếp theo.
 
 `security-review` của ECC dùng để phòng ngừa lỗi khi phát triển; `security-audit` của Cloudflare dùng để điều tra và xác minh lỗ hổng. `security-audit` mặc định chỉ hướng dẫn theo câu hỏi; chỉ chạy toàn bộ quy trình khi người dùng yêu cầu audit/pentest codebase, review bảo mật toàn diện hoặc tạo báo cáo. Ví dụ: `$security-audit audit toàn bộ repo này, profile quick`. Full audit cần agent hỗ trợ subagent độc lập; chạy mã của mục tiêu cần sandbox cô lập ở cấp hệ điều hành, không có mạng ngoài, giới hạn tài nguyên và quyền ghi. Thiếu điều kiện thực thi thì giữ kết luận `needs_validation` cùng thông tin còn thiếu.
 
 ## Nguồn và giấy phép
 
-Các snapshot Superpowers và Context Engineering được nhập ngày **2026-10-20**; Cloudflare và wshobson được nhập ngày **2026-10-22**. Ba nguồn đầu dùng `skills/<tên-skill>/`; wshobson dùng `plugins/<plugin>/skills/<tên-skill>/`.
+Các snapshot Superpowers và Context Engineering được nhập ngày **2026-10-20**; Cloudflare và wshobson được nhập ngày **2026-10-22**; morluto/rea và ruvnet/ruflo được nhập ngày **2026-10-24**. Ba nguồn đầu dùng `skills/<tên-skill>/`; wshobson dùng `plugins/<plugin>/skills/<tên-skill>/`; morluto dùng `.agents/skills/<tên-skill>/`; ruvnet dùng gốc repo và `docs/`.
 
 | Nguồn | Commit cố định | Skill đã nhập |
 | --- | --- | --- |
@@ -35,6 +37,8 @@ Các snapshot Superpowers và Context Engineering được nhập ngày **2026-1
 | [Agent-Skills-for-Context-Engineering](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering) | [`9ff0c99108b36d3b886defd825d8ac1f47dba374`](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering/tree/9ff0c99108b36d3b886defd825d8ac1f47dba374/skills) | `harness-engineering`, `context-compression`, `tool-design`, `evaluation` |
 | [cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill) | [`c1c8a8c1471069fb0e188eeaff69b8e8db6564a8`](https://github.com/cloudflare/security-audit-skill/tree/c1c8a8c1471069fb0e188eeaff69b8e8db6564a8/skills/security-audit) | `security-audit` |
 | [wshobson/agents](https://github.com/wshobson/agents) | [`0874a27b17a22e2b7c2e2bcd725768e0803cad06`](https://github.com/wshobson/agents/tree/0874a27b17a22e2b7c2e2bcd725768e0803cad06/plugins) | `dotnet-backend-patterns`, `postgresql-table-design`, `sql-optimization-patterns`, `github-actions-templates`, `openapi-spec-generation` |
+| [morluto/rea](https://github.com/morluto/rea) | [`c2caae88f8bf3290ad5535ccac9bdd35b6733852`](https://github.com/morluto/rea/tree/c2caae88f8bf3290ad5535ccac9bdd35b6733852/.agents/skills/reverse-engineer-anything) | `reverse-engineer-anything` |
+| [ruvnet/ruflo](https://github.com/ruvnet/ruflo) | [`d36d72a9ff6c8fa4fa728f44ff535f2c0b5bd7cc`](https://github.com/ruvnet/ruflo/tree/d36d72a9ff6c8fa4fa728f44ff535f2c0b5bd7cc) | `ruflo` |
 
 Mỗi thư mục skill giữ bản `LICENSE` MIT của nguồn cùng tài liệu và script đi kèm. Giấy phép ISC ở gốc repo không thay thế giấy phép của các nội dung này.
 
@@ -46,6 +50,8 @@ Mỗi thư mục skill giữ bản `LICENSE` MIT của nguồn cùng tài liệu
 - `tool-design` dùng đúng tên tool do host cung cấp; không áp đặt một kiểu namespace MCP cho mọi host.
 - `tool-design/scripts/description_generator.py` sửa lỗi định dạng JSON: thay placeholder trong từng giá trị trước khi serialize, giữ đúng dấu nháy, xuống dòng và ký tự đặc biệt. Test hồi quy nằm trong `tool-design/tests/`.
 - `security-audit` giữ nguyên toàn bộ 20 file trong thư mục skill nguồn; `README.md` và `LICENSE` ở gốc upstream được đặt cùng thư mục skill để giữ hướng dẫn và giấy phép.
+- `reverse-engineer-anything` giữ nguyên toàn bộ 7 file tài liệu và `references/` trong thư mục skill; file `LICENSE` MIT được sao chép trực tiếp từ gốc upstream morluto/rea.
+- `ruflo` giữ nguyên `SKILL.md` cốt lõi và tài liệu giải thích kiến trúc/MetaHarness trong `references/`; file `LICENSE` MIT được sao chép trực tiếp từ gốc upstream ruvnet/ruflo.
 - wshobson nhập chọn lọc 5 thư mục skill, giữ đủ `references/`, `assets/` và thêm `LICENSE` MIT vào từng thư mục. Plugin nguồn tương ứng: `dotnet-contribution`, `database-design`, `developer-essentials`, `cicd-automation`, `documentation-generation`.
 - Các template wshobson là tài liệu tham khảo, chưa phải project chạy độc lập. Kiểm tra phiên bản framework, action và DB trước khi áp dụng; giữ kiến trúc, contract và kiểu ID hiện có nếu nhiệm vụ không yêu cầu đổi. Chỉ nhập skill, không cài marketplace, agent, command, hook hay cấu hình cho harness khác.
 - Các skill khác được nguồn nhắc đến là tham khảo tùy chọn. Chỉ đọc khi đã có sẵn hoặc khi nhiệm vụ cần truy cập nguồn.

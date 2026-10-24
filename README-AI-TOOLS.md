@@ -339,6 +339,10 @@ Bổ sung 7 skill chọn lọc từ [Superpowers](https://github.com/obra/superp
 
 Thêm 5 skill từ [wshobson/agents](https://github.com/wshobson/agents): [`dotnet-backend-patterns`](.agents/skills/dotnet-backend-patterns/SKILL.md), [`postgresql-table-design`](.agents/skills/postgresql-table-design/SKILL.md), [`sql-optimization-patterns`](.agents/skills/sql-optimization-patterns/SKILL.md), [`github-actions-templates`](.agents/skills/github-actions-templates/SKILL.md), [`openapi-spec-generation`](.agents/skills/openapi-spec-generation/SKILL.md). Gọi trực tiếp bằng tên, ví dụ `$postgresql-table-design`; bản nhập giữ đầy đủ tài liệu, template và LICENSE MIT.
 
+Thêm [`reverse-engineer-anything`](.agents/skills/reverse-engineer-anything/SKILL.md) từ [morluto/rea](https://github.com/morluto/rea): hỗ trợ reverse engineering binary native, .NET, Electron, APK và web bằng REA workflows và MCP.
+
+Thêm [`ruflo`](.agents/skills/ruflo/SKILL.md) từ [ruvnet/ruflo](https://github.com/ruvnet/ruflo): điều phối multi-agent swarm, 314+ MCP tools, bộ nhớ ngữ nghĩa HNSW/AgentDB, routing 3 tầng và hệ sinh thái plugin.
+
 [`security-audit`](.agents/skills/security-audit/SKILL.md) bổ sung audit bảo mật 6 pha với coverage ledger, xác minh độc lập và báo cáo có schema. Gọi `$security-audit` kèm phạm vi audit; câu hỏi bảo mật thông thường chỉ dùng chế độ hướng dẫn. Validator CLI cần Node.js hỗ trợ `O_NOFOLLOW`/`O_NONBLOCK`; trên Windows dùng Linux/WSL phù hợp.
 
 Xem [HARNESS.md](HARNESS.md) để chọn skill, tra commit nguồn, giấy phép MIT và giới hạn script mẫu. `AGENTS.md` chỉ nạp bảng định tuyến; nội dung từng skill được đọc khi cần.
