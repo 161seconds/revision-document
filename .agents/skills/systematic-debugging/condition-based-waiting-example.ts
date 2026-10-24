@@ -2,8 +2,10 @@
 // From: Lace test infrastructure improvements (2025-10-03)
 // Context: Fixed 15 flaky tests by replacing arbitrary timeouts
 
-import type { ThreadManager } from '~/threads/thread-manager';
-import type { LaceEvent, LaceEventType } from '~/threads/types';
+// shortcut: minimal standalone event types; use project types when integrating.
+type LaceEvent = { type: string; data: Record<string, unknown> };
+type LaceEventType = LaceEvent['type'];
+type ThreadManager = { getEvents(threadId: string): LaceEvent[] };
 
 /**
  * Wait for a specific event type to appear in thread

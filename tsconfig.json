@@ -11,7 +11,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "typescript/**/*"
+    "typescript/**/*",
+    ".agents/skills/systematic-debugging/condition-based-waiting-example.ts"
   ],
   "exclude": [
     "node_modules"

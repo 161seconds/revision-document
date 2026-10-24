@@ -1,90 +1,90 @@
-# 🚀 Developer Revision Documents & Engineering Knowledge Base
+# Developer Revision Documents & Engineering Knowledge Base
 
-> **Kho tài liệu ôn tập kiến thức kỹ thuật phần mềm cốt lõi, cheat sheet, bài tập thực hành kèm test tự động và cẩm nang thực chiến RMIT Hackathon 2026.**
+> **A comprehensive knowledge base for core software engineering principles, cheat sheets, automated test-driven practice labs, and practical guides for RMIT Hackathon 2026.**
 
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](file:///d:/my-project/revision-document/LICENSE)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 24 Domains](https://img.shields.io/badge/Knowledge%20Base-24%20Domains-orange.svg)](#-danh-mục-tài-liệu-chuyên-sâu-24-lĩnh-vực)
-[![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](file:///d:/my-project/revision-document/README-AI-TOOLS.md)
-[![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md)
+[![Topics: 24 Domains](https://img.shields.io/badge/Knowledge%20Base-24%20Domains-orange.svg)](#knowledge-base-directory-24-domains)
+[![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
+[![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
 ---
 
-## 📌 Mục Lục
+## Table of Contents
 
-1. [Tổng Quan Dự Án](#-tổng-quan-dự-án)
-2. [Điểm Nổi Bật (Key Highlights)](#-điểm-nổi-bật-key-highlights)
-3. [Danh Mục Tài Liệu Chuyên Sâu (24 Lĩnh Vực)](#-danh-mục-tài-liệu-chuyên-sâu-24-lĩnh-vực)
-4. [Cấu Trúc Thống Nhất Trong Mỗi Thư Mục](#-cấu-trúc-thống-nhất-trong-mỗi-thư-mục)
-5. [Cây Thư Mục Toàn Dự Án](#-cây-thư-mục-toàn-dự-án)
-6. [Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động](#-hướng-dẫn-cài-đặt--chạy-kiểm-thử-tự-động)
-7. [Hệ Thống Tối Ưu Hóa & Chuẩn Hóa AI Agent (ECC + Token Stack)](#-hệ-thống-tối-ưu-hóa--chuẩn-hóa-ai-agent-ecc--token-stack)
-8. [Lộ Trình Mở Rộng Tài Liệu](#lộ-trình-mở-rộng-tài-liệu)
-9. [Đóng Góp & Giấy Phép](#-đóng-góp--giấy-phép)
-
----
-
-## 🎯 Tổng Quan Dự Án
-
-**Developer Revision Documents** là kho tri thức kỹ thuật phần mềm toàn diện được thiết kế có hệ thống dành cho:
-- **Lập trình viên & Kỹ sư phần mềm**: Nắm vững nguyên lý cốt lõi, chuẩn bị phỏng vấn kỹ thuật (Coding, System Design, Security, Cloud) từ Junior tới Senior/Staff.
-- **Sinh viên & Nghiên cứu sinh**: Ôn tập các môn học đại học (C/C++, Java, .NET, Database, Testing SWT301, DevOps).
-- **Thí sinh Hackathon & AI Engineers**: Cẩm nang toàn thư từ A-Z tham gia **RMIT Hackathon 2026** (Kaggle Offline, LLM Security, Red/Blue Teaming, Multilingual RAG, Quantization).
-- **AI Coding Agents**: Tích hợp các bộ quy tắc (skills, rules) tối ưu hóa context, token và quy trình TDD/Security.
+1. [Project Overview](#project-overview)
+2. [Key Highlights](#key-highlights)
+3. [Knowledge Base Directory (24 Domains)](#knowledge-base-directory-24-domains)
+4. [Standardized Module Architecture](#standardized-module-architecture)
+5. [Repository Structure](#repository-structure)
+6. [Installation & Automated Testing](#installation--automated-testing)
+7. [AI Agent Optimization & Standards (ECC + Token Stack)](#ai-agent-optimization--standards-ecc--token-stack)
+8. [Documentation Roadmap](#documentation-roadmap)
+9. [Contributing & License](#contributing--license)
 
 ---
 
-## ⭐ Điểm Nổi Bật (Key Highlights)
+## Project Overview
 
-- 🧩 **24 Lĩnh vực công nghệ**: Từ khoa học máy tính cơ bản (Memory, Pointers, Concurrency) đến phân tán quy mô lớn (ByteByteGo, Sharding, Saga, Kafka), Clean Architecture và Full-Stack hiện đại (Next.js, RSC).
-- 🧪 **Kiểm thử tự động thực tế (TDD & Assertions)**: Mọi bài tập thực hành đều đi kèm bộ test case tự chấm đúng/sai ngay trên terminal.
-- 🛡️ **Bảo mật chuyên sâu theo chuẩn Quốc tế**: Tích hợp OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, DevSecOps.
-- ⚡ **Tiết kiệm 50% - 80% Token cho AI Agent**: Bộ ngũ công cụ tích hợp sẵn `RTK`, `Headroom`, `Caveman`, `Ponytail` và khung quy trình `ECC`.
-- 🏆 **RMIT Hackathon 2026 Master Handbook**: Bộ giáo trình 15 chuyên đề, 5 starter code, bộ dataset mẫu, kịch bản pitch 5 phút và sổ tay cấp cứu OOM trên Kaggle.
+**Developer Revision Documents** is a comprehensive software engineering knowledge base systematically structured for:
+- **Software Engineers & Developers**: Mastering core engineering principles and preparing for technical interviews (Coding, System Design, Security, Cloud) from Junior to Senior/Staff levels.
+- **Students & Researchers**: Reviewing university curriculum topics (C/C++, Java, .NET, Databases, Testing SWT301, DevOps).
+- **Hackathon Competitors & AI Engineers**: Complete end-to-end playbook for **RMIT Hackathon 2026** (Kaggle Offline, LLM Security, Red/Blue Teaming, Multilingual RAG, Quantization).
+- **AI Coding Agents**: Integrated skills and rules to optimize context windows, minimize token usage, and enforce rigorous TDD and security workflows.
 
 ---
 
-## 📚 Danh Mục Tài Liệu Chuyên Sâu (24 Lĩnh Vực)
+## Key Highlights
 
-| # | Chủ Đề & Công Nghệ | Nội Dung Trọng Tâm | Tài Liệu & Cheat Sheet |
+- **24 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
+- **Practical Automated Testing (TDD & Assertions)**: Every practice lab includes executable test suites evaluated directly in the terminal via assertions.
+- **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
+- **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
+- **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
+
+---
+
+## Knowledge Base Directory (24 Domains)
+
+| # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
-| **01** | **JavaScript** | Nền tảng JS, Scope & Closures, Async/Await & Event Loop, DOM & Web APIs, ES6+ đến ES.Next, OOP & Prototypes, Meta-programming | [javascript/](file:///d:/my-project/revision-document/javascript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/javascript/summary.md) |
-| **02** | **TypeScript** | Type System, Interfaces & Types, Generics, Utility Types, Decorators, TSConfig Tuning, Type Narrowing | [typescript/](file:///d:/my-project/revision-document/typescript/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/typescript/summary.md) |
-| **03** | **React** | Component Lifecycle, Hooks hiện đại (`useId`, `useTransition`), Context, State Management, Profiler & Performance Optimization | [react/](file:///d:/my-project/revision-document/react/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/react/summary.md) |
-| **04** | **Next.js & Modern Full-Stack** | App Router, React Server Components (RSC), Rendering (SSR/SSG/ISR/Streaming), Server Actions, 4 Tầng Caching, Web Vitals | [nextjs/](file:///d:/my-project/revision-document/nextjs/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/nextjs/summary.md) |
-| **05** | **Database & SQL** | SQL Querying, Aggregations, Complex Joins, Subqueries & Window Functions, B-Tree Indexes, ACID & Isolation Levels, SQLi Defense | [database/](file:///d:/my-project/revision-document/database/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/database/summary.md) |
-| **06** | **.NET / C#** | C# Core, OOP & Pattern Matching, Generics, LINQ to Objects, Memory Management (`Span<T>`, `ref struct`), Async/Await, C# Zero to Hero | [dotnet/](file:///d:/my-project/revision-document/dotnet/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/dotnet/summary.md) |
-| **07** | **Java & JVM** | Java Core, JVM Architecture & Memory Model (Heap/Stack/Metaspace), OOP, Exception Handling, I/O Streams, Collections, Concurrency | [java/](file:///d:/my-project/revision-document/java/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/java/summary.md) |
-| **08** | **C / C++** | Con trỏ (Pointers Arithmetic), Stack vs Heap, Quản lý bộ nhớ động, Structs & Data Structures, File I/O, Modern C++ (RAII, Smart Pointers) | [c-cpp/](file:///d:/my-project/revision-document/c-cpp/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/c-cpp/summary.md) |
-| **09** | **Git & VCS** | Kiến trúc 3 Cây (HEAD, Index, Working Directory), Branching & Merge, Interactive Rebase, Conflict Resolution, Reflog, Hooks, LFS | [git/](file:///d:/my-project/revision-document/git/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/git/summary.md) |
-| **10** | **DevOps & Cloud Native** | Docker Multi-Stage Builds, Docker Compose, Kubernetes Architecture, Pods/Deployments/Services/Ingress, PVC/PV, CI/CD, GitOps | [devops/](file:///d:/my-project/revision-document/devops/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/devops/summary.md) |
-| **11** | **AWS Cloud Architecture** | IAM Least Privilege, VPC Networking (Subnets, NAT, IGW), EC2 & Auto-Scaling, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](file:///d:/my-project/revision-document/aws/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/aws/summary.md) |
-| **12** | **System Design** | Scalability, Caching Patterns, CAP & PACELC, Sharding, Kafka & Event-Driven, ByteByteGo Vol 1 & 2, Geohash, Double-Entry Ledger, 4-Step Framework | [system-design/](file:///d:/my-project/revision-document/system-design/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/system-design/summary.md) |
-| **13** | **Web & API Security** | OWASP Top 10, Authentication & Session Hijacking, OAuth2 & PKCE, OIDC, JWT Security, Cryptography (AES-GCM, TLS 1.3), DevSecOps, STRIDE/DREAD | [security/](file:///d:/my-project/revision-document/security/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/security/summary.md) |
-| **14** | **Rust Systems** | Ownership, Borrowing & Lifetimes, Structs & Enums, Pattern Matching, Generics & Traits, Fearless Concurrency (Send/Sync, Arc/Mutex), Smart Pointers | [rust/](file:///d:/my-project/revision-document/rust/README.md) \| [Cheat Sheet](file:///d:/my-project/revision-document/rust/summary.md) |
-| **15** | **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Red/Blue Teaming, RAG Triad, Quantization NF4, Pitching 5 Phút) | [hackathon-rmit-2026/](file:///d:/my-project/revision-document/hackathon-rmit-2026/README.md) \| [Cẩm Nang Toàn Thư](file:///d:/my-project/revision-document/hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
-| **16** | **SWT301 - Software Testing** | Nghiên cứu ứng dụng LLM trong sinh Test Cases tự động, Prompting kiểm thử phần mềm, kịch bản thuyết trình bảo vệ 2 slides | [swt301/](file:///d:/my-project/revision-document/swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Script Thuyết Trình](file:///d:/my-project/revision-document/swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
-| **17** | **Matt Pocock Agent Skills** | Bộ kỹ năng agent chuẩn mực (TDD, Code Review, Refactoring, Best Practices) từ Matt Pocock dành cho AI Coding Assistant | [mattpocock-skills/](file:///d:/my-project/revision-document/mattpocock-skills/README.md) \| [Scope & Rules](file:///d:/my-project/revision-document/mattpocock-skills/SCOPE.md) |
-| **18** | **Clean Architecture & Application Architecture** | Dependency Rule, ranh giới .NET, Hexagonal, DDD/CQRS, Vertical Slice, transaction, kiểm thử kiến trúc, ADR và migration | [clean-architecture/](clean-architecture/README.md) \| [Cheat Sheet](clean-architecture/summary.md) \| [18 nguồn](clean-architecture/sources.md) |
-| **19** | **Harness thực chiến** | Chọn skill, giới hạn phạm vi, prompt debug/verify, tool/evaluation, handoff và lab RED/GREEN | [harness-practice/](harness-practice/README.md) \| [Cheat Sheet](harness-practice/summary.md) |
-| **20** | **API contract** | HTTP/DTO, keyset pagination, validation, Problem Details, versioning, compatibility và lab HTTP .NET | [api-contracts/](api-contracts/README.md) \| [Cheat Sheet](api-contracts/summary.md) |
-| **21** | **PostgreSQL concurrency** | MVCC, isolation, conditional write, row lock, deadlock, retry và lab PostgreSQL thật | [postgresql-concurrency/](postgresql-concurrency/README.md) \| [Cheat Sheet](postgresql-concurrency/summary.md) |
-| **22** | **Integration testing .NET** | API–Service–Repository, xUnit, WebApplicationFactory, Testcontainers, DB isolation và kiểm tra lưu trữ thật | [dotnet-integration-testing/](dotnet-integration-testing/README.md) \| [Cheat Sheet](dotnet-integration-testing/summary.md) |
-| **23** | **DDD và modular monolith** | Context map, aggregate, invariant, ownership, module contract, event và lab Ordering–Billing | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
-| **24** | **Webhook và payment tin cậy** | Signature, idempotency, inbox/outbox, retry, reconciliation và lab rollback/replay PostgreSQL | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
+| **01** | **JavaScript** | Core foundations, Scope & Closures, Async/Await & Event Loop, DOM & Web APIs, ES6+ to ES.Next, OOP & Prototypes, Meta-programming | [javascript/](javascript/README.md) \| [Cheat Sheet](javascript/summary.md) |
+| **02** | **TypeScript** | Type System, Interfaces & Types, Generics, Utility Types, Decorators, TSConfig Tuning, Type Narrowing | [typescript/](typescript/README.md) \| [Cheat Sheet](typescript/summary.md) |
+| **03** | **React** | Component Lifecycle, Modern Hooks (`useId`, `useTransition`), Context, State Management, Profiler & Performance Optimization | [react/](react/README.md) \| [Cheat Sheet](react/summary.md) |
+| **04** | **Next.js & Modern Full-Stack** | App Router, React Server Components (RSC), Rendering (SSR/SSG/ISR/Streaming), Server Actions, 4-tier Caching, Web Vitals | [nextjs/](nextjs/README.md) \| [Cheat Sheet](nextjs/summary.md) |
+| **05** | **Database & SQL** | SQL Querying, Aggregations, Complex Joins, Subqueries & Window Functions, B-Tree Indexes, ACID & Isolation Levels, SQLi Defense | [database/](database/README.md) \| [Cheat Sheet](database/summary.md) |
+| **06** | **.NET / C#** | C# Core, OOP & Pattern Matching, Generics, LINQ to Objects, Memory Management (`Span<T>`, `ref struct`), Async/Await, C# Zero to Hero | [dotnet/](dotnet/README.md) \| [Cheat Sheet](dotnet/summary.md) |
+| **07** | **Java & JVM** | Java Core, JVM Architecture & Memory Model (Heap/Stack/Metaspace), OOP, Exception Handling, I/O Streams, Collections, Concurrency | [java/](java/README.md) \| [Cheat Sheet](java/summary.md) |
+| **08** | **C / C++** | Pointer Arithmetic, Stack vs Heap, Dynamic Memory Management, Structs & Data Structures, File I/O, Modern C++ (RAII, Smart Pointers) | [c-cpp/](c-cpp/README.md) \| [Cheat Sheet](c-cpp/summary.md) |
+| **09** | **Git & VCS** | 3-Tree Architecture (HEAD, Index, Working Directory), Branching & Merging, Interactive Rebase, Conflict Resolution, Reflog, Hooks, LFS | [git/](git/README.md) \| [Cheat Sheet](git/summary.md) |
+| **10** | **DevOps & Cloud Native** | Multi-stage Docker Builds, Docker Compose, Kubernetes Architecture, Pods/Deployments/Services/Ingress, PVC/PV, CI/CD, GitOps | [devops/](devops/README.md) \| [Cheat Sheet](devops/summary.md) |
+| **11** | **AWS Cloud Architecture** | IAM Least Privilege, VPC Networking (Subnets, NAT, IGW), EC2 & Auto-Scaling, S3, RDS & Aurora, DynamoDB, SQS/SNS, CloudWatch, IaC | [aws/](aws/README.md) \| [Cheat Sheet](aws/summary.md) |
+| **12** | **System Design** | Scalability, Caching Patterns, CAP & PACELC, Sharding, Kafka & Event-Driven Architecture, ByteByteGo Vol 1 & 2, Geohash, Double-Entry Ledger, 4-Step Framework | [system-design/](system-design/README.md) \| [Cheat Sheet](system-design/summary.md) |
+| **13** | **Web & API Security** | OWASP Top 10, Authentication & Session Hijacking, OAuth2 & PKCE, OIDC, JWT Security, Cryptography (AES-GCM, TLS 1.3), DevSecOps, STRIDE/DREAD | [security/](security/README.md) \| [Cheat Sheet](security/summary.md) |
+| **14** | **Rust Systems** | Ownership, Borrowing & Lifetimes, Structs & Enums, Pattern Matching, Generics & Traits, Fearless Concurrency (Send/Sync, Arc/Mutex), Smart Pointers | [rust/](rust/README.md) \| [Cheat Sheet](rust/summary.md) |
+| **15** | **RMIT Hackathon 2026** | Security × Generative AI × Low-Resource Languages (Kaggle Playbook, Red/Blue Teaming, RAG Triad, Quantization NF4, 5-Minute Pitching) | [hackathon-rmit-2026/](hackathon-rmit-2026/README.md) \| [Master Handbook](hackathon-rmit-2026/MASTER_HANDBOOK_RMIT_2026.md) |
+| **16** | **SWT301 - Software Testing** | Automated test case generation using LLMs, Prompt engineering for software testing, 2-slide defense presentation script | [swt301/](swt301/CAN_LLM_GENERATE_TEST_CASES.md) \| [Presentation Script](swt301/SCRIPT_THUYET_TRINH_2_SLIDES.md) |
+| **17** | **Matt Pocock Agent Skills** | Standardized agent skill suites (TDD, Code Review, Refactoring, Best Practices) from Matt Pocock for AI coding assistants | [mattpocock-skills/](mattpocock-skills/README.md) \| [Scope & Rules](mattpocock-skills/SCOPE.md) |
+| **18** | **Clean Architecture & Application Architecture** | Dependency Rule, .NET architectural boundaries, Hexagonal Architecture, DDD/CQRS, Vertical Slice, Transactions, Architecture testing, ADRs, and Migration | [clean-architecture/](clean-architecture/README.md) \| [Cheat Sheet](clean-architecture/summary.md) \| [18 Sources](clean-architecture/sources.md) |
+| **19** | **Practical Agent Harnesses** | Skill selection, scope fencing, debug/verify prompts, tool evaluation, handoffs, and RED/GREEN labs | [harness-practice/](harness-practice/README.md) \| [Cheat Sheet](harness-practice/summary.md) |
+| **20** | **API Contracts** | HTTP/DTO design, keyset pagination, input validation, Problem Details, versioning, contract compatibility, and .NET HTTP lab | [api-contracts/](api-contracts/README.md) \| [Cheat Sheet](api-contracts/summary.md) |
+| **21** | **PostgreSQL Concurrency** | MVCC, isolation levels, conditional writes, row locks, deadlocks, retry strategies, and hands-on PostgreSQL race-condition lab | [postgresql-concurrency/](postgresql-concurrency/README.md) \| [Cheat Sheet](postgresql-concurrency/summary.md) |
+| **22** | **Integration Testing in .NET** | API-Service-Repository testing, xUnit, WebApplicationFactory, Testcontainers, database isolation, and verified persistence tests | [dotnet-integration-testing/](dotnet-integration-testing/README.md) \| [Cheat Sheet](dotnet-integration-testing/summary.md) |
+| **23** | **DDD & Modular Monolith** | Context mapping, Aggregates, Invariants, Bounded Context ownership, module contracts, domain events, and Ordering-Billing lab | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
+| **24** | **Reliable Payments & Webhooks** | Signatures, idempotency keys, inbox/outbox patterns, retries, reconciliation, and PostgreSQL replay/rollback lab | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
 
 ---
 
-## 🏗️ Cấu Trúc Thống Nhất Trong Mỗi Thư Mục
+## Standardized Module Architecture
 
-Mọi thư mục chủ đề kỹ thuật đều tuân thủ cấu trúc chuẩn 3 lớp:
+Every technical domain adheres to a consistent 3-tier structure:
 
 ```mermaid
 graph LR
-    A[Mỗi Module Kỹ Thuật] --> B["<b>1. Lý Thuyết & Bản Đồ Tri Thức</b><br/>README.md & summary.md"]
-    A --> C["<b>2. Code Mẫu Thực Tế</b><br/>01-*/, 02-*/ runnable code"]
-    A --> D["<b>3. Bài Tập Tự Luyện & Test</b><br/>practice.* (Auto-graded assertion)"]
+    A["Module Structure"] --> B["<b>1. Theory & Knowledge Map</b><br/>README.md & summary.md"]
+    A --> C["<b>2. Practical Code Examples</b><br/>01-*/, 02-*/ runnable code"]
+    A --> D["<b>3. Hands-on Practice & Tests</b><br/>practice.* (Auto-graded assertions)"]
 
     style A fill:#0284c7,stroke:#38bdf8,stroke-width:2px,color:#ffffff
     style B fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc
@@ -93,161 +93,162 @@ graph LR
 ```
 
 1. **`README.md` & `summary.md`**:
-   - Trình bày trực quan, ngắn gọn, đi thẳng vào bản chất vấn đề.
-   - **Knowledge Links**: Bản đồ liên kết với các chủ đề liên quan.
-   - **Interview Traps**: Tổng hợp các cạm bẫy phỏng vấn kỹ thuật và cách trả lời chuẩn mực.
-2. **Các ví dụ thực tế (Runnable Code)**:
-   - Các file mã nguồn minh họa nguyên lý, có thể chạy trực tiếp bằng `node`, `ts-node`, `dotnet`, `g++`, hoặc `cargo`.
-3. **`practice.*` (Bài tập thực hành)**:
-   - Chứa các hàm cần hoàn thiện (skeleton code) kèm theo bộ `assert` tự động kiểm tra tính đúng đắn khi chạy lệnh.
+   - Concise, conceptual breakdown targeting core engineering mechanics.
+   - **Knowledge Links**: Cross-discipline dependency maps.
+   - **Interview Traps**: Common technical interview pitfalls, edge cases, and model answers.
+2. **Runnable Code Examples**:
+   - Standalone implementations illustrating core patterns, directly executable with `node`, `ts-node`, `dotnet`, `g++`, or `cargo`.
+3. **`practice.*` (Self-Paced Labs)**:
+   - Skeleton challenges containing pre-configured automated assertion checks that provide instant pass/fail feedback in the terminal.
 
 ---
 
-## 📂 Cây Thư Mục Toàn Dự Án
+## Repository Structure
 
 ```text
 revision-document/
 ├── .agents/                      # AI Agent Skills, Rules & Workflows
-│   ├── rules/                    # Quy tắc điều hướng ngữ cảnh
-│   ├── skills/                   # Kỹ năng cốt lõi và 12 skill bổ sung từ nguồn mở
-│   └── workflows/                # Quy trình kiểm tra mã nguồn (code-review.md)
-├── aws/                          # 5 Module AWS Cloud & Solutions Architect
-├── c-cpp/                        # 5 Module C/C++ từ con trỏ tới C++20
-├── clean-architecture/           # 8 bài kiến trúc ứng dụng, nguồn gốc và ví dụ .NET
-├── reliable-payments/           # Webhook, inbox/outbox, idempotency và recovery lab
-├── ddd-modular-monolith/         # Context, aggregate, ownership và contract giữa module
-├── dotnet-integration-testing/   # xUnit, WebApplicationFactory và PostgreSQL Testcontainers
-├── postgresql-concurrency/       # MVCC, lock, version và lab race trên PostgreSQL thật
-├── api-contracts/                # Contract HTTP, compatibility và lab .NET
-├── database/                     # 6 Module Cơ sở dữ liệu & SQL chuyên sâu
-├── devops/                       # 5 Module Docker, Kubernetes, CI/CD, GitOps
-├── dotnet/                       # 5 Module .NET, C# & C# Zero to Hero
-├── git/                          # 4 Module Git & Sổ tay Git cơ bản/nâng cao
-├── harness-practice/             # Hướng dẫn harness theo task, prompt và lab RED/GREEN
-├── hackathon-rmit-2026/          # Cẩm nang toàn thư RMIT Hackathon 2026
-│   ├── 01-roadmap-leader/        # Lộ trình 4 tuần cho Team Leader
-│   ├── 02-past-exams-analysis/   # Phân tích đề thi cũ & Barem SkywardAI
-│   ├── 03-tech-knowledge/        # 15 Chuyên đề kỹ thuật LLM Security & RAG
-│   ├── 04-starter-code/          # 8 File mã nguồn mẫu & pipeline Kaggle
-│   ├── 05-team-strategy-and-ideas/# Chiến thuật 14h, Notebook template, Game theory
-│   ├── 06-mock-datasets/         # Dữ liệu giả lập Task 1, 2, 3
-│   ├── 07-pitching-and-slides/   # Script pitching 5 phút & 10 câu hỏi Q&A
-│   ├── 08-troubleshooting-faq/   # Cấp cứu OOM, Kaggle offline, Emergency runbook
-│   ├── MASTER_HANDBOOK_RMIT_2026.md # Sách điện tử toàn thư từ 0 đến vô địch
-│   └── README.md                 # Playbook chiến lược cuộc thi
-├── java/                         # 5 Module Java Core, JVM & Concurrency
-├── javascript/                   # 11 Module JavaScript từ nền tảng tới Meta-programming
-├── mattpocock-skills/            # Kho công cụ & kỹ năng Agent của Matt Pocock
-├── nextjs/                       # 4 Module Next.js App Router, RSC & Server Actions
-├── react/                        # 4 Module React hiện đại, Hooks, State & Profiler
-├── rust/                         # 5 Module Rust Systems Programming
-├── security/                     # 8 Module Web Security, OWASP & DevSecOps
-├── swt301/                       # Kiểm thử phần mềm & Sinh Test Case bằng LLM
-├── system-design/                # 8 Module System Design & ByteByteGo 101
-├── typescript/                   # 4 Module TypeScript chuyên sâu
-├── AGENTS.md                     # Điều hướng ngữ cảnh cho AI Agents
-├── CAVEMAN.md                    # Nén token output (lược bỏ từ ngữ thừa)
-├── DOCUMENTATION-ROADMAP.md      # Chủ đề nên bổ sung, khoảng trống và lab ưu tiên
-├── ECC.md                        # Khung chuẩn hóa quy trình kỹ thuật & TDD
-├── HEADROOM.md                   # Nén ngữ cảnh đầu vào (Context compression)
-├── PONYTAIL.md                   # Nén code sinh ra (ngăn over-engineering)
-├── RTK.md                        # Nén output lệnh terminal / shell
-├── README-AI-TOOLS.md            # Hướng dẫn chi tiết bộ ngũ tối ưu AI Agent
-├── package.json                  # Cấu hình dự án & scripts test tự động
-└── tsconfig.json                 # Cấu hình TypeScript compiler
+│   ├── rules/                    # Context routing rules
+│   ├── skills/                   # Core skills and open-source integrations
+│   └── workflows/                # Code review and auditing workflows
+├── aws/                          # 5 AWS Cloud & Solutions Architecture modules
+├── c-cpp/                        # 5 C/C++ modules from raw pointers to modern C++20
+├── clean-architecture/           # 8 application architecture guides, history & .NET labs
+├── reliable-payments/            # Webhooks, inbox/outbox, idempotency & recovery lab
+├── ddd-modular-monolith/         # Contexts, aggregates, boundaries & cross-module contracts
+├── dotnet-integration-testing/   # xUnit, WebApplicationFactory & PostgreSQL Testcontainers
+├── postgresql-concurrency/       # MVCC, locking, isolation levels & concurrency lab
+├── api-contracts/                # HTTP contracts, schema evolution & .NET API lab
+├── database/                     # 6 In-depth Database & SQL modules
+├── devops/                       # 5 Docker, Kubernetes, CI/CD & GitOps modules
+├── dotnet/                       # 5 .NET, C# & C# Zero to Hero modules
+├── git/                          # 4 Git internals, workflow & advanced recovery modules
+├── harness-practice/             # Agent harness guides, prompting & RED/GREEN labs
+├── hackathon-rmit-2026/          # RMIT Hackathon 2026 Master Handbook & Playbook
+│   ├── 01-roadmap-leader/        # 4-week team leader roadmap
+│   ├── 02-past-exams-analysis/   # Past challenges breakdown & SkywardAI rubrics
+│   ├── 03-tech-knowledge/        # 15 LLM Security & RAG deep dives
+│   ├── 04-starter-code/          # 8 starter scripts & Kaggle pipelines
+│   ├── 05-team-strategy-and-ideas/# 14-hour game theory, strategy & notebook templates
+│   ├── 06-mock-datasets/         # Synthetic datasets for Tasks 1, 2, and 3
+│   ├── 07-pitching-and-slides/   # 5-minute pitch script & Q&A preparation
+│   ├── 08-troubleshooting-faq/   # Kaggle offline debugging, OOM runbook & FAQs
+│   ├── MASTER_HANDBOOK_RMIT_2026.md # End-to-end competition handbook
+│   └── README.md                 # Strategic competition playbook
+├── java/                         # 5 Java Core, JVM internals & Concurrency modules
+├── javascript/                   # 11 JavaScript modules from fundamentals to meta-programming
+├── mattpocock-skills/            # Agent skill suite curated from Matt Pocock
+├── nextjs/                       # 4 Next.js App Router, RSC & Server Actions modules
+├── react/                        # 4 Modern React, Hooks, State & Profiler modules
+├── rust/                         # 5 Rust systems programming modules
+├── security/                     # 8 Web Security, OWASP Top 10 & DevSecOps modules
+├── swt301/                       # Software testing & LLM test generation research
+├── system-design/                # 8 System Design & ByteByteGo architectural patterns
+├── typescript/                   # 4 Advanced TypeScript type gymnastics modules
+├── AGENTS.md                     # Context routing index for AI agents
+├── CAVEMAN.md                    # Output token compression rules
+├── DOCUMENTATION-ROADMAP.md      # Topic expansion roadmap, gaps & priority labs
+├── ECC.md                        # Engineering & TDD workflow standardization framework
+├── HEADROOM.md                   # Input context compression rules
+├── PONYTAIL.md                   # Code generation simplification rules
+├── RTK.md                        # Terminal output token compression rules
+├── README-AI-TOOLS.md            # AI agent token optimization guide
+├── package.json                  # Project configuration & automated test scripts
+└── tsconfig.json                 # TypeScript compiler configuration
 ```
 
 ---
 
-## 🛠️ Hướng Dẫn Cài Đặt & Chạy Kiểm Thử Tự Động
+## Installation & Automated Testing
 
-### 1. Yêu Cầu Môi Trường
-- **Node.js**: Phiên bản `>= 22.0.0` (hỗ trợ cờ `--experimental-transform-types`).
-- **npm**: Phiên bản `>= 10.0.0`.
-- **TypeScript**: Phiên bản `^7.0.2` (đã cài đặt trong `devDependencies`).
+### 1. Prerequisites
+- **Node.js**: Version `>= 22.0.0` (supports native `--experimental-transform-types`).
+- **npm**: Version `>= 10.0.0`.
+- **TypeScript**: Version `^7.0.2` (configured in `devDependencies`).
 
-### 2. Cài Đặt Thư Viện
+### 2. Setup
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/161seconds/revision-document.git
 cd revision-document
 
-# Cài đặt các gói phụ thuộc
+# Install dependencies
 npm install
 ```
 
-### 3. Chạy Kiểm Tra Mã Nguồn & Bài Tập Thực Hành
+### 3. Running Verification & Practice Tests
 
 ```bash
-# 1. Kiểm tra toàn bộ cú pháp TypeScript không xuất file build
+# 1. Type-check all TypeScript files without emitting build artifacts
 npm run test:ts
 
-# 2. Chạy toàn bộ bài tập thực hành TypeScript (Tự động chấm bằng assertion)
+# 2. Run all TypeScript practice labs (evaluated with automated assertions)
 npm run test:ts:practice
 
-# 3. Chạy toàn bộ bài tập thực hành React
+# 3. Run all React practice labs
 npm run test:react:practice
 
-# 4. Chạy toàn bộ bài tập thực hành Next.js App Router & Server Actions
+# 4. Run all Next.js App Router & Server Actions practice labs
 npm run test:nextjs:practice
 ```
 
 ---
 
-## 🤖 Hệ Thống Tối Ưu Hóa & Chuẩn Hóa AI Agent (ECC + Token Stack)
+## AI Agent Optimization & Standards (ECC + Token Stack)
 
-Repository này được cấu hình sẵn hệ thống **5 lớp tối ưu hóa token và chuẩn hóa quy trình kỹ thuật**, giúp các AI Agent (Google Antigravity, Claude Code, Cursor, Codex) hoạt động với hiệu suất tối đa:
+This repository comes pre-configured with a **5-tier token optimization and engineering standardization stack**, enabling AI coding agents (Google Antigravity, Claude Code, Cursor, Codex) to operate with maximum context efficiency:
 
 ```mermaid
 flowchart TD
-    User([User Prompt / Yêu cầu]) --> ECC_Plan[1. ECC: Lập kế hoạch & Tiêu chuẩn nghiệm thu]
-    ECC_Plan --> Headroom[2. Headroom: Nén Context, File & Lịch sử]
+    User([User Prompt / Task]) --> ECC_Plan[1. ECC: Planning & Acceptance Criteria]
+    ECC_Plan --> Headroom[2. Headroom: Context & History Compression]
     Headroom --> LLM([LLM Engine])
-    LLM --> ECC_TDD[3. ECC: Quy trình TDD Red -> Green]
-    ECC_TDD --> Ponytail[4. Ponytail: Ngăn Code Thừa / Dùng Native API]
-    Ponytail --> ECC_Review[5. ECC: Code & Security Review Tự Động]
-    ECC_Review --> Caveman[6. Caveman: Loại bỏ văn hoa rườm rà]
-    Caveman --> Response([Kết quả ngắn gọn & chính xác])
-    Response -. Lệnh Test / Build .-> RTK[7. RTK: Nén Output Terminal]
-    RTK -. Nạp lại làm Context .-> Headroom
+    LLM --> ECC_TDD[3. ECC: Strict TDD Red -> Green Cycle]
+    ECC_TDD --> Ponytail[4. Ponytail: Prevent Bloat / Enforce Native APIs]
+    Ponytail --> ECC_Review[5. ECC: Automated Code & Security Review]
+    ECC_Review --> Caveman[6. Caveman: Remove Conversational Verbosity]
+    Caveman --> Response([Concise & Accurate Output])
+    Response -. Test / Build Commands .-> RTK[7. RTK: Terminal Output Compression]
+    RTK -. Recycled Context .-> Headroom
 
     classDef tool fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
     class ECC_Plan,Headroom,ECC_TDD,Ponytail,ECC_Review,Caveman,RTK tool;
 ```
 
-### Bảng Phân Vai 5 Công Cụ:
+### Tool Allocation & Responsibilities
 
-| Công Cụ | File Cấu Hình | Vị Trí Tác Động | Giá Trị Mang Lại |
+| Tool | Configuration File | Operating Layer | Impact & Value |
 | :--- | :--- | :--- | :--- |
-| **RTK** | [RTK.md](file:///d:/my-project/revision-document/RTK.md) | Terminal / Bash Output | Nén sạch tới **90%** log rác từ lệnh test, git, build |
-| **Headroom** | [HEADROOM.md](file:///d:/my-project/revision-document/HEADROOM.md) | Context & Prompt Input | Nén **50% - 80%** prompt tokens trước khi gửi tới model |
-| **Caveman** | [CAVEMAN.md](file:///d:/my-project/revision-document/CAVEMAN.md) | Response Generation | Giảm **1.4× đến 3×** chi phí output token |
-| **Ponytail** | [PONYTAIL.md](file:///d:/my-project/revision-document/PONYTAIL.md) | Code Generation | Cắt giảm **~54%** số dòng code thừa, ngăn over-engineering |
-| **ECC** | [ECC.md](file:///d:/my-project/revision-document/ECC.md) | Development Lifecycle | Chuẩn hóa 100% quy trình TDD, Security và Code Review |
+| **RTK** | [RTK.md](RTK.md) | Terminal / Shell Output | Compresses up to **90%** of terminal noise from test, git, and build outputs |
+| **Headroom** | [HEADROOM.md](HEADROOM.md) | Context & Prompt Input | Reduces prompt tokens by **50% - 80%** prior to model ingestion |
+| **Caveman** | [CAVEMAN.md](CAVEMAN.md) | Response Generation | Cuts conversational token overhead by **1.4x to 3x** |
+| **Ponytail** | [PONYTAIL.md](PONYTAIL.md) | Code Generation | Reduces redundant boilerplate by **~54%**, eliminating over-engineering |
+| **ECC** | [ECC.md](ECC.md) | Development Lifecycle | Standardizes TDD, Security, and Code Review workflows |
 
-👉 Xem hướng dẫn kích hoạt tự động và thiết lập chi tiết tại: **[AI Agent Optimization Guide](file:///d:/my-project/revision-document/README-AI-TOOLS.md)**.
+For automated setup and in-depth configuration, refer to the **[AI Agent Optimization Guide](README-AI-TOOLS.md)**.
 
-Các skill bổ sung về harness, context, tool, evaluation, debug và xác minh có tại [HARNESS.md](HARNESS.md), kèm nguồn, commit cố định và giấy phép MIT.
-
----
-
-## Lộ Trình Mở Rộng Tài Liệu
-
-Xem [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) để chọn chủ đề tiếp theo. Ưu tiên DDD/modular monolith, API contract, PostgreSQL chuyên sâu, integration testing và tích hợp có retry; mỗi nhóm có phần đã có, khoảng trống và lab đề xuất.
+Supplementary skills covering agent harnesses, context compaction, tool design, evaluation, debugging, and verification are detailed in [HARNESS.md](HARNESS.md), including upstream references, pinned commits, and MIT licensing.
 
 ---
 
-## 🤝 Đóng Góp & Giấy Phép
+## Documentation Roadmap
 
-- **Báo cáo lỗi / Góp ý**: Mở Issue tại [GitHub Issues](https://github.com/161seconds/revision-document/issues).
-- **Quy chuẩn gửi Pull Request**:
-  1. Tuân thủ định dạng 3 lớp cho mỗi module.
-  2. Đảm bảo chạy vượt qua toàn bộ lệnh `npm run test:ts:practice` và `npm run test:react:practice`.
-  3. Viết mã nguồn ngắn gọn, tối ưu, chú thích rõ ràng bằng tiếng Việt hoặc tiếng Anh.
-- **Giấy phép (License)**: Dự án phát hành theo giấy phép [ISC License](file:///d:/my-project/revision-document/LICENSE).
+Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic expansions. Current development priorities include DDD/modular monoliths, API contracts, advanced PostgreSQL concurrency, integration testing patterns, and resilient payment integrations with automated retries. Each topic defines existing coverage, known gaps, and proposed labs.
 
 ---
+
+## Contributing & License
+
+- **Reporting Issues / Feedback**: Submit an issue via [GitHub Issues](https://github.com/161seconds/revision-document/issues).
+- **Pull Request Guidelines**:
+  1. Adhere to the standardized 3-tier structure for every module.
+  2. Ensure all automated tests pass (`npm run test:ts:practice` and `npm run test:react:practice`).
+  3. Keep code concise, idiomatic, and clearly commented.
+- **License**: Released under the [ISC License](LICENSE).
+
+---
+
 <p align="center">
-  <b>Happy Coding & Engineering! May your code be bug-free and your systems always scalable.</b> 🌟
+  <b>Happy Coding & Engineering! May your code be bug-free and your systems always scalable.</b>
 </p>

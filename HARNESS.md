@@ -41,6 +41,7 @@ Mỗi thư mục skill giữ bản `LICENSE` MIT của nguồn cùng tài liệu
 ## Điều chỉnh cho repo
 
 - `systematic-debugging` dùng `tdd-workflow` và `verification-before-completion` đã có tại đây, thay cho tên plugin Superpowers.
+- `systematic-debugging/condition-based-waiting-example.ts` dùng kiểu event/manager cục bộ thay cho alias riêng `~/threads/*` của Lace. File được kiểm tra bằng `pnpm run test:ts`; logic polling và timeout giữ nguyên.
 - Tài liệu `researcher/` trong `harness-engineering` trỏ về commit nguồn; không giả định repo này có hệ thống nghiên cứu đó.
 - `tool-design` dùng đúng tên tool do host cung cấp; không áp đặt một kiểu namespace MCP cho mọi host.
 - `tool-design/scripts/description_generator.py` sửa lỗi định dạng JSON: thay placeholder trong từng giá trị trước khi serialize, giữ đúng dấu nháy, xuống dòng và ký tự đặc biệt. Test hồi quy nằm trong `tool-design/tests/`.
