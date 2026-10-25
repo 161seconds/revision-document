@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 24 Domains](https://img.shields.io/badge/Knowledge%20Base-24%20Domains-orange.svg)](#knowledge-base-directory-24-domains)
+[![Topics: 25 Domains](https://img.shields.io/badge/Knowledge%20Base-25%20Domains-orange.svg)](#knowledge-base-directory-25-domains)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Project Overview](#project-overview)
 2. [Key Highlights](#key-highlights)
-3. [Knowledge Base Directory (24 Domains)](#knowledge-base-directory-24-domains)
+3. [Knowledge Base Directory (25 Domains)](#knowledge-base-directory-25-domains)
 4. [Standardized Module Architecture](#standardized-module-architecture)
 5. [Repository Structure](#repository-structure)
 6. [Installation & Automated Testing](#installation--automated-testing)
@@ -37,15 +37,16 @@
 
 ## Key Highlights
 
-- **24 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
+- **25 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
 - **Practical Automated Testing (TDD & Assertions)**: Every practice lab includes executable test suites evaluated directly in the terminal via assertions.
 - **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
 - **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
+- **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
 
 ---
 
-## Knowledge Base Directory (24 Domains)
+## Knowledge Base Directory (25 Domains)
 
 | # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
@@ -73,12 +74,13 @@
 | **22** | **Integration Testing in .NET** | API-Service-Repository testing, xUnit, WebApplicationFactory, Testcontainers, database isolation, and verified persistence tests | [dotnet-integration-testing/](dotnet-integration-testing/README.md) \| [Cheat Sheet](dotnet-integration-testing/summary.md) |
 | **23** | **DDD & Modular Monolith** | Context mapping, Aggregates, Invariants, Bounded Context ownership, module contracts, domain events, and Ordering-Billing lab | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
 | **24** | **Reliable Payments & Webhooks** | Signatures, idempotency keys, inbox/outbox patterns, retries, reconciliation, and PostgreSQL replay/rollback lab | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
+| **25** | **Hallmark UI Design** | 48 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
 
 ---
 
 ## Standardized Module Architecture
 
-Every technical domain adheres to a consistent 3-tier structure:
+Learning modules use a consistent 3-tier structure; imported upstream repositories retain their original layouts:
 
 ```mermaid
 graph LR
@@ -123,6 +125,7 @@ revision-document/
 ├── devops/                       # 5 Docker, Kubernetes, CI/CD & GitOps modules
 ├── dotnet/                       # 5 .NET, C# & C# Zero to Hero modules
 ├── git/                          # 4 Git internals, workflow & advanced recovery modules
+├── hallmark/                     # Complete Hallmark UI design skill, themes, scripts & site
 ├── harness-practice/             # Agent harness guides, prompting & RED/GREEN labs
 ├── hackathon-rmit-2026/          # RMIT Hackathon 2026 Master Handbook & Playbook
 │   ├── 01-roadmap-leader/        # 4-week team leader roadmap
@@ -230,6 +233,16 @@ For automated setup and in-depth configuration, refer to the **[AI Agent Optimiz
 
 Supplementary skills covering agent harnesses, context compaction, tool design, evaluation, debugging, and verification are detailed in [HARNESS.md](HARNESS.md), including upstream references, pinned commits, and MIT licensing.
 
+### Hallmark UI Design
+
+[Hallmark](hallmark/README.md) provides design guidance for Claude Code, Codex, Cursor, and OpenCode. It includes 48 themes, custom design directions, redesign workflows that preserve content and wiring, and UI audits with static and browser-based checks.
+
+- **Source snapshot**: [Nutlope/hallmark](https://github.com/Nutlope/hallmark), version `2.0.0`, pinned to commit [`7ec8682`](https://github.com/Nutlope/hallmark/commit/7ec868225c6caa040558c321ee0fefa0e73f83a8).
+- **Start here**: [Skill guide](hallmark/skills/hallmark/SKILL.md), [theme catalog](hallmark/skills/hallmark/references/themes/index.json), and [design gates](hallmark/skills/hallmark/references/gates.md).
+- **Installation**: The source is stored in `hallmark/`; it is not installed in `.agents/skills/`. Follow the [upstream installation instructions](hallmark/README.md#install) to enable it in a project.
+- **Codex usage after installation**: `$hallmark <prompt>`, `$hallmark redesign <path>`, or `$hallmark audit <path>`.
+- **Requirements**: Node.js `>= 18`; browser checks additionally require Chrome and `puppeteer-core`. Static checks remain available without the browser setup.
+
 ---
 
 ## Documentation Roadmap
@@ -245,7 +258,7 @@ Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic 
   1. Adhere to the standardized 3-tier structure for every module.
   2. Ensure all automated tests pass (`npm run test:ts:practice` and `npm run test:react:practice`).
   3. Keep code concise, idiomatic, and clearly commented.
-- **License**: Released under the [ISC License](LICENSE).
+- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence).
 
 ---
 
