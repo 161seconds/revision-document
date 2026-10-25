@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rowan: edit rows, read the diff, commit</title>
+<meta name="description" content="Rowan is a desktop database client that stages every edit as SQL you review before it runs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="banner">
+  <div class="container banner__in">
+    <p>New connections open read-only until you switch them.</p>
+    <a href="#connect">How connecting works</a>
+  </div>
+</div>
+
+<header class="bar" data-bar>
+  <div class="container bar__in">
+    <a class="wordmark" href="#main" aria-label="Rowan, home">Rowan</a>
+    <nav aria-label="Main">
+      <ul class="bar__links">
+        <li><a href="#steps">Four steps</a></li>
+        <li><a href="#window">The window</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--quiet bar__cta" href="#download">Download</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1>Edit rows. Read the diff. Commit.</h1>
+        <p class="lead">A database client that stages every edit as SQL you review.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#download">Download Rowan</a>
+          <a class="btn btn--quiet" href="#steps">See the four steps</a>
+        </div>
+      </div>
+
+      <div class="hero__visual">
+        <fieldset class="seg">
+          <legend>Show these rows as</legend>
+          <input type="radio" name="view" id="v-grid" value="grid" checked><label for="v-grid">Rowan</label>
+          <input type="radio" name="view" id="v-psql" value="psql"><label for="v-psql">psql</label>
+        </fieldset>
+
+        <figure class="app" data-slot="hero" data-kind="product" data-alt="Rowan's main window: the orders table, one cell edited, the change staged" role="img" aria-label="Rowan showing the orders table filtered to pending orders, with one status cell edited and one change staged">
+          <div class="app__top">
+            <span class="app__conn">shop on db.example.com</span>
+            <span class="app__tab is-on">orders</span>
+            <span class="app__tab">customers</span>
+            <span class="app__mode">Read and write</span>
+          </div>
+          <div class="app__body">
+            <ul class="app__side">
+              <li>customers</li>
+              <li class="is-on">orders</li>
+              <li>order_items</li>
+              <li>products</li>
+              <li>refunds</li>
+            </ul>
+            <div class="app__main">
+              <div class="app__filter"><code>status = 'pending'</code><span>Sort by created</span></div>
+              <div class="grid-view">
+                <table class="rows">
+                  <thead><tr><th>id</th><th>customer</th><th class="r">total</th><th>status</th><th>created</th></tr></thead>
+                  <tbody>
+                    <tr><td>1041</td><td>Example Kitchen</td><td class="r">120.00</td><td>pending</td><td>09:12</td></tr>
+                    <tr class="is-edit"><td>1042</td><td>Example Bakery</td><td class="r">48.50</td><td class="cell-edit"><s>pending</s> shipped</td><td>09:40</td></tr>
+                    <tr><td>1043</td><td>Example Florist</td><td class="r">75.00</td><td>pending</td><td>10:05</td></tr>
+                    <tr><td>1044</td><td>Example Kitchen</td><td class="r">32.00</td><td>pending</td><td>10:31</td></tr>
+                    <tr><td>1045</td><td>Example Cafe</td><td class="r">210.00</td><td>pending</td><td>11:02</td></tr>
+                    <tr class="is-edit"><td>1046</td><td>Example Florist</td><td class="r cell-edit"><s>64.00</s> 60.00</td><td>pending</td><td>11:47</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <pre class="psql-view"><code>shop=&gt; SELECT * FROM orders WHERE status = 'pending' ORDER BY created_at;
+  id  |    customer     | total  | status  |   created_at
+------+-----------------+--------+---------+------------------
+ 1041 | Example Kitchen | 120.00 | pending | 2026-10-19 09:12
+ 1042 | Example Bakery  |  48.50 | pending | 2026-10-19 09:40
+ 1043 | Example Florist |  75.00 | pending | 2026-10-19 10:05
+ 1044 | Example Kitchen |  32.00 | pending | 2026-10-19 10:31
+ 1045 | Example Cafe    | 210.00 | pending | 2026-10-19 11:02
+ 1046 | Example Florist |  64.00 | pending | 2026-10-19 11:47
+(6 rows)
+
+shop=&gt; UPDATE orders SET status = 'shipped' WHERE id = 1042;
+UPDATE 1
+shop=&gt; <span class="comment">-- no review, already written</span></code></pre>
+              <div class="app__foot graphite">
+                <code><span class="token">UPDATE</span> orders <span class="token">SET</span> status = <span class="token">'shipped'</span> <span class="token">WHERE</span> id = 1042;</code>
+                <span class="staged">2 changes staged</span>
+                <span class="app__btn">Review SQL</span>
+              </div>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="window" id="window">
+    <div class="container">
+      <div class="head head--split">
+        <h2>One window per table</h2>
+        <p class="lead">Rows, schema, JSON and keys share one screen.</p>
+      </div>
+      <div class="bento">
+        <article class="tile tile--lead">
+          <div class="tile__vis" data-slot="fk" data-kind="product" data-alt="An order row with its customer opened beside it from the foreign key" role="img" aria-label="An order row whose customer_id opens the matching customer row beside it">
+            <div class="fk">
+              <table class="rows rows--mini">
+                <thead><tr><th>id</th><th>customer_id</th><th class="r">total</th></tr></thead>
+                <tbody>
+                  <tr><td>1041</td><td><span class="link">17</span></td><td class="r">120.00</td></tr>
+                  <tr class="is-sel"><td>1042</td><td><span class="link">23</span></td><td class="r">48.50</td></tr>
+                  <tr><td>1043</td><td><span class="link">31</span></td><td class="r">75.00</td></tr>
+                </tbody>
+              </table>
+              <dl class="record">
+                <div><dt>customers.id</dt><dd>23</dd></div>
+                <div><dt>name</dt><dd>Example Bakery</dd></div>
+                <div><dt>email</dt><dd>orders@example.com</dd></div>
+                <div><dt>city</dt><dd>Leeds</dd></div>
+              </dl>
+            </div>
+          </div>
+          <h3>Follow a foreign key</h3>
+          <p>Click customer_id and the customer opens beside the order.</p>
+        </article>
+
+        <article class="tile">
+          <div class="tile__vis graphite" data-slot="json" data-kind="product" data-alt="A JSON column opened as a tree" role="img" aria-label="A JSON cell from the products table opened as a collapsible tree">
+<pre><code><span class="comment">products.attributes, row 8</span>
+{
+  <span class="token">"colour"</span>: <span class="token">"oat"</span>,
+  <span class="token">"sizes"</span>: [<span class="token">"S"</span>, <span class="token">"M"</span>, <span class="token">"L"</span>],
+  <span class="token">"care"</span>: {
+    <span class="token">"wash"</span>: 30,
+    <span class="token">"tumble"</span>: false
+  }
+}</code></pre>
+          </div>
+          <h3>JSON cells open as trees</h3>
+          <p>Fold, search and edit nested values in place.</p>
+        </article>
+
+        <article class="tile">
+          <div class="tile__vis" data-slot="palette" data-kind="product" data-alt="The command palette with three matches" role="img" aria-label="The command palette searching for refunds, showing three matches">
+            <div class="palette">
+              <div class="palette__q"><span>refu</span><kbd>⌘&nbsp;K</kbd></div>
+              <ul>
+                <li class="is-on">Open table refunds</li>
+                <li>Filter orders by refund_id</li>
+                <li>Copy refunds as CSV</li>
+              </ul>
+            </div>
+          </div>
+          <h3>Every action on ⌘&nbsp;K</h3>
+          <p>Tables, filters and exports, a few letters away.</p>
+        </article>
+
+        <article class="tile tile--wide">
+          <div class="tile__vis" data-slot="schema" data-kind="product" data-alt="The schema panel listing columns and types for orders" role="img" aria-label="The schema panel for orders, listing each column with its type and keys">
+            <table class="schema">
+              <tbody>
+                <tr><td>id</td><td><code>bigint</code></td><td>primary key</td></tr>
+                <tr><td>customer_id</td><td><code>bigint</code></td><td>references customers</td></tr>
+                <tr><td>total</td><td><code>numeric(10,2)</code></td><td>not null</td></tr>
+                <tr><td>status</td><td><code>text</code></td><td>default 'pending'</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>The schema stays in view</h3>
+          <p>Types, keys and defaults sit beside the rows they shape.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div id="steps">
+    <section class="stage stage--connect" id="connect">
+      <div class="container split">
+        <div class="split__text">
+          <h2>1. Open it read-only</h2>
+          <p class="lead">Paste the connection URL from your app’s config.</p>
+          <ul class="facts">
+            <li>Test the connection before you save it</li>
+            <li>Passwords go to the system keychain</li>
+          </ul>
+        </div>
+        <div class="split__vis" data-slot="connect" data-kind="product" data-alt="The new connection form, read-only switched on" role="img" aria-label="The new connection form with a Postgres URL pasted and read-only switched on">
+          <div class="conn">
+            <p class="conn__title">New connection</p>
+            <div class="conn__field"><span class="conn__label">URL</span><span class="conn__input"><code>postgres://app@db.example.com:5432/shop</code></span></div>
+            <div class="conn__pair">
+              <div class="conn__field"><span class="conn__label">Name</span><span class="conn__input">shop</span></div>
+              <div class="conn__field"><span class="conn__label">Password</span><span class="conn__input">Saved in keychain</span></div>
+            </div>
+            <div class="conn__switch"><span class="switch is-on" aria-hidden="true"></span><span>Read-only</span></div>
+            <div class="conn__foot"><span class="app__btn app__btn--quiet">Test</span><span class="app__btn">Connect</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage stage--browse">
+      <div class="container">
+        <div class="head head--split">
+          <h2>2. Filter without writing SQL</h2>
+          <p class="lead">Click a column to sort it; type to filter.</p>
+        </div>
+        <div class="browse" data-slot="browse" data-kind="product" data-alt="The customers table filtered by city, sorted by name" role="img" aria-label="The customers table filtered to Leeds and sorted by name">
+          <div class="browse__bar">
+            <span class="chip">city is Leeds</span>
+            <span class="chip">orders over 0</span>
+            <span class="browse__sort">Sorted by name</span>
+          </div>
+          <table class="rows rows--wide">
+            <thead><tr><th>id</th><th>name</th><th>email</th><th>city</th><th class="r">orders</th></tr></thead>
+            <tbody>
+              <tr><td>23</td><td>Example Bakery</td><td>orders@example.com</td><td>Leeds</td><td class="r">14</td></tr>
+              <tr class="is-sel"><td>17</td><td>Example Kitchen</td><td>hello@example.com</td><td>Leeds</td><td class="r">9</td></tr>
+              <tr><td>40</td><td>Example Market</td><td>shop@example.com</td><td>Leeds</td><td class="r">3</td></tr>
+              <tr><td>52</td><td>Example Studio</td><td>studio@example.com</td><td>Leeds</td><td class="r">1</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage stage--query">
+      <div class="container split split--flip">
+        <div class="split__vis graphite editor" data-slot="query" data-kind="product" data-alt="The SQL editor with a join and its result count" role="img" aria-label="The SQL editor with a query joining orders and customers, completing a column name">
+          <p class="editor__file">leeds-pending.sql</p>
+<pre><code><span class="ln">1</span><span class="token">SELECT</span> c.name, <span class="token">count</span>(o.id) <span class="token">AS</span> pending
+<span class="ln">2</span><span class="token">FROM</span> orders o
+<span class="ln">3</span><span class="token">JOIN</span> customers c <span class="token">ON</span> c.id = o.customer_id
+<span class="ln">4</span><span class="token">WHERE</span> o.status = <span class="token">'pending'</span>
+<span class="ln">5</span>  <span class="token">AND</span> c.city = <span class="token">'Leeds'</span>
+<span class="hl"><span class="ln">6</span><span class="token">GROUP BY</span> c.na<span class="caret">me</span></span>
+<span class="ln">7</span><span class="token">ORDER BY</span> pending <span class="token">DESC</span>;</code></pre>
+          <ul class="complete">
+            <li class="is-on"><code>name</code><span>text, customers</span></li>
+            <li><code>notes</code><span>text, customers</span></li>
+          </ul>
+        </div>
+        <div class="split__text">
+          <h2>3. Write the SELECT yourself</h2>
+          <p class="lead">For the joins and counts a filter cannot reach.</p>
+          <ul class="facts">
+            <li>Column names complete from the live schema</li>
+            <li>Results open as a table you can filter again</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage stage--commit">
+      <div class="container">
+        <div class="head head--split">
+          <h2>4. Commit what you read</h2>
+          <p class="lead">psql writes on Enter. Rowan waits for you.</p>
+        </div>
+        <div class="diff" data-slot="commit" data-kind="product" data-alt="Rowan's review pane with the staged transaction" role="img" aria-label="The same two edits: psql has already written them, Rowan holds them as a transaction to review">
+          <div class="pane graphite">
+            <p class="pane__head">psql, already written</p>
+<pre><code>shop=&gt; <span class="token">UPDATE</span> orders <span class="token">SET</span> status = <span class="token">'shipped'</span>
+         <span class="token">WHERE</span> id = 1042;
+UPDATE 1
+shop=&gt; <span class="token">UPDATE</span> orders <span class="token">SET</span> total = 60.00
+         <span class="token">WHERE</span> id = 1046;
+UPDATE 1</code></pre>
+          </div>
+          <div class="pane graphite">
+            <p class="pane__head">Rowan, commit.sql, waiting for review</p>
+<pre><code><span class="token">BEGIN</span>;
+<span class="hl"><span class="token">UPDATE</span> orders <span class="token">SET</span> status = <span class="token">'shipped'</span> <span class="token">WHERE</span> id = 1042;</span>
+<span class="hl"><span class="token">UPDATE</span> orders <span class="token">SET</span> total = 60.00 <span class="token">WHERE</span> id = 1046;</span>
+<span class="token">COMMIT</span>;</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="close" id="download">
+    <div class="container close__grid">
+      <div>
+        <h2>Get the download link</h2>
+        <p class="lead">One email, with the installer and nothing else.</p>
+      </div>
+      <form class="signup" data-endpoint="" novalidate>
+        <label for="email">Work email</label>
+        <div class="signup__row">
+          <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+          <button class="btn btn--primary" type="submit">Send the link</button>
+        </div>
+        <p class="signup__help" id="email-help" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark">Rowan</p>
+    <div class="foot__row">
+      <ul class="foot__links">
+        <li><a href="#window">The window</a></li>
+        <li><a href="#steps">Four steps</a></li>
+        <li><a href="#download">Download</a></li>
+      </ul>
+      <p class="foot__legal">© 2026 Rowan</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const bar = document.querySelector('[data-bar]');
+  let last = scrollY, ticking = false;
+  addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = scrollY;
+      bar.classList.toggle('is-hidden', y > last && y > 240 && !bar.contains(document.activeElement));
+      last = y; ticking = false;
+    });
+  }, { passive: true });
+  bar.addEventListener('focusin', () => bar.classList.remove('is-hidden'));
+})();
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const input = form.querySelector('input'), help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'The link is on its way to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

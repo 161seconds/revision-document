@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Summer School of Making: wood, ink and clay in Weimar</title>
+<meta name="description" content="A four-week summer course in furniture, print and ceramics in Weimar, 1 to 28 July. 36 places; applications close 15 March.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@700&family=Karla:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="container bar__in">
+    <a class="wordmark" href="#top" aria-label="Summer School of Making, home">Summer School of Making</a>
+    <nav class="bar__nav" aria-label="Main">
+      <a class="bar__link" href="#shops">The shops</a>
+      <a class="bar__link" href="#dates">Dates</a>
+      <a class="btn btn--primary btn--bar" href="#apply">Apply<span class="bar__by">&nbsp;by 15 March</span></a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-h">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-h">A summer of making in Weimar</h1>
+        <p class="lead">Furniture, print and ceramics, from 1 to 28&nbsp;July.</p>
+        <dl class="boxes">
+          <div><dt>Places</dt><dd>36</dd></div>
+          <div><dt>Applications close</dt><dd>15 March</dd></div>
+        </dl>
+        <div class="actions">
+          <a class="btn btn--primary" href="#apply">Apply for a place</a>
+          <a class="btn btn--outline" href="#shops">See the three shops</a>
+        </div>
+      </div>
+      <div class="hero__visual">
+        <figure class="photo hero__photo" data-slot="hero" data-alt="One of the school's own shops in daylight, benches and machines ready">
+          <img src="photos/woodshop-1920.jpg" width="1920" height="1274" sizes="(min-width: 60rem) 46vw, 100vw" fetchpriority="high" style="object-position: 35% 55%" alt="A long daylit woodshop of workbenches and machines">
+        </figure>
+        <nav class="hero__codes" aria-label="The three shops">
+          <a class="code code--furniture" href="#furniture" data-open="furniture">Furniture</a>
+          <a class="code code--print" href="#print" data-open="print">Print</a>
+          <a class="code code--ceramics" href="#ceramics" data-open="ceramics">Ceramics</a>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  <section class="shops" id="shops" aria-labelledby="shops-h">
+    <div class="container">
+      <div class="head-split">
+        <h2 id="shops-h">Three shops, one course</h2>
+        <p class="lead">Choose the one you want first. Each keeps its colour on this page.</p>
+      </div>
+      <div class="switch">
+        <div class="tabs" role="tablist" aria-label="The three shops"><button role="tab" class="tab tab--furniture" id="t-furniture" aria-controls="furniture" aria-selected="true">Furniture</button><button role="tab" class="tab tab--print" id="t-print" aria-controls="print" aria-selected="false" tabindex="-1">Print</button><button role="tab" class="tab tab--ceramics" id="t-ceramics" aria-controls="ceramics" aria-selected="false" tabindex="-1">Ceramics</button></div>
+        <article class="shop" role="tabpanel" id="furniture" aria-labelledby="t-furniture">
+          <figure class="photo shop__photo" data-slot="furniture" data-alt="The furniture shop at work: hands at a bench, a lathe or a joint">
+            <img src="photos/woodturning-indonesia-1920.jpg" width="1920" height="1280" sizes="(min-width: 60rem) 56vw, 100vw" loading="lazy" style="object-position: 40% 50%" alt="Hands steadying a gouge against a lathe as the shavings fly">
+          </figure>
+          <div class="shop__cell code--furniture">
+            <h3>Furniture</h3>
+            <ul class="shop__covers"><li>Joints</li><li>Frames</li><li>Finishes</li></ul>
+            <a class="shop__go" href="#apply" data-pick="furniture">Apply with furniture first</a>
+          </div>
+        </article>
+        <article class="shop" role="tabpanel" id="print" aria-labelledby="t-print">
+          <figure class="photo shop__photo" data-slot="print" data-alt="The print shop at work: type, ink and a press, a sheet being pulled">
+            <img src="photos/american-french-tool-24x48-etching-press-1280.jpg" width="1280" height="1342" sizes="(min-width: 60rem) 56vw, 100vw" loading="lazy" style="object-position: 50% 55%" alt="A spoked etching press standing in a bare print room">
+          </figure>
+          <div class="shop__cell code--print">
+            <h3>Print</h3>
+            <ul class="shop__covers"><li>Paper</li><li>Ink</li><li>The press</li></ul>
+            <a class="shop__go" href="#apply" data-pick="print">Apply with print first</a>
+          </div>
+        </article>
+        <article class="shop" role="tabpanel" id="ceramics" aria-labelledby="t-ceramics">
+          <figure class="photo shop__photo" data-slot="ceramics" data-alt="The ceramics shop at work: the wheel, the clay and the tools">
+            <img src="photos/pottery-workshop-at-odisha-crafts-museum-02-1920.jpg" width="1920" height="1280" sizes="(min-width: 60rem) 56vw, 100vw" loading="lazy" style="object-position: 52% 45%" alt="A potter's hands closing a clay cone on a fast spinning wheel">
+          </figure>
+          <div class="shop__cell code--ceramics">
+            <h3>Ceramics</h3>
+            <ul class="shop__covers"><li>Clay</li><li>Glaze</li><li>The kiln</li></ul>
+            <a class="shop__go" href="#apply" data-pick="ceramics">Apply with ceramics first</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cal" id="dates" aria-labelledby="dates-h">
+    <div class="container">
+      <div class="head-split">
+        <h2 id="dates-h">From March to July</h2>
+        <p class="lead">Apply first. Then four weeks at the bench, all three shops at once.</p>
+      </div>
+      <div class="cal__grid">
+        <div class="cal__deadline is-next">
+          <p class="cal__tag">Next</p>
+          <p class="cal__day">15 March</p>
+          <p class="cal__what">Applications close</p>
+        </div>
+        <div class="cal__july">
+          <p class="cal__tag">Next</p>
+          <ol class="cal__weeks" aria-label="The four weeks of July">
+            <li><b>Week 1</b><span>1 to 7 July</span></li>
+            <li><b>Week 2</b><span>8 to 14 July</span></li>
+            <li><b>Week 3</b><span>15 to 21 July</span></li>
+            <li><b>Week 4</b><span>22 to 28 July</span></li>
+          </ol>
+          <ul class="cal__shops" aria-label="Shops open through July">
+            <li class="code--furniture">Furniture</li>
+            <li class="code--print">Print</li>
+            <li class="code--ceramics">Ceramics</li>
+          </ul>
+          <div class="cal__ends"><span>1 July, the shops open</span><span>28 July, the last day</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="apply" id="apply" aria-labelledby="apply-h">
+    <div class="container apply__grid">
+      <div class="apply__head">
+        <h2 id="apply-h">Apply for a place</h2>
+        <p class="lead">For students, and for anyone changing career.</p>
+        <dl class="facts">
+          <div><dt>Where</dt><dd>Weimar</dd></div>
+          <div><dt>When</dt><dd>1 to 28 July</dd></div>
+          <div><dt>Places</dt><dd>36</dd></div>
+          <div><dt>Closes</dt><dd>15 March</dd></div>
+        </dl>
+      </div>
+      <form class="sheet" data-endpoint="" novalidate>
+        <div class="sheet__cell">
+          <label for="a-name">Your name</label>
+          <input id="a-name" name="name" type="text" autocomplete="name" required>
+        </div>
+        <div class="sheet__cell">
+          <label for="a-email">Email</label>
+          <input id="a-email" name="email" type="email" autocomplete="email" inputmode="email" required>
+        </div>
+        <fieldset class="sheet__cell sheet__cell--wide pick">
+          <legend>First choice</legend>
+          <div class="pick__row">
+            <input type="radio" name="shop" id="s-furniture" value="furniture" required><label class="opt-furniture" for="s-furniture">Furniture</label>
+            <input type="radio" name="shop" id="s-print" value="print"><label class="opt-print" for="s-print">Print</label>
+            <input type="radio" name="shop" id="s-ceramics" value="ceramics"><label class="opt-ceramics" for="s-ceramics">Ceramics</label>
+          </div>
+        </fieldset>
+        <fieldset class="sheet__cell sheet__cell--wide pick pick--plain">
+          <legend>You are</legend>
+          <div class="pick__row pick__row--two">
+            <input type="radio" name="who" id="w-student" value="student"><label for="w-student">A student</label>
+            <input type="radio" name="who" id="w-change" value="changing career"><label for="w-change">Changing career</label>
+          </div>
+        </fieldset>
+        <div class="sheet__cell sheet__cell--wide">
+          <label for="a-why">What would you like to make?</label>
+          <textarea id="a-why" name="why" rows="3"></textarea>
+        </div>
+        <div class="sheet__foot">
+          <button class="btn btn--paper" type="submit">Apply for a place</button>
+          <p class="apply__help" id="apply-help" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__line">Wood, ink and clay. Weimar, in July.</p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="This page">
+        <a href="#shops">The shops</a>
+        <a href="#dates">Dates</a>
+        <a href="#apply">Apply</a>
+      </nav>
+      <p class="foot__legal">&copy; 2026 Summer School of Making</p>
+    </div>
+    <p class="foot__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Woodshop.jpg">Dolly442</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Woodturning_Indonesia.jpg">Bertrand from Paris, France</a> (CC BY 2.0), <a href="https://commons.wikimedia.org/wiki/File:American_French_Tool_24x48_etching_press.jpg">ColinMB</a> (CC BY-SA 4.0) and <a href="https://commons.wikimedia.org/wiki/File:Pottery_workshop_at_Odisha_Crafts_Museum_02.jpg">Kritzolina</a> (CC BY-SA 4.0), all on Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const tabs = [...document.querySelectorAll('.tabs [role="tab"]')]; if (!tabs.length) return;
+  const show = (t, focus) => { tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); if (focus) t.focus(); };
+  tabs.forEach((t, i) => { t.addEventListener('click', () => show(t)); t.addEventListener('keydown', (e) => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) { e.preventDefault(); show(tabs[(i + d + tabs.length) % tabs.length], true); } }); });
+  show(tabs[0]);
+  document.querySelectorAll('[data-open]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); show(document.getElementById('t-' + a.dataset.open)); document.getElementById('shops').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); }));
+  document.querySelectorAll('[data-pick]').forEach((a) => a.addEventListener('click', () => { const r = document.getElementById('s-' + a.dataset.pick); if (r) r.checked = true; }));
+  /* the next date on the calendar, from the visitor's own date */
+  const now = new Date(), m = now.getMonth(), d = now.getDate();
+  const july = (m === 6 && d <= 28), toJuly = (m === 2 && d > 15) || m === 3 || m === 4 || m === 5;
+  const dl = document.querySelector('.cal__deadline'), jl = document.querySelector('.cal__july');
+  if (dl && jl) { dl.classList.toggle('is-next', !july && !toJuly); jl.classList.toggle('is-next', july || toJuly); jl.querySelector('.cal__tag').textContent = july ? 'Now' : 'Next'; }
+})();
+(() => {
+  const form = document.querySelector('.sheet');
+  const help = document.getElementById('apply-help');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fields = [...form.querySelectorAll('input[type="text"], input[type="email"]')];
+    fields.forEach((i) => i.removeAttribute('aria-invalid'));
+    const bad = fields.find((i) => !i.checkValidity());
+    if (bad) { bad.setAttribute('aria-invalid', 'true'); bad.setAttribute('aria-describedby', 'apply-help'); help.textContent = bad.type === 'email' ? 'That email looks incomplete. Write it as name@example.com.' : 'Write your name so we know who is applying.'; bad.focus(); return; }
+    if (!form.querySelector('input[name="shop"]:checked')) { help.textContent = 'Pick the shop you want first.'; form.querySelector('#s-furniture').focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Your application reached the school.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+})();
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

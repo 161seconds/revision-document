@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fenwick and Daughters, coffee roasted in York since 1921</title>
+<meta name="description" content="Fenwick and Daughters roasts six coffees a week in York, sold in 250 g bags or by subscription.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600&family=Grenze:wght@400&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="mast">
+  <div class="container mast__bar">
+    <a class="mast__link" href="#week">This week</a>
+    <a class="wordmark" href="#top" aria-label="Fenwick and Daughters, back to the top">Fenwick and Daughters</a>
+    <a class="mast__link mast__link--end" href="#order">Order</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-h">
+    <figure class="hero__photo" data-slot="roaster" data-alt="The York roaster at work, a fresh roast tipping into the cooling tray">
+      <img src="photos/cooling-time-for-coffee-1920.jpg" width="1920" height="1348" fetchpriority="high"
+           alt="A fresh roast swept round the cooling tray by its paddle arm">
+    </figure>
+    <div class="container hero__inner">
+      <div class="plate fibre">
+        <h1 id="hero-h">Roasted in York<br> since 1921</h1>
+        <p class="lead">Six coffees a week, sold in 250&nbsp;g bags or by subscription.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#order">Order a bag</a>
+          <a class="btn" href="#week">See this week’s six</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="week" id="week" aria-labelledby="week-h">
+    <div class="container">
+      <div class="split week__head">
+        <h2 id="week-h">This week’s six</h2>
+        <p class="lead">Roasted this week in York. Choose a row to order it.</p>
+      </div>
+      <div class="ledger-wrap">
+        <table class="ledger">
+          <thead>
+            <tr><th scope="col" class="idx">No.</th><th scope="col">Coffee</th><th scope="col">Process</th><th scope="col">Roast</th><th scope="col">Brew it for</th><th scope="col" class="r"><span class="visually-hidden">Order</span></th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="idx">1</td><th scope="row">Yirgacheffe, Ethiopia</th><td>Washed</td><td>Light</td><td>Filter</td><td class="r"><a class="pick" href="#order" data-coffee="1">Order<span class="visually-hidden"> Yirgacheffe, Ethiopia</span></a></td></tr>
+            <tr><td class="idx">2</td><th scope="row">Huila, Colombia</th><td>Washed</td><td>Medium</td><td>Filter</td><td class="r"><a class="pick" href="#order" data-coffee="2">Order<span class="visually-hidden"> Huila, Colombia</span></a></td></tr>
+            <tr><td class="idx">3</td><th scope="row">Cerrado, Brazil</th><td>Natural</td><td>Medium</td><td>Espresso</td><td class="r"><a class="pick" href="#order" data-coffee="3">Order<span class="visually-hidden"> Cerrado, Brazil</span></a></td></tr>
+            <tr><td class="idx">4</td><th scope="row">Antigua, Guatemala</th><td>Washed</td><td>Medium</td><td>Filter</td><td class="r"><a class="pick" href="#order" data-coffee="4">Order<span class="visually-hidden"> Antigua, Guatemala</span></a></td></tr>
+            <tr><td class="idx">5</td><th scope="row">Kiambu, Kenya</th><td>Washed</td><td>Light</td><td>Filter</td><td class="r"><a class="pick" href="#order" data-coffee="5">Order<span class="visually-hidden"> Kiambu, Kenya</span></a></td></tr>
+            <tr><td class="idx">6</td><th scope="row">The York blend</th><td>Washed and natural</td><td>Dark</td><td>Espresso</td><td class="r"><a class="pick" href="#order" data-coffee="6">Order<span class="visually-hidden"> The York blend</span></a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="drum" aria-labelledby="drum-h">
+    <div class="container split drum__grid">
+      <figure class="photo drum__photo" data-slot="drum" data-alt="The roaster in York between roasts, the drum over its cooling tray">
+        <img src="photos/coffee-roasting-machine-the-roastery-coaltown-coffee-ammanfo-1920.jpg" width="1920" height="2560" loading="lazy"
+             alt="A drum coffee roaster above its copper cooling tray" style="object-position: 50% 62%">
+      </figure>
+      <div class="drum__text">
+        <h2 id="drum-h">Every bag roasted in York</h2>
+        <p class="lead">The week’s six go through the drum here, then into their bags.</p>
+        <dl class="facts">
+          <div><dt>Roastery</dt><dd>York</dd></div>
+          <div><dt>Roasting since</dt><dd>1921</dd></div>
+          <div><dt>Each week</dt><dd>Six coffees, listed above</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="ways band fibre" aria-labelledby="ways-h">
+    <div class="container">
+      <p class="statement">Two ways to buy, and the same six coffees either way.</p>
+      <h2 id="ways-h" class="visually-hidden">Ways to buy</h2>
+      <ol class="ways__rows" role="list">
+        <li><h3 class="ways__title">By the bag</h3><p>One bag of any of the week’s six, or two, or three.</p><a class="ways__go" href="#order" data-kind="bag">Order a bag</a></li>
+        <li><h3 class="ways__title">By subscription</h3><p>The same bags, sent on a rhythm you choose.</p><a class="ways__go" href="#order" data-kind="subscription">Start one</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="cup" id="cup" aria-labelledby="cup-h">
+    <div class="container">
+      <div class="split cup__head">
+        <h2 id="cup-h">From the sack to the cup</h2>
+        <p class="lead">Green coffee goes in, the week’s six come out, and the brewing is yours.</p>
+      </div>
+      <div class="split cup__pair">
+        <figure class="cup__a">
+          <div class="photo" data-slot="green" data-alt="Green coffee in its sack before roasting">
+            <img src="photos/green-bean-coffee-1920.jpg" width="1920" height="1277" loading="lazy"
+                 alt="A burlap sack spilling green coffee beans across a wooden table" style="object-position: 55% 60%">
+          </div>
+          <figcaption>Green coffee, before the drum</figcaption>
+        </figure>
+        <figure class="cup__b">
+          <div class="photo" data-slot="cup" data-alt="A cup of the week’s coffee">
+            <img src="photos/espresso-coffee-pouring-from-retro-espresso-machine-1920.jpg" width="1920" height="2876" loading="lazy"
+                 alt="Espresso streaming from a chrome machine into two glass cups" style="object-position: 50% 62%">
+          </div>
+          <figcaption>The cup, after it</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="order-band" id="order" aria-labelledby="order-h">
+    <div class="container">
+      <form class="split order" data-endpoint="" novalidate>
+        <div class="order__text">
+          <h2 id="order-h">Order from this week</h2>
+          <fieldset class="cells" data-group="coffee">
+            <legend>Coffee</legend>
+            <div class="cells__row cells__row--3">
+              <input type="radio" name="coffee" id="coffee-1" value="Yirgacheffe, Ethiopia" checked><label for="coffee-1"><span class="cells__no">1</span> Yirgacheffe</label>
+              <input type="radio" name="coffee" id="coffee-2" value="Huila, Colombia"><label for="coffee-2"><span class="cells__no">2</span> Huila</label>
+              <input type="radio" name="coffee" id="coffee-3" value="Cerrado, Brazil"><label for="coffee-3"><span class="cells__no">3</span> Cerrado</label>
+              <input type="radio" name="coffee" id="coffee-4" value="Antigua, Guatemala"><label for="coffee-4"><span class="cells__no">4</span> Antigua</label>
+              <input type="radio" name="coffee" id="coffee-5" value="Kiambu, Kenya"><label for="coffee-5"><span class="cells__no">5</span> Kiambu</label>
+              <input type="radio" name="coffee" id="coffee-6" value="The York blend"><label for="coffee-6"><span class="cells__no">6</span> York blend</label>
+            </div>
+          </fieldset>
+          <fieldset class="cells" data-group="kind">
+            <legend>How you buy</legend>
+            <div class="cells__row cells__row--2">
+              <input type="radio" name="kind" id="kind-bag" value="bag" checked><label for="kind-bag">By the bag</label>
+              <input type="radio" name="kind" id="kind-sub" value="subscription"><label for="kind-sub">By subscription</label>
+            </div>
+          </fieldset>
+          <div class="cells__pair">
+            <fieldset class="cells" data-group="bags">
+              <legend>Bags each time</legend>
+              <div class="cells__row cells__row--3">
+                <input type="radio" name="bags" id="bags-1" value="1" checked><label for="bags-1">1</label>
+                <input type="radio" name="bags" id="bags-2" value="2"><label for="bags-2">2</label>
+                <input type="radio" name="bags" id="bags-3" value="3"><label for="bags-3">3</label>
+              </div>
+            </fieldset>
+            <fieldset class="cells" data-group="often" disabled>
+              <legend>How often</legend>
+              <div class="cells__row cells__row--3">
+                <input type="radio" name="often" id="often-w" value="every week" checked><label for="often-w">Weekly</label>
+                <input type="radio" name="often" id="often-f" value="every fortnight"><label for="often-f">Fortnightly</label>
+                <input type="radio" name="often" id="often-m" value="every month"><label for="often-m">Monthly</label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+        <div class="order__sum">
+          <p class="order__label">Your order</p>
+          <p class="tally" aria-live="polite"><span class="tally__g">250&nbsp;g</span> <span class="tally__of">of <span class="tally__coffee">Yirgacheffe, Ethiopia</span></span> <span class="tally__when">once</span></p>
+          <dl class="order__terms">
+            <div><dt>Bag</dt><dd>250&nbsp;g, roasted in York</dd></div>
+            <div><dt>Price</dt><dd><span class="fill" data-fill="price">price to come</span></dd></div>
+          </dl>
+          <button class="btn btn--on-field" type="submit">Place the order</button>
+          <p class="help" id="order-help" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<aside class="buybar" aria-label="Order" hidden>
+  <div class="container buybar__inner">
+    <p class="buybar__text"><span class="buybar__name">This week’s six</span> <span class="buybar__terms">by the bag, or by subscription</span></p>
+    <a class="btn btn--primary" href="#order">Order a bag</a>
+  </div>
+</aside>
+
+<footer class="letter">
+  <div class="container letter__inner">
+    <p class="letter__sign">With thanks from the roastery,</p>
+    <p class="letter__name">Fenwick and Daughters</p>
+    <div class="letter__foot">
+      <nav class="letter__nav" aria-label="Footer">
+        <a href="#week">This week’s six</a>
+        <a href="#cup">From the sack to the cup</a>
+        <a href="#order">Order</a>
+      </nav>
+      <p class="legal">York, since 1921</p>
+      <p class="letter__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Cooling_time_for_coffee.jpg">Jameswasswa</a> (CC&nbsp;BY-SA&nbsp;4.0), <a href="https://commons.wikimedia.org/wiki/File:Coffee_roasting_machine,_The_Roastery,_Coaltown_Coffee,_Ammanford,_Wales.jpg">Vouliagmeni</a> (CC&nbsp;BY-SA&nbsp;4.0), <a href="https://commons.wikimedia.org/wiki/File:Green_Bean_Coffee.jpg">DeaPeaJay</a> (CC&nbsp;BY-SA&nbsp;2.0), <a href="https://commons.wikimedia.org/wiki/File:Espresso_coffee_pouring_from_retro_espresso_machine.jpg">Shixart1985</a> (CC&nbsp;BY&nbsp;2.0), all on Wikimedia Commons.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+(() => {
+  const form = document.querySelector('form.order');
+  const often = form.querySelector('[data-group="often"]');
+  const g = form.querySelector('.tally__g'), when = form.querySelector('.tally__when'), coffee = form.querySelector('.tally__coffee');
+  const submit = form.querySelector('button[type="submit"]');
+  const tally = () => {
+    const sub = form.elements.kind.value === 'subscription';
+    often.disabled = !sub;
+    const grams = 250 * Number(form.elements.bags.value);
+    g.textContent = grams >= 1000 ? `${grams / 1000} kg` : `${grams} g`;
+    coffee.textContent = form.elements.coffee.value;
+    when.textContent = sub ? form.elements.often.value : 'once';
+    submit.textContent = sub ? 'Start the subscription' : 'Place the order';
+  };
+  form.addEventListener('change', tally);
+  document.querySelectorAll('[data-kind]').forEach((a) => a.addEventListener('click', () => { form.elements.kind.value = a.dataset.kind; tally(); }));
+  document.querySelectorAll('[data-coffee]').forEach((a) => a.addEventListener('click', () => { form.elements.coffee.value = form.querySelector(`#coffee-${a.dataset.coffee}`).value; tally(); }));
+  tally();
+  const help = form.querySelector('#order-help');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: the order is not connected to a shop yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'The roastery has your order.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+  const bar = document.querySelector('.buybar'), hero = document.querySelector('.hero'), order = document.getElementById('order');
+  if (bar && 'IntersectionObserver' in window) {
+    bar.hidden = false;
+    const seen = { hero: true, order: false };
+    const sync = () => bar.classList.toggle('is-up', !seen.hero && !seen.order);
+    new IntersectionObserver(([e]) => { seen.hero = e.isIntersecting; sync(); }).observe(hero);
+    new IntersectionObserver(([e]) => { seen.order = e.isIntersecting; sync(); }, { rootMargin: '0px 0px -20% 0px' }).observe(order);
+  }
+})();
+</script>
+</body>
+</html>

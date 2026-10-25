@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark: who changed the protocol, when, and why</title>
+<meta name="description" content="Benchmark is a lab notebook that versions experimental protocols and records every change with who, when and why, for research labs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@400;500&family=Atkinson+Hyperlegible+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="container nav">
+  <div class="bar">
+    <a class="bar__mark" href="#top" aria-label="Benchmark, home">Benchmark</a>
+    <nav class="bar__links" aria-label="Main">
+      <a href="#reason">The record</a>
+      <a href="#before">Versions</a>
+      <a href="#week">The lab</a>
+      <a href="#try">Try one</a>
+      <a href="#questions">Questions</a>
+    </nav>
+    <div class="bar__end"><a class="btn btn--line btn--nav" href="#request" data-to-request>Request access</a></div>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Who changed the anneal step?</h1>
+      <p class="lead">Benchmark records who changed a protocol, when, and why.</p>
+      <form class="ask" id="request" data-endpoint="" novalidate>
+        <label class="ask__label" for="email">Work email</label>
+        <div class="ask__row">
+          <input class="input" id="email" name="email" type="email" autocomplete="email" placeholder="name@lab.example" required>
+          <button class="btn btn--amber" type="submit">Request access</button>
+        </div>
+        <p class="ask__help" id="ask-help" aria-live="polite">For research labs, by request. Or <a href="#try">try a change</a> first.</p>
+      </form>
+    </div>
+
+    <div class="hero__visual">
+      <div class="panels record" data-slot="hero" data-alt="One protocol in your Benchmark: its versions, its steps, the step that changed and the record of that change">
+        <div class="record__head">
+          <span class="record__name">PCR, 30 cycles</span>
+          <span class="record__where">Protocols, molecular</span>
+        </div>
+        <ol class="rail" aria-label="Versions of PCR, 30 cycles">
+          <li><span class="m">v1</span></li>
+          <li><span class="m">v2</span></li>
+          <li><span class="m">v3</span></li>
+          <li><span class="m">v4</span></li>
+          <li class="is-now" aria-current="true"><span class="m">v5</span></li>
+        </ol>
+        <table class="steps">
+          <caption class="visually-hidden">Steps of the sample protocol, version 5</caption>
+          <thead><tr><th scope="col">Step</th><th scope="col">Temperature</th><th scope="col">Time</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><span class="m n">1</span>Initial denaturation</th><td class="m">95&nbsp;°C</td><td class="m">3&nbsp;min</td></tr>
+            <tr><th scope="row"><span class="m n">2</span>Denature</th><td class="m">95&nbsp;°C</td><td class="m">30&nbsp;s</td></tr>
+            <tr class="is-changed"><th scope="row"><span class="m n">3</span>Anneal</th><td class="m"><del>58&nbsp;°C</del> <ins>60&nbsp;°C</ins></td><td class="m">30&nbsp;s</td></tr>
+            <tr><th scope="row"><span class="m n">4</span>Extend</th><td class="m">72&nbsp;°C</td><td class="m">1&nbsp;min</td></tr>
+            <tr><th scope="row"><span class="m n">5</span>Final extension</th><td class="m">72&nbsp;°C</td><td class="m">5&nbsp;min</td></tr>
+          </tbody>
+        </table>
+        <dl class="change">
+          <div><dt>Who</dt><dd class="amber">Scientist</dd></div>
+          <div><dt>When</dt><dd class="m cool">2026-10-09 09:41:07</dd></div>
+          <div><dt>Version</dt><dd class="m cool">v4 to v5</dd></div>
+          <div class="change__why"><dt>Why</dt><dd>“Primer dimers at 58&nbsp;°C.”</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reason" id="reason" aria-labelledby="reason-head">
+  <div class="container reason__grid">
+    <figure class="reading" aria-labelledby="reason-head">
+      <p class="reading__was m"><del>100&nbsp;V</del></p>
+      <p class="reading__now m">90<span class="reading__unit">V</span></p>
+    </figure>
+    <div class="reason__side">
+      <h2 id="reason-head">Every value keeps its reason</h2>
+      <dl class="sign">
+        <div><dt>Where</dt><dd>Western blot transfer, step 2</dd></div>
+        <div><dt>Who</dt><dd class="amber">Lab manager</dd></div>
+        <div><dt>When</dt><dd class="m cool">2026-10-08 16:05:12</dd></div>
+        <div><dt>Why</dt><dd class="sign__why">“Bands smeared at 100&nbsp;V.”</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="before" id="before" aria-labelledby="before-head">
+  <div class="container">
+    <div class="switch" data-switch>
+      <div class="before__head">
+        <div class="before__text">
+          <h2 id="before-head">What did it say before?</h2>
+          <p class="lead">Every version is kept. Read any two side by side.</p>
+        </div>
+        <div class="seg" role="tablist" aria-label="Versions to compare">
+          <button type="button" role="tab" id="t-45" aria-controls="p-45" aria-selected="false" tabindex="-1"><span class="m">v4</span> and <span class="m">v5</span></button>
+          <button type="button" role="tab" id="t-35" aria-controls="p-35" aria-selected="true"><span class="m">v3</span> and <span class="m">v5</span></button>
+          <button type="button" role="tab" id="t-15" aria-controls="p-15" aria-selected="false" tabindex="-1"><span class="m">v1</span> and <span class="m">v5</span></button>
+        </div>
+      </div>
+
+      <div class="panels compare" role="tabpanel" id="p-45" hidden aria-labelledby="t-45" data-slot="compare-1" data-alt="Two adjacent versions of one of your protocols side by side">
+        <div class="compare__bar"><span class="compare__name">PCR, 30 cycles</span><span class="compare__count">One step changed</span></div>
+        <table class="diff">
+          <caption class="visually-hidden">Version 4 against version 5, sample</caption>
+          <thead><tr><th scope="col"><span class="visually-hidden">Change</span></th><th scope="col">Step</th><th scope="col"><span class="m cool">v4</span> 2 Oct, Scientist</th><th scope="col"><span class="m cool">v5</span> 9 Oct, Scientist</th></tr></thead>
+          <tbody>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">1</span>Initial denaturation</th><td class="m">95&nbsp;°C, 3&nbsp;min</td><td class="m">95&nbsp;°C, 3&nbsp;min</td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">2</span>Denature</th><td class="m">95&nbsp;°C, 30&nbsp;s</td><td class="m">95&nbsp;°C, 30&nbsp;s</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">3</span>Anneal</th><td class="m was"><del>58&nbsp;°C</del>, 30&nbsp;s</td><td class="m now"><ins>60&nbsp;°C</ins>, 30&nbsp;s</td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">4</span>Extend</th><td class="m">72&nbsp;°C, 1&nbsp;min</td><td class="m">72&nbsp;°C, 1&nbsp;min</td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">5</span>Final extension</th><td class="m">72&nbsp;°C, 5&nbsp;min</td><td class="m">72&nbsp;°C, 5&nbsp;min</td></tr>
+          </tbody>
+        </table>
+        <ol class="between" aria-label="Changes between v4 and v5">
+          <li><span class="m cool">v5</span><span class="amber">Scientist</span><span class="m cool">9 Oct</span><q>Primer dimers at 58&nbsp;°C.</q></li>
+        </ol>
+      </div>
+
+      <div class="panels compare" role="tabpanel" id="p-35" aria-labelledby="t-35" data-slot="compare-2" data-alt="Two versions of one of your protocols side by side, and the reasons for what changed between them">
+        <div class="compare__bar"><span class="compare__name">PCR, 30 cycles</span><span class="compare__count">Two steps changed</span></div>
+        <table class="diff">
+          <caption class="visually-hidden">Version 3 against version 5, sample</caption>
+          <thead><tr><th scope="col"><span class="visually-hidden">Change</span></th><th scope="col">Step</th><th scope="col"><span class="m cool">v3</span> 18 Sep, Lab manager</th><th scope="col"><span class="m cool">v5</span> 9 Oct, Scientist</th></tr></thead>
+          <tbody>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">1</span>Initial denaturation</th><td class="m">95&nbsp;°C, 3&nbsp;min</td><td class="m">95&nbsp;°C, 3&nbsp;min</td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">2</span>Denature</th><td class="m">95&nbsp;°C, 30&nbsp;s</td><td class="m">95&nbsp;°C, 30&nbsp;s</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">3</span>Anneal</th><td class="m was"><del>58&nbsp;°C</del>, 30&nbsp;s</td><td class="m now"><ins>60&nbsp;°C</ins>, 30&nbsp;s</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">4</span>Extend</th><td class="m was">72&nbsp;°C, <del>45&nbsp;s</del></td><td class="m now">72&nbsp;°C, <ins>1&nbsp;min</ins></td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">5</span>Final extension</th><td class="m">72&nbsp;°C, 5&nbsp;min</td><td class="m">72&nbsp;°C, 5&nbsp;min</td></tr>
+          </tbody>
+        </table>
+        <ol class="between" aria-label="Changes between v3 and v5">
+          <li><span class="m cool">v4</span><span class="amber">Scientist</span><span class="m cool">2 Oct</span><q>Extension to 1&nbsp;min.</q></li>
+          <li><span class="m cool">v5</span><span class="amber">Scientist</span><span class="m cool">9 Oct</span><q>Primer dimers at 58&nbsp;°C.</q></li>
+        </ol>
+      </div>
+
+      <div class="panels compare" role="tabpanel" id="p-15" hidden aria-labelledby="t-15" data-slot="compare-3" data-alt="The first and the latest version of one of your protocols side by side, with every reason between them">
+        <div class="compare__bar"><span class="compare__name">PCR, 30 cycles</span><span class="compare__count">Four steps changed</span></div>
+        <table class="diff">
+          <caption class="visually-hidden">Version 1 against version 5, sample</caption>
+          <thead><tr><th scope="col"><span class="visually-hidden">Change</span></th><th scope="col">Step</th><th scope="col"><span class="m cool">v1</span> 21 Aug, Lab manager</th><th scope="col"><span class="m cool">v5</span> 9 Oct, Scientist</th></tr></thead>
+          <tbody>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">1</span>Initial denaturation</th><td class="m">95&nbsp;°C, 3&nbsp;min</td><td class="m">95&nbsp;°C, 3&nbsp;min</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">2</span>Denature</th><td class="m was"><del>94&nbsp;°C</del>, 30&nbsp;s</td><td class="m now"><ins>95&nbsp;°C</ins>, 30&nbsp;s</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">3</span>Anneal</th><td class="m was"><del>55&nbsp;°C</del>, 30&nbsp;s</td><td class="m now"><ins>60&nbsp;°C</ins>, 30&nbsp;s</td></tr>
+            <tr class="is-changed"><td class="g m" aria-label="changed">±</td><th scope="row"><span class="m n">4</span>Extend</th><td class="m was">72&nbsp;°C, <del>45&nbsp;s</del></td><td class="m now">72&nbsp;°C, <ins>1&nbsp;min</ins></td></tr>
+            <tr><td class="g m"></td><th scope="row"><span class="m n">5</span>Final extension</th><td class="m">72&nbsp;°C, 5&nbsp;min</td><td class="m">72&nbsp;°C, 5&nbsp;min</td></tr>
+          </tbody>
+        </table>
+        <ol class="between" aria-label="Changes between v1 and v5">
+          <li><span class="m cool">v2</span><span class="amber">Scientist</span><span class="m cool">4 Sep</span><q>Weak bands at 55&nbsp;°C.</q></li>
+          <li><span class="m cool">v3</span><span class="amber">Lab manager</span><span class="m cool">18 Sep</span><q>Denature as the polymerase sheet says.</q></li>
+          <li><span class="m cool">v4</span><span class="amber">Scientist</span><span class="m cool">2 Oct</span><q>Extension to 1&nbsp;min.</q></li>
+          <li><span class="m cool">v5</span><span class="amber">Scientist</span><span class="m cool">9 Oct</span><q>Primer dimers at 58&nbsp;°C.</q></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="week" id="week" aria-labelledby="week-head">
+  <div class="container week__grid">
+    <figure class="week__photo">
+      <div class="week__frame" data-slot="photo-1" data-alt="Your own lab: the bench where the protocols are run, no faces needed">
+        <img src="photos/csiro-scienceimage-11401-csiro-researcher-with-pipette-1280.jpg" width="1280" height="1920" loading="lazy" style="object-position: 50% 40%" alt="A gloved hand gripping a pipette at a lab bench, the tip pointing down">
+      </div>
+      <figcaption>The bench runs the version in the record.</figcaption>
+    </figure>
+    <div class="week__text">
+      <h2 id="week-head">The lab’s week, newest first</h2>
+      <p class="lead">A lab manager reads every change in one trail.</p>
+      <ol class="trail" aria-label="This week in the lab, sample">
+        <li><p class="trail__top"><b>qPCR, standard curve</b><span class="m cool">v6</span></p><p class="trail__why">“Dilution series to 1:10, five points.”</p><p class="trail__meta"><span class="amber">Scientist</span><span class="m cool">Thu 14:30</span></p></li>
+        <li><p class="trail__top"><b>Western blot transfer</b><span class="m cool">v8</span></p><p class="trail__why">“Bands smeared at 100&nbsp;V.”</p><p class="trail__meta"><span class="amber">Lab manager</span><span class="m cool">Wed 16:05</span></p></li>
+        <li><p class="trail__top"><b>Cell passage</b><span class="m cool">v12</span></p><p class="trail__why">“Confluent a day early, split at 80%.”</p><p class="trail__meta"><span class="amber">Scientist</span><span class="m cool">Tue 11:20</span></p></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="try" id="try" aria-labelledby="try-head">
+  <div class="container try__grid">
+    <div class="try__text">
+      <h2 id="try-head">You write the why</h2>
+      <p class="lead">Benchmark writes the rest. Nothing you type here leaves this page.</p>
+    </div>
+    <div class="panels pair">
+      <form class="pair__you" novalidate>
+        <p class="pair__who"><span class="chip chip--amber">Person</span> What you write</p>
+        <div class="field"><label for="temp">Step 3, anneal at</label><div class="unit"><input class="input m" id="temp" name="temperature" type="number" inputmode="decimal" min="40" max="80" step="0.5" value="62"><span>°C for 30&nbsp;s</span></div></div>
+        <div class="field"><label for="why">Why the change?</label><textarea class="input" id="why" name="why" rows="3" autocomplete="off">Faint bands at 60 °C.</textarea><p class="field__help" id="why-help" aria-live="polite"></p></div>
+      </form>
+      <div class="pair__system" aria-live="polite">
+        <p class="pair__who"><span class="chip chip--cool">System</span> What Benchmark writes</p>
+        <p class="pair__reading m"><del>60&nbsp;°C</del> <ins data-new>62&nbsp;°C</ins></p>
+        <dl class="pair__parts">
+          <div><dt>Who</dt><dd class="amber">You</dd></div>
+          <div><dt>When</dt><dd class="m cool">to the second, on saving</dd></div>
+          <div><dt>Version</dt><dd class="m cool">v5 to v6</dd></div>
+          <div><dt>Why</dt><dd data-why>“Faint bands at 60 °C.”</dd></div>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="questions" id="questions" aria-labelledby="questions-head">
+  <div class="container questions__grid">
+    <h2 id="questions-head">What a lab asks first</h2>
+    <dl class="qa">
+      <div><dt>Who is Benchmark for?</dt><dd>Research labs: the scientists who run protocols and the managers who keep them.</dd></div>
+      <div><dt>What does a change record?</dt><dd>Who made it, when, and why, on the version it made.</dd></div>
+      <div><dt>Is an old version ever lost?</dt><dd>No. Every version stays, to read beside any other.</dd></div>
+      <div class="qa__last"><dt>How does a lab start?</dt><dd><span>Ask with a work email.</span> <a class="btn btn--line" href="#request" data-to-request>Request access</a></dd></div>
+    </dl>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container foot__in">
+    <p class="foot__sign">Kept by Benchmark.</p>
+    <p class="foot__date"><time datetime="2026-10-21">21 October 2026</time></p>
+    <nav class="foot__links" aria-label="Footer"><a href="#reason">The record</a><a href="#before">Versions</a><a href="#week">The lab</a><a href="#try">Try one</a><a href="#questions">Questions</a><a href="#request" data-to-request>Request access</a></nav>
+    <p class="foot__legal">© 2026 Benchmark</p>
+    <p class="foot__credit" data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:CSIRO_ScienceImage_11401_CSIRO_researcher_with_pipette.jpg">Morgan Brown, CSIRO</a>, CC&nbsp;BY&nbsp;3.0, on Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var temp = document.getElementById('temp'), why = document.getElementById('why');
+  if (!temp || !why) return;
+  var outNew = document.querySelector('[data-new]'), outWhy = document.querySelector('[data-why]'), help = document.getElementById('why-help');
+  function sync() {
+    var t = Number(temp.value);
+    var ok = temp.value !== '' && t >= 40 && t <= 80;
+    temp.toggleAttribute('aria-invalid', !ok);
+    outNew.textContent = ok ? (t % 1 ? t.toFixed(1) : String(t)) + ' °C' : '40 to 80 °C';
+    var reason = why.value.trim();
+    outWhy.textContent = reason ? '“' + reason + '”' : 'A reason is needed before a change is saved.';
+    help.textContent = reason ? '' : 'Say why, in a few words.';
+  }
+  temp.addEventListener('input', sync); why.addEventListener('input', sync); sync();
+})();
+document.querySelectorAll('[data-switch]').forEach(function (sw) {
+  var tabs = [].slice.call(sw.querySelectorAll('[role="tab"]'));
+  function pick(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on); t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { pick(t); });
+    t.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (e.key === 'Home') { e.preventDefault(); pick(tabs[0], true); }
+      else if (e.key === 'End') { e.preventDefault(); pick(tabs[tabs.length - 1], true); }
+      else if (d) { e.preventDefault(); pick(tabs[(i + d + tabs.length) % tabs.length], true); }
+    });
+  });
+  pick(tabs.filter(function (t) { return t.getAttribute('aria-selected') === 'true'; })[0] || tabs[0]);
+});
+document.querySelectorAll('[data-to-request]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    var input = document.getElementById('email');
+    if (!input) return;
+    e.preventDefault();
+    document.getElementById('top').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    setTimeout(function () { input.focus({ preventScroll: true }); }, 450);
+  });
+});
+document.querySelectorAll('form[data-endpoint]').forEach(function (form) {
+  var input = form.querySelector('input'), help = form.querySelector('[aria-live]'), first = help.innerHTML;
+  input.addEventListener('input', function () { if (input.hasAttribute('aria-invalid') && input.checkValidity()) { input.removeAttribute('aria-invalid'); help.innerHTML = first; } });
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@lab.example.'; input.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then(function (r) { help.textContent = r.ok ? 'Thanks. The reply goes to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+      .catch(function () { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+</script>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

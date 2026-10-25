@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Picnic, an indie game demo night in Leeds</title>
+<meta name="description" content="Pixel Picnic: 22 playable indie game demos for one night in Leeds, 14 November, 7pm to midnight. Entry by ticket, £6 on the door.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Chivo:wght@400;700;900&family=Silkscreen:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="banner"><div class="container"><p>One night only: 22 indie games you can play before they ship.</p></div></div>
+<header class="bar">
+  <div class="container bar__in">
+    <a class="bar__mark" href="#top" aria-label="Pixel Picnic, back to the top">Pixel Picnic</a>
+    <nav class="bar__links" aria-label="Sections">
+      <a href="#night">The night</a>
+      <a href="#questions">Questions</a>
+      <a class="btn btn--small" href="#tickets">Tickets</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="hero__text">
+    <h1 id="hero-head"><span class="hero__date">14 Nov</span> <span class="hero__place">Leeds</span></h1>
+    <p class="lead"><b>Pixel Picnic.</b> 22 indie games, playable before they ship.</p>
+    <dl class="stub">
+      <div><dt>Doors</dt><dd><span class="figure">7PM</span><span class="stub__to">to midnight</span></dd></div>
+      <div><dt>On the door</dt><dd><span class="figure figure--ember">£6</span><span class="stub__to">by ticket</span></dd></div>
+    </dl>
+    <div class="hero__acts">
+      <a class="btn" href="#tickets">Get a ticket</a>
+      <a class="btn btn--open" href="#night">See the night</a>
+    </div>
+  </div>
+  <figure class="hero__photo pic crt" data-slot="hero" data-alt="A player at Pixel Picnic with a pad in hand, lit by the screen, from behind">
+    <img src="photos/arcade-8409657650-1920.jpg" width="2448" height="2448" alt="An arcade joystick and its buttons on a black cabinet, close" style="object-position: 30% 55%" fetchpriority="high">
+  </figure>
+</section>
+
+<section class="night" id="night" aria-labelledby="night-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="night-head">One night, two sides of the screen.</h2>
+      <p class="lead">Half the room plays. Half made the games.</p>
+    </div>
+    <table class="sched">
+      <caption class="visually-hidden">The night hour by hour, for players and for developers</caption>
+      <thead>
+        <tr><td></td><th scope="col" class="sched__p1">You came to play</th><th scope="col" class="sched__p2">You made one</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row"><span class="sched__when">Before doors</span></th><td><span class="sched__quiet">Have your ticket ready</span></td><td>Set your build up</td></tr>
+        <tr class="is-next"><th scope="row"><span class="figure">7PM</span><span class="sched__tag">Next up</span></th><td>Doors open. Walk up and pick up any pad</td><td>Step back and let strangers play</td></tr>
+        <tr><th scope="row"><span class="sched__when">All night</span></th><td>Play what nobody outside the studio has seen</td><td>Watch them find what you never tested</td></tr>
+        <tr><th scope="row"><span class="figure">12AM</span></th><td>The screens go dark</td><td>Pack up with notes from real hands</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="say" aria-labelledby="say-head">
+  <div class="container say__in">
+    <h2 id="say-head" class="say__line">Tell its maker what broke.</h2>
+    <p class="say__by">The developers stand next to their demos all night.</p>
+  </div>
+</section>
+
+<section class="ask" id="questions" aria-labelledby="ask-head">
+  <div class="container ask__grid">
+    <figure class="pic crt ask__photo" data-slot="night" data-alt="A developer at Pixel Picnic watching someone play their game, over the shoulder">
+      <img src="photos/backlit-keyboard-1920.jpg" width="4357" height="2451" alt="Fingers on a backlit keyboard in the dark" style="object-position: 46% 60%" loading="lazy">
+    </figure>
+    <div class="ask__text">
+      <h2 id="ask-head">Before you come.</h2>
+      <div class="qs">
+        <details open>
+          <summary>Do I need a ticket?</summary>
+          <p>Yes, entry is by ticket. Request yours below and pay on the door.</p>
+        </details>
+        <details>
+          <summary>Where in Leeds?</summary>
+          <p>The venue is <span class="fill" data-fill="venue">to be announced</span>.</p>
+        </details>
+        <details>
+          <summary>I made a game. Can I show it?</summary>
+          <p>The night is for developers showing work in progress. <span class="fill" data-fill="apply">How to apply, to be announced</span>.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tickets" id="tickets" aria-labelledby="tickets-head">
+  <div class="container tickets__grid">
+    <div class="tickets__text">
+      <h2 id="tickets-head">Entry is by ticket.</h2>
+      <p class="lead">£6 a head on the door. Count your crew in.</p>
+      <p class="tickets__when">14 November, Leeds</p>
+    </div>
+    <form class="ticket" data-endpoint="" novalidate aria-label="Request tickets">
+      <div class="ticket__count">
+        <span class="ticket__label" id="count-label">Tickets</span>
+        <div class="count" role="group" aria-labelledby="count-label">
+          <button type="button" class="count__btn" data-step="-1" aria-label="One ticket fewer">&minus;</button>
+          <input class="count__n" id="count" name="count" type="number" inputmode="numeric" min="1" max="20" value="2" aria-labelledby="count-label">
+          <button type="button" class="count__btn" data-step="1" aria-label="One ticket more">+</button>
+        </div>
+      </div>
+      <p class="ticket__total"><span class="ticket__label">Pay on the door</span><output class="figure" id="total" for="count" aria-live="polite">£12</output></p>
+      <div class="ticket__mail">
+        <label for="mail">Email address, for the tickets</label>
+        <input id="mail" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="ticket-help">
+      </div>
+      <div class="ticket__go">
+        <button class="btn" type="submit">Request tickets</button>
+        <p class="ticket__help" id="ticket-help" aria-live="polite"></p>
+      </div>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mast">Pixel Picnic</p>
+    <div class="foot__row">
+      <p class="foot__line">See you in Leeds on the 14th.</p>
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#night">The night</a>
+        <a href="#questions">Questions</a>
+        <a href="#tickets">Tickets</a>
+      </nav>
+    </div>
+    <p class="foot__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Arcade_(8409657650).jpg">Faruk Ateş from Vancouver &amp; SF</a> (CC&nbsp;BY&nbsp;2.0), <a href="https://commons.wikimedia.org/wiki/File:Backlit_keyboard.jpg">Colin</a> (CC&nbsp;BY-SA&nbsp;4.0), both on Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+const PRICE = 6;
+document.querySelectorAll('.count').forEach((c) => {
+  const n = c.querySelector('input'), out = document.getElementById('total');
+  const show = () => { const v = Math.min(20, Math.max(1, Math.round(Number(n.value) || 1))); n.value = v; out.textContent = '£' + v * PRICE; c.querySelector('[data-step="-1"]').disabled = v <= 1; c.querySelector('[data-step="1"]').disabled = v >= 20; };
+  c.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => { n.value = (Number(n.value) || 1) + Number(b.dataset.step); show(); }));
+  n.addEventListener('change', show); show();
+});
+document.querySelectorAll('form.ticket[data-endpoint]').forEach((form) => {
+  const input = form.querySelector('input[type="email"]'), help = form.querySelector('.ticket__help');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: tickets are not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Request received.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+</script>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+/* Hallmark · job: join (a campaign: sign the petition) · shape: Manifesto · genre: editorial · theme: Manifesto (by request)
+ * hero: Ledge, no picture, the two named demands in Anton at poster size resting on the red pledge plate, the signature itself (name blank in the sentence, email, Add my name) as the foot of the first screen, MANUALS in red · sections: rows (the record of the demands), statement (the stacked creed), showcase (one board full-bleed), poster line (the vote date) over a two-step timeline with the signature again and a working copy-the-link · nav: slab, a paper-2 bar on a 4px ink rule with one red block · footer: mast, the coalition's name across the width · imagery: one library photograph, duotone paper ink
+ * job close: a petition is signed where it is asked, so the form moved into the hero; the page ends on the vote date, the hero's action again and a way to pass it on, not a second form
+ * axes: dark/display-condensed/warm · posture: committed · contrast: pass · fold: pass · v2.8.0 */
+/* Hallmark · waive 38iii · one red word, MANUALS, inside the hero head and nowhere else · the Manifesto theme spends its red word once on the demand it names */
+/* Hallmark · waive 39b · the name blank stands taller because it sits inside the pledge line at display size; the email field and its button stay 52px · the visitor signs the declaration in its own display type */
+/* Hallmark · waive 49b · the wordmark is the coalition's full name and stacks to two lines under 40rem, never three · the name cannot shorten, so it stacks on a phone instead of shrinking */
+/* Hallmark · waive 55b · every display line is its own nowrap span sized in cqi so it cannot wrap at 320px · Anton capitals lock into one block at 0.9 */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root { --nav-h: 76px; }
+
+body { color: var(--color-ink-2); }
+h1, h2, h3 { font-weight: 400; text-transform: uppercase; line-height: 1.02; letter-spacing: var(--tracking-display); color: var(--color-ink); }
+h2 { max-width: none; font-size: clamp(3rem, 3.6vw + 1.25rem, 5.25rem); }
+.lead { color: var(--color-ink-2); }
+
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-accent); color: var(--color-accent-ink); font-weight: 600; text-decoration: none; }
+.skip:focus-visible { top: var(--space-md); }
+
+a { color: var(--color-ink); text-decoration-color: var(--color-ink-2); transition: text-decoration-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+a:hover { text-decoration-color: var(--color-accent-text); }
+a:active { color: var(--color-ink-2); }
+a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+
+/* Display lines: each its own nowrap line, sized to the column */
+.display { max-width: none; line-height: var(--lh-tight); }
+.display > span { display: block; white-space: nowrap; }
+.hot { display: inline; color: var(--color-accent-text); }
+.hero__in, .creed .container, .mast .container { container-type: inline-size; }
+
+/* Nav: a slab, a paper-2 bar on a heavy ink rule */
+.slab { background: var(--color-paper-2); border-bottom: var(--rule-bar) solid var(--color-ink); }
+.slab__in { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: var(--nav-h); }
+.wordmark { font: 400 var(--text-xl)/1 var(--font-display); text-transform: uppercase; color: var(--color-ink); text-decoration: none; white-space: nowrap; }
+.wordmark:hover { color: var(--color-ink-2); }
+.slab__nav { display: flex; align-items: center; gap: var(--space-xl); }
+.slab__link { display: inline-flex; align-items: center; min-height: 44px; font: 500 var(--text-sm)/1 var(--font-body); color: var(--color-ink); text-underline-offset: 0.3em; white-space: nowrap; }
+
+/* Controls: a flat red block beside a hairline block */
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 var(--space-lg); border: var(--rule-hair) solid transparent; border-radius: 0; background: none; font: 600 var(--text-md)/1 var(--font-body); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.btn--sm { min-height: 44px; padding: 0 var(--space-md); font-size: var(--text-sm); }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-accent-deep); }
+.btn--secondary { border-color: var(--color-ink-2); color: var(--color-ink); }
+.btn--secondary:hover { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+
+/* Hero: Ledge, the head resting on the red pledge plate */
+.hero__in { display: grid; align-content: end; min-height: calc(100dvh - var(--nav-h) - var(--rule-bar)); padding-block: var(--space-2xl) var(--space-xl); box-sizing: border-box; }
+.hero__head { font-size: min(11.2cqi, var(--text-display)); }
+
+/* The pledge: the page's one red surface, the signature in its display line */
+.pledge { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; margin-top: var(--space-xl); padding: var(--space-xl) var(--space-xl) var(--space-lg); background: var(--color-accent); color: var(--color-accent-ink); }
+.pledge__line { grid-column: 1 / span 7; margin: 0; font: 400 clamp(2.25rem, 3.4vw + 0.5rem, 4rem)/1.04 var(--font-display); text-transform: uppercase; color: var(--color-accent-ink); }
+.pledge__name { width: 5.2em; margin-left: 0.2em; padding: 0 0 var(--space-3xs); border: 0; border-bottom: 4px solid var(--color-accent-ink); border-radius: 0; background: transparent; color: var(--color-accent-ink); font: inherit; text-transform: none; outline: 2px solid transparent; outline-offset: 2px; transition: border-color var(--dur-short) var(--ease-out); }
+.pledge__name::placeholder { color: color-mix(in oklch, var(--color-accent-ink) 72%, var(--color-accent)); text-transform: uppercase; }
+.pledge__name:hover { border-bottom-color: var(--color-paper); }
+.pledge__name:focus-visible { outline-color: var(--color-accent-ink); }
+.pledge__field { grid-column: 8 / -1; }
+.pledge__field label { display: block; margin-bottom: var(--space-xs); font-size: var(--text-sm); font-weight: 500; }
+.pledge__row { display: flex; gap: var(--space-xs); }
+.pledge__email { flex: 1; min-width: 0; min-height: 52px; padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-accent-ink); border-radius: 0; background: transparent; color: var(--color-accent-ink); outline: 2px solid transparent; outline-offset: -4px; }
+.pledge__email:hover { background: color-mix(in oklch, var(--color-paper) 12%, transparent); }
+.pledge__email:focus-visible { outline-color: var(--color-accent-ink); }
+.pledge input[aria-invalid] { border-color: var(--color-paper); }
+.pledge input:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn--sign { background: var(--color-paper); color: var(--color-ink); }
+.btn--sign:hover { background: var(--color-paper-3); }
+.btn--sign:focus-visible { outline-color: var(--color-accent-ink); }
+.pledge__help { min-height: 1lh; margin-top: var(--space-xs); font-size: var(--text-sm); color: var(--color-accent-ink); }
+
+/* Five demands: the record */
+.demands { padding-top: var(--section-gap); }
+.demands__head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; padding-bottom: var(--space-2xl); }
+.demands__head h2 { grid-column: 1 / span 7; }
+.demands__head .lead { grid-column: 9 / -1; }
+.record { margin: 0; padding: 0; list-style: none; border-top: var(--rule-bar) solid var(--color-ink); }
+.record__row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-lg); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.record__no { grid-column: 1 / span 2; font: 400 clamp(2.5rem, 3vw + 1rem, 4.25rem)/1 var(--font-display); color: var(--color-muted); }
+.record__head { grid-column: 3 / span 5; font-size: clamp(2rem, 2vw + 1rem, 3.25rem); }
+.record__line { grid-column: 8 / -1; font-size: var(--text-lead); color: var(--color-ink-2); }
+.record__row--open .record__line { grid-column: 3 / -1; }
+.record__row--open .record__no { color: var(--color-muted); white-space: nowrap; }
+.fill { padding: 0 0.2em; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+
+/* The creed: three lines stacked at the size of the sheet */
+.creed { padding-top: var(--section-gap-l); }
+.creed__head { font-size: min(18cqi, 15rem); }
+
+/* The board: one photograph, edge to edge */
+.board { padding-top: var(--section-gap-l); }
+.board__head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; }
+.board__head h2 { grid-column: 1 / span 6; }
+.board__head .lead { grid-column: 8 / -1; max-width: 34ch; }
+.photo { position: relative; margin: 0; }
+.photo > img { outline: var(--rule-hair) solid var(--color-rule); outline-offset: -1px; }
+.board__photo { margin-top: var(--space-2xl); aspect-ratio: 21 / 8; }
+
+/* The vote: the date as a poster line over the two steps left */
+.vote { padding-top: var(--section-gap); }
+.vote .container { container-type: inline-size; }
+.vote__date { font-size: min(27cqi, 22rem); }
+.timeline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: var(--space-xl) 0 0; padding: 0; list-style: none; border-top: var(--rule-bar) solid var(--color-ink); }
+.timeline li { display: grid; gap: var(--space-xs); padding: var(--space-lg) var(--space-xl) 0 0; }
+.timeline li + li { padding-left: var(--space-xl); border-left: var(--rule-hair) solid var(--color-rule); }
+.timeline__when { font: 400 var(--text-2xl)/1 var(--font-display); text-transform: uppercase; color: var(--color-muted); }
+.timeline .is-now .timeline__when { color: var(--color-accent-text); }
+.timeline__what { font-size: var(--text-lead); color: var(--color-ink); }
+.vote__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-sm); margin-top: var(--space-2xl); }
+.vote__help { margin-top: var(--space-sm); min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+
+/* Footer: the mast, the coalition's name across the sheet */
+.mast { padding-block: var(--section-gap-s) var(--space-2xl); }
+.mast__name { margin: 0; font-family: var(--font-display); font-size: min(8.4cqi, 9rem); text-transform: uppercase; color: var(--color-ink); }
+.mast__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-md) var(--space-xl); margin-top: var(--space-xl); padding-top: var(--space-md); border-top: var(--rule-bar) solid var(--color-ink); }
+.mast__links { display: flex; flex-wrap: wrap; gap: var(--space-lg); }
+.mast__links a { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--text-sm); }
+.mast small { font-size: var(--text-sm); color: var(--color-muted); }
+.mast__credits { margin-top: var(--space-sm); font-size: var(--text-xs); line-height: 1.6; color: var(--color-muted); }
+.mast__credits a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-rule); text-underline-offset: 0.2em; }
+.mast__credits a:hover { color: var(--color-ink); }
+
+/* The one reveal: the hero head wipes upward once */
+.reveal { animation: wipe var(--dur-long) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes wipe { from { clip-path: inset(100% 0 0 0); } to { clip-path: inset(0); } }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none; } .btn, a { transition: none; } .btn:active { transform: none; } }
+
+@media (max-width: 60rem) {
+  :root { --nav-h: 64px; }
+  .slab__link { display: none; }
+  .hero__in { min-height: 0; padding-block: var(--space-3xl) var(--space-2xl); }
+  .demands__head h2, .demands__head .lead, .board__head h2, .board__head .lead, .pledge__line, .pledge__field { grid-column: 1 / -1; }
+  .pledge { padding: var(--space-lg); row-gap: var(--space-xl); }
+  .demands__head .lead, .board__head .lead { margin-top: var(--space-md); }
+  .record__head, .record__line, .record__row--open .record__line { grid-column: 3 / -1; }
+  .record__line { margin-top: var(--space-xs); }
+  .timeline { grid-template-columns: minmax(0, 1fr); }
+  .timeline li, .timeline li + li { padding: var(--space-lg) 0; border-left: 0; border-bottom: var(--rule-hair) solid var(--color-rule); }
+  .board__photo { aspect-ratio: 3 / 2; }
+}
+@media (max-width: 40rem) {
+  .record__row { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xs); }
+  .record__no, .record__head, .record__line, .record__row--open .record__line { grid-column: 1 / -1; }
+  .pledge__row { flex-direction: column; }
+  .wordmark { white-space: normal; max-width: 6.2em; font-size: var(--text-lg); }
+  .slab__in { gap: var(--space-md); }
+}

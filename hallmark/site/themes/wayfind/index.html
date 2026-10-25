@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Platform: live departures and the fastest exit on the Lisbon metro</title>
+<meta name="description" content="Platform shows live departures, delays and the fastest exit at every station on the Lisbon metro. Free.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;500;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="slab">
+  <div class="container slab__inner">
+    <a class="wordmark" href="#top" aria-label="Platform, back to the top">Platform</a>
+    <nav class="slab__links" aria-label="Main">
+      <a href="#departures">Departures</a>
+      <a href="#exits">Exits</a>
+      <a href="#delays">Delays</a>
+    </nav>
+    <a class="btn btn--on-ink btn--small" href="#free">Get Platform</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Board where the exit&nbsp;is.</h1>
+      <p class="lead">Live departures, delays and the fastest exit at every Lisbon metro station.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#free">Get Platform free</a>
+        <a class="btn" href="#departures">See a station</a>
+      </div>
+    </div>
+
+    <div class="hero__visual">
+      <figure class="frame hero__photo" data-slot="hero-photo" data-alt="A Lisbon metro platform with a train waiting">
+        <img src="photos/2025-08-06-lisbon-metro-train-waiting-at-santa-apol-nia-1920.jpg" width="1920" height="1281" fetchpriority="high" alt="A red-fronted Lisbon metro train waiting at a pale platform, its sign set for Santa Apolónia" style="object-position: 62% 55%">
+      </figure>
+      <figure class="phone" data-slot="hero" data-kind="product" data-alt="The Platform station screen at Baixa-Chiado: the next trains both ways, a delay, and the carriage that stops at the Chiado exit">
+        <div class="phone__screen" aria-hidden="true">
+          <div class="phone__head">
+            <span class="phone__station">Baixa-Chiado</span>
+            <span class="phone__lines"><i class="sw sw--blue"></i><i class="sw sw--green"></i></span>
+          </div>
+          <div class="board">
+            <p class="board__line"><i class="sw sw--blue"></i>Blue line</p>
+            <div class="board__row"><span class="board__to">Santa Apolónia</span><span class="board__min">2 min</span></div>
+            <div class="board__row"><span class="board__to">Reboleira</span><span class="board__min">4 min</span></div>
+            <p class="board__line"><i class="sw sw--green"></i>Green line</p>
+            <div class="board__row"><span class="board__to">Cais do Sodré</span><span class="board__min">3 min</span></div>
+            <div class="board__row board__row--late"><span class="board__to">Telheiras, late</span><span class="board__min">+3</span></div>
+          </div>
+          <div class="exit">
+            <span class="exit__label">Fastest exit</span>
+            <span class="exit__where">Front carriage</span>
+            <span class="exit__to">Exit Chiado, top of the escalators</span>
+          </div>
+          <div class="phone__foot"><span class="live">Live</span><span>Updated now</span></div>
+        </div>
+        <figcaption class="visually-hidden">The station screen at Baixa-Chiado, a sample: Santa Apolónia in 2 minutes, Reboleira in 4, Cais do Sodré in 3, Telheiras running 3 minutes late, and the front carriage for the Chiado exit.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="departures band--ink" id="departures" aria-labelledby="dep-head">
+  <div class="container">
+    <div class="dep__head">
+      <div>
+        <h2 id="dep-head">Both lines, both&nbsp;ways.</h2>
+        <p class="lead">Pick an interchange: every train through it, to the&nbsp;minute.</p>
+      </div>
+      <div class="picker" role="radiogroup" aria-label="Station">
+        <button type="button" role="radio" aria-checked="true" data-station="alameda">Alameda</button>
+        <button type="button" role="radio" aria-checked="false" data-station="baixa">Baixa-Chiado</button>
+        <button type="button" role="radio" aria-checked="false" data-station="marques">Marquês</button>
+        <button type="button" role="radio" aria-checked="false" data-station="saldanha">Saldanha</button>
+      </div>
+    </div>
+    <table class="deptable">
+      <caption class="visually-hidden">Departures at the chosen station, sample times</caption>
+      <thead><tr><th scope="col">Line</th><th scope="col">To</th><th scope="col" class="num">Next</th><th scope="col" class="num">Then</th><th scope="col" class="st">Status</th></tr></thead>
+      <tbody data-board>
+        <tr><td><i class="sw sw--green"></i>Green</td><td>Cais do Sodré</td><td class="num">1 min</td><td class="num">6 min</td><td class="st">On time</td></tr>
+        <tr><td><i class="sw sw--green"></i>Green</td><td>Telheiras</td><td class="num">3 min</td><td class="num">9 min</td><td class="st">On time</td></tr>
+        <tr><td><i class="sw sw--red"></i>Red</td><td>Aeroporto</td><td class="num">2 min</td><td class="num">8 min</td><td class="st">On time</td></tr>
+        <tr class="is-late"><td><i class="sw sw--red"></i>Red</td><td>São Sebastião</td><td class="num">5 min</td><td class="num">14 min</td><td class="st"><span>4 min late</span></td></tr>
+      </tbody>
+    </table>
+    <p class="dep__note"><span class="live" data-live>Live in the app</span> Sample times on this page.</p>
+  </div>
+</section>
+
+<section class="exits" id="exits" aria-labelledby="exit-head">
+  <div class="container exits__grid">
+    <figure class="frame exits__photo" data-slot="photo-1" data-alt="Stairs and an escalator inside a Lisbon metro station">
+      <img src="photos/metro-lisboa-january-2015-2a-1920.jpg" width="1920" height="1350" loading="lazy" decoding="async" alt="A wide stair and an escalator rising beside a square pillar inside a Lisbon metro station" style="object-position: 40% 50%">
+    </figure>
+    <div class="exits__text">
+      <h2 id="exit-head">Step off at the&nbsp;stairs.</h2>
+      <p class="lead">The exit screen names the carriage that stops nearest your way&nbsp;out.</p>
+      <ol class="route" aria-label="A sample route out of Baixa-Chiado">
+        <li><b>Front</b><span>Carriage to board</span></li>
+        <li><b>Left</b><span>Escalators up</span></li>
+        <li class="route__end"><b>Chiado</b><span>Exit to the street</span></li>
+      </ol>
+      <p class="exits__cap">A sample route at Baixa-Chiado.</p>
+    </div>
+  </div>
+</section>
+
+<section class="lines" id="delays" aria-labelledby="del-head">
+  <div class="container">
+    <div class="lines__head">
+      <h2 id="del-head">Late lines, before the&nbsp;gates.</h2>
+      <p class="lead">Every line’s state, before you tap&nbsp;in.</p>
+    </div>
+    <ul class="lines__rows" aria-label="Line status, sample">
+      <li class="is-late"><i class="sw sw--blue"></i><b>Blue line</b><span class="ends">Reboleira to Santa Apolónia</span><span class="state"><span class="live" aria-hidden="true"></span>3 min late</span></li>
+      <li><i class="sw sw--yellow"></i><b>Yellow line</b><span class="ends">Odivelas to Rato</span><span class="state">On time</span></li>
+      <li><i class="sw sw--green"></i><b>Green line</b><span class="ends">Telheiras to Cais do Sodré</span><span class="state">On time</span></li>
+      <li><i class="sw sw--red"></i><b>Red line</b><span class="ends">São Sebastião to Aeroporto</span><span class="state">On time</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="close" id="free" aria-labelledby="free-head">
+  <div class="container close__grid">
+    <div class="close__head">
+      <h2 id="free-head">Free, at every station.</h2>
+      <p class="lead">Every line, from the street to the platform and&nbsp;back.</p>
+    </div>
+    <div class="close__act">
+      <a class="btn btn--ink" href="#free">Get Platform free</a>
+      <a class="btn btn--on-signal" href="#departures">See a station</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container foot__inner">
+    <p class="foot__word">Platform</p>
+    <nav class="foot__links" aria-label="Footer">
+      <a href="#departures">Departures</a>
+      <a href="#exits">Exits</a>
+      <a href="#delays">Delays</a>
+      <a href="#free">Get Platform free</a>
+    </nav>
+    <p class="foot__legal">© 2026 Platform. Lisbon metro, every station.</p>
+    <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:2025-08-06,_Lisbon_Metro_train_waiting_at_Santa_Apol%C3%B3nia.jpg">Patrycja Rosa (ptrcnull)</a> (CC BY 4.0) and <a href="https://commons.wikimedia.org/wiki/File:Metro_Lisboa_January_2015-2a.jpg">Alvesgaspar</a> (CC BY-SA 4.0), via Wikimedia Commons</p>
+  </div>
+</footer>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+<script>
+// The station picker: sample times for four interchanges, swapped in place like a board.
+(() => {
+  const S = (line, to, next, then, late) => ({ line, to, next, then, late });
+  const boards = {
+    alameda: [S('green', 'Cais do Sodré', 1, 6), S('green', 'Telheiras', 3, 9), S('red', 'Aeroporto', 2, 8), S('red', 'São Sebastião', 5, 14, 4)],
+    baixa: [S('blue', 'Santa Apolónia', 2, 7), S('blue', 'Reboleira', 4, 10, 3), S('green', 'Cais do Sodré', 3, 8), S('green', 'Telheiras', 1, 6)],
+    marques: [S('blue', 'Santa Apolónia', 3, 9), S('blue', 'Reboleira', 1, 7), S('yellow', 'Rato', 2, 8), S('yellow', 'Odivelas', 6, 12, 2)],
+    saldanha: [S('yellow', 'Rato', 4, 10), S('yellow', 'Odivelas', 2, 8), S('red', 'Aeroporto', 1, 7, 2), S('red', 'São Sebastião', 3, 9)],
+  };
+  const name = { blue: 'Blue', yellow: 'Yellow', green: 'Green', red: 'Red' };
+  const body = document.querySelector('[data-board]');
+  const live = document.querySelector('[data-live]');
+  const radios = [...document.querySelectorAll('[data-station]')];
+  const render = (key) => {
+    body.innerHTML = boards[key].map((r) => `<tr${r.late ? ' class="is-late"' : ''}><td><i class="sw sw--${r.line}"></i>${name[r.line]}</td><td>${r.to}</td><td class="num">${r.next} min</td><td class="num">${r.then} min</td><td class="st">${r.late ? `<span>${r.late} min late</span>` : 'On time'}</td></tr>`).join('');
+    live.classList.remove('is-blink'); void live.offsetWidth; live.classList.add('is-blink');
+  };
+  const pick = (b) => { radios.forEach((x) => { const on = x === b; x.setAttribute('aria-checked', String(on)); x.tabIndex = on ? 0 : -1; }); render(b.dataset.station); };
+  radios.forEach((b, i) => {
+    b.tabIndex = i === 0 ? 0 : -1;
+    b.addEventListener('click', () => pick(b));
+    b.addEventListener('keydown', (e) => { const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!k) return; e.preventDefault(); const n = radios[(i + k + radios.length) % radios.length]; pick(n); n.focus(); });
+  });
+})();
+</script>
+</body>
+</html>

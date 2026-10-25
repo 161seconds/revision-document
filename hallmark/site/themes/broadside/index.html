@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wickford Autumn Machinery Sale: Saturday 8 November, 10am</title>
+  <meta name="description" content="A one-day farm machinery auction at Wickford: 312 lots on Saturday 8 November from 10am, with viewing the Friday before from noon.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Six+Caps&family=Bevan&family=Archivo+Narrow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="mast">
+    <div class="container mast__inner">
+      <span class="mast__side">Farm machinery auction</span>
+      <a class="wordmark mast__mark" href="#top" aria-label="Wickford Autumn Machinery Sale, home">Wickford Sale</a>
+      <a class="mast__side mast__link" href="#register">Register to bid</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-head">
+      <div class="container hero__grid">
+        <div class="bill">
+          <h1 class="bill__head" id="hero-head"><span class="fit" style="--w: 3.822">Wickford autumn</span> <span class="fit" style="--w: 3.286">Machinery sale</span></h1>
+          <p class="fit bill__date" style="--w: 5.823">Saturday 8 November, 10am</p>
+          <div class="actions">
+            <a class="btn" href="#register">Register to bid</a>
+            <a class="btn btn--frame" href="#days">View on Friday from noon</a>
+          </div>
+        </div>
+        <figure class="frame frame--photo hero__plate grained">
+          <div class="plate" data-slot="hero" data-alt="Your own photograph of the machinery on sale: the line of lots in the sale field, or one tractor side-on, in plain daylight">
+          <img src="photos/fr-nkische-schweiz-getreideernte-20210821-rm-154445-1920.jpg" width="5184" height="3888" fetchpriority="high" style="object-position: 42% 55%" alt="A combine harvester unloading grain into a tractor trailer, side-on in a cloud of dust">
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="days" id="days" aria-labelledby="days-head">
+      <div class="container">
+        <div class="days__head">
+          <h2 id="days-head">Two days at Wickford</h2>
+          <p class="days__line">Look on Friday, bid on Saturday.</p>
+        </div>
+        <div class="days__bill">
+          <div class="day">
+            <p class="day__what">Viewing</p>
+            <div class="day__fit"><p class="fit day__name" style="--w: 3.915">Friday 7 November</p></div>
+            <p class="day__hour">From noon</p>
+            <p class="day__note">Walk the lines and look every lot over, the day before the sale.</p>
+          </div>
+          <div class="day">
+            <p class="day__what">The sale</p>
+            <div class="day__fit"><p class="fit day__name" style="--w: 4.571">Saturday 8 November</p></div>
+            <p class="day__hour">From 10am</p>
+            <p class="day__note">Lot 1 is called at ten, and the lots sell one by one through the day.</p>
+          </div>
+        </div>
+        <dl class="days__where">
+          <div><dt>Sale ground</dt><dd><span class="fill" data-fill="sale-ground">Address to be announced</span>, Wickford</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="count" id="lots" aria-labelledby="count-head">
+      <div class="container">
+        <div class="count__fit"><h2 id="count-head" class="fit count__figure" style="--w: 3.640">312 lots, one day</h2></div>
+        <div class="count__row">
+          <p class="count__note">Every lot on the ground for Friday&rsquo;s viewing.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="plate-s" aria-labelledby="plate-head">
+      <div class="container plate-s__grid">
+        <figure class="frame frame--photo plate-s__plate grained">
+          <div class="plate" data-slot="lot-detail" data-alt="Your own photograph of one lot, plain and side-on: a tractor, a trailer or a digger">
+            <img src="photos/high-pressure-cleaning-with-personal-protective-equipment-01-1920.jpg" width="1920" height="1280" loading="lazy" style="object-position: 40% 50%" alt="A man in waterproofs pressure washing a rusty machine part on a pallet">
+          </div>
+        </figure>
+        <div class="plate-s__text">
+          <h2 id="plate-head">Look it over first</h2>
+          <p class="stage__line">Friday is for walking the lines, side-on and close, before a single bid is taken.</p>
+          <a class="btn btn--frame" href="#register">Take a bidding number</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="register grained" id="register" aria-labelledby="register-head">
+      <div class="container register__grid">
+        <div class="register__text">
+          <h2 id="register-head">Register to bid</h2>
+          <p class="register__line">Take a bidding number before the first lot is called.</p>
+        </div>
+        <form class="register__form" data-endpoint="" novalidate>
+          <div class="field">
+            <label for="r-name">Name</label>
+            <input id="r-name" name="name" type="text" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="r-phone">Phone</label>
+            <input id="r-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required>
+          </div>
+          <div class="field field--wide">
+            <label for="r-farm">Farm or business, if you bid for one</label>
+            <input id="r-farm" name="organization" type="text" autocomplete="organization">
+          </div>
+          <div class="register__actions">
+            <button class="btn" type="submit">Send my details</button>
+            <p class="register__help" id="register-help" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="close">
+    <div class="container">
+     <div class="close__inner">
+      <p class="fit close__line" style="--w: 4.509">See you at Wickford.</p>
+      <div class="close__row">
+        <nav class="close__links" aria-label="Footer">
+          <a href="#days">The two days</a>
+          <a href="#lots">The lots</a>
+          <a href="#register">Register to bid</a>
+        </nav>
+        <small>© 2026 Wickford Autumn Machinery Sale</small>
+      </div>
+      <p class="close__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Fr%C3%A4nkische_Schweiz_Getreideernte-20210821-RM-154445.jpg">Ermell</a> <span>(<abbr>CC BY-SA 4.0</abbr>)</span> and <a href="https://commons.wikimedia.org/wiki/File:High-Pressure-Cleaning-with-Personal-Protective-Equipment-01.jpg">CEphoto, Uwe Aranas</a> <span>(<abbr>CC BY-SA 3.0</abbr>)</span>, all on Wikimedia Commons.</p>
+     </div>
+    </div>
+  </footer>
+
+  <script>
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fields = [...form.querySelectorAll('input[required]')];
+    fields.forEach((i) => i.toggleAttribute('aria-invalid', !i.checkValidity()));
+    const bad = fields.find((i) => !i.checkValidity());
+    if (bad) { bad.setAttribute('aria-describedby', help.id); help.textContent = bad.type === 'tel' ? 'Add a phone number so the office can reach you on the day.' : 'Add your name to register.'; bad.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected to the sale office yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Registered. Your bidding number comes from the sale office.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+  </script>
+
+  <script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

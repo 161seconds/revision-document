@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ramen at the counter that stays lit</title>
+<meta name="description" content="A late-night ramen counter: sit facing the pot and eat while the rest of the street sleeps.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&family=Hepta+Slab:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="container nav">
+  <a class="wordmark" href="#main" aria-label="ramen, back to the top">ramen</a>
+  <ul class="nav__links">
+    <li class="nav__more"><a href="#counter">The counter</a></li>
+    <li class="nav__more"><a href="#bowl">The bowl</a></li>
+    <li><a href="#find">Find us</a></li>
+  </ul>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <div class="hero__night">
+      <div class="container">
+        <h1 id="hero-head">Ramen after the other kitchens close.</h1>
+      </div>
+    </div>
+    <div class="hero__lit">
+      <div class="container hero__litin">
+        <figure class="hero__band" data-slot="hero" data-alt="The kitchen seen from a stool at night: the cooks, the stockpots, the stacked bowls">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Making_of_chinese_noodles_5166105.jpg/1920px-Making_of_chinese_noodles_5166105.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Making_of_chinese_noodles_5166105.jpg/960px-Making_of_chinese_noodles_5166105.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Making_of_chinese_noodles_5166105.jpg/1280px-Making_of_chinese_noodles_5166105.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Making_of_chinese_noodles_5166105.jpg/1920px-Making_of_chinese_noodles_5166105.jpg 1920w" sizes="(min-width: 1440px) 1312px, 100vw" width="4608" height="3456" alt="Two cooks at work in a small noodle kitchen, stockpots and stacked bowls behind them" fetchpriority="high">
+        </figure>
+        <div class="hero__foot">
+          <p>A stool at the counter for whoever is still up.</p>
+          <a class="btn" href="#find">Find the counter</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lamp counter" id="counter" aria-labelledby="counter-head">
+    <div class="container counter__in">
+      <div class="counter__text">
+        <h2 id="counter-head">Every stool faces the pot.</h2>
+        <p>Order across the counter and the bowl comes straight over it, for cooks off shift, nurses off nights and the last ones out. Eat it hot, then give your stool to whoever is waiting.</p>
+      </div>
+      <figure class="counter__photo" data-slot="cook" data-alt="The cook at the pot, seen from a stool during the late service">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Dalian_Liaoning_China_Noodlemaker-01.jpg/960px-Dalian_Liaoning_China_Noodlemaker-01.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Dalian_Liaoning_China_Noodlemaker-01.jpg/960px-Dalian_Liaoning_China_Noodlemaker-01.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Dalian_Liaoning_China_Noodlemaker-01.jpg/1280px-Dalian_Liaoning_China_Noodlemaker-01.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Dalian_Liaoning_China_Noodlemaker-01.jpg/1920px-Dalian_Liaoning_China_Noodlemaker-01.jpg 1920w" sizes="(min-width: 60rem) 45vw, 100vw" width="2506" height="3759" alt="A cook in a white cap stretching noodles by hand over a floured steel counter" loading="lazy" style="object-position: 50% 30%">
+      </figure>
+    </div>
+  </section>
+
+  <section class="bowl" id="bowl" aria-labelledby="bowl-head">
+    <div class="container">
+      <div class="bowl__head">
+        <h2 id="bowl-head">A bowl, from the top down.</h2>
+        <p>The tare goes in first and the toppings last.</p>
+      </div>
+      <ol class="strata">
+        <li class="stratum stratum--1" data-reveal style="--i: 0"><h3>Toppings</h3><p>Laid on last, eaten first.</p></li>
+        <li class="stratum stratum--2 stratum--thin" data-reveal style="--i: 1"><h3>Aroma oil</h3><p>A thin slick of fat that carries the smell to you.</p></li>
+        <li class="stratum stratum--3" data-reveal style="--i: 2"><h3>Noodles</h3><p>Lifted from the boil and folded in while they still have bite.</p></li>
+        <li class="stratum stratum--4" data-reveal style="--i: 3"><h3>Broth</h3><p>The deep part, ladled hot over the tare.</p></li>
+        <li class="stratum stratum--5 stratum--thin" data-reveal style="--i: 4"><h3>Tare</h3><p>The seasoning at the bottom that salts the whole bowl.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="container find" id="find" aria-labelledby="find-head">
+    <div class="find__text">
+      <h2 id="find-head">Come by once the street’s quiet.</h2>
+      <dl class="find__facts">
+        <div><dt>Address</dt><dd><span class="fill" data-fill="address">Address to be confirmed</span></dd></div>
+        <div><dt>Hours</dt><dd>Late. <span class="fill" data-fill="hours">Exact hours to be confirmed</span></dd></div>
+      </dl>
+    </div>
+    <figure class="find__photo" data-slot="counter" data-alt="The counter and its stools, empty, under the counter lights">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Barhocker_%28fcm%29.jpg/960px-Barhocker_%28fcm%29.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Barhocker_%28fcm%29.jpg/960px-Barhocker_%28fcm%29.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Barhocker_%28fcm%29.jpg/1280px-Barhocker_%28fcm%29.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Barhocker_%28fcm%29.jpg/1920px-Barhocker_%28fcm%29.jpg 1920w" sizes="(min-width: 60rem) 45vw, 100vw" width="1465" height="1865" alt="A row of bentwood stools along a wooden counter" loading="lazy" style="object-position: 50% 40%">
+    </figure>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer__in">
+    <a class="wordmark" href="#main" aria-label="ramen, back to the top">ramen</a>
+    <ul class="footer__links">
+      <li><a href="#counter">The counter</a></li>
+      <li><a href="#bowl">The bowl</a></li>
+      <li><a href="#find">Find us</a></li>
+    </ul>
+    <p class="footer__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Making_of_chinese_noodles_5166105.jpg">Ermell</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:Barhocker_(fcm).jpg">Frank C. Müller, Baden-Baden</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Dalian_Liaoning_China_Noodlemaker-01.jpg">CEphoto, Uwe Aranas</a> (CC BY-SA 4.0), all via Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -10% 0px' });
+  document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+} else { document.querySelectorAll('[data-reveal]').forEach((el) => el.classList.add('is-in')); }
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

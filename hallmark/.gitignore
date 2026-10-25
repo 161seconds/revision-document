@@ -1,0 +1,47 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (in case future tooling lands)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Build / temp
+dist/
+build/
+.cache/
+*.log
+.vercel
+
+# Environment + secrets
+.env
+.env.local
+.env.*.local
+
+# Generation pipeline artifacts (raw outputs before commit)
+.image-cache/
+
+# Runtime state from Hallmark's own runs (per-project log, never publish)
+.hallmark/
+
+# `skills` CLI install lockfile: generated whenever 'skills add' runs in this
+# directory, not part of the skill source.
+skills-lock.json
+.agents/
+
+# Local agent / preview tooling config (Claude Code, etc.), not skill source
+.claude/
+
+# Local leftover from the old test thumbnails, never published.
+site/_tests/_thumbs/hum-02.jpg

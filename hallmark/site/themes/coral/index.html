@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tilly, invoicing that chases late payments for you</title>
+<meta name="description" content="Tilly is invoicing for freelancers that sends the reminders, logs the replies and marks invoices paid, for 8 pounds a month.">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js'); if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'animate' in Element.prototype) document.documentElement.classList.add('story');</script>
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+<svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <filter id="deboss" x="-10%" y="-20%" width="120%" height="140%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.22" numOctaves="3" seed="6" result="n"/>
+    <feColorMatrix in="n" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.9 1.38" result="cover"/>
+    <feComposite in="SourceGraphic" in2="cover" operator="in" result="ink"/>
+    <feOffset in="SourceAlpha" dx="1.1" dy="1.3" result="o1"/>
+    <feComposite in="SourceAlpha" in2="o1" operator="out" result="wall"/>
+    <feGaussianBlur in="wall" stdDeviation="0.45" result="wallb"/>
+    <feFlood flood-color="#4a1d12" flood-opacity="0.7"/>
+    <feComposite in2="wallb" operator="in"/>
+    <feComposite in2="SourceAlpha" operator="in" result="shade"/>
+    <feOffset in="SourceAlpha" dx="-0.7" dy="-0.8" result="o2"/>
+    <feComposite in="SourceAlpha" in2="o2" operator="out" result="floor"/>
+    <feGaussianBlur in="floor" stdDeviation="0.35" result="floorb"/>
+    <feFlood flood-color="#fff6ef" flood-opacity="0.55"/>
+    <feComposite in2="floorb" operator="in"/>
+    <feComposite in2="SourceAlpha" operator="in" result="light"/>
+    <feOffset in="SourceAlpha" dx="0.6" dy="0.7" result="o3"/>
+    <feComposite in="o3" in2="SourceAlpha" operator="out" result="lip"/>
+    <feFlood flood-color="#ffffff" flood-opacity="0.9"/>
+    <feComposite in2="lip" operator="in" result="lipw"/>
+    <feOffset in="SourceAlpha" dx="-0.5" dy="-0.6" result="o4"/>
+    <feComposite in="o4" in2="SourceAlpha" operator="out" result="edge"/>
+    <feGaussianBlur in="edge" stdDeviation="0.3" result="edgeb"/>
+    <feFlood flood-color="#3a2a1e" flood-opacity="0.22"/>
+    <feComposite in2="edgeb" operator="in" result="edgew"/>
+    <feMerge><feMergeNode in="lipw"/><feMergeNode in="edgew"/><feMergeNode in="ink"/><feMergeNode in="shade"/><feMergeNode in="light"/></feMerge>
+  </filter>
+</svg>
+
+<header class="site">
+  <div class="container site__in">
+    <a class="wordmark" href="#top" aria-label="Tilly, back to the top">Tilly</a>
+    <nav class="site__nav" aria-label="Page">
+      <a class="site__link" href="#chase">How it chases</a>
+      <a class="site__link" href="#cost">Pricing</a>
+      <a class="btn btn--card btn--sm" href="#start">Sign up</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero desk" aria-labelledby="hero-head">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-head">Never write<br><span class="hang">“</span>following&nbsp;up”<br>again.</h1>
+        <p class="lead">Invoicing for freelancers that sends reminders, logs replies and marks invoices paid.</p>
+        <div class="actions">
+          <a class="btn btn--ink" href="#start">Start invoicing</a>
+          <a class="btn btn--card" href="#chase">See how it chases</a>
+        </div>
+        <p class="hero__terms">£8 a month, one plan.</p>
+      </div>
+
+      <figure class="scene" data-slot="hero" data-scene data-alt="Invoice 0042 on the desk: its reminder sealed in a window envelope, the client's reply tucked under it, and the invoice pressed Paid" role="img" aria-label="An overhead desk: invoice 0042 for Example Kitchen, 380 pounds, printed on cotton paper. A copy has gone out in a window envelope as reminder 2, the client's reply card is tucked under the invoice, and the invoice is pressed Paid in coral.">
+        <div class="scene__in" aria-hidden="true">
+          <div class="sheet reply">
+            <p class="reply__text">Sorry, this slipped through. Paying today.</p>
+            <p class="reply__who">accounts@example.com</p>
+          </div>
+
+          <div class="sheet inv inv--file" data-file>
+            <span class="inv__from">Example Studio</span>
+            <span class="mono" aria-hidden="true">T</span>
+            <span class="inv__addr"><b>Example Kitchen</b>1 Example Street<br>Example Town</span>
+            <span class="inv__no">Invoice <span class="fig">0042</span></span>
+            <span class="inv__dates"><span>Issued <span class="fig">18 Sep</span></span><span>Due <span class="fig">2 Oct</span></span></span>
+            <span class="inv__lines">
+              <span>Menu illustrations</span><span class="fig">£300.00</span>
+              <span>Two rounds of changes</span><span class="fig">£80.00</span>
+              <span class="inv__total">Total</span><span class="fig inv__total">£380.00</span>
+            </span>
+            <span class="inv__pay">Pay by bank transfer, quoting 0042.</span>
+            <span class="paid" data-paid>Paid</span>
+          </div>
+
+          <div class="env">
+            <div class="env__flapwrap"><div class="env__flap"><i class="env__gum"></i></div></div>
+            <div class="env__back"></div>
+            <div class="sheet letter" data-letter>
+              <i class="sheet__lift" data-lift></i>
+              <span class="letter__from">Example Studio</span>
+              <span class="letter__addr"><b>Example Kitchen</b>1 Example Street<br>Example Town</span>
+            </div>
+            <div class="env__glass"></div>
+            <div class="env__front">
+              <div class="env__paper"></div>
+              <span class="env__ppi" data-ppi><b>Reminder 2</b>Sent by Tilly</span>
+            </div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="q q--chase" id="chase" aria-labelledby="q1">
+    <div class="container">
+      <div class="q__head">
+        <h2 id="q1">Do I still have to chase?</h2>
+        <p class="lead">No. Here is one late invoice, from the first reminder to paid.</p>
+      </div>
+      <div class="pin" data-pin>
+        <figure class="slot folio pin__visual" data-slot="demo-3" data-alt="One invoice's record in Tilly, with the replies filed as cards" data-step="3" role="img" aria-label="Invoice 0044 for Example Films, 2,150 pounds, in Tilly: due on 30 September, reminder 1 sent on 3 October, the client's reply logged the same morning and filed with the other replies, then marked paid on 10 October.">
+          <div class="folio__in" aria-hidden="true">
+            <div class="sheet record">
+              <div class="record__bar"><span class="record__mark">Tilly</span><span class="record__tabs"><span class="is-on">Invoices</span><span>Clients</span><span>Replies</span></span></div>
+              <div class="record__head">
+                <span class="record__who">Example Films</span>
+                <span class="record__what">Invoice <span class="fig">0044</span><span class="fig">£2,150.00</span></span>
+              </div>
+              <ol class="record__steps">
+                <li><span>Sent</span><span class="fig">16 Sep</span></li>
+                <li><span>Due</span><span class="fig">30 Sep</span></li>
+                <li data-at="1"><span>Reminder 1 sent by Tilly</span><span class="fig">3 Oct, 09:00</span></li>
+                <li data-at="2"><span>Reply logged</span><span class="fig">3 Oct, 11:42</span></li>
+                <li data-at="3"><span>Marked paid, reminders stopped</span><span class="fig">10 Oct</span></li>
+              </ol>
+              <span class="paid paid--record" data-at="3">Paid</span>
+            </div>
+            <div class="cards">
+              <div class="card"><span class="card__tab"><span>Example Theatre</span><span class="fig">0039</span></span></div>
+              <div class="card"><span class="card__tab"><span>Example Gallery</span><span class="fig">0040</span></span></div>
+              <div class="card"><span class="card__tab"><span>Example Bakery</span><span class="fig">0041</span></span><p class="card__who">Filed with 0041</p></div>
+              <div class="card card--front" data-at="2">
+                <span class="card__tab"><span>Example Films</span><span class="fig">0044</span></span>
+                <p class="card__text">Sorry, this slipped through. We’ll pay on Friday.</p>
+                <p class="card__who">finance@example.com, filed with 0044</p>
+              </div>
+            </div>
+          </div>
+        </figure>
+        <ol class="pin__panels" role="list">
+          <li class="pin__panel" data-step="1">
+            <h3>It sends the reminders</h3>
+            <p class="pin__hand">On your own, you notice it’s late and draft a careful email.</p>
+            <p class="pin__tilly">Tilly writes the reminder and sends it for you.</p>
+          </li>
+          <li class="pin__panel" data-step="2">
+            <h3>It logs the replies</h3>
+            <p class="pin__hand">On your own, answers land in your inbox with everything else.</p>
+            <p class="pin__tilly">Tilly files each reply with the invoice it answers.</p>
+          </li>
+          <li class="pin__panel" data-step="3">
+            <h3>It marks it paid</h3>
+            <p class="pin__hand">On your own, you update your records and hope nothing slipped.</p>
+            <p class="pin__tilly">Tilly marks the invoice paid, and the asking stops.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="q q--receive well-band" id="receive" aria-labelledby="q2">
+    <div class="container">
+      <div class="q__head q__head--split">
+        <div class="q__words">
+          <h2 id="q2">What does my client receive?</h2>
+          <p class="lead">A short, polite reminder, with the invoice one click away.</p>
+        </div>
+        <fieldset class="tone">
+          <legend class="tone__legend">Tone of the reminder</legend>
+          <div class="tone__track">
+            <label class="tone__stop"><input type="radio" name="tone" value="friendly"><span>Friendly</span></label>
+            <label class="tone__stop"><input type="radio" name="tone" value="plain" checked><span>Plain</span></label>
+            <label class="tone__stop"><input type="radio" name="tone" value="firm"><span>Firm</span></label>
+            <i class="tone__thumb" aria-hidden="true"></i>
+          </div>
+          <p class="visually-hidden" aria-live="polite" data-tone-say></p>
+        </fieldset>
+      </div>
+      <figure class="showcase">
+        <div class="slot client" data-slot="demo-2" data-alt="A reminder as your client receives it, beside the invoice it links to" role="img" aria-label="The second reminder for invoice 0042 as Example Kitchen receives it: a short email saying the 380 pounds was due on 2 October, with a link to the invoice, beside the invoice itself on cotton paper, marked overdue.">
+          <div class="client__in" aria-hidden="true">
+            <div class="doc mail">
+              <div class="mail__head">
+                <p class="mail__subject">Invoice 0042 is now 7 days overdue</p>
+                <div class="mail__meta">
+                  <span>From</span><span>Example Studio</span>
+                  <span>To</span><span>accounts@example.com</span>
+                  <span>Sent</span><span class="fig">Today, 09:00</span>
+                </div>
+              </div>
+              <div class="mail__body">
+                <p>Hello,</p>
+                <div class="mail__tone">
+                  <p data-tone="friendly">Hope the week is going well. A gentle nudge that invoice 0042 for £380.00 was due on 2 October.</p>
+                  <p data-tone="plain">A quick reminder that invoice 0042 for £380.00 was due on 2 October. You can see it in full below.</p>
+                  <p data-tone="firm">Invoice 0042 for £380.00 was due on 2 October and is now overdue. Please arrange payment this week.</p>
+                </div>
+                <p>Thank you,<br>Example Studio</p>
+                <span class="mail__link">View invoice 0042</span>
+              </div>
+              <p class="mail__foot"><span>Sent by Tilly for Example Studio</span></p>
+            </div>
+            <div class="sheet bill">
+              <span class="mono">T</span>
+              <span class="bill__top"><span class="bill__title">Invoice <span class="fig">0042</span></span><i class="status">Overdue</i></span>
+              <span class="bill__parties"><span>From<b>Example Studio</b></span><span>To<b>Example Kitchen</b></span></span>
+              <span class="bill__meta"><span>Issued<b class="fig">18 Sep 2026</b></span><span>Due<b class="fig">2 Oct 2026</b></span></span>
+              <span class="bill__lines">
+                <span>Menu illustrations, six dishes</span><span class="fig">£300.00</span>
+                <span>Two rounds of changes</span><span class="fig">£80.00</span>
+                <span class="bill__total">Total</span><span class="fig bill__total">£380.00</span>
+              </span>
+              <span class="bill__pay">Pay by bank transfer, quoting 0042.</span>
+            </div>
+          </div>
+        </div>
+        <figcaption>Reminder 2 for invoice 0042, as Example Kitchen receives it.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band offer" id="cost" aria-labelledby="q5">
+    <div class="container offer__grid">
+      <div class="offer__text">
+        <h2 id="q5">What does it cost?</h2>
+        <p class="price"><span class="price__fig">£8</span><span class="price__unit">a month</span></p>
+        <ul class="inc" role="list" aria-label="What the £8 pays for">
+          <li>Invoices sent from Tilly</li>
+          <li>Reminders written and sent for you</li>
+          <li>Replies filed with their invoice</li>
+          <li>Paid invoices marked and closed</li>
+        </ul>
+      </div>
+      <div class="post" id="start">
+        <div class="post__env">
+          <i class="post__side post__side--l" aria-hidden="true"></i>
+          <i class="post__side post__side--r" aria-hidden="true"></i>
+          <i class="post__bottom" aria-hidden="true"></i>
+          <span class="post__flapwrap" aria-hidden="true"><i class="post__flap"></i></span>
+          <div class="post__act">
+            <a class="btn btn--ink" href="#start" data-needs-url="signup">Start for £8 a month</a>
+            <p class="post__terms">Start with your next invoice.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="close">
+  <div class="container">
+    <p class="close__line">Send the invoice. Tilly does the asking.</p>
+    <div class="close__row">
+      <a class="wordmark" href="#top" aria-label="Tilly, back to the top">Tilly</a>
+      <nav class="close__links" aria-label="Footer">
+        <a href="#chase">How it chases</a>
+        <a href="#receive">What clients get</a>
+        <a href="#cost">Pricing</a>
+      </nav>
+      <p class="close__legal">© 2026 Tilly. Invoicing for freelancers.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="scene.js" defer></script>
+</body>
+</html>

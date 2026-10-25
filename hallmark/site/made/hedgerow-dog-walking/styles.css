@@ -1,0 +1,126 @@
+/* Hallmark · shape: Feature Stack · genre: editorial · theme: Hedgerow (deal 1/3, seed dog-walking-business-2f38·076f9633·2026-10-20·r0) · draw: ecba0d (nav and footer swapped)
+ * hero: Stage · nav: edge-aligned, wordmark and one link (draw's search-led bar swapped: nothing to search) · footer: colophon block (draw's index columns swapped: no sitemap) · imagery: photographs, library 3, natural · walk note built as a sample in the hero · signature: the note an owner gets after every walk, pinned to the hero photograph · hedgerow: hedge
+ * axes: dark/high-contrast-serif/chromatic-green · posture: drenched · contrast: pass · fold: pass · inferred: audience busy dog owners nearby, use book a meet and greet, tone editorial and calm · v2.8.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S3 R5 V4 · weakest: S, the brief gives no name, area or prices; the page leans on the after-walk note and the four walk kinds, the only things that are this service's own, and slots the rest */
+@import url("./tokens.css");
+@import url("./base.css");
+
+body { font-size: 1.0625rem; line-height: 1.6; color: var(--color-ink-2); }
+h1, h2, h3 { font-weight: 400; line-height: 1.08; color: var(--color-ink); }
+
+/* Controls */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--space-lg); border: 1.5px solid var(--color-accent); border-radius: var(--radius-pill); font: 700 var(--text-sm)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-accent-2); border-color: var(--color-accent-2); }
+.btn--secondary { background: transparent; color: var(--color-accent); }
+.btn--secondary:hover { background: color-mix(in oklab, var(--color-accent) 12%, transparent); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.btn[aria-busy="true"] { cursor: progress; }
+a { text-decoration-color: var(--color-accent); }
+a:hover { text-decoration-thickness: 2px; }
+.label { font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); }
+.fill { padding: 0 0.2em; border-radius: 2px; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+/* Nav: edge-aligned */
+.nav { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.nav__inner { display: flex; align-items: center; justify-content: space-between; min-height: 72px; gap: var(--space-lg); }
+.wordmark { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-ink); text-decoration: none; white-space: nowrap; }
+.nav__link { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); white-space: nowrap; }
+
+/* Hero: Stage */
+.hero { min-height: calc(100dvh - 73px); display: grid; align-items: center; padding-block: var(--space-xl) var(--space-2xl); }
+.hero__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-3xl); align-items: center; }
+.hero__text { display: grid; gap: var(--space-lg); justify-items: start; }
+.hero__text .lead { max-width: 34ch; }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-xs); }
+.hero__visual { position: relative; }
+.photo { margin: 0; border-radius: var(--radius-card); }
+.photo > img { outline: var(--rule-hair) solid color-mix(in oklab, var(--color-ink) 8%, transparent); outline-offset: -1px; }
+.photo--hero { height: min(68dvh, 640px); min-height: 440px; }
+
+/* The walk note: a sample of what owners receive */
+.note { position: absolute; z-index: 2; left: calc(-1 * var(--space-2xl)); bottom: var(--space-xl); width: min(320px, 70%); margin: 0; padding: var(--space-lg); background: var(--color-ink); color: var(--color-paper); }
+.note dl { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: var(--space-xs) var(--space-md); margin: 0; font-size: var(--text-sm); }
+.note .note__title { font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; padding-bottom: var(--space-xs); }
+.note figcaption { margin-top: var(--space-md); padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-accent-deep); font-size: var(--text-sm); color: var(--color-accent-deep); }
+.note dt { font-weight: 500; color: var(--color-accent-deep); }
+.note dd { margin: 0; color: var(--color-paper); }
+
+/* Sections */
+.section { padding-block: var(--section-gap) 0; }
+.section--l { padding-block: var(--section-gap-l) 0; }
+.head { display: grid; gap: var(--space-md); }
+
+/* Split: meet first */
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-3xl); align-items: center; }
+.split__text { display: grid; gap: var(--space-2xl); }
+.facts { display: grid; gap: 0; margin: 0; }
+.facts > div { display: grid; grid-template-columns: minmax(0, 7rem) minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+.facts dt { font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); padding-top: var(--space-3xs); }
+.facts dd { margin: 0; }
+.photo--portrait { aspect-ratio: 4 / 5; min-height: 440px; }
+
+/* Feature stack: sticky pane beside the walk */
+.stack { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: var(--space-3xl); align-items: start; }
+.stack__pane { position: sticky; top: var(--space-2xl); display: grid; gap: var(--space-lg); justify-items: start; z-index: var(--z-sticky); }
+.stages { list-style: none; margin: 0; padding: 0; counter-reset: stage; }
+.stages > li { counter-increment: stage; display: grid; grid-template-columns: minmax(0, 4rem) minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-2xl); border-top: var(--rule-hair) solid var(--color-rule); }
+.stages > li::before { content: counter(stage); font-family: var(--font-display); font-size: var(--text-2xl); line-height: 1.1; color: var(--color-accent); }
+.stages h3 { font-size: var(--text-2xl); margin-bottom: var(--space-sm); }
+.stages .photo { grid-column: 2; aspect-ratio: 16 / 10; min-height: 360px; margin-top: var(--space-lg); }
+
+/* Index as a field guide: the walks */
+.index { list-style: none; margin: var(--space-2xl) 0 0; padding: 0; border-top: 1.5px solid var(--color-accent); }
+.index > li { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 4fr); gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.index h3 { font-size: var(--text-3xl); }
+.index__note { margin-top: var(--space-lg); font-size: var(--text-sm); color: var(--color-muted); }
+
+/* Form on the cream band */
+.band--cream { background: var(--color-ink); color: var(--color-paper); padding-block: var(--section-gap-s); margin-top: var(--section-gap); --color-rule: color-mix(in oklab, var(--color-paper) 22%, var(--color-ink)); --color-focus: var(--color-paper); }
+.band--cream h2 { color: var(--color-paper); }
+.band--cream .btn { border-color: var(--color-paper); }
+.band--cream .btn--primary { background: var(--color-paper); color: var(--color-ink); }
+.band--cream .btn--primary:hover { background: var(--color-paper-3); border-color: var(--color-paper-3); }
+.band--cream .fill { color: var(--color-paper-3); background: color-mix(in oklch, var(--color-accent-deep) 16%, transparent); }
+.booking { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-3xl); align-items: start; }
+.booking__text { display: grid; gap: var(--space-lg); }
+.form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg) var(--space-md); }
+.field { display: grid; gap: var(--space-xs); }
+.field--wide { grid-column: 1 / -1; }
+.field label { font-size: var(--text-sm); font-weight: 500; }
+.field input { min-height: 48px; padding: 0 var(--space-md); border: var(--rule-hair) solid var(--color-accent-deep); border-radius: 0; background: var(--color-ink); color: var(--color-paper); outline: 2px solid transparent; outline-offset: -3px; }
+.field input:hover { border-color: var(--color-paper); }
+.field input:focus-visible { outline-color: var(--color-paper); }
+.field input[aria-invalid] { border-color: var(--color-paper); border-width: var(--rule-hair); }
+.field input:disabled { opacity: 0.55; cursor: not-allowed; }
+.form__foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-md); }
+.form__help { min-height: 1lh; font-size: var(--text-sm); }
+
+/* Footer: colophon block */
+.footer { padding-block: var(--space-3xl) var(--space-2xl); }
+.footer__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-3xl); }
+.footer .wordmark { font-size: var(--text-2xl); }
+.footer__body { display: grid; gap: var(--space-md); font-size: var(--text-sm); color: var(--color-muted); }
+.footer__links { display: flex; flex-wrap: wrap; gap: var(--space-lg); font-size: var(--text-md); color: var(--color-ink); }
+.footer__body a { color: var(--color-ink-2); }
+
+@media (max-width: 60rem) {
+  .hero { min-height: 0; }
+  .hero__grid, .split, .stack, .booking, .footer__grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  .photo--hero { height: auto; aspect-ratio: 4 / 3; min-height: 0; }
+  .note { position: static; width: 100%; }
+  .photo--portrait, .stages .photo { min-height: 0; }
+  .stack__pane { position: static; }
+  .index > li { grid-template-columns: minmax(0, 1fr); gap: var(--space-xs); }
+}
+@media (max-width: 40rem) {
+  .nav .wordmark { font-size: var(--text-lg); }
+  .form { grid-template-columns: minmax(0, 1fr); }
+  .stages > li { grid-template-columns: minmax(0, 2.5rem) minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .btn { transition: background-color var(--dur-short) linear; } .btn:active { transform: none; } }

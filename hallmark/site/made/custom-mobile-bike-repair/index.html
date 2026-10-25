@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile bike repair, fixed outside your house</title>
+<meta name="description" content="A bike mechanic comes to your house and repairs your bike right outside: say what it is doing and book a visit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="container nav__inner">
+    <a class="wordmark" href="#main" aria-label="Mobile bike repair, home">Mobile bike repair</a>
+    <a class="btn btn--quiet" href="#book">Book a visit</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__body">
+      <h1 id="hero-title">We fix bikes outside your house.</h1>
+      <p class="hero__lede">Tell us what it’s doing and a mechanic comes to you.</p>
+    </div>
+  </section>
+    <div class="lane" id="lane">
+      <div class="container lane__inner">
+        <fieldset class="chips" data-symptom-group>
+          <legend>What’s it doing?</legend>
+          <div class="chips__row">
+            <input type="radio" name="symptom-hero" id="h-clicks" value="clicks" checked><label for="h-clicks">Clicks when I pedal</label>
+            <input type="radio" name="symptom-hero" id="h-brakes" value="brakes"><label for="h-brakes">Brakes squeal or feel soft</label>
+            <input type="radio" name="symptom-hero" id="h-gears" value="gears"><label for="h-gears">Gears skip</label>
+            <input type="radio" name="symptom-hero" id="h-flats" value="flats"><label for="h-flats">Flat again</label>
+            <input type="radio" name="symptom-hero" id="h-years" value="years"><label for="h-years">Not ridden in years</label>
+          </div>
+        </fieldset>
+        <a class="btn" href="#book" data-carry>Send a mechanic</a>
+      </div>
+    </div>
+  <figure class="hero__photo" data-slot="hero" data-alt="Your mechanic at work on a customer's bike outside their front door, the stand up on the pavement">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg/1920px-Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg/960px-Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg/1280px-Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg/1920px-Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg 1920w" sizes="100vw" width="2858" height="1801" alt="An old black bicycle leaning against a stone wall" fetchpriority="high">
+    </figure>
+  <section class="fix" id="fix" aria-labelledby="fix-title">
+    <div class="container">
+      <h2 id="fix-title">In your words, then ours</h2>
+      <div class="panels">
+        <div class="panel" id="p-clicks">
+          <p class="said">“It clicks when I pedal.”</p>
+          <div class="panel__answer">
+          <h3>Usually a pedal, a crank or the chain.</h3>
+          <dl class="checks">
+            <div><dt>Pedals</dt><dd>Threads tight, bearings turning smoothly.</dd></div>
+            <div><dt>Crank bolts</dt><dd>Torqued so the arms stop creaking.</dd></div>
+            <div><dt>Chain</dt><dd>Cleaned, oiled and measured for wear.</dd></div>
+            <div><dt>Bottom bracket</dt><dd>Checked for play and grinding.</dd></div>
+          </dl>
+          </div>
+        </div>
+        <div class="panel" id="p-brakes">
+          <p class="said">“The brakes squeal, or feel soft.”</p>
+          <div class="panel__answer">
+          <h3>Pads, cables and what they grip.</h3>
+          <dl class="checks">
+            <div><dt>Pads</dt><dd>Worn or glazed pads swapped out.</dd></div>
+            <div><dt>Cables or hoses</dt><dd>Tension set, or the hydraulics bled.</dd></div>
+            <div><dt>Rims and rotors</dt><dd>Cleaned and trued so pads bite evenly.</dd></div>
+            <div><dt>Levers</dt><dd>Firm well before they reach the bar.</dd></div>
+          </dl>
+          </div>
+        </div>
+        <div class="panel" id="p-gears">
+          <p class="said">“The gears skip.”</p>
+          <div class="panel__answer">
+          <h3>Cable tension, the hanger, a worn chain.</h3>
+          <dl class="checks">
+            <div><dt>Indexing</dt><dd>Each click lands on one cog.</dd></div>
+            <div><dt>Hanger</dt><dd>Straightened if a knock bent it.</dd></div>
+            <div><dt>Chain and cassette</dt><dd>Measured, since a worn pair slips.</dd></div>
+            <div><dt>Gear cables</dt><dd>Frayed or sticky cables replaced.</dd></div>
+          </dl>
+          </div>
+        </div>
+        <div class="panel" id="p-flats">
+          <p class="said">“It’s flat again.”</p>
+          <div class="panel__answer">
+          <h3>Whatever keeps letting the air out.</h3>
+          <dl class="checks">
+            <div><dt>Tyre</dt><dd>Searched for glass, thorns and wire.</dd></div>
+            <div><dt>Rim tape</dt><dd>Covering every spoke hole.</dd></div>
+            <div><dt>Tube and valve</dt><dd>Patched or replaced, valve checked.</dd></div>
+            <div><dt>Pressure</dt><dd>Set for you and the tyre.</dd></div>
+          </dl>
+          </div>
+        </div>
+        <div class="panel" id="p-years">
+          <p class="said">“It hasn’t been ridden in years.”</p>
+          <div class="panel__answer">
+          <h3>A full once-over before the first ride.</h3>
+          <dl class="checks">
+            <div><dt>Tyres</dt><dd>Perished rubber and tubes replaced.</dd></div>
+            <div><dt>Brakes</dt><dd>Seized parts freed, pads set.</dd></div>
+            <div><dt>Chain and gears</dt><dd>Rust off, every gear shifting.</dd></div>
+            <div><dt>Bolts</dt><dd>Every one checked and tightened.</dd></div>
+          </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ride container" aria-labelledby="ride-title">
+    <div class="ride__grid">
+      <figure class="photo" data-slot="ride" data-alt="A customer riding off from their own front door after the repair">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg/1280px-Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg/960px-Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg/1280px-Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg/1920px-Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_%283296897865%29.jpg 1920w" sizes="(min-width: 60rem) 55vw, 100vw" width="2945" height="1875" alt="A parent riding a cargo bike with a child along a snowy street" style="object-position: 40% 60%" loading="lazy">
+      </figure>
+      <div class="ride__text">
+        <h2 id="ride-title">Quiet again, at your own door.</h2>
+        <p class="intro">No car rack, and no pushing it to a shop and back.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="book" id="book" aria-labelledby="book-title">
+    <div class="container book__grid">
+      <div class="book__head">
+        <h2 id="book-title">Your street is the workshop.</h2>
+        <p class="intro">We bring the stand and the tools. Tell us the bike and a day.</p>
+        <p class="area">We currently cover <span class="fill" data-fill="area">service area to be confirmed</span>.</p>
+      </div>
+      <form class="form" data-endpoint="" novalidate>
+        <div class="field field--wide">
+          <label for="f-symptom">What’s it doing?</label>
+          <select id="f-symptom" name="symptom" required>
+            <option value="">Choose one</option>
+            <option value="clicks">Clicks when I pedal</option>
+            <option value="brakes">Brakes squeal or feel soft</option>
+            <option value="gears">Gears skip</option>
+            <option value="flats">Flat again</option>
+            <option value="years">Not ridden in years</option>
+            <option value="other">Something else</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-bike">Your bike</label>
+          <input id="f-bike" name="bike" type="text" autocomplete="off" placeholder="Blue hybrid, kids’ bike, e-bike">
+        </div>
+        <div class="field field--wide">
+          <label for="f-address">Street address</label>
+          <input id="f-address" name="address" type="text" autocomplete="street-address" required>
+        </div>
+        <div class="field">
+          <label for="f-day">A day that suits</label>
+          <input id="f-day" name="day" type="date">
+        </div>
+        <div class="field">
+          <label for="f-name">Your name</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone</label>
+          <input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+        </div>
+        <div class="form__foot">
+          <button class="btn" type="submit">Send a mechanic</button>
+          <p class="form__help" id="form-help" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__row">
+      <div class="footer__brand">
+        <a class="wordmark" href="#main" aria-label="Mobile bike repair, back to top">Mobile bike repair</a>
+        <p>Bike repair outside your house.</p>
+      </div>
+      <nav aria-label="Footer">
+        <ul>
+          <li><a href="#fix">What we check</a></li>
+          <li><a href="#book">Send a mechanic</a></li>
+        </ul>
+      </nav>
+    </div>
+    <p class="credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Raleigh_lady%27s_loop_frame_bicycle_1930s.jpg">DeFacto</a> (CC BY-SA 4.0, Wikimedia Commons), <a href="https://commons.wikimedia.org/wiki/File:Christiania_Winter_-_Cycling_in_Winter_in_Copenhagen_(3296897865).jpg">Mikael Colville-Andersen from Copenhagen, Denmark</a> (CC0, Wikimedia Commons)</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const panels = [...document.querySelectorAll('.panel')];
+  const chips = [...document.querySelectorAll('input[name="symptom-hero"]')];
+  const select = document.getElementById('f-symptom');
+  const set = (key, form) => {
+    panels.forEach((p) => { p.hidden = p.id !== 'p-' + key; });
+    chips.forEach((c) => { c.checked = c.value === key; });
+    if (select && form) select.value = key;
+  };
+  set((chips.find((c) => c.checked) || chips[0]).value, false);
+  chips.forEach((c) => c.addEventListener('change', () => set(c.value, true)));
+  if (select) select.addEventListener('change', () => { if (chips.some((c) => c.value === select.value)) set(select.value, false); });
+  document.querySelectorAll('[data-carry]').forEach((a) => a.addEventListener('click', () => {
+    const c = chips.find((x) => x.checked);
+    if (c && select && !select.value) select.value = c.value;
+  }));
+
+  document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+    const help = form.querySelector('[aria-live]');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fields = [...form.querySelectorAll('input, select')];
+      fields.forEach((f) => f.toggleAttribute('aria-invalid', !f.checkValidity()));
+      const bad = fields.find((f) => !f.checkValidity());
+      if (bad) {
+        const label = form.querySelector('label[for="' + bad.id + '"]').textContent;
+        bad.setAttribute('aria-describedby', help.id);
+        help.textContent = label + ' is missing. Fill it in so the mechanic can find you.';
+        bad.focus();
+        return;
+      }
+      if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+      fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+        .then((r) => { help.textContent = r.ok ? 'Request sent.' : 'That did not go through. Try again in a minute.'; })
+        .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+    });
+  });
+})();
+</script>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

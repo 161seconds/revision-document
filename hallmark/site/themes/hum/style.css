@@ -1,0 +1,455 @@
+/* Hallmark · shape: Workbench · genre: playful · theme: Hum (by request; cut paper) · job: try
+ * hero: Settled, on a cut-paper ground · nav: a torn paper bar with card-stock tabs · footer: mast, the wordmark cut from paper and planted in torn soil, under the links · sections: Pinned (one round, four moments, the screen held while the panels pass), Switcher (the garden on its first day, after a week, after two weeks, its beds on torn paper steps), Split (the kite photograph torn along its right edge beside three ruled facts for grown-ups), Band (a torn ink sheet: the start day, the free days counted, the press, beside the first screen) · imagery: photographs, library 1, natural vib=12 exp=4 · samples: the product built (the playable round, the word card, the garden and its plants, the end of a round, the first screen); plant names, page counts, garden states, the time left and yesterday's plants are samples of the product's shape · signature: a reading round you can play, each word read growing a plant set in type · range: the product as pinned screens, a garden as pressable states, a start day as card-stock pills · radius: 28px for a children's product, 16px for card stock
+ * axes: light/rounded-sans/chromatic-yellow · posture: full-palette · contrast: pass · fold: pass · layout fix: close is the start, no email */
+/* Hallmark · answered F7 · the pills outside the button pair are chips inside the built product samples (the round, the word card, the garden, the first screen), the nav knobs and the stage's moment tabs, which are links the size of controls */
+@import url("./tokens.css");
+@import url("./base.css");
+@import url("./paper.css");
+
+@property --curl { syntax: "<length>"; inherits: true; initial-value: 44px; }
+
+:root {
+  --radius-card: 28px; --radius-stock: 16px; --bar-h: 76px; --stage-h: min(620px, calc(100svh - 2 * var(--space-2xl)));
+  /* Paper: one light from the top left, so every cast shadow falls down and right */
+  --color-card: oklch(98.8% 0.007 95);
+  --color-white: oklch(99.6% 0.005 95);
+  --color-ink-deep: oklch(13% 0.012 255);
+  --color-pear-edge: oklch(45% 0.1 90 / 0.7);
+  --color-sand: oklch(77% 0.1 76);
+  --color-sugar: oklch(89% 0.035 236);
+  --color-hill-1: oklch(94.5% 0.03 118); --color-hill-2: oklch(91.5% 0.045 135);
+  --color-mint-mid: oklch(70% 0.16 152);
+  --color-coral-deep: oklch(56% 0.17 24); --color-blue-deep: oklch(36% 0.13 255);
+  --grain-fine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .27 0 0 0 0 .18 0 0 0 .3 -.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --color-curl-1: oklch(90% 0.02 90); --color-curl-2: oklch(99% 0.006 95); --color-curl-3: oklch(93% 0.016 92);
+  --color-strip: oklch(89% 0.04 78);
+  --color-fringe: oklch(99.2% 0.006 95);
+  --color-edge: oklch(83% 0.04 88);
+  --color-leaf: oklch(64% 0.15 150);
+  --color-soil-2: oklch(66% 0.145 150);
+  --color-kraft: oklch(63% 0.085 62);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .42 -.18'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='turbulence' baseFrequency='.024' numOctaves='4' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .42 0 0 0 0 .36 0 0 0 0 .24 -10 0 0 0 .42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --fibre-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='turbulence' baseFrequency='.024' numOctaves='4' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 .96 -10 0 0 0 .5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --shadow-paper: drop-shadow(0 0 0.6px oklch(20% 0.014 255 / 0.32)) drop-shadow(1.5px 2.5px 1.5px oklch(20% 0.014 255 / 0.1)) drop-shadow(6px 14px 16px oklch(20% 0.014 255 / 0.13));
+  --shadow-paper-low: drop-shadow(0 0 0.6px oklch(20% 0.014 255 / 0.34)) drop-shadow(1px 2px 1.5px oklch(20% 0.014 255 / 0.13));
+  --plant-size: clamp(28px, 2vw + 2.4svh, 64px);
+  --tile-size: clamp(1.5rem, 4vw + 0.1rem, 4.25rem);
+}
+
+body { font-weight: 500; color: var(--color-ink-2); background: var(--grain), var(--fibre), var(--color-paper); }
+h1, h2, h3 { font-weight: var(--display-weight); color: var(--color-ink); line-height: 1.05; }
+a { color: var(--color-accent-2); text-underline-offset: 0.18em; }
+mark { background: color-mix(in oklab, var(--color-accent) 55%, transparent); color: inherit; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+/* A sheet of torn paper: the pale fibre core first, the coloured face over it, one stacked shadow on the pair */
+.sheet { position: absolute; display: block; pointer-events: none; filter: var(--shadow-paper-low); }
+.sheet > i { position: absolute; inset: 0; }
+.sheet > i:first-child { background: var(--fibre), color-mix(in oklab, var(--sheet-c, var(--color-paper-3)) 18%, var(--color-fringe)); }
+.sheet > i:last-child { background: var(--grain), var(--fibre), var(--sheet-c, var(--color-paper-3)); }
+
+/* Controls: thick card stock with a visible edge that presses down */
+.btn { --edge: 5px; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 54px; padding: 0 var(--space-lg); border: 0; border-radius: var(--radius-stock); font: 600 var(--text-md)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; color: var(--color-ink);
+  transition: translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-micro) var(--ease-snap), background-color var(--dur-short) var(--ease-snap); }
+.btn--primary { background: var(--grain), var(--fibre), var(--color-accent); color: var(--color-accent-ink);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-white) 55%, transparent), inset 0 0 0 1px color-mix(in oklab, var(--color-accent-deep) 40%, transparent), 0 var(--edge) 0 0 var(--color-accent-deep), 2px calc(var(--edge) + 4px) 10px -3px color-mix(in oklab, var(--color-ink) 32%, transparent);
+  transition-timing-function: var(--ease-spring); }
+.btn--primary:hover { --edge: 7px; translate: 0 -2px; }
+.btn--primary:active { --edge: 1px; translate: 0 4px; transition-duration: calc(var(--dur-micro) / 2); }
+.btn--secondary { background: var(--fibre), var(--color-card);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 13%, transparent), 0 var(--edge) 0 0 var(--color-edge), 2px calc(var(--edge) + 3px) 8px -3px color-mix(in oklab, var(--color-ink) 22%, transparent); }
+.btn--secondary:hover { --edge: 6px; translate: 0 -1px; background-color: var(--color-white); }
+.btn--secondary:active { --edge: 1px; translate: 0 4px; }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; translate: none; }
+.btn--small { --edge: 4px; min-height: 44px; padding: 0 var(--space-md); border-radius: 13px; font-size: var(--text-sm); }
+.btn--small:hover { --edge: 5px; }
+.btn--small:active { --edge: 1px; translate: 0 3px; }
+.btn--icon svg { flex: none; }
+
+/* Nav: a strip of paper torn along its lower edge, card-stock tabs on it */
+.bar { position: sticky; top: 0; z-index: var(--z-sticky-nav); filter: drop-shadow(0 0 0.6px color-mix(in oklab, var(--color-ink) 30%, transparent)) drop-shadow(1px 3px 3px color-mix(in oklab, var(--color-ink) 8%, transparent)); }
+.bar::before { content: ""; position: absolute; inset: 0 0 -10px; z-index: -1; background: var(--grain), var(--fibre), var(--color-card); clip-path: var(--tear-bar); }
+.bar__inner { display: flex; align-items: center; gap: var(--space-lg); min-height: var(--bar-h); }
+.wordmark { margin-right: auto; font: 600 var(--text-2xl)/1 var(--font-display); letter-spacing: var(--tracking-display); color: var(--color-ink); text-decoration: none; }
+.knobs { display: flex; gap: var(--space-sm); }
+.knob { --edge: 3px; display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-md); border-radius: 12px; background: var(--fibre), var(--color-paper-2); color: var(--color-ink); font: 500 var(--text-sm)/1 var(--font-body); text-decoration: none;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent), 0 var(--edge) 0 0 var(--color-edge); transition: translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-micro) var(--ease-snap), background-color var(--dur-short) var(--ease-snap); }
+.knob:hover { background-color: var(--color-paper-3); }
+.knob:active { --edge: 1px; translate: 0 2px; }
+.knob:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+
+/* Chips inside the built screens */
+.chip { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 40px; padding: 0 var(--space-md); border-radius: var(--radius-pill); background: var(--color-paper); color: var(--color-ink); font: 600 var(--text-sm)/1 var(--font-body); white-space: nowrap; }
+.chip--paper { background: var(--color-paper); }
+.chip--ink { background: var(--color-ink); color: var(--color-paper); }
+.chip--line { background: transparent; box-shadow: inset 0 0 0 2px var(--color-ink); }
+.chip--well { background: var(--color-paper-2); }
+.chip--big { min-height: 52px; padding: 0 var(--space-lg); font-size: var(--text-md); }
+.grow { position: relative; display: block; height: 10px; border-radius: var(--radius-pill); background: color-mix(in oklab, var(--color-mint) 40%, var(--color-paper)); }
+.grow::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--g) * 100%); border-radius: inherit; background: var(--color-mint-deep); }
+
+/* Hero: settled, the head beside a reading card, on a ground of torn paper */
+.hero { --ground-h: clamp(110px, 18svh, 190px); position: relative; isolation: isolate; box-sizing: border-box; min-height: calc(100svh - var(--bar-h)); display: grid; align-content: center; padding-block: var(--space-md) calc(var(--ground-h) + var(--space-3xl)); }
+.hero__grid { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); column-gap: var(--space-2xl); align-items: center; }
+.hero h1 { max-width: none; font-size: clamp(2.75rem, 5.5vw, 5.25rem); }
+.hero .lead { margin-top: var(--space-lg); max-width: 30ch; }
+@media (min-width: 60.001rem) { .hero h1 { white-space: nowrap; } }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-top: var(--space-xl); }
+
+/* The reading card: a pear mat, a lighter card with a curled corner, a price sticker slapped on */
+.round-wrap { position: relative; margin: 0; width: 100%; max-width: 660px; justify-self: end; }
+.mat { inset: -14px -34px -40px -16px; rotate: -2.6deg; --sheet-c: var(--color-sugar); filter: var(--shadow-paper); }
+.mat > i:first-child { clip-path: var(--tear-sheetf); }
+.mat > i:last-child { clip-path: var(--tear-sheet); }
+.card { --curl: 44px; position: relative; filter: var(--shadow-paper); transition: --curl var(--dur-long) var(--ease-snap); }
+.card:hover { --curl: 58px; }
+.play, .first { margin: 0; border-radius: 22px; background: var(--grain), var(--fibre), var(--color-card);
+  -webkit-mask: linear-gradient(315deg, transparent calc(var(--curl) * 0.7071), var(--color-ink) calc(var(--curl) * 0.7071 + 0.6px));
+  mask: linear-gradient(315deg, transparent calc(var(--curl) * 0.7071), var(--color-ink) calc(var(--curl) * 0.7071 + 0.6px)); }
+.curl { position: absolute; right: 0; bottom: 0; width: var(--curl); height: var(--curl); border-top-left-radius: 60% 60%; clip-path: polygon(0 0, 100% 0, 0 100%);
+  background: linear-gradient(315deg, var(--color-curl-1) 0 47%, var(--color-curl-2) 58%, var(--color-curl-3) 100%); }
+.play { display: grid; gap: var(--space-md); padding: var(--space-lg) var(--space-xl) var(--space-md); color: var(--color-ink); }
+.play__top { display: flex; align-items: center; gap: var(--space-md); padding-right: 84px; }
+.tab { flex: none; display: inline-flex; align-items: center; min-height: 34px; padding: 0 var(--space-sm); border-radius: 10px; background: var(--fibre), var(--color-paper-2); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent); font: 600 var(--text-sm)/1 var(--font-body); white-space: nowrap; }
+.timer { flex: 1 1 auto; min-width: 4rem; }
+.timer__track { position: relative; display: block; height: 20px; border-radius: 3px; background: color-mix(in oklab, var(--color-paper-3) 55%, var(--color-card)); box-shadow: inset 1px 1.5px 2px color-mix(in oklab, var(--color-ink) 16%, transparent); rotate: -0.6deg; }
+.timer__sand { --t: 0.84; position: absolute; inset: -1px auto -1px 0; width: calc(var(--t) * 100%); filter: drop-shadow(0 0 0.5px color-mix(in oklab, var(--color-pear-edge) 70%, transparent)) drop-shadow(1px 1.5px 1px color-mix(in oklab, var(--color-ink) 18%, transparent)); }
+.timer__sand::before { content: ""; position: absolute; inset: 0; background: var(--grain), var(--fibre), var(--color-sand);
+  clip-path: var(--tear-end, polygon(1px 0%, calc(100% - 3px) 0%, calc(100% - 0.5px) 16%, calc(100% - 5px) 33%, calc(100% - 1.5px) 49%, calc(100% - 6px) 64%, calc(100% - 2px) 82%, calc(100% - 4px) 100%, 0% 100%, 2.5px 70%, 0.5px 44%, 3px 22%)); }
+.scrap { position: absolute; top: -1px; width: 8px; height: 22px; background: var(--grain), var(--fibre), var(--color-sand); pointer-events: none; animation: scrap 1.1s var(--ease-in) forwards; }
+@keyframes scrap { 0% { translate: 0 0; rotate: 0deg; opacity: 1; } 30% { translate: 3px -3px; rotate: 18deg; } 100% { translate: 14px 46px; rotate: 74deg; opacity: 0; } }
+.timer__time { flex: none; font: 600 var(--text-md)/1 var(--font-body); color: var(--color-ink-2); white-space: nowrap; }
+.timer__time .num { display: inline-block; min-width: 2.4em; text-align: right; color: var(--color-ink); }
+
+/* The sentence: word tiles on a strip of torn paper */
+.strip { position: relative; isolation: isolate; margin: var(--space-xs) calc(-1 * var(--space-md)) 0 calc(-1 * var(--space-sm)); padding: var(--space-lg) var(--space-lg) var(--space-xl); rotate: -1.1deg; }
+.paper-strip { inset: 0; z-index: -1; --sheet-c: var(--color-strip); }
+.paper-strip > i:first-child { clip-path: var(--tear-stripf); }
+.paper-strip > i:last-child { clip-path: var(--tear-strip); }
+.words { display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-sm); margin: 0; max-width: none; rotate: 1.1deg; }
+.tile { --edge: 5px; --cx: 50%; --cy: 50%; position: relative; display: inline-flex; align-items: center; min-height: 1.55em; padding: 0.06em 0.3em 0.14em; border: 0; border-radius: 14px; font: 600 var(--tile-size)/1 var(--font-display); letter-spacing: -0.02em; color: var(--color-ink); cursor: pointer;
+  background: var(--fibre), var(--color-card);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 12%, transparent), 0 var(--edge) 0 0 var(--tile-edge, var(--color-edge)), 2px calc(var(--edge) + 3px) 7px -2px color-mix(in oklab, var(--color-ink) 24%, transparent);
+  transition: translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-short) var(--ease-snap); }
+.tile > span { position: relative; z-index: 1; }
+.words__br { flex-basis: 100%; height: 0; }
+.tile::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--grain), var(--fibre), var(--tc); clip-path: circle(0% at var(--cx) var(--cy)); transition: clip-path var(--dur-long) var(--ease-snap); }
+.tile:hover { --edge: 6px; translate: 0 -1px; }
+.tile:active { --edge: 1px; translate: 0 4px; }
+.tile:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+.tile--pear { --tc: var(--color-accent); --te: var(--color-accent-deep); }
+.tile--coral { --tc: var(--color-accent-3); --te: var(--color-coral-deep); }
+.tile--mint { --tc: var(--color-mint); --te: var(--color-mint-deep); }
+.tile--blue { --tc: var(--color-accent-2); --te: var(--color-blue-deep); --tt: var(--color-paper); }
+.tile > span { transition: color var(--dur-short) var(--ease-snap); }
+.tile[aria-pressed="true"] { --tile-edge: var(--te); --edge: 3px; translate: 0 2px; cursor: default; }
+.tile[aria-pressed="true"] > span { color: var(--tt, var(--color-ink)); }
+.js .play:not(.is-live) .tile > span { color: var(--color-ink); }
+.tile[aria-pressed="true"]::before { clip-path: circle(80% at var(--cx) var(--cy)); }
+.js .play:not(.is-live) .tile { --tile-edge: var(--color-edge); --edge: 5px; translate: none; }
+.js .play:not(.is-live) .tile::before { clip-path: circle(0% at 50% 50%); transition: none; }
+.tile.is-next { box-shadow: inset 0 0 0 2px var(--color-ink), 0 var(--edge) 0 0 var(--color-ink-2), 2px calc(var(--edge) + 3px) 7px -2px color-mix(in oklab, var(--color-ink) 24%, transparent); }
+.tile.is-pop { animation: pop var(--dur-long) var(--ease-snap); }
+.tile.is-wrong { animation: wrong 0.32s var(--ease-snap); }
+.tile.is-nudge { animation: nudge 0.9s var(--ease-snap) 2; }
+@keyframes pop { 0% { translate: 0 5px; } 45% { translate: 0 -5px; } 100% { translate: 0 2px; } }
+@keyframes wrong { 0%, 100% { translate: 0 0; } 25% { translate: -4px 0; } 50% { translate: 4px 0; } 75% { translate: -2px 0; } }
+@keyframes nudge { 0%, 100% { translate: 0 0; } 40% { translate: 0 -6px; } 60% { translate: 0 -6px; } }
+.play__bottom { display: flex; align-items: center; gap: var(--space-sm); min-height: 48px; padding-right: calc(var(--curl) - var(--space-md)); }
+.play__say { margin-right: auto; font: 500 var(--text-md)/1.3 var(--font-body); color: var(--color-ink-2); }
+
+/* The sticker: a die-cut price tag with its white backing, placed by hand */
+.sticker { position: absolute; top: -34px; right: -26px; z-index: 3; width: 136px; aspect-ratio: 1; margin: 0; rotate: 9deg; filter: drop-shadow(0 0 0.6px color-mix(in oklab, var(--color-ink) 30%, transparent)) drop-shadow(1px 2px 1px color-mix(in oklab, var(--color-ink) 14%, transparent)) drop-shadow(4px 8px 10px color-mix(in oklab, var(--color-ink) 14%, transparent)); }
+.sticker::before { content: ""; position: absolute; inset: 0; background: var(--color-white); clip-path: var(--cut-sticker); }
+.sticker__in { position: absolute; inset: 0; display: grid; place-content: center; gap: var(--space-2xs); text-align: center; color: var(--color-ink); clip-path: var(--cut-sticker-in);
+  background: linear-gradient(140deg, color-mix(in oklab, var(--color-white) 32%, transparent), transparent 42%), var(--grain), var(--color-accent-3); }
+.sticker b { font: 600 1.625rem/0.9 var(--font-display); letter-spacing: -0.03em; max-width: 4ch; margin-inline: auto; }
+.sticker__in > span { font: 500 0.8125rem/1.15 var(--font-body); max-width: 8ch; margin-inline: auto; }
+
+/* The ground: three torn sheets, the plants standing in the middle one and tucked behind the front */
+.hills { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hill { left: 0; right: 0; bottom: 0; filter: drop-shadow(0 0 0.5px color-mix(in oklab, var(--color-ink) 16%, transparent)) drop-shadow(1px 2px 2px color-mix(in oklab, var(--color-ink) 6%, transparent)); }
+.hill > i:last-child { background: var(--grain-fine), var(--sheet-c); }
+.hill--1 { top: 46%; --sheet-c: var(--color-hill-1); }
+.hill--2 { top: 60%; --sheet-c: var(--color-hill-2); }
+.hill--1 > i:first-child { clip-path: var(--tear-far-1f); } .hill--1 > i:last-child { clip-path: var(--tear-far-1); }
+.hill--2 > i:first-child { clip-path: var(--tear-far-2f); } .hill--2 > i:last-child { clip-path: var(--tear-far-2); }
+.ground { position: absolute; inset: auto 0 0; z-index: 1; height: var(--ground-h); }
+.soil--1 { inset: 0; --sheet-c: var(--color-mint); }
+.soil--2 { inset: 40% 0 0; --sheet-c: var(--color-soil-2); }
+.soil--3 { inset: 74% 0 0; --sheet-c: var(--color-kraft); }
+.soil--1 > i:first-child { clip-path: var(--tear-soil-1f); } .soil--1 > i:last-child { clip-path: var(--tear-soil-1); }
+.soil--2 > i:first-child { clip-path: var(--tear-soil-2f); } .soil--2 > i:last-child { clip-path: var(--tear-soil-2); }
+.soil--3 > i:first-child { clip-path: var(--tear-soil-3f); } .soil--3 > i:last-child { clip-path: var(--tear-soil-3); }
+.ground__plants { position: absolute; inset: 0; }
+.plot { position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(60% - 30px); height: 0; }
+.plot--seeds { bottom: calc(60% - 26px); }
+.seed { position: absolute; left: var(--x); translate: -50% 0; rotate: -6deg; bottom: 0; font: 600 calc(var(--plant-size) * 0.62)/0.7 var(--font-display); color: var(--color-mint-deep); filter: var(--shadow-paper-low); transition: opacity var(--dur-short) linear, scale var(--dur-short) var(--ease-snap); transform-origin: 50% 100%; }
+.seed:nth-child(even) { rotate: 5deg; }
+html:not(.js) .seed, .seed.is-gone { opacity: 0; scale: 0.4; }
+
+/* A plant set in type: a stem of l's, leaves of brackets, a head from the word it grew from */
+.plant { --s: 1; position: absolute; bottom: var(--b, 0); left: var(--x, 50%); translate: -50% 0; rotate: var(--lean, 0deg); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; font: 600 calc(var(--plant-size) * var(--s))/0.74 var(--font-display); filter: var(--shadow-paper-low); }
+.plant i, .plant b { display: block; font-style: normal; font-weight: 600; }
+.plant__stem { display: flex; flex-direction: column; align-items: center; color: var(--color-mint-deep); }
+.plant__stem i { transform-origin: 50% 100%; rotate: -1.5deg; }
+.plant__stem i:nth-child(even) { rotate: 2deg; translate: 0.02em 0; }
+.plant__head { font-size: 1.75em; line-height: 0.62; margin-bottom: 0.02em; transform-origin: 50% 80%; }
+.plant__head--coral { color: var(--color-accent-3); }
+.plant__head--pear { color: var(--color-accent-deep); }
+.plant__head--green { color: var(--color-mint-deep); }
+.plant__head--mint { color: var(--color-mint-mid); }
+.plant__head--blue { color: var(--color-accent-2); }
+.plot--full { inset: 0; height: auto; }
+.plant--far { opacity: 0.42; filter: none; }
+.plant--far .plant__stem { color: var(--color-leaf); }
+.plant--front { z-index: 1; }
+.leaf { position: absolute; bottom: calc(var(--at) * 0.74em + 0.2em); left: 50%; color: var(--color-leaf); font-size: 1.25em; line-height: 0.8; }
+.leaf--l { translate: -118% 0; rotate: -42deg; transform-origin: 100% 100%; }
+.leaf--r { translate: 18% 0; rotate: 42deg; transform-origin: 0% 100%; }
+.plant .plant__seed { position: absolute; bottom: 0.3em; left: 50%; translate: -50% 0; display: none; color: var(--color-ink); font-size: 1em; line-height: 0.6; }
+.plant i { transition: scale var(--dur-long) var(--ease-snap) calc(var(--i) * 110ms), opacity var(--dur-short) linear calc(var(--i) * 110ms); }
+.js .plant--today:not(.is-grown) i { scale: 0.001; opacity: 0; transition-delay: 0s; }
+.plant.is-seed .plant__seed { display: block; }
+
+/* Shared head block: head left, its line right */
+.split-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; }
+.split-head h2 { grid-column: 1 / span 7; }
+.split-head .lead { grid-column: 9 / span 4; padding-bottom: var(--space-2xs); }
+
+/* One round, four moments: pinned */
+.round__top { display: flex; align-items: center; gap: var(--space-md); }
+.round__pages { position: relative; flex: 0 1 11rem; height: 8px; border-radius: var(--radius-pill); background: var(--color-paper-3); }
+.round__pages::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); border-radius: inherit; background: var(--color-accent-deep); }
+.round__time { display: inline-flex; align-items: center; gap: var(--space-xs); margin-left: auto; font: 500 var(--text-sm)/1 var(--font-body); color: var(--color-ink-2); }
+.round__sentence { align-self: center; margin: 0; max-width: none; font: 600 clamp(2.5rem, 4.4vw, 4rem)/1.15 var(--font-display); letter-spacing: -0.01em; text-wrap: balance; }
+.round__sentence mark { padding: 0 0.14em; border-radius: var(--space-xs); background: var(--color-accent); }
+.round__sentence .is-next { color: var(--color-muted); }
+.round__bottom { display: flex; align-items: center; gap: var(--space-sm); }
+.round__next { margin-left: auto; }
+.scr__in { box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; padding: var(--space-xl); color: var(--color-ink); }
+.moments { padding-top: var(--section-gap); }
+.pin { margin-top: var(--space-2xl); }
+.pin__stage { display: none; }
+.pin__panels { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-2xl); }
+.moment { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: center; }
+.moment .scr { grid-column: 1 / span 7; }
+.moment__text { grid-column: 9 / -1; }
+.moment h3 { font-size: var(--text-display-s); max-width: 12ch; }
+.moment__text p { margin-top: var(--space-md); font-size: var(--text-lead); line-height: 1.45; max-width: 30ch; }
+.scr { margin: 0; border-radius: var(--radius-card); background: var(--grain), var(--fibre), var(--color-paper-2); }
+.scr .scr__in { min-height: 520px; height: 100%; }
+.scr--grow { background: var(--grain), var(--fibre), var(--color-mint); }
+.scr--stop { background: var(--grain), var(--fibre), var(--color-accent-3); }
+.hear__word { align-self: center; margin: 0; font: 600 clamp(6rem, 12vw, 11rem)/1 var(--font-display); letter-spacing: -0.04em; }
+.hear__word mark { padding: 0 0.12em; border-radius: var(--space-md); background: var(--color-accent); }
+.hear__from { margin-right: auto; font-size: var(--text-lead); color: var(--color-ink-2); }
+.grow__card { align-self: center; display: grid; gap: var(--space-sm); padding: var(--space-xl); border-radius: calc(var(--radius-card) - var(--space-sm)); background: var(--color-paper); }
+.grow__label { font: 600 var(--text-sm)/1 var(--font-body); color: var(--color-mint-deep); }
+.grow__name { font: 600 clamp(4rem, 7vw, 6.5rem)/1 var(--font-display); letter-spacing: -0.04em; }
+.grow--big { height: 16px; margin-top: var(--space-xs); }
+.stop__title { align-self: center; margin: 0; font: 600 clamp(3.5rem, 6.4vw, 6rem)/1 var(--font-display); letter-spacing: -0.035em; max-width: 9ch; }
+.stop__line { margin-right: auto; font: 600 var(--text-2xl)/1.1 var(--font-display); }
+
+@media (min-width: 60.001rem) {
+  .js .pin.is-pinned { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); }
+  .js .pin.is-pinned .pin__stage { grid-column: 1 / span 7; grid-row: 1; position: sticky; top: calc((100svh - var(--stage-h)) / 2 + var(--bar-h) / 2); align-self: start; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--space-md); height: var(--stage-h); }
+  .js .pin.is-pinned .pin__panels { grid-column: 9 / -1; grid-row: 1; gap: 0; }
+  .js .pin.is-pinned .moment { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 78svh; align-content: center; }
+  .js .pin.is-pinned .moment__text { grid-column: 1; }
+  .js .pin.is-pinned .moment:first-child { min-height: var(--stage-h); align-content: start; padding-top: var(--space-3xl); }
+  .js .pin.is-pinned .moment:last-child { min-height: var(--stage-h); align-content: end; padding-bottom: var(--space-3xl); }
+  .js .pin.is-pinned .moment .scr { display: none; }
+  .js .pin.is-pinned .moment__text { transition: opacity var(--dur-long) var(--ease-snap); opacity: 0.32; }
+  .js .pin.is-pinned .moment.is-on .moment__text { opacity: 1; }
+}
+.pin__tabs { display: flex; gap: var(--space-sm); padding-bottom: var(--space-2xs); }
+.pin__tab { --edge: 3px; display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-md); border-radius: 12px; background: var(--fibre), var(--color-paper-2); color: var(--color-ink); font: 600 var(--text-sm)/1 var(--font-body); text-decoration: none;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent), 0 var(--edge) 0 0 var(--color-edge); transition: background-color var(--dur-short) var(--ease-snap), color var(--dur-short) var(--ease-snap), translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-micro) var(--ease-snap); }
+.pin__tab:hover { background-color: var(--color-paper-3); }
+.pin__tab.is-on { --edge: 1px; translate: 0 2px; background: var(--color-ink); color: var(--color-paper); box-shadow: 0 var(--edge) 0 0 var(--color-ink); }
+.pin__screens { position: relative; }
+.js .pin__screens .scr { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity var(--dur-long) var(--ease-snap), transform var(--dur-long) var(--ease-snap); }
+.js .pin__screens .scr.is-on { opacity: 1; transform: none; }
+.pin__screens .scr .scr__in { min-height: 0; }
+
+/* Watch the garden fill: a switcher; the beds sit on torn paper steps */
+.garden-sec { padding-top: var(--section-gap-l); }
+.garden-sec__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: center; }
+.garden-sec__text { grid-column: 1 / span 4; }
+.garden-sec__text .lead { margin-top: var(--space-lg); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xl); }
+.seg button { --edge: 4px; min-height: 48px; padding: 0 var(--space-lg); border: 0; border-radius: 13px; background: var(--fibre), var(--color-card); color: var(--color-ink); font: 600 var(--text-md)/1 var(--font-body); cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 13%, transparent), 0 var(--edge) 0 0 var(--color-edge), 2px calc(var(--edge) + 3px) 8px -3px color-mix(in oklab, var(--color-ink) 20%, transparent);
+  transition: translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-micro) var(--ease-snap), background-color var(--dur-short) var(--ease-snap), color var(--dur-short) var(--ease-snap); }
+.seg button:hover { --edge: 5px; translate: 0 -1px; }
+.seg button:active { --edge: 1px; translate: 0 3px; }
+.seg button[aria-selected="true"] { --edge: 1px; translate: 0 3px; background: var(--color-ink); color: var(--color-paper); box-shadow: 0 var(--edge) 0 0 var(--color-ink); }
+.seg button:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.garden { grid-column: 5 / -1; display: grid; gap: var(--space-xl); padding: var(--space-xl) var(--space-xl) var(--space-lg); border-radius: 22px; overflow: visible; background: var(--grain), var(--fibre), var(--color-card); color: var(--color-ink); filter: var(--shadow-paper); }
+.garden__state { display: grid; gap: var(--space-lg); }
+.garden__top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs) var(--space-lg); }
+.garden__title { font-size: var(--text-2xl); max-width: none; }
+.garden__when { font-size: var(--text-md); color: var(--color-ink-2); }
+.garden__next { display: flex; justify-content: flex-end; }
+.garden__next .chip { border-radius: 12px; background: var(--fibre), var(--color-paper-2); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent); }
+.beds-wrap { position: relative; isolation: isolate; margin-inline: calc(-1 * var(--space-lg)); padding: var(--space-sm) var(--space-lg) var(--space-lg); }
+.step { z-index: -1; left: 0; right: 0; }
+.step--1 { top: 22px; bottom: 0; --sheet-c: var(--color-mint); }
+.step--2 { top: calc(50% + 18px); bottom: 0; --sheet-c: var(--color-soil-2); }
+.step--1 > i:first-child { clip-path: var(--tear-step-1f); } .step--1 > i:last-child { clip-path: var(--tear-step-1); }
+.step--2 > i:first-child { clip-path: var(--tear-step-2f); } .step--2 > i:last-child { clip-path: var(--tear-step-2); }
+.beds { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); grid-auto-rows: 148px; gap: var(--space-md) var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.bed { position: relative; display: grid; grid-template-rows: auto auto 1fr; align-content: start; gap: var(--space-3xs); padding: var(--space-sm) var(--space-xs) 0; border-radius: 14px; background: var(--fibre), var(--color-card); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 8%, transparent), 0 3px 0 0 var(--color-edge), 2px 6px 8px -3px color-mix(in oklab, var(--color-ink) 22%, transparent); }
+.bed b { font: 600 var(--text-sm)/1.1 var(--font-display); color: var(--color-ink); hyphens: auto; }
+.bed > span { font-size: var(--text-xs); line-height: 1.2; color: var(--color-ink-2); }
+.plant--mini { --plant-size: 30px; left: 50%; bottom: 8px; }
+.plant--mini.is-seed .plant__seed { bottom: 0.1em; font-size: 1.6em; }
+.bed--empty { background: color-mix(in oklab, var(--color-ink) 7%, transparent); box-shadow: inset 1px 2px 3px color-mix(in oklab, var(--color-ink) 16%, transparent); }
+
+/* For grown-ups: the photograph runs off the left edge, torn along its right */
+.grown { padding-top: var(--section-gap-l); }
+.grown__grid { --col: calc((var(--container) - 2 * var(--gutter) - 11 * var(--gap-columns)) / 12);
+  display: grid; grid-template-columns: [full-start] minmax(var(--gutter), 1fr) [content-start] minmax(0, calc(7 * var(--col) + 6 * var(--gap-columns))) [mid] minmax(0, calc(5 * var(--col) + 5 * var(--gap-columns))) [content-end] minmax(var(--gutter), 1fr) [full-end]; align-items: center; }
+.grown__photo { grid-column: full-start / mid; aspect-ratio: 4 / 3; max-height: 640px; overflow: visible; background: none; filter: var(--shadow-paper); }
+.grown__photo::before { content: ""; position: absolute; inset: 0; background: var(--fibre), var(--color-fringe); clip-path: var(--tear-photof); }
+.grown__photo > img { clip-path: var(--tear-photo); }
+.photo { margin: 0; }
+.grown__text { grid-column: mid / content-end; padding-left: var(--space-3xl); }
+.grown__text h2 { font-size: var(--text-section); }
+.facts { margin: var(--space-2xl) 0 0; }
+.facts > div { display: grid; gap: var(--space-2xs); padding-block: var(--space-lg); border-top: 2px solid var(--color-rule); }
+.facts > div:last-child { border-bottom: 2px solid var(--color-rule); }
+.facts dt { font: 600 var(--text-2xl)/1.1 var(--font-display); letter-spacing: -0.02em; color: var(--color-ink); }
+.facts dd { margin: 0; font-size: var(--text-md); color: var(--color-ink-2); }
+
+/* The close: a torn sheet of ink paper, the start beside the first screen */
+.start { position: relative; isolation: isolate; margin-top: var(--section-gap); padding-block: calc(var(--section-gap-s) + var(--space-md)) var(--section-gap-s); color: var(--color-paper); }
+.band { inset: -14px 0 0; z-index: -1; --sheet-c: var(--color-ink); filter: drop-shadow(0 0 0.6px color-mix(in oklab, var(--color-ink) 40%, transparent)) drop-shadow(0 -2px 3px color-mix(in oklab, var(--color-ink) 12%, transparent)); }
+.band > i:first-child { clip-path: var(--tear-bandf); background: var(--fibre), var(--color-paper); }
+.band > i:last-child { clip-path: var(--tear-band); background: var(--fibre-light), var(--color-ink); }
+.start h2 { color: var(--color-paper); font-size: var(--text-display-s); }
+.start__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-2xl); align-items: center; }
+.start__plan { grid-column: 1 / span 6; }
+.pick { margin: var(--space-2xl) 0 0; padding: 0; border: 0; }
+.pick legend { padding: 0; margin-bottom: var(--space-sm); font: 500 var(--text-md)/1.3 var(--font-body); color: color-mix(in oklab, var(--color-paper) 78%, var(--color-ink)); }
+.pick__row { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.pill { position: relative; }
+.pill input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.pill span { --edge: 4px; display: inline-flex; align-items: center; min-height: 52px; padding: 0 var(--space-lg); border-radius: 14px; background: var(--fibre-light), var(--color-ink-2); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-white) 12%, transparent), 0 var(--edge) 0 0 var(--color-ink-deep); font: 600 var(--text-md)/1 var(--font-body); color: var(--color-paper);
+  transition: background-color var(--dur-short) var(--ease-snap), color var(--dur-short) var(--ease-snap), translate var(--dur-micro) var(--ease-snap), box-shadow var(--dur-micro) var(--ease-snap); }
+.pill:hover span { background-color: color-mix(in oklab, var(--color-paper) 12%, var(--color-ink-2)); }
+.pill input:checked + span { --edge: 1px; translate: 0 3px; background: var(--fibre), var(--color-card); color: var(--color-ink); box-shadow: 0 var(--edge) 0 0 var(--color-edge); }
+.pill input:focus-visible + span { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.pick__out { margin-top: var(--space-xl); font: 600 var(--text-2xl)/1.25 var(--font-display); letter-spacing: -0.02em; color: var(--color-paper); max-width: 26ch; }
+.pick__out mark { white-space: nowrap; padding: 0 0.12em; border-radius: var(--space-2xs); background: var(--color-accent); color: var(--color-accent-ink); }
+.start__go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg); margin-top: var(--space-xl); }
+.start .btn:focus-visible { outline-color: var(--color-accent); }
+.start .btn--primary { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-white) 55%, transparent), 0 var(--edge) 0 0 var(--color-accent-deep), 2px calc(var(--edge) + 4px) 10px -3px color-mix(in oklab, var(--color-ink-deep) 50%, transparent); }
+.start__note { font-size: var(--text-sm); color: color-mix(in oklab, var(--color-paper) 78%, var(--color-ink)); max-width: 30ch; }
+.card--first { grid-column: 8 / -1; filter: drop-shadow(0 0 0.6px color-mix(in oklab, var(--color-ink-deep) 50%, transparent)) drop-shadow(2px 4px 2px color-mix(in oklab, var(--color-ink-deep) 25%, transparent)) drop-shadow(8px 16px 18px color-mix(in oklab, var(--color-ink-deep) 30%, transparent)); }
+.first { overflow: hidden; }
+.first__in { box-sizing: border-box; display: grid; justify-items: start; align-content: space-between; gap: var(--space-xl); min-height: 520px; padding: var(--space-xl); color: var(--color-ink); }
+.first__title { font: 600 clamp(3rem, 4.6vw, 4.25rem)/1 var(--font-display); letter-spacing: -0.035em; max-width: 8ch; }
+.first__bed { justify-self: stretch; display: grid; gap: var(--space-sm); padding: var(--space-lg); border-radius: 16px; background: var(--fibre), color-mix(in oklab, var(--color-paper) 55%, var(--color-mint)); font-size: var(--text-md); }
+.first__bed .grow { background: color-mix(in oklab, var(--color-mint) 55%, var(--color-paper)); }
+
+/* Footer: the links, then the mast cut from paper and planted in torn soil */
+.mast { display: flex; flex-direction: column-reverse; padding-top: var(--section-gap-s); }
+.mast__cut { position: relative; margin-top: var(--space-2xl); }
+.mast__word { display: flex; margin: 0 0 0 -0.03em; font: 600 clamp(5rem, 30vw, 27rem)/0.8 var(--font-display); letter-spacing: -0.04em; white-space: nowrap; }
+.mast__word span { display: inline-block; rotate: var(--r); translate: 0 var(--y); color: var(--color-accent); filter: drop-shadow(0 0 0.8px var(--color-pear-edge)) drop-shadow(2px 3px 1.5px color-mix(in oklab, var(--color-ink) 16%, transparent)) drop-shadow(8px 16px 18px color-mix(in oklab, var(--color-ink) 14%, transparent)); }
+.ground--mast { --ground-h: clamp(72px, 9vw, 150px); position: relative; margin-top: calc(-0.55 * var(--ground-h)); }
+.mast__row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-md); align-items: center; padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); }
+.mast__line { grid-column: 1 / span 4; font-weight: 600; color: var(--color-ink); }
+.mast__links { grid-column: 5 / span 6; display: flex; flex-wrap: wrap; gap: var(--space-xl); }
+.mast__links a { font-weight: 600; text-decoration: none; }
+.mast__links a:hover { text-decoration: underline; }
+.mast__legal { grid-column: 11 / -1; justify-self: end; font-size: var(--text-sm); color: var(--color-muted); }
+.mast__credits { margin-top: var(--space-md); max-width: none; font-size: var(--text-sm); line-height: 1.5; color: var(--color-muted); }
+.mast__credits a { color: inherit; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .js .pin__screens .scr { transform: none; }
+  .btn, .btn:hover, .btn:active, .tile, .tile:hover, .tile:active { transition: none; }
+  .card { transition: none; }
+  .scrap { display: none; }
+}
+
+@media (max-width: 60rem) {
+  .hero { min-height: calc(100svh - var(--bar-h)); align-content: start; padding-top: var(--space-xl); }
+  .hero__grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2xl); }
+  .round-wrap { justify-self: stretch; max-width: none; }
+  .knobs { display: none; }
+  .split-head h2, .split-head .lead { grid-column: 1 / -1; }
+  .split-head .lead { margin-top: var(--space-md); }
+  .moment { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-lg); }
+  .moment .scr, .moment__text { grid-column: 1; }
+  .moment__text { order: -1; }
+  .scr .scr__in { min-height: 22rem; padding: var(--space-lg); }
+  .garden-sec__grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xl); }
+  .garden-sec__text, .garden { grid-column: 1; }
+  .beds { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .step--2 { top: calc(50% + 10px); }
+  .grown__grid { grid-template-columns: var(--gutter) minmax(0, 1fr) var(--gutter); row-gap: var(--space-xl); }
+  .grown__photo { grid-column: 1 / 3; width: 100%; }
+  .grown__text { grid-column: 2; padding-left: 0; }
+  .start__grid { grid-template-columns: minmax(0, 1fr); }
+  .start__plan, .card--first { grid-column: 1; }
+  .first__in { min-height: 22rem; }
+  .mast__row { grid-template-columns: minmax(0, 1fr); }
+  .mast__line, .mast__links, .mast__legal { grid-column: 1; justify-self: start; }
+}
+@media (max-width: 40rem) {
+  :root { --bar-h: 64px; --tile-size: 1.75rem; --plant-size: 26px; }
+  .hero { --ground-h: 92px; padding-top: var(--space-lg); }
+  .hero h1 { font-size: 2.6rem; }
+  .hero .lead { margin-top: var(--space-sm); font-size: var(--text-md); }
+  .actions { margin-top: var(--space-lg); gap: var(--space-sm); }
+  .actions .btn { min-height: 48px; padding: 0 var(--space-md); }
+  .hero__grid { row-gap: var(--space-xl); }
+  .mat { inset: -10px -8px -14px -8px; }
+  .play { gap: var(--space-sm); padding: var(--space-md) var(--space-md) var(--space-sm); }
+  .play__top { gap: var(--space-xs); padding-right: 72px; }
+  .tab { display: none; }
+  .timer__time { font-size: var(--text-sm); }
+  .strip { padding: var(--space-md) var(--space-sm) var(--space-lg); margin-inline: calc(-1 * var(--space-xs)); }
+  .words { gap: var(--space-sm) var(--space-xs); }
+  .tile { border-radius: 10px; --edge: 4px; }
+  .play__say { font-size: var(--text-sm); }
+  .sticker { width: 92px; top: -34px; right: -6px; }
+  .sticker b { font-size: 1rem; }
+  .sticker__in > span { font-size: 0.625rem; }
+  .card { --curl: 30px; }
+  .bar__inner .btn--small { min-height: 40px; }
+  .round__top { flex-wrap: wrap; gap: var(--space-sm); }
+  .round__pages { order: 3; flex-basis: 100%; }
+  .round__bottom { flex-wrap: wrap; }
+  .hear__from { font-size: var(--text-md); flex-basis: 100%; }
+  .stop__line { font-size: var(--text-xl); }
+  .garden { padding: var(--space-lg) var(--space-md); }
+  .seg { display: flex; flex-wrap: nowrap; }
+  .seg button { flex: 1; padding: 0 var(--space-sm); font-size: var(--text-sm); white-space: nowrap; }
+  .beds { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 124px; }
+  .bed--empty { display: none; }
+  .step--2 { top: 50%; }
+  .pick__out { font-size: var(--text-xl); }
+  .mast__links { gap: var(--space-md) var(--space-lg); }
+}
+@media (max-width: 40rem) {
+  .plot--old .plant:nth-child(2), .plot--old .plant:nth-child(4), .plot--old .plant:nth-child(7) { display: none; }
+}
+@media (max-width: 40rem) { .plot { left: calc(var(--gutter) + var(--space-sm)); } }
+@media (max-width: 40rem) {
+  .play__top { padding-right: 84px; }
+  .play__bottom:has([data-again]:not([hidden])) [data-hear] { display: none; }
+}
+@media (max-width: 40rem) {
+  .plant--front { --s: 0.9 !important; }
+  .plant--front:first-child { left: 6%; }
+  .plant--front:last-child { left: 90%; }
+}

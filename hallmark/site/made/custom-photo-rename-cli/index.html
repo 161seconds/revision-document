@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>whenshot: rename photos by the date they were taken</title>
+  <meta name="description" content="An open source command line tool that renames photos by the date they were taken, so sorting by name sorts them by time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <!-- "whenshot" is a placeholder name (data-placeholder="tool-name"): replace every instance with the real one. -->
+  <header class="field">
+    <div class="nav container">
+      <a class="wordmark" href="#top" aria-label="whenshot, home" data-placeholder="tool-name">whenshot</a>
+      <nav class="nav__links" aria-label="Page">
+        <a href="#name">How it names</a>
+        <a href="#source">Source</a>
+        <a href="#install">Install</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="field">
+    <section class="hero container" id="top">
+      <div class="hero__top">
+        <h1>A photo’s name should be its date.</h1>
+        <div class="hero__side">
+          <p class="lede">An open source command line tool that renames photos by date taken.</p>
+          <a class="btn" href="#install">Install</a>
+        </div>
+      </div>
+      <figure class="sheet sorter" data-slot="hero-folder" data-kind="product" data-alt="A screen recording of a real folder in your file manager, sorted by name, before and after a run">
+        <div class="sheet__bar">
+          <input type="checkbox" id="run" class="run__input">
+          <label for="run" class="run"><code class="run__cmd" data-placeholder="tool-name">$ whenshot 2024-trip</code><span class="run__do">Run it</span><span class="run__undo">Reset</span></label>
+          <p class="sheet__sort">One day, three devices, sorted by name</p>
+        </div>
+        <ol class="frames" aria-label="Six photos from one day, sorted by name">
+          <li class="frame" style="--b: 0; --a: 1; --cx: 0; --cy: 0; --dx: 1; --dy: 0; --bx: 0; --by: 0; --ax: 1; --ay: 0">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg/960px-Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg/960px-Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg/1280px-Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg/1920px-Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="8160" height="6144" alt="A croissant on a cafe table" style="object-position: 50% 50%"><time class="imprint" datetime="2024-08-17T09:15:33">09:15:33</time></div>
+            <span class="frame__name"><span class="old">DSC_0412.JPG</span><span class="new">2024-08-17_<wbr>09-15-33.JPG</span></span>
+            <span class="frame__from">Camera</span>
+          </li>
+          <li class="frame" style="--b: 1; --a: 4; --cx: 1; --cy: 0; --dx: 1; --dy: 1; --bx: 1; --by: 0; --ax: 0; --ay: 2">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg/960px-Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg/960px-Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg/1280px-Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg/1920px-Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="5472" height="3648" alt="Boats on an estuary at dusk" style="object-position: 50% 50%"><time class="imprint" datetime="2024-08-17T20:37:46">20:37:46</time></div>
+            <span class="frame__name"><span class="old">DSC_0419.JPG</span><span class="new">2024-08-17_<wbr>20-37-46.JPG</span></span>
+            <span class="frame__from">Camera</span>
+          </li>
+          <li class="frame" style="--b: 2; --a: 0; --cx: 2; --cy: 0; --dx: 0; --dy: 0; --bx: 0; --by: 1; --ax: 0; --ay: 0">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/960px-Herbert_Lake_beim_Icefields_Parkway.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/960px-Herbert_Lake_beim_Icefields_Parkway.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/1280px-Herbert_Lake_beim_Icefields_Parkway.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/1920px-Herbert_Lake_beim_Icefields_Parkway.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="3239" height="2160" alt="Morning mist on a mountain lake" style="object-position: 50% 50%"><time class="imprint" datetime="2024-08-17T07:42:10">07:42:10</time></div>
+            <span class="frame__name"><span class="old">IMG_2207.JPG</span><span class="new">2024-08-17_<wbr>07-42-10.JPG</span></span>
+            <span class="frame__from">Phone</span>
+          </li>
+          <li class="frame" style="--b: 3; --a: 3; --cx: 0; --cy: 1; --dx: 0; --dy: 1; --bx: 1; --by: 1; --ax: 1; --ay: 1">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg/960px-Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg/960px-Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg/1280px-Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg/1920px-Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="2030" height="1523" alt="People wading at sunset" style="object-position: 45% 70%"><time class="imprint" datetime="2024-08-17T19:51:04">19:51:04</time></div>
+            <span class="frame__name"><span class="old">IMG_2231.JPG</span><span class="new">2024-08-17_<wbr>19-51-04.JPG</span></span>
+            <span class="frame__from">Phone</span>
+          </li>
+          <li class="frame" style="--b: 4; --a: 2; --cx: 1; --cy: 1; --dx: 2; --dy: 0; --bx: 0; --by: 2; --ax: 0; --ay: 1">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cycling_Amsterdam_03.jpg/960px-Cycling_Amsterdam_03.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cycling_Amsterdam_03.jpg/960px-Cycling_Amsterdam_03.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cycling_Amsterdam_03.jpg/1280px-Cycling_Amsterdam_03.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Cycling_Amsterdam_03.jpg/1920px-Cycling_Amsterdam_03.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="2265" height="1500" alt="A cyclist passing a brick wall" style="object-position: 40% 50%"><time class="imprint" datetime="2024-08-17T13:08:51">13:08:51</time></div>
+            <span class="frame__name"><span class="old">P1030218.JPG</span><span class="new">2024-08-17_<wbr>13-08-51.JPG</span></span>
+            <span class="frame__from">Second camera</span>
+          </li>
+          <li class="frame" style="--b: 5; --a: 5; --cx: 2; --cy: 1; --dx: 2; --dy: 1; --bx: 1; --by: 2; --ax: 1; --ay: 2">
+            <div class="frame__pic"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg/960px-Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg/960px-Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg/1280px-Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg/1920px-Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg 1920w" sizes="(min-width: 60rem) 15vw, 45vw" width="3387" height="2294" alt="An old town street at night" style="object-position: 50% 50%"><time class="imprint" datetime="2024-08-17T22:04:17">22:04:17</time></div>
+            <span class="frame__name"><span class="old">P1030244.JPG</span><span class="new">2024-08-17_<wbr>22-04-17.JPG</span></span>
+            <span class="frame__from">Second camera</span>
+          </li>
+        </ol>
+      </figure>
+    </section>
+    </div>
+
+    <section class="anatomy-sec container" id="name" aria-labelledby="name-h">
+      <h2 id="name-h">Biggest unit first, so it sorts</h2>
+      <p class="intro">Year, month, day, then the time: sort by name and you get shutter order.</p>
+      <div class="anatomy" aria-label="The new name of IMG_2231.JPG, read part by part">
+        <div class="anatomy__part" style="--n: 11">
+          <span class="anatomy__text">2024-08-17_</span>
+          <span class="anatomy__label" style="grid-column: 1 / 5">year</span>
+          <span class="anatomy__label" style="grid-column: 6 / 8">month</span>
+          <span class="anatomy__label" style="grid-column: 9 / 11">day</span>
+        </div><div class="anatomy__part" style="--n: 12">
+          <span class="anatomy__text">19-51-04.JPG</span>
+          <span class="anatomy__label" style="grid-column: 1 / 3">hour</span>
+          <span class="anatomy__label" style="grid-column: 4 / 6">minute</span>
+          <span class="anatomy__label" style="grid-column: 7 / 9">second</span>
+        </div>
+      </div>
+      <p class="anatomy__was">Once called IMG_2231.JPG, from the phone.</p>
+    </section>
+
+    <section class="dates container" id="dates" aria-labelledby="dates-h">
+      <figure class="dates__photo">
+        <div class="photo" data-slot="photo-1" data-alt="One of your own photos, the one whose two dates are listed beside it">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/1920px-Herbert_Lake_beim_Icefields_Parkway.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/960px-Herbert_Lake_beim_Icefields_Parkway.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/1280px-Herbert_Lake_beim_Icefields_Parkway.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Herbert_Lake_beim_Icefields_Parkway.jpg/1920px-Herbert_Lake_beim_Icefields_Parkway.jpg 1920w" sizes="(min-width: 60rem) 55vw, 100vw" width="3239" height="2160" alt="Morning mist on a still mountain lake, pines and peaks reflected" loading="lazy">
+          <time class="imprint imprint--big" datetime="2024-08-17T07:42:10" data-keep>2024-08-17 07:42:10</time>
+        </div>
+        <figcaption class="caption">IMG_2207.JPG, from the phone</figcaption>
+      </figure>
+      <div class="dates__text">
+        <h2 id="dates-h">The shutter’s date, not the copy’s</h2>
+        <dl class="dates__list">
+          <div class="dates__row dates__row--taken">
+            <dt>Date taken</dt>
+            <dd><span class="dates__value"><time datetime="2024-08-17T07:42:10">2024-08-17 07:42:10</time></span>Written by the phone as the shutter fired. It travels inside the photo.</dd>
+          </div>
+          <div class="dates__row">
+            <dt>Date modified</dt>
+            <dd><span class="dates__value"><time datetime="2024-09-02T21:14:55">2024-09-02 21:14:55</time></span>The evening it was copied off the phone. Copies can change it.</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+  <section class="night" id="ls" aria-labelledby="ls-h">
+    <div class="container">
+      <h2 id="ls-h">Plain ls, in shutter order</h2>
+      <div class="ls__head">
+        <p class="intro">Past midnight too, because the day comes before the hour.</p>
+      </div>
+      <figure class="session">
+        <pre class="session__col"><code><span class="prompt">$</span> ls -1 2024-trip
+<span class="out">DSC_0398.JPG
+DSC_0412.JPG
+DSC_0419.JPG
+IMG_2189.JPG
+IMG_2207.JPG
+IMG_2231.JPG
+P1030201.JPG
+P1030218.JPG
+P1030244.JPG</span>
+<span class="prompt">$</span> <span data-placeholder="tool-name">whenshot</span> 2024-trip
+<span class="prompt">$</span> ls -1 2024-trip
+<span class="renamed">2024-08-16_21-30-12.JPG
+2024-08-16_23-58-40.JPG
+2024-08-17_00-03-05.JPG
+2024-08-17_07-42-10.JPG
+2024-08-17_09-15-33.JPG
+2024-08-17_13-08-51.JPG
+2024-08-17_19-51-04.JPG
+2024-08-17_20-37-46.JPG
+2024-08-17_22-04-17.JPG</span></code></pre>
+        <figcaption class="session__cap">An example session over two days of photos.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="field close" id="install" aria-labelledby="install-h">
+    <div class="container">
+      <h2 id="install-h">Try it on a copied folder first</h2>
+      <pre class="close__cmds"><code><span class="prompt">$</span> <span class="fill" data-fill="install">install command to come</span>
+<span class="prompt">$</span> cp -R 2024-trip trip-test
+<span class="prompt">$</span> <span data-placeholder="tool-name">whenshot</span> trip-test</code></pre>
+      <p class="close__foot" id="source">Source code: <span class="fill" data-fill="repo">repository link to come</span></p>
+    </div>
+  </section>
+  </main>
+
+  <footer class="foot container">
+    <div class="foot__row">
+      <a class="wordmark" href="#top" aria-label="whenshot, back to top" data-placeholder="tool-name">whenshot</a>
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#name">How it names</a>
+        <a href="#source">Source</a>
+        <a href="#install">Install</a>
+      </nav>
+    </div>
+    <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Herbert_Lake_beim_Icefields_Parkway.jpg">Florian Fuchs</a> (CC BY 3.0), <a href="https://commons.wikimedia.org/wiki/File:Almond_croissant_-_Workshop_Coffee_Lab_2025-06-27.jpg">Andy Li</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:Cycling_Amsterdam_03.jpg">Alfredo Borba</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Sunset_Agta_Beach_Resort_-_Biliran_Philippines.jpg">Leodb</a> (CC BY-SA 3.0), <a href="https://commons.wikimedia.org/wiki/File:Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg">Matt Harrop</a> (CC BY-SA 2.0), <a href="https://commons.wikimedia.org/wiki/File:Esztergom_by_night_01_-_Simor_J%C3%A1nos_utca.jpg">Pudelek</a> (CC BY-SA 4.0), all via Wikimedia Commons.</p>
+  </footer>
+  <script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

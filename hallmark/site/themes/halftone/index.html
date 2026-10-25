@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pop Fizz: lemon and ginger soda, twelve cans for £14</title>
+<meta name="description" content="Pop Fizz is a lemon and ginger soda in 330ml cans at 39 calories each, sold in boxes of twelve for £14.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ultra&family=Chivo:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="slab">
+  <div class="container slab__inner">
+    <a class="slab__mark" href="#main" aria-label="Pop Fizz, home">Pop Fizz</a>
+    <nav aria-label="Main" class="slab__nav">
+      <a href="#label">The label</a>
+      <a href="#inside">What&rsquo;s in it</a>
+    </nav>
+    <a class="btn btn--slab" href="#box">Buy a box</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-head">Lemon and ginger in a cold can.</h1>
+        <p class="lead">A lemon and ginger soda: 330ml cans, 39 calories each.</p>
+        <div class="hero__actions">
+          <a class="btn" href="#box">Buy 12 for £14</a>
+          <a class="line" href="#inside">What&rsquo;s in it</a>
+        </div>
+      </div>
+      <div class="hero__visual">
+        <figure class="photo" data-slot="hero" data-alt="The Pop Fizz can, cold and beaded, beside a cut lemon, in bright daylight">
+          <img src="photos/zitronenscheiben-2025-7302-1920.jpg" width="1920" height="1280" fetchpriority="high" style="object-position: 30% 50%" alt="Two thin lemon slices lit from behind, every segment glowing">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="poster" aria-labelledby="poster-head">
+    <div class="container poster__grid">
+      <p class="poster__fig" aria-hidden="true">39</p>
+      <div class="poster__text">
+        <h2 id="poster-head">Calories in a 330ml can</h2>
+        <p class="lead">Lemon for the bite, ginger for the heat, and the rest is bubbles.</p>
+      </div>
+      <figure class="poster__shot">
+        <div class="photo" data-slot="lemon" data-alt="A cut lemon, close and bright">
+          <img src="photos/lemon-whole-and-split-1920.jpg" width="1920" height="1280" loading="lazy" decoding="async" style="object-position: 78% 50%" alt="A lemon cut in half, its pale segments facing the light">
+        </div>
+        <figcaption class="caption">A lemon, cut through the middle.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="label" class="label" aria-labelledby="label-head">
+    <div class="container label__grid">
+      <div class="label__head">
+        <h2 id="label-head">Read the back of the can</h2>
+        <p class="lead">Everything the label says, at a size you can read.</p>
+      </div>
+      <dl class="panel">
+        <div><dt>Flavour</dt><dd>Lemon and ginger</dd></div>
+        <div><dt>Can</dt><dd>330ml</dd></div>
+        <div><dt>Calories</dt><dd>39 a can</dd></div>
+        <div><dt>Box</dt><dd>12 cans</dd></div>
+        <div><dt>Price</dt><dd>£14 a box</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="inside" class="inside" aria-labelledby="inside-head">
+    <div class="container">
+      <div class="ruled head-row">
+        <h2 id="inside-head">Ginger heat, cold fizz</h2>
+        <p class="lead">Two things go in with the lemon.</p>
+      </div>
+      <div class="inside__pair">
+        <figure>
+          <div class="photo" data-slot="ginger" data-alt="A knob of fresh ginger, for the heat">
+            <img src="photos/ginger-root-1920.jpg" width="1920" height="1276" loading="lazy" decoding="async" style="object-position: 50% 50%" alt="A knobbly hand of fresh ginger root">
+          </div>
+          <figcaption class="caption">Ginger, for the heat.</figcaption>
+        </figure>
+        <figure>
+          <div class="photo" data-slot="fizz" data-alt="Pop Fizz poured over ice, bubbles rising in the glass">
+            <img src="photos/lemon-series-3047083562-1920.jpg" width="1920" height="1280" loading="lazy" decoding="async" style="object-position: 35% 50%" alt="Two lemon slices suspended in sparkling water among tiny bubbles">
+          </div>
+          <figcaption class="caption">Bubbles, in every can.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="box" class="box screen" aria-labelledby="box-head">
+    <div class="container box__grid">
+      <div class="box__head">
+        <h2 id="box-head">Twelve cans to a box</h2>
+        <p class="lead">Pick how many boxes; the price follows from £14 each.</p>
+      </div>
+      <form class="order" data-endpoint="" novalidate aria-labelledby="box-head">
+        <p class="order__label" id="boxes-label">Boxes</p>
+        <div class="stepper" role="group" aria-labelledby="boxes-label">
+          <button type="button" data-step="-1" aria-label="One box fewer">&minus;</button>
+          <output id="boxes" aria-live="polite">1</output>
+          <button type="button" data-step="1" aria-label="One box more">+</button>
+        </div>
+        <p class="order__total"><span id="cans">12</span> cans, <span id="total">£14</span></p>
+        <div><button class="btn btn--ink" type="submit" id="buy">Buy 1 box for £14</button></div>
+        <p class="order__note" id="order-note" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="close">
+  <div class="container">
+    <p class="close__line">Lemon, ginger and a lot of fizz.</p>
+    <div class="close__row">
+      <nav aria-label="Footer" class="close__links">
+        <a href="#label">The label</a>
+        <a href="#inside">What&rsquo;s in it</a>
+        <a href="#box">Buy a box</a>
+      </nav>
+      <p class="close__note">© 2026 Pop Fizz</p>
+    </div>
+    <p class="close__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Zitronenscheiben_--_2025_--_7302.jpg">Dietmar Rabich</a> <span>(<abbr>CC BY-SA 4.0</abbr>)</span>, <a href="https://commons.wikimedia.org/wiki/File:Lemon_-_whole_and_split.jpg">Ivar Leidus</a> <span>(<abbr>CC BY-SA 4.0</abbr>)</span>, <a href="https://commons.wikimedia.org/wiki/File:Ginger_Root.jpg">Sanjay Acharya</a> <span>(<abbr>CC BY-SA 4.0</abbr>)</span> and <a href="https://commons.wikimedia.org/wiki/File:Lemon_Series_(3047083562).jpg">THOR</a> <span>(<abbr>CC BY 2.0</abbr>)</span>, all on Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const form = document.querySelector('.order');
+  if (!form) return;
+  const out = form.querySelector('#boxes'), cans = form.querySelector('#cans'), total = form.querySelector('#total'), buy = form.querySelector('#buy'), note = form.querySelector('#order-note');
+  const minus = form.querySelector('[data-step="-1"]');
+  let n = 1;
+  const draw = () => {
+    out.textContent = String(n);
+    cans.textContent = String(n * 12);
+    total.textContent = '£' + String(n * 14);
+    buy.textContent = 'Buy ' + n + (n === 1 ? ' box' : ' boxes') + ' for £' + (n * 14);
+    minus.disabled = n === 1;
+  };
+  form.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => { n = Math.min(10, Math.max(1, n + Number(b.dataset.step))); note.textContent = ''; draw(); }));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!form.dataset.endpoint) { note.textContent = 'Nothing was ordered: the shop is not connected yet.'; return; }
+  });
+  draw();
+})();
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+</script>
+</body>
+</html>

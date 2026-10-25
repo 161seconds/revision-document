@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kessler Archive: seventy years of Swiss posters, indexed</title>
+<meta name="description" content="The Kessler Archive’s online index of 9,400 Swiss posters from 1920 to 1990, searchable by designer, year and printer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Radio+Canada+Big:wght@400;700&family=Radio+Canada:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top" id="top">
+  <div class="container top__in">
+    <a class="wordmark" href="#top" aria-label="Kessler Archive, home"><span class="wordmark__a">Kessler</span> <span class="wordmark__b">Archive</span></a>
+    <nav class="top__links" aria-label="Ways into the index">
+      <a href="#designers">Designers</a>
+      <a href="#years">Years</a>
+      <a href="#printers">Printers</a>
+      <a href="#search">Search</a>
+    </nav>
+    <details class="menu">
+      <summary>Menu</summary>
+      <nav aria-label="Ways into the index, small screens">
+        <a href="#designers">Designers</a>
+        <a href="#years">Years</a>
+        <a href="#printers">Printers</a>
+        <a href="#search">Search</a>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="container hero__in">
+      <div class="hero__type">
+        <h1 id="hero-h" class="hero__head">Seventy years of Swiss posters</h1>
+        <div class="hero__knock" aria-hidden="true">Seventy years of Swiss posters</div>
+      </div>
+      <div class="hero__foot">
+        <p class="lead">The Kessler Archive’s index, now online: search by designer, year or printer.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#search">Search the index</a>
+          <a class="btn btn--secondary" href="#designers">Designers, A to Z</a>
+        </div>
+      </div>
+      <figure class="hero__figure"><p class="figure">9,400</p><figcaption>posters, one record each</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="statement" aria-label="How the index is filed">
+    <div class="container">
+      <p class="statement__text">Every poster is filed three ways: by the <a href="#designers">designer</a> who drew it, the <a href="#years">year</a> it went up and the <a href="#printers">press</a> that printed it.</p>
+    </div>
+  </section>
+
+  <section class="designers" id="designers" aria-labelledby="designers-h">
+    <div class="container">
+      <div class="head head--split head--late">
+        <h2 id="designers-h">Designers, A to Z</h2>
+        <p class="lead">Pick a letter to search every surname that begins with it.</p>
+      </div>
+      <div class="az">
+        <div class="az__letters" role="group" aria-label="Surname initial">
+          <button type="button" data-letter="A">A</button><button type="button" data-letter="B">B</button><button type="button" data-letter="C">C</button><button type="button" data-letter="D">D</button><button type="button" data-letter="E">E</button><button type="button" data-letter="F">F</button><button type="button" data-letter="G">G</button><button type="button" data-letter="H">H</button><button type="button" data-letter="I">I</button><button type="button" data-letter="J">J</button><button type="button" data-letter="K" aria-pressed="true">K</button><button type="button" data-letter="L">L</button><button type="button" data-letter="M">M</button><button type="button" data-letter="N">N</button><button type="button" data-letter="O">O</button><button type="button" data-letter="P">P</button><button type="button" data-letter="Q">Q</button><button type="button" data-letter="R">R</button><button type="button" data-letter="S">S</button><button type="button" data-letter="T">T</button><button type="button" data-letter="U">U</button><button type="button" data-letter="V">V</button><button type="button" data-letter="W">W</button><button type="button" data-letter="X">X</button><button type="button" data-letter="Y">Y</button><button type="button" data-letter="Z">Z</button>
+        </div>
+        <div class="az__pick" aria-live="polite">
+          <p class="az__glyph" aria-hidden="true">K</p>
+          <a class="btn btn--secondary az__go" href="#search" data-prefill="designer" data-value="K"><span>Surnames from <span class="az__l">K</span></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="years field--mark" id="years" aria-labelledby="years-h">
+    <div class="container years__in">
+      <div class="head years__head">
+        <h2 id="years-h">Any year, 1920 to 1990</h2>
+        <p class="lead">Slide to a year, then open every poster from it.</p>
+        <a class="btn btn--primary years__go" href="#search" data-prefill="year" data-value="1957"><span>Posters from <span class="years__y">1957</span></span></a>
+      </div>
+      <output class="years__value figure" for="year-range" aria-live="polite">1957</output>
+      <div class="years__scale">
+        <label class="visually-hidden" for="year-range">Year</label>
+        <input id="year-range" type="range" min="1920" max="1990" step="1" value="1957">
+        <div class="years__decades" role="group" aria-label="Jump to a decade">
+          <button type="button" data-year="1920">1920</button>
+          <button type="button" data-year="1930">1930</button>
+          <button type="button" data-year="1940">1940</button>
+          <button type="button" data-year="1950" aria-pressed="true">1950</button>
+          <button type="button" data-year="1960">1960</button>
+          <button type="button" data-year="1970">1970</button>
+          <button type="button" data-year="1980">1980</button>
+          <button type="button" data-year="1990">1990</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="printers" id="printers" aria-labelledby="printers-h">
+    <div class="container printers__grid">
+      <figure class="printers__fig">
+        <div class="photo" data-slot="press" data-alt="A sheet from the Kessler Archive, or its printers' type, photographed flat in even light">
+          <img src="photos/wood-type-close-up-1920.jpg" width="1920" height="1280" loading="lazy" alt="A block of old wooden letterpress type, set in reverse" style="object-position: 46% 48%">
+        </div>
+      </figure>
+      <div class="printers__text">
+        <h2 id="printers-h">By the press that printed it</h2>
+        <p class="lead">Follow one printer across seventy years of sheets.</p>
+        <form class="inline-form" data-endpoint="" data-jump="printer" novalidate>
+          <label for="q-printer-quick">Printer</label>
+          <div class="inline-form__row">
+            <input id="q-printer-quick" name="printer" type="text" autocomplete="off" placeholder="A press, or its town">
+            <button class="btn btn--primary" type="submit">Find the press</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="search field" id="search" aria-labelledby="search-h">
+    <div class="container">
+      <div class="head head--split">
+        <h2 id="search-h">Search the whole index</h2>
+        <p class="lead">Fill one field, two or all three.</p>
+      </div>
+      <form class="search__form" data-endpoint="" novalidate>
+        <div class="search__fields">
+          <div class="q">
+            <label for="q-designer">Designer</label>
+            <input id="q-designer" name="designer" type="text" autocomplete="off" placeholder="A surname">
+          </div>
+          <div class="q">
+            <label for="q-year">Year</label>
+            <input id="q-year" name="year" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="1920 to 1990" aria-describedby="q-year-help">
+            <p class="q__help" id="q-year-help"></p>
+          </div>
+          <div class="q">
+            <label for="q-printer">Printer</label>
+            <input id="q-printer" name="printer" type="text" autocomplete="off" placeholder="A press">
+          </div>
+        </div>
+        <div class="search__foot">
+          <p class="search__reads" aria-live="polite">Every poster in the index.</p>
+          <button class="btn btn--primary" type="submit">Search the index</button>
+        </div>
+        <p class="search__status" role="status"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <a class="foot__mark" href="#top" aria-label="Kessler Archive, back to the top"><span class="wordmark__a">Kessler</span> <span class="wordmark__b">Archive</span></a>
+    <div class="foot__grid">
+      <p class="foot__line">Swiss poster design, 1920 to 1990, in one index for designers and researchers.</p>
+      <nav class="foot__nav" aria-label="The index">
+        <a href="#designers">Designers</a>
+        <a href="#years">Years</a>
+        <a href="#printers">Printers</a>
+        <a href="#search">Search</a>
+      </nav>
+      <div class="foot__legal">
+        <p>© 2026 Kessler Archive</p>
+        <p class="foot__credits" data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:Wood_Type_close-up.jpg">Adam Lusch</a> (CC BY-SA 2.0, Wikimedia Commons).</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const form = $('.search__form');
+  const fD = $('#q-designer'), fY = $('#q-year'), fP = $('#q-printer');
+  const help = $('#q-year-help'), reads = $('.search__reads'), status = $('.search__status');
+
+  // the alphabet
+  const glyph = $('.az__glyph'), go = $('.az__go'), goL = $('.az__l');
+  $$('.az__letters button').forEach((b) => b.addEventListener('click', () => {
+    $$('.az__letters button').forEach((o) => o.removeAttribute('aria-pressed'));
+    b.setAttribute('aria-pressed', 'true');
+    const l = b.dataset.letter;
+    glyph.textContent = l; goL.textContent = l; go.dataset.value = l;
+  }));
+
+  // the year
+  const range = $('#year-range'), out = $('.years__value'), yGo = $('.years__go'), yY = $('.years__y');
+  const setYear = (y) => {
+    range.value = y; out.textContent = y; yY.textContent = y; yGo.dataset.value = y;
+    const d = Math.min(1990, Math.floor(y / 10) * 10);
+    $$('.years__decades button').forEach((b) => { if (+b.dataset.year !== d) b.removeAttribute('aria-pressed'); else b.setAttribute('aria-pressed', 'true'); });
+  };
+  range.addEventListener('input', () => setYear(+range.value));
+  $$('.years__decades button').forEach((b) => b.addEventListener('click', () => setYear(+b.dataset.year)));
+
+  // the search reads back what it will look for
+  const yearOk = (v) => /^\d{4}$/.test(v) && +v >= 1920 && +v <= 1990;
+  const read = () => {
+    const d = fD.value.trim(), y = fY.value.trim(), p = fP.value.trim();
+    const bad = !!y && !yearOk(y);
+    help.textContent = bad ? 'The index runs from 1920 to 1990.' : '';
+    if (bad) fY.setAttribute('aria-invalid', 'true'); else fY.removeAttribute('aria-invalid');
+    if (!d && !y && !p) { reads.textContent = 'Every poster in the index.'; return; }
+    let s = 'Posters';
+    if (d) s += ` by ${d}`;
+    if (y && yearOk(y)) s += ` from ${y}`;
+    if (p) s += `, printed by ${p}`;
+    reads.textContent = s + '.';
+  };
+  [fD, fY, fP].forEach((f) => f.addEventListener('input', () => { status.textContent = ''; read(); }));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const y = fY.value.trim();
+    if (y && !yearOk(y)) { help.textContent = 'The index runs from 1920 to 1990.'; fY.focus(); return; }
+    status.textContent = 'The index is not connected to this page yet, so nothing was searched.';
+  });
+
+  // links and the quick form carry their value into the search
+  const fill = (k, v) => { ({ designer: fD, year: fY, printer: fP })[k].value = v; read(); };
+  $$('[data-prefill]').forEach((a) => a.addEventListener('click', () => { fill(a.dataset.prefill, a.dataset.value); }));
+  $('.inline-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    fill('printer', $('#q-printer-quick').value.trim());
+    $('#search').scrollIntoView({ block: 'start' });
+    fP.focus({ preventScroll: true });
+  });
+})();
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

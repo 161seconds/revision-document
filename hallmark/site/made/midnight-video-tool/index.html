@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reelcut, long interviews cut into captioned clips</title>
+<meta name="description" content="Reelcut cuts long interviews into short captioned clips for social, for small video teams.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100,400;100,500;125,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<div class="banner">
+  <div class="container banner__in">
+    <p>That long interview on your drive is a week of posts.</p>
+    <a href="#start">Try it on yours</a>
+  </div>
+</div>
+
+<header class="bar">
+  <div class="container bar__in">
+    <a class="wordmark" href="#main" aria-label="Reelcut, home">Reelcut</a>
+    <nav aria-label="Main">
+      <ul class="bar__links">
+        <li><a href="#steps">How it cuts</a></li>
+        <li><a href="#captions">Captions</a></li>
+        <li><a href="#questions">Questions</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--secondary btn--small" href="#start">Cut an interview</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container hero__in">
+    <div class="hero__text settle">
+      <h1 id="hero-title">One interview, a week of clips.</h1>
+      <p class="lead">Reelcut cuts long interviews into short captioned clips for social.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#start">Cut an interview</a>
+        <a class="btn btn--secondary" href="#steps">See how it cuts</a>
+      </div>
+    </div>
+
+    <div class="app" data-slot="hero" data-alt="Reelcut's project screen: one long interview on a timeline, three clips cut from it">
+      <div class="app__top">
+        <span class="app__title">Founder interview, full take</span>
+        <span class="app__meta">Example Studio</span>
+      </div>
+      <div class="app__source">
+        <div class="app__row">
+          <span>Source</span>
+          <span class="num">58:14</span>
+        </div>
+        <div class="track" role="img" aria-label="A 58 minute timeline of speech with three marked moments">
+          <svg class="track__wave" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20 L0.0 18.9 L2.5 18.9 L5.0 18.9 L7.5 13.8 L10.0 8.4 L12.5 9.5 L15.0 12.3 L17.5 7.9 L20.0 12.9 L22.5 9.5 L25.0 13.7 L27.5 14.1 L30.0 11.4 L32.5 7.9 L35.0 15.1 L37.5 14.2 L40.0 10.0 L42.5 6.5 L45.0 9.6 L47.5 10.8 L50.0 4.5 L52.5 13.2 L55.0 4.8 L57.5 10.4 L60.0 12.0 L62.5 12.8 L65.0 11.7 L67.5 7.7 L70.0 15.2 L72.5 12.6 L75.0 13.4 L77.5 17.3 L80.0 16.7 L82.5 18.6 L85.0 18.6 L87.5 18.6 L90.0 17.1 L92.5 18.9 L95.0 18.9 L97.5 18.9 L100.0 17.2 L102.5 18.0 L105.0 12.6 L107.5 13.2 L110.0 17.5 L112.5 14.3 L115.0 15.1 L117.5 12.1 L120.0 14.0 L122.5 18.6 L125.0 12.6 L127.5 18.6 L130.0 18.6 L132.5 15.1 L135.0 18.6 L137.5 16.5 L140.0 18.6 L142.5 12.6 L145.0 10.3 L147.5 10.8 L150.0 6.5 L152.5 11.0 L155.0 6.3 L157.5 6.7 L160.0 6.5 L162.5 7.7 L165.0 4.2 L167.5 3.7 L170.0 9.1 L172.5 7.9 L175.0 14.6 L177.5 8.9 L180.0 9.9 L182.5 6.7 L185.0 18.9 L187.5 18.9 L190.0 18.9 L192.5 8.9 L195.0 14.8 L197.5 10.0 L200.0 12.6 L202.5 12.9 L205.0 13.6 L207.5 7.0 L210.0 14.0 L212.5 13.8 L215.0 13.5 L217.5 10.1 L220.0 18.6 L222.5 16.9 L225.0 17.1 L227.5 14.7 L230.0 16.0 L232.5 15.9 L235.0 18.6 L237.5 18.6 L240.0 18.6 L242.5 14.2 L245.0 12.7 L247.5 18.6 L250.0 18.6 L252.5 17.8 L255.0 17.4 L257.5 14.8 L260.0 13.9 L262.5 17.4 L265.0 18.6 L267.5 16.8 L270.0 17.7 L272.5 16.1 L275.0 12.4 L277.5 18.9 L280.0 18.9 L282.5 18.9 L285.0 13.2 L287.5 18.3 L290.0 8.6 L292.5 8.5 L295.0 6.2 L297.5 5.8 L300.0 8.9 L302.5 8.2 L305.0 10.7 L307.5 5.4 L310.0 11.4 L312.5 11.8 L315.0 11.2 L317.5 12.4 L320.0 11.5 L322.5 15.1 L325.0 16.3 L327.5 15.3 L330.0 16.0 L332.5 13.4 L335.0 16.5 L337.5 7.8 L340.0 9.9 L342.5 14.1 L345.0 12.7 L347.5 11.5 L350.0 11.4 L352.5 14.1 L355.0 7.5 L357.5 6.9 L360.0 13.2 L362.5 14.3 L365.0 18.6 L367.5 18.6 L370.0 18.9 L372.5 18.9 L375.0 18.9 L377.5 18.6 L380.0 18.6 L382.5 15.2 L385.0 18.6 L387.5 18.6 L390.0 17.2 L392.5 18.6 L395.0 15.6 L397.5 10.4 L400.0 11.0 L402.5 12.3 L405.0 16.5 L407.5 15.6 L410.0 17.9 L412.5 12.3 L415.0 15.1 L417.5 13.0 L420.0 17.7 L422.5 18.6 L425.0 12.7 L427.5 10.4 L430.0 11.0 L432.5 10.4 L435.0 9.1 L437.5 8.6 L440.0 12.4 L442.5 8.4 L445.0 9.0 L447.5 11.5 L450.0 11.1 L452.5 8.5 L455.0 9.0 L457.5 5.2 L460.0 3.3 L462.5 18.9 L465.0 18.9 L467.5 18.9 L470.0 6.9 L472.5 13.4 L475.0 15.2 L477.5 15.4 L480.0 15.6 L482.5 15.3 L485.0 10.8 L487.5 7.7 L490.0 7.9 L492.5 11.2 L495.0 9.4 L497.5 8.2 L500.0 15.7 L502.5 10.7 L505.0 9.2 L507.5 11.6 L510.0 13.1 L512.5 17.1 L515.0 18.6 L517.5 16.1 L520.0 18.6 L522.5 17.2 L525.0 15.6 L527.5 18.6 L530.0 18.6 L532.5 14.4 L535.0 15.6 L537.5 18.6 L540.0 18.6 L542.5 18.5 L545.0 10.3 L547.5 10.7 L550.0 17.0 L552.5 10.3 L555.0 18.9 L557.5 18.9 L560.0 18.9 L562.5 14.2 L565.0 18.6 L567.5 18.6 L570.0 10.3 L572.5 13.1 L575.0 13.7 L577.5 8.8 L580.0 12.6 L582.5 7.1 L585.0 6.4 L587.5 11.3 L590.0 9.9 L592.5 8.8 L595.0 8.8 L597.5 5.3 L600.0 8.7 L600.0 31.3 L597.5 34.7 L595.0 31.2 L592.5 31.2 L590.0 30.1 L587.5 28.7 L585.0 33.6 L582.5 32.9 L580.0 27.4 L577.5 31.2 L575.0 26.3 L572.5 26.9 L570.0 29.7 L567.5 21.4 L565.0 21.4 L562.5 25.8 L560.0 21.1 L557.5 21.1 L555.0 21.1 L552.5 29.7 L550.0 23.0 L547.5 29.3 L545.0 29.7 L542.5 21.5 L540.0 21.4 L537.5 21.4 L535.0 24.4 L532.5 25.6 L530.0 21.4 L527.5 21.4 L525.0 24.4 L522.5 22.8 L520.0 21.4 L517.5 23.9 L515.0 21.4 L512.5 22.9 L510.0 26.9 L507.5 28.4 L505.0 30.8 L502.5 29.3 L500.0 24.3 L497.5 31.8 L495.0 30.6 L492.5 28.8 L490.0 32.1 L487.5 32.3 L485.0 29.2 L482.5 24.7 L480.0 24.4 L477.5 24.6 L475.0 24.8 L472.5 26.6 L470.0 33.1 L467.5 21.1 L465.0 21.1 L462.5 21.1 L460.0 36.7 L457.5 34.8 L455.0 31.0 L452.5 31.5 L450.0 28.9 L447.5 28.5 L445.0 31.0 L442.5 31.6 L440.0 27.6 L437.5 31.4 L435.0 30.9 L432.5 29.6 L430.0 29.0 L427.5 29.6 L425.0 27.3 L422.5 21.4 L420.0 22.3 L417.5 27.0 L415.0 24.9 L412.5 27.7 L410.0 22.1 L407.5 24.4 L405.0 23.5 L402.5 27.7 L400.0 29.0 L397.5 29.6 L395.0 24.4 L392.5 21.4 L390.0 22.8 L387.5 21.4 L385.0 21.4 L382.5 24.8 L380.0 21.4 L377.5 21.4 L375.0 21.1 L372.5 21.1 L370.0 21.1 L367.5 21.4 L365.0 21.4 L362.5 25.7 L360.0 26.8 L357.5 33.1 L355.0 32.5 L352.5 25.9 L350.0 28.6 L347.5 28.5 L345.0 27.3 L342.5 25.9 L340.0 30.1 L337.5 32.2 L335.0 23.5 L332.5 26.6 L330.0 24.0 L327.5 24.7 L325.0 23.7 L322.5 24.9 L320.0 28.5 L317.5 27.6 L315.0 28.8 L312.5 28.2 L310.0 28.6 L307.5 34.6 L305.0 29.3 L302.5 31.8 L300.0 31.1 L297.5 34.2 L295.0 33.8 L292.5 31.5 L290.0 31.4 L287.5 21.7 L285.0 26.8 L282.5 21.1 L280.0 21.1 L277.5 21.1 L275.0 27.6 L272.5 23.9 L270.0 22.3 L267.5 23.2 L265.0 21.4 L262.5 22.6 L260.0 26.1 L257.5 25.2 L255.0 22.6 L252.5 22.2 L250.0 21.4 L247.5 21.4 L245.0 27.3 L242.5 25.8 L240.0 21.4 L237.5 21.4 L235.0 21.4 L232.5 24.1 L230.0 24.0 L227.5 25.3 L225.0 22.9 L222.5 23.1 L220.0 21.4 L217.5 29.9 L215.0 26.5 L212.5 26.2 L210.0 26.0 L207.5 33.0 L205.0 26.4 L202.5 27.1 L200.0 27.4 L197.5 30.0 L195.0 25.2 L192.5 31.1 L190.0 21.1 L187.5 21.1 L185.0 21.1 L182.5 33.3 L180.0 30.1 L177.5 31.1 L175.0 25.4 L172.5 32.1 L170.0 30.9 L167.5 36.3 L165.0 35.8 L162.5 32.3 L160.0 33.5 L157.5 33.3 L155.0 33.7 L152.5 29.0 L150.0 33.5 L147.5 29.2 L145.0 29.7 L142.5 27.4 L140.0 21.4 L137.5 23.5 L135.0 21.4 L132.5 24.9 L130.0 21.4 L127.5 21.4 L125.0 27.4 L122.5 21.4 L120.0 26.0 L117.5 27.9 L115.0 24.9 L112.5 25.7 L110.0 22.5 L107.5 26.8 L105.0 27.4 L102.5 22.0 L100.0 22.8 L97.5 21.1 L95.0 21.1 L92.5 21.1 L90.0 22.9 L87.5 21.4 L85.0 21.4 L82.5 21.4 L80.0 23.3 L77.5 22.7 L75.0 26.6 L72.5 27.4 L70.0 24.8 L67.5 32.3 L65.0 28.3 L62.5 27.2 L60.0 28.0 L57.5 29.6 L55.0 35.2 L52.5 26.8 L50.0 35.5 L47.5 29.2 L45.0 30.4 L42.5 33.5 L40.0 30.0 L37.5 25.8 L35.0 24.9 L32.5 32.1 L30.0 28.6 L27.5 25.9 L25.0 26.3 L22.5 30.5 L20.0 27.1 L17.5 32.1 L15.0 27.7 L12.5 30.5 L10.0 31.6 L7.5 26.2 L5.0 21.1 L2.5 21.1 L0.0 21.1 Z"/></svg>
+          <span class="track__cut" style="--at: 12%; --len: 3%"><i>1</i></span>
+          <span class="track__cut is-on" style="--at: 41%; --len: 4%"><i>2</i></span>
+          <span class="track__cut" style="--at: 77%; --len: 2.5%"><i>3</i></span>
+        </div>
+        <div class="track__scale num" aria-hidden="true"><span>0:00</span><span>15:00</span><span>30:00</span><span>45:00</span><span>58:14</span></div>
+      </div>
+      <ol class="clips">
+        <li class="clip">
+          <figure class="clip__frame" data-slot="clip-1" data-alt="A vertical frame from the first clip">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Shure_SM7.jpg/960px-Shure_SM7.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Shure_SM7.jpg/960px-Shure_SM7.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/fc/Shure_SM7.jpg/1280px-Shure_SM7.jpg 1280w" sizes="(min-width: 60rem) 14vw, 30vw" width="3024" height="4032" alt="" fetchpriority="high" style="object-position: 50% 45%">
+            <p class="cap" data-keep>We almost <b>didn’t</b> ship it.</p>
+          </figure>
+          <p class="clip__meta"><span>Clip 1</span><span class="num">0:38</span></p>
+        </li>
+        <li class="clip is-on">
+          <figure class="clip__frame" data-slot="clip-2" data-alt="A vertical frame from the second clip">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/960px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/960px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/1280px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg 1280w" sizes="(min-width: 60rem) 14vw, 30vw" width="4032" height="6048" alt="" fetchpriority="high" style="object-position: 50% 40%">
+            <p class="cap" data-keep>So we stopped <b>hiring</b> for a year.</p>
+          </figure>
+          <p class="clip__meta"><span>Clip 2</span><span class="num">0:51</span></p>
+        </li>
+        <li class="clip">
+          <figure class="clip__frame" data-slot="clip-3" data-alt="A vertical frame from the third clip">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg/960px-Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg/960px-Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg/1280px-Neumann_U87_Condenser_Microphone_-_Studio_A%2C_In_Your_Ear_Studios.jpg 1280w" sizes="(min-width: 60rem) 14vw, 30vw" width="5184" height="3456" alt="" fetchpriority="high" style="object-position: 46% 50%">
+            <p class="cap" data-keep>Ask the person who <b>uses</b> it.</p>
+          </figure>
+          <p class="clip__meta"><span>Clip 3</span><span class="num">0:29</span></p>
+        </li>
+      </ol>
+      <div class="app__foot">
+        <span>3 clips, captioned, 9:16</span>
+        <span class="app__btn">Export all</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="steps" id="steps" aria-labelledby="steps-title">
+  <div class="container split split--5-7">
+    <div>
+      <h2 id="steps-title">From full take to posted clip</h2>
+      <p class="lead">You film for an hour. Reelcut reads every word.</p>
+      <ol class="steps__list">
+        <li>
+          <h3>Drop in the full take</h3>
+          <p>Straight off the card or the drive, as long as it runs.</p>
+        </li>
+        <li>
+          <h3>Read the moments it marks</h3>
+          <p>It transcribes the take and marks lines that stand alone.</p>
+        </li>
+        <li>
+          <h3>Trim, caption, export</h3>
+          <p>Move a cut by the word, then export every size.</p>
+        </li>
+      </ol>
+    </div>
+
+    <div class="well transcript" data-slot="transcript" data-alt="Reelcut's transcript view with one marked passage">
+      <figure class="transcript__frame" data-slot="take-frame" data-alt="A wide frame from your own interview, at the marked moment">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/1280px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/960px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/1280px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg/1920px-Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg 1920w" sizes="(min-width: 60rem) 50vw, 100vw" width="4032" height="6048" alt="" loading="lazy" style="object-position: 50% 30%">
+        <span class="transcript__tc num" data-keep>12:08</span>
+      </figure>
+      <div class="transcript__head">
+        <span>Transcript</span>
+        <span class="num">12:02 to 13:10</span>
+      </div>
+      <div class="line"><span class="line__t num">12:02</span><span class="line__who">Host</span><p>When money ran short, what changed first?</p></div>
+      <div class="line is-marked">
+        <span class="line__t num">12:08</span><span class="line__who">Guest</span>
+        <p>Honestly? We stopped hiring for a year. Everyone did two jobs, and the product got better for it.</p>
+      </div>
+      <div class="line"><span class="line__t num">12:59</span><span class="line__who">Host</span><p>Did anyone leave?</p></div>
+      <div class="transcript__foot">
+        <span>Marked moment, 0:51</span>
+        <span class="app__btn">Make clip</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="captions" id="captions" aria-labelledby="captions-title">
+  <div class="container split split--4-8">
+    <div class="split__text">
+      <h2 id="captions-title">Captions cut from the transcript</h2>
+      <p class="lead">Feeds play silent. The words carry the clip.</p>
+      <ul class="facts">
+        <li>Timed to each word, from the transcript</li>
+        <li>Your fonts and colours, saved once</li>
+      </ul>
+    </div>
+
+    <div class="well studio">
+      <figure class="studio__frame" data-slot="caption-frame" data-alt="A vertical frame from one of your own clips, the speaker in shot">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Farjad_jolani_Cinematographer.jpg/960px-Farjad_jolani_Cinematographer.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Farjad_jolani_Cinematographer.jpg/960px-Farjad_jolani_Cinematographer.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Farjad_jolani_Cinematographer.jpg/1280px-Farjad_jolani_Cinematographer.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Farjad_jolani_Cinematographer.jpg/1920px-Farjad_jolani_Cinematographer.jpg 1920w" sizes="(min-width: 60rem) 24vw, 80vw" width="4623" height="3332" alt="" loading="lazy" style="object-position: 72% 42%">
+        <p class="cap cap--big" data-keep>Everyone did <b>two</b> jobs.</p>
+      </figure>
+      <form class="studio__panel" aria-label="Caption style">
+        <fieldset class="seg">
+          <legend>Style</legend>
+          <input type="radio" name="cs" id="cs-word" value="word" checked><label for="cs-word">Word by word</label>
+          <input type="radio" name="cs" id="cs-box" value="box"><label for="cs-box">Boxed line</label>
+          <input type="radio" name="cs" id="cs-plain" value="plain"><label for="cs-plain">Plain line</label>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Position</legend>
+          <input type="radio" name="cp" id="cp-low" value="low" checked><label for="cp-low">Low</label>
+          <input type="radio" name="cp" id="cp-mid" value="mid"><label for="cp-mid">Middle</label>
+        </fieldset>
+        <dl class="studio__specs">
+          <div><dt>Line length</dt><dd class="num">Up to 4 words</dd></div>
+          <div><dt>Timing</dt><dd>From the transcript</dd></div>
+        </dl>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="shapes" aria-labelledby="shapes-title">
+  <div class="container">
+    <div class="headsplit">
+      <h2 id="shapes-title">One cut, every shape</h2>
+      <p class="lead">Reelcut keeps the subject in frame as the shape changes.</p>
+    </div>
+    <div class="ratios">
+      <figure class="ratio ratio--tall">
+        <div class="ratio__frame" data-slot="ratio-tall" data-alt="Your clip in 9:16">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/960px-Rob_Bourdon_HQ.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/960px-Rob_Bourdon_HQ.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/1280px-Rob_Bourdon_HQ.jpg 1280w" sizes="(min-width: 60rem) 16vw, 40vw" width="3888" height="2588" alt="" loading="lazy" style="object-position: 50% 45%">
+        </div>
+        <figcaption><span class="num">9:16</span> Reels, Shorts, TikTok</figcaption>
+      </figure>
+      <figure class="ratio ratio--square">
+        <div class="ratio__frame" data-slot="ratio-square" data-alt="Your clip in 1:1">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/960px-Rob_Bourdon_HQ.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/960px-Rob_Bourdon_HQ.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/1280px-Rob_Bourdon_HQ.jpg 1280w" sizes="(min-width: 60rem) 20vw, 50vw" width="3888" height="2588" alt="" loading="lazy" style="object-position: 50% 45%">
+        </div>
+        <figcaption><span class="num">1:1</span> Feed posts</figcaption>
+      </figure>
+      <figure class="ratio ratio--wide">
+        <div class="ratio__frame" data-slot="ratio-wide" data-alt="Your clip in 16:9">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/1280px-Rob_Bourdon_HQ.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/960px-Rob_Bourdon_HQ.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/1280px-Rob_Bourdon_HQ.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Rob_Bourdon_HQ.jpg/1920px-Rob_Bourdon_HQ.jpg 1920w" sizes="(min-width: 60rem) 45vw, 100vw" width="3888" height="2588" alt="A drummer on a dark stage, lit from behind" loading="lazy" style="object-position: 50% 45%">
+        </div>
+        <figcaption><span class="num">16:9</span> YouTube, LinkedIn</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="review" aria-labelledby="review-title">
+  <div class="container split split--6-6">
+    <div class="split__text">
+      <h2 id="review-title">Notes pinned to the word</h2>
+            <dl class="facts facts--dl">
+        <div><dt>Notes on the word</dt><dd>Comments pin to the exact line.</dd></div>
+        <div><dt>One approval</dt><dd>Nothing exports unsigned.</dd></div>
+      </dl>
+    </div>
+    <div class="well notes" data-slot="review" data-alt="Reelcut's review view: a clip with comments pinned to words">
+      <div class="transcript__head"><span>Clip 2, review</span><span>2 notes</span></div>
+      <p class="notes__quote">“So we stopped <mark>hiring</mark> for a year, and the product got <mark class="b">better</mark>.”</p>
+      <ul class="notes__list">
+        <li>
+          <span class="notes__who">Producer</span>
+          <p>Start on “hiring”, the breath drags.</p>
+          <span class="notes__t num">0:02</span>
+        </li>
+        <li>
+          <span class="notes__who">Client</span>
+          <p>End on “better”.</p>
+          <span class="notes__t num">0:47</span>
+        </li>
+      </ul>
+      <div class="transcript__foot">
+        <span>Waiting on one approval</span>
+        <span class="app__btn">Approve clip</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq" id="questions" aria-labelledby="faq-title">
+  <div class="container faq__in">
+    <h2 id="faq-title">Before you send the take</h2>
+    <div class="faq__rows">
+      <details>
+        <summary><h3>Does it post for us?</h3></summary>
+        <p>No. It exports finished files, and you post them where you already do.</p>
+      </details>
+      <details>
+        <summary><h3>Can we move a cut?</h3></summary>
+        <p>Every cut is yours. Move it by the word, or mark a moment it missed.</p>
+      </details>
+      <details>
+        <summary><h3>What about two cameras?</h3></summary>
+        <p>Drop in both angles and Reelcut cuts to whoever is speaking.</p>
+      </details>
+      <details>
+        <summary><h3>Who keeps the footage?</h3></summary>
+        <p>You do. Delete a project and its files go with it.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="start" id="start" aria-labelledby="start-title">
+  <div class="container split split--5-7">
+    <div class="split__text">
+      <h2 id="start-title">Send us your longest interview</h2>
+      <p class="lead">The clips come back by email.</p>
+    </div>
+    <form class="well signup" data-endpoint="" novalidate>
+      <div class="field">
+        <label for="file">Link to the file</label>
+        <input id="file" name="file" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/interview.mov" required>
+      </div>
+      <div class="field">
+        <label for="email">Your email</label>
+        <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+      <button class="btn btn--primary" type="submit">Cut my interview</button>
+      <p class="signup__help" id="signup-help" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container foot__in">
+    <p class="foot__mark">Reelcut</p>
+    <p class="foot__colophon">For small video teams who film long and post short. <a href="#start">Send an interview</a>.</p>
+    <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Shure_SM7.jpg">The Midnite Wolf</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:Close_up_view_of_a_microphone_set_up_in_a_recording_studio.jpg">Shixart1985</a> (CC BY 2.0), <a href="https://commons.wikimedia.org/wiki/File:Neumann_U87_Condenser_Microphone_-_Studio_A,_In_Your_Ear_Studios.jpg">Will Fisher</a> (CC BY-SA 2.0), <a href="https://commons.wikimedia.org/wiki/File:Farjad_jolani_Cinematographer.jpg">DarkRavenCore</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Rob_Bourdon_HQ.jpg">Rickard Laurin</a> (CC BY-SA 3.0), all via Wikimedia Commons.</p>
+    <p class="foot__legal">© 2026 Reelcut</p>
+  </div>
+</footer>
+
+<script>
+(() => { const bar = document.querySelector('.bar'); let last = scrollY, ticking = false;
+  addEventListener('scroll', () => { if (ticking) return; ticking = true; requestAnimationFrame(() => { const y = scrollY; bar.classList.toggle('is-up', y > last && y > 400 && !bar.contains(document.activeElement)); last = y; ticking = false; }); }, { passive: true }); })();
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const bad = [...form.querySelectorAll('input')].find((i) => { const ok = i.checkValidity(); i.toggleAttribute('aria-invalid', !ok); return !ok; });
+    if (bad) { bad.setAttribute('aria-describedby', help.id); help.textContent = bad.type === 'email' ? 'That address looks incomplete. Write it as name@example.com.' : 'Paste the full link to the file, starting with https.'; bad.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Got it. The clips go to ' + form.email.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample Room, a materials library in London</title>
+<meta name="description" content="Sample Room is a London library where architects borrow physical samples of 2,600 surfaces: stone, timber, terrazzo and ceramic. Visits by booking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=Onest:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="container bar">
+    <a class="bar__mark" href="#top" aria-label="Sample Room, home">Sample Room</a>
+    <form class="find" role="search" action="#catalogue">
+      <label class="visually-hidden" for="find-q">Search the catalogue</label>
+      <input id="find-q" name="q" type="search" placeholder="Search the catalogue: oak, marble, glazed" autocomplete="off">
+      <button class="btn btn--secondary find__go" type="submit">Find</button>
+    </form>
+    <a class="btn btn--primary bar__act" href="#visit">Book a visit</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <div class="container">
+      <ul class="hero__set" aria-label="One surface from each family">
+        <li><figure class="card hero__card">
+          <div class="card__pic" data-slot="hero-stone" data-alt="A stone sample from the library, flat-on and close">
+            <img src="photos/red-marble-quarry-cava-buscada-erto-e-casso-pordenone-friuli-1920.jpg" width="1920" height="1440" fetchpriority="high" style="object-position: 40% 70%" alt="A sawn face of rose-red marble, banded in pale lines">
+          </div>
+          <figcaption class="card__cap"><span>Stone</span><span class="code">ST-0412</span></figcaption>
+        </figure></li>
+        <li><figure class="card hero__card">
+          <div class="card__pic pic--zoom" data-slot="hero-timber" data-alt="A timber sample from the library, flat-on and close">
+            <img src="photos/fichte-dreischichtplatte-2009-1920.jpg" width="1920" height="1112" fetchpriority="high" style="object-position: 46% 56%" alt="The cut edge of a three-layer spruce board, its layers running across">
+          </div>
+          <figcaption class="card__cap"><span>Timber</span><span class="code">TI-0207</span></figcaption>
+        </figure></li>
+        <li><figure class="card hero__card">
+          <div class="card__pic pic--panel" data-slot="hero-terrazzo" data-alt="A terrazzo sample from the library, flat-on and close">
+            <img src="photos/vitoria-adurza-iturritxu-bt-03-1920.jpg" width="1920" height="1099" fetchpriority="high" style="object-position: 50% 40%" alt="A pale ground packed with fine stone chips, a joint across it">
+          </div>
+          <figcaption class="card__cap"><span>Terrazzo</span><span class="code">TZ-0104</span></figcaption>
+        </figure></li>
+        <li><figure class="card hero__card">
+          <div class="card__pic" data-slot="hero-ceramic" data-alt="A ceramic sample from the library, flat-on and close">
+            <img src="photos/travessa-couto-fernandes-60-centro-s-o-lu-s-2025-6016-pcorr--1920.jpg" width="1920" height="1919" fetchpriority="high" style="object-position: 50% 50%" alt="Blue and white glazed tiles with a repeating floral pattern">
+          </div>
+          <figcaption class="card__cap"><span>Ceramic</span><span class="code">CE-0710</span></figcaption>
+        </figure></li>
+      </ul>
+      <div class="hero__text">
+        <h1 id="hero-head">Borrow the stone before you specify it</h1>
+        <div class="hero__side">
+          <p class="lead">A London library of stone, timber, terrazzo and ceramic samples for architects.</p>
+          <div class="acts">
+            <a class="btn btn--primary" href="#visit">Book a visit</a>
+            <a class="btn btn--secondary" href="#catalogue">See the catalogue</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="count band--ink" aria-labelledby="count-head">
+    <div class="container count__grid">
+      <h2 id="count-head" class="count__fig"><span class="visually-hidden">The library holds </span>2,600<span class="count__unit"> surfaces</span></h2>
+      <div class="count__side">
+        <p class="lead">Physical samples, on shelves, to take back to the studio.</p>
+        <ul class="families">
+          <li><span class="code">ST</span>Stone</li>
+          <li><span class="code">TI</span>Timber</li>
+          <li><span class="code">TZ</span>Terrazzo</li>
+          <li><span class="code">CE</span>Ceramic</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="close" aria-labelledby="close-head">
+    <div class="container">
+      <div class="head">
+        <h2 id="close-head">Every surface, up close</h2>
+        <p class="lead">Grain, veins and joints, as they will sit on your desk.</p>
+      </div>
+      <figure class="card close__wide">
+        <div class="card__pic" data-slot="close-wide" data-alt="A wide stone sample from the library, flat-on, the veining across the frame">
+          <img src="photos/marble-top-1920.jpg" width="1920" height="2560" loading="lazy" style="object-position: 50% 40%" alt="White marble with grey and gold veins running on the diagonal">
+        </div>
+        <figcaption class="card__cap"><span>White marble, honed</span><span class="code">ST-0538</span></figcaption>
+      </figure>
+      <div class="close__pair">
+        <figure class="card">
+          <div class="card__pic" data-slot="close-a" data-alt="A stone sample from the library, flat-on and close">
+            <img src="photos/stone-wall-old-farm-dordogne-1920.jpg" width="1920" height="1265" loading="lazy" style="object-position: 50% 55%" alt="Knapped flint and pale stone cobbles set close in lime">
+          </div>
+          <figcaption class="card__cap"><span>Flint, knapped in lime</span><span class="code">ST-0611</span></figcaption>
+        </figure>
+        <figure class="card">
+          <div class="card__pic" data-slot="close-b" data-alt="A ceramic sample from the library, flat-on and close">
+            <img src="photos/old-brickwork-red-brick-1920.jpg" width="1920" height="1276" loading="lazy" style="object-position: 50% 50%" alt="Weathered red bricks laid in thick lime mortar">
+          </div>
+          <figcaption class="card__cap"><span>Red brick, handmade</span><span class="code">CE-0733</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalogue" id="catalogue" aria-labelledby="cat-head">
+    <div class="container">
+      <div class="head">
+        <h2 id="cat-head">The catalogue, by code</h2>
+        <p class="lead">A shelf of it here; the other surfaces are in the room.</p>
+      </div>
+      <fieldset class="cells" aria-controls="spec">
+        <legend class="visually-hidden">Show one family</legend>
+        <input type="radio" name="fam" id="f-all" value="" checked><label for="f-all">All</label>
+        <input type="radio" name="fam" id="f-stone" value="Stone"><label for="f-stone">Stone</label>
+        <input type="radio" name="fam" id="f-timber" value="Timber"><label for="f-timber">Timber</label>
+        <input type="radio" name="fam" id="f-terrazzo" value="Terrazzo"><label for="f-terrazzo">Terrazzo</label>
+        <input type="radio" name="fam" id="f-ceramic" value="Ceramic"><label for="f-ceramic">Ceramic</label>
+      </fieldset>
+      <div class="spec-wrap">
+        <table class="spec" id="spec">
+          <thead><tr><th scope="col">Code</th><th scope="col">Surface</th><th scope="col">Family</th><th scope="col">Finish</th><th scope="col" class="r">Sample, mm</th></tr></thead>
+          <tbody>
+            <tr data-fam="Stone"><td class="code">ST-0412</td><th scope="row">Red marble</th><td>Stone</td><td>Sawn face</td><td class="r code">300 × 300</td></tr>
+            <tr data-fam="Stone"><td class="code">ST-0538</td><th scope="row">White marble</th><td>Stone</td><td>Honed</td><td class="r code">300 × 300</td></tr>
+            <tr data-fam="Stone"><td class="code">ST-0611</td><th scope="row">Flint in lime</th><td>Stone</td><td>Knapped</td><td class="r code">400 × 300</td></tr>
+            <tr data-fam="Timber"><td class="code">TI-0207</td><th scope="row">Spruce, three-layer</th><td>Timber</td><td>Sanded</td><td class="r code">300 × 150</td></tr>
+            <tr data-fam="Timber"><td class="code">TI-0315</td><th scope="row">Oak, quarter-sawn</th><td>Timber</td><td>Oiled</td><td class="r code">300 × 150</td></tr>
+            <tr data-fam="Terrazzo"><td class="code">TZ-0104</td><th scope="row">Pale ground, fine chip</th><td>Terrazzo</td><td>Polished</td><td class="r code">300 × 300</td></tr>
+            <tr data-fam="Terrazzo"><td class="code">TZ-0122</td><th scope="row">Mixed chip, coarse</th><td>Terrazzo</td><td>Honed</td><td class="r code">300 × 300</td></tr>
+            <tr data-fam="Ceramic"><td class="code">CE-0710</td><th scope="row">Blue and white tile</th><td>Ceramic</td><td>Glazed</td><td class="r code">150 × 150</td></tr>
+            <tr data-fam="Ceramic"><td class="code">CE-0733</td><th scope="row">Red brick</th><td>Ceramic</td><td>Handmade</td><td class="r code">215 × 65</td></tr>
+          </tbody>
+        </table>
+        <p class="spec__empty" id="spec-empty" role="status" hidden>Nothing on this shelf matches. Ask for it when you book: the room holds all 2,600.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="borrow" id="borrow" aria-labelledby="borrow-head">
+    <div class="container borrow__grid">
+      <figure class="card borrow__pic">
+        <div class="card__pic" data-slot="borrow" data-alt="Samples laid out on a desk in the library, ready to borrow">
+          <img src="photos/zellige-loose-tile-shapes-1920.jpg" width="1920" height="1285" loading="lazy" style="object-position: 50% 50%" alt="Loose pieces of terracotta and glazed tile in cream, wine and blue">
+        </div>
+        <figcaption class="card__cap"><span>Glazed pieces, loose</span><span class="code">CE-0741</span></figcaption>
+      </figure>
+      <div class="borrow__text">
+        <h2 id="borrow-head">Book, borrow, bring back</h2>
+        <ol class="steps">
+          <li><span class="steps__n" aria-hidden="true">1</span><div><h3>Book a visit</h3><p>Pick a day and the families you want to see.</p></div></li>
+          <li><span class="steps__n" aria-hidden="true">2</span><div><h3>Borrow</h3><p>Take the samples to your desk and your drawings.</p></div></li>
+          <li><span class="steps__n" aria-hidden="true">3</span><div><h3>Bring back</h3><p>They go back on the shelf for the next practice.</p></div></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="visit" id="visit" aria-labelledby="visit-head">
+    <div class="container visit__grid">
+      <div class="visit__text">
+        <h2 id="visit-head">Pick your samples in London</h2>
+        <p class="lead">Visits are by booking. Tell us the day and the families.</p>
+      </div>
+      <form class="card visit__form" data-endpoint="" novalidate>
+        <div class="form__row">
+          <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" type="text" autocomplete="name" required></div>
+          <div class="field"><label for="f-practice">Practice</label><input id="f-practice" name="practice" type="text" autocomplete="organization"></div>
+        </div>
+        <div class="form__row">
+          <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+          <div class="field"><label for="f-day">Day</label><input id="f-day" name="day" type="date" required></div>
+        </div>
+        <fieldset class="cells cells--form">
+          <legend>Families to see</legend>
+          <input type="checkbox" name="families" id="c-stone" value="stone"><label for="c-stone">Stone</label>
+          <input type="checkbox" name="families" id="c-timber" value="timber"><label for="c-timber">Timber</label>
+          <input type="checkbox" name="families" id="c-terrazzo" value="terrazzo"><label for="c-terrazzo">Terrazzo</label>
+          <input type="checkbox" name="families" id="c-ceramic" value="ceramic"><label for="c-ceramic">Ceramic</label>
+        </fieldset>
+        <div class="form__end">
+          <button class="btn btn--primary" type="submit">Request a visit</button>
+          <p class="form__help" id="form-help" aria-live="polite"></p>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark">Sample Room</p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#catalogue">The catalogue</a>
+        <a href="#borrow">Borrowing</a>
+        <a href="#visit">Book a visit</a>
+      </nav>
+      <p class="foot__place">London, visits by booking</p>
+    </div>
+    <p class="foot__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Red_marble_quarry_Cava_Buscada_-_Erto_e_Casso,_Pordenone,_Friuli-Venezia_Giulia,_Italy_-_2021-09-27.jpg">Mænsard vokser</a>, CC&nbsp;BY-SA&nbsp;4.0; <a href="https://commons.wikimedia.org/wiki/File:Fichte_Dreischichtplatte_2009.jpg">Elke Wetzig (elya)</a>, CC&nbsp;BY-SA&nbsp;3.0; <a href="https://commons.wikimedia.org/wiki/File:Vitoria_-_Adurza_-_Iturritxu_-BT-_03.jpg">Basotxerri</a>, CC&nbsp;BY-SA&nbsp;4.0; <a href="https://commons.wikimedia.org/wiki/File:Travessa_Couto_Fernandes_60_Centro_S%C3%A3o_Lu%C3%ADs_2025-6016_(pcorr,_crop).jpg">Prburley, derivative work by Aristeas</a>, CC&nbsp;BY&nbsp;4.0; <a href="https://commons.wikimedia.org/wiki/File:Marble_Top.jpg">Ambadyanands</a>, CC0; <a href="https://commons.wikimedia.org/wiki/File:Stone_wall_old_farm_Dordogne.jpg">Jebulon</a>, CC0; <a href="https://commons.wikimedia.org/wiki/File:Old_brickwork._Red_brick.jpg">Dmitry Makeev</a>, CC&nbsp;BY-SA&nbsp;3.0; <a href="https://commons.wikimedia.org/wiki/File:Zellige_loose_tile_shapes.jpg">Jadcooper</a>, CC&nbsp;BY-SA&nbsp;4.0, all on Wikimedia Commons. &copy; 2026 Sample Room.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const rows = [...document.querySelectorAll('#spec tbody tr')];
+  const empty = document.getElementById('spec-empty');
+  const q = document.getElementById('find-q');
+  const apply = () => {
+    const fam = document.querySelector('input[name="fam"]:checked').value;
+    const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    rows.forEach((r) => { const t = r.textContent.toLowerCase(); const ok = (!fam || r.dataset.fam === fam) && words.every((w) => t.includes(w)); r.hidden = !ok; if (ok) shown++; });
+    empty.hidden = shown > 0;
+  };
+  document.querySelectorAll('input[name="fam"]').forEach((i) => i.addEventListener('change', apply));
+  q.addEventListener('input', apply);
+  q.form.addEventListener('submit', (e) => { e.preventDefault(); document.getElementById('f-all').checked = true; apply(); document.getElementById('catalogue').scrollIntoView(); });
+})();
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fields = [...form.querySelectorAll('input[required]')];
+    fields.forEach((i) => i.toggleAttribute('aria-invalid', !i.checkValidity()));
+    const bad = fields.find((i) => !i.checkValidity());
+    if (bad) {
+      bad.setAttribute('aria-describedby', help.id);
+      help.textContent = bad.type === 'email' ? 'That address looks incomplete. Write it as name@example.com.' : bad.type === 'date' ? 'Pick the day you would like to visit.' : 'Add your name so we know who is coming.';
+      bad.focus();
+      return;
+    }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Your request reached us.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+</script>
+</body>
+</html>

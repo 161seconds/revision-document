@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ours: a budget for two</title>
+<meta name="description" content="A budget for couples: shared bills in the middle, what is yours and mine at the edges, split the way you agree.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@700&family=Onest:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="hero" id="top">
+  <nav class="nav container" aria-label="Main">
+    <ul class="nav__links">
+      <li><a href="#month">The month</a></li>
+      <li><a href="#splits">Splits</a></li>
+      <li><a href="#saving">Saving</a></li>
+    </ul>
+    <details class="nav__menu">
+      <summary>Menu</summary>
+      <ul>
+        <li><a href="#month">The month</a></li>
+        <li><a href="#splits">Splits</a></li>
+        <li><a href="#saving">Saving</a></li>
+      </ul>
+    </details>
+    <a class="wordmark" href="#top" aria-label="Ours, home">Ours</a>
+    <a class="btn btn--quiet nav__action" href="#start">Start a budget</a>
+  </nav>
+
+  <div class="hero__body container" id="main">
+    <h1 class="hero__head"><span class="hero__you">Yours,</span> <span class="hero__me">mine,</span> <span class="hero__ours">and the rent.</span></h1>
+    <div class="hero__pair">
+      <p class="hero__lede">One budget for two people, with room for what’s yours alone.</p>
+      <a class="btn" href="#start">Start a budget together</a>
+    </div>
+
+  </div>
+
+  <div class="bill" data-slot="rent" data-kind="product" data-alt="Screenshot of a shared bill in the app, split between two people">
+    <p class="bill__name">Rent this month, <span class="num">$2,000</span><br><span class="bill__hint">Drag the line to split it your way</span></p>
+    <div class="bill__you"><span>You pay</span> <b class="num" data-out="you">$1,000</b></div>
+    <div class="bill__me"><span>I pay</span> <b class="num" data-out="me">$1,000</b></div>
+    <input class="bill__range" type="range" min="30" max="70" step="5" value="50" aria-label="Your share of the rent, in percent" aria-valuetext="You pay 50 percent">
+  </div>
+</header>
+
+<main>
+  <section class="month container" id="month" aria-labelledby="month-h">
+    <div class="head">
+      <h2 id="month-h">One month, from both sides.</h2>
+      <p>Shared bills sit in the middle. Yours and mine stay at the edges.</p>
+    </div>
+    <div class="app" data-slot="month" data-kind="product" data-alt="Screenshot of the month view: your spending, the shared bills and your partner’s spending side by side">
+      <div class="app__bar">
+        <span class="app__month">October</span>
+        <span class="app__sum">Shared this month <b class="num">$2,750</b></span>
+      </div>
+      <div class="app__cols">
+        <div class="col col--you">
+          <p class="col__name">Yours</p>
+          <ul class="col__list">
+            <li><span>Gym</span> <span class="num">$40</span></li>
+            <li><span>Books</span> <span class="num">$25</span></li>
+            <li><span>Coffee</span> <span class="num">$30</span></li>
+          </ul>
+          <p class="col__foot"><span>Spent</span> <b class="num">$95</b></p>
+        </div>
+        <div class="col col--ours">
+          <p class="col__name">Ours</p>
+          <ul class="col__list col__list--split">
+            <li style="--s: 60"><span>Rent</span> <span class="num">$2,000</span><i aria-hidden="true"></i><small>You $1,200</small><small>I $800</small></li>
+            <li style="--s: 50"><span>Groceries</span> <span class="num">$600</span><i aria-hidden="true"></i><small>You $300</small><small>I $300</small></li>
+            <li style="--s: 50"><span>Electricity</span> <span class="num">$90</span><i aria-hidden="true"></i><small>You $45</small><small>I $45</small></li>
+            <li style="--s: 50"><span>Internet</span> <span class="num">$60</span><i aria-hidden="true"></i><small>You $30</small><small>I $30</small></li>
+          </ul>
+        </div>
+        <div class="col col--me">
+          <p class="col__name">Mine</p>
+          <ul class="col__list">
+            <li><span>Climbing</span> <span class="num">$55</span></li>
+            <li><span>Records</span> <span class="num">$30</span></li>
+            <li><span>Haircut</span> <span class="num">$35</span></li>
+          </ul>
+          <p class="col__foot"><span>Spent</span> <b class="num">$120</b></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="splits" id="splits" aria-labelledby="splits-h">
+    <div class="container splits__in">
+      <div class="head">
+        <h2 id="splits-h">Split the rent by pay.</h2>
+        <p>Or down the middle, or all on one of you.</p>
+      </div>
+      <ul class="rules" aria-label="Example splits, your share against mine">
+        <li style="--s: 50"><p><b>Groceries</b> down the middle</p><div class="rule__bar"><span class="num">50%</span><span class="num">50%</span></div></li>
+        <li style="--s: 60"><p><b>Rent</b> by what you each earn</p><div class="rule__bar"><span class="num">60%</span><span class="num">40%</span></div></li>
+        <li style="--s: 100"><p><b>Your sister’s birthday</b> all yours</p><div class="rule__bar rule__bar--whole"><span class="num">100%</span></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="private" id="private" aria-labelledby="private-h">
+    <div class="pair">
+      <div class="pair__half pair__half--you">
+        <h2 id="private-h">Your coffee is your business.</h2>
+        <figure class="pair__fig">
+          <div class="phone" data-slot="your-view" data-kind="product" data-alt="Screenshot of your own pot with each purchase listed">
+            <p class="phone__title">Yours this month</p>
+            <ul class="col__list">
+              <li><span>Gym</span> <span class="num">$40</span></li>
+              <li><span>Books</span> <span class="num">$25</span></li>
+              <li><span>Coffee</span> <span class="num">$30</span></li>
+            </ul>
+            <p class="phone__left"><span>Left</span> <b class="num">$175</b></p>
+          </div>
+          <figcaption>What you see</figcaption>
+        </figure>
+      </div>
+      <div class="pair__half pair__half--me">
+        <p class="pair__lede">They see what you have left, never what you bought.</p>
+        <figure class="pair__fig">
+          <div class="phone phone--closed" data-slot="their-view" data-kind="product" data-alt="Screenshot of your partner’s screen showing only your remaining total">
+            <p class="phone__title">Yours this month</p>
+            <p class="phone__big num">$175 <span>left</span></p>
+            <p class="phone__note">The details are yours to share.</p>
+          </div>
+          <figcaption>What they see</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="saving" id="saving" aria-labelledby="saving-h" style="--a: 33.3; --b: 22.2">
+    <div class="saving__head">
+      <h2 id="saving-h">One sofa, two paydays.</h2>
+      <p>The gap in the middle is what’s left to save.</p>
+      <p class="saving__togo"><b class="num">$800</b> to go of <span class="num">$1,800</span></p>
+    </div>
+    <div class="saving__you"><p><b class="num">$600</b> from you</p></div>
+    <div class="saving__gap" aria-hidden="true"></div>
+    <div class="saving__me"><p><b class="num">$400</b> from me</p></div>
+  </section>
+
+  <section class="start" id="start" aria-labelledby="start-h">
+    <div class="start__half start__half--you">
+      <h2 id="start-h">Start with your half.</h2>
+      <a class="btn" href="#start">Start a budget together</a>
+    </div>
+    <div class="start__half start__half--me">
+      <p class="start__them">Then invite them to theirs.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot container">
+  <a class="wordmark" href="#top" aria-label="Ours, back to top">Ours</a>
+  <ul class="foot__links">
+    <li><a href="#month">The month</a></li>
+    <li><a href="#splits">Splits</a></li>
+    <li><a href="#private">Privacy</a></li>
+    <li><a href="#saving">Saving</a></li>
+  </ul>
+  <p class="foot__line">A budget for two people who share some of it.</p>
+</footer>
+
+<script>
+(() => {
+  const hero = document.querySelector('.hero');
+  const bill = document.querySelector('.bill');
+  const range = document.querySelector('.bill__range');
+  if (!hero || !bill || !range) return;
+  const total = 2000;
+  const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
+  const place = () => {
+    const v = Number(range.value);
+    hero.style.setProperty('--seam', v + '%');
+    bill.querySelector('[data-out="you"]').textContent = fmt(total * v / 100);
+    bill.querySelector('[data-out="me"]').textContent = fmt(total * (100 - v) / 100);
+    range.setAttribute('aria-valuetext', 'You pay ' + v + ' percent, ' + fmt(total * v / 100));
+  };
+  range.addEventListener('input', place);
+  place();
+})();
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

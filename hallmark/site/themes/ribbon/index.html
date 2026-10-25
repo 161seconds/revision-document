@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lull: rain, wind and a distant train, faded out once you sleep</title>
+<meta name="description" content="Lull layers rain, wind and distant trains, then fades them out once you fall asleep. Three pounds a month.">
+<meta name="theme-color" content="#05080f">
+<script>document.documentElement.classList.add('js');setTimeout(function(){document.documentElement.classList.add('is-ready')},2400);</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500&family=Figtree:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="container nav__bar">
+    <a class="wordmark" href="#top" aria-label="Lull, back to the top">Lull</a>
+    <nav aria-label="Main">
+      <ul class="nav__links" role="list">
+        <li><a href="#sounds">The sounds</a></li>
+        <li><a href="#fade">The fade</a></li>
+        <li><a href="#price">Price</a></li>
+      </ul>
+    </nav>
+    <a class="btn btn--small" href="#price">Start Lull</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="night" aria-hidden="true">
+    <div class="night__grain"></div>
+    <div class="night__land"></div>
+    <canvas class="night__terrain" data-terrain></canvas>
+    <span class="train train--still"></span>
+    <canvas class="night__canvas" data-night></canvas>
+  </div>
+
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head" class="rise" style="--i: 0">Rain, wind,<br> a distant train.</h1>
+      <p class="lead rise" style="--i: 1">Lull layers all three, then fades them out once you fall asleep.</p>
+      <div class="actions rise" style="--i: 2">
+        <a class="btn btn--primary" href="#price">Start for &pound;3 a month</a>
+        <a class="btn btn--quiet" href="#fade">See how it fades</a>
+      </div>
+    </div>
+
+    <div class="mixer rise" style="--i: 3" data-mixer role="group" aria-label="Sample mix: three faders, a fade-out timer and Listen">
+      <div class="mixer__head">
+        <p class="mixer__title">Tonight</p>
+        <p class="mixer__status" data-status aria-live="polite"><span class="led" aria-hidden="true"></span><span data-status-text>Sample mix</span></p>
+      </div>
+
+      <div class="mixer__channels">
+        <div class="ch" data-ch="rain" style="--level: 0.6">
+          <span class="ch__value" data-value>60</span>
+          <div class="ch__fader" role="slider" tabindex="0" aria-label="Rain" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60">
+            <span class="ch__scale"></span>
+            <span class="ch__slot"><span class="ch__glow"></span></span>
+            <span class="ch__cap"></span>
+          </div>
+          <span class="ch__name">Rain</span>
+        </div>
+        <div class="ch" data-ch="wind" style="--level: 0.35">
+          <span class="ch__value" data-value>35</span>
+          <div class="ch__fader" role="slider" tabindex="0" aria-label="Wind" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35">
+            <span class="ch__scale"></span>
+            <span class="ch__slot"><span class="ch__glow"></span></span>
+            <span class="ch__cap"></span>
+          </div>
+          <span class="ch__name">Wind</span>
+        </div>
+        <div class="ch" data-ch="train" style="--level: 0.15">
+          <span class="ch__value" data-value>15</span>
+          <div class="ch__fader" role="slider" tabindex="0" aria-label="Distant trains" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="15">
+            <span class="ch__scale"></span>
+            <span class="ch__slot"><span class="ch__glow"></span></span>
+            <span class="ch__cap"></span>
+          </div>
+          <span class="ch__name">Distant train</span>
+        </div>
+      </div>
+
+      <div class="timer" style="--t: 0.5; --p: 0">
+        <div class="timer__row">
+          <span class="timer__label">Fade out</span>
+          <span class="timer__value" data-timer-value>in 30 min</span>
+        </div>
+        <div class="timer__curve" data-timer role="slider" tabindex="0" aria-label="Fade out after" aria-valuemin="1" aria-valuemax="60" aria-valuenow="30" aria-valuetext="30 minutes">
+          <svg class="timer__svg" viewBox="0 0 300 56" preserveAspectRatio="none" focusable="false">
+            <defs>
+              <linearGradient id="fade-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="currentColor" stop-opacity="0.2"/>
+                <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path class="timer__area" data-timer-area d="M0 8 L90 8 C108 8 132 56 150 56 L300 56 L300 56 L0 56 Z" fill="url(#fade-fill)"/>
+            <path class="timer__line" data-timer-line d="M0 8 L90 8 C108 8 132 56 150 56 L300 56" fill="none" stroke="currentColor" vector-effect="non-scaling-stroke"/>
+          </svg>
+          <span class="timer__head" aria-hidden="true"></span>
+          <span class="timer__handle" aria-hidden="true"></span>
+        </div>
+        <div class="timer__axis" aria-hidden="true"><span>Now</span><span>1 hour</span></div>
+      </div>
+
+      <button class="listen" type="button" data-listen disabled aria-pressed="false">
+        <span class="listen__icon" aria-hidden="true"></span><span data-listen-label>Listen</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="mix" id="sounds" aria-labelledby="sounds-head">
+  <div class="container mix__grid">
+    <div class="mix__text">
+      <h2 id="sounds-head">Three sounds, one mix.</h2>
+      <p class="lead">Each has its own level, so rain can lead and the train stays far off.</p>
+      <ol class="sound-list" role="list">
+        <li><h3>Rain</h3><p>Leads the mix, steady on the glass.</p><span class="sound-list__level" data-level-for="rain">60</span></li>
+        <li><h3>Wind</h3><p>Sits under the rain.</p><span class="sound-list__level" data-level-for="wind">35</span></li>
+        <li><h3>Distant trains</h3><p>Kept low, far off behind the rest.</p><span class="sound-list__level" data-level-for="train">15</span></li>
+      </ol>
+    </div>
+
+    <div class="mix__app">
+    <figure class="phone" data-slot="app" data-alt="The Lull mixer on the phone: rain, wind and distant trains on three faders, and the fade-out switch">
+      <div class="phone__screen mixer mixer--app" data-mixer role="group" aria-label="The Lull app mixer, sample">
+        <div class="mixer__head">
+          <p class="mixer__title">Tonight</p>
+          <p class="mixer__status"><span class="led" aria-hidden="true"></span><span data-status-text>Sample mix</span></p>
+        </div>
+        <div class="mixer__channels">
+          <div class="ch" data-ch="rain" style="--level: 0.6">
+            <span class="ch__value" data-value>60</span>
+            <div class="ch__fader" role="slider" tabindex="0" aria-label="Rain, in the app" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60">
+              <span class="ch__scale"></span><span class="ch__slot"><span class="ch__glow"></span></span><span class="ch__cap"></span>
+            </div>
+            <span class="ch__name">Rain</span>
+          </div>
+          <div class="ch" data-ch="wind" style="--level: 0.35">
+            <span class="ch__value" data-value>35</span>
+            <div class="ch__fader" role="slider" tabindex="0" aria-label="Wind, in the app" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35">
+              <span class="ch__scale"></span><span class="ch__slot"><span class="ch__glow"></span></span><span class="ch__cap"></span>
+            </div>
+            <span class="ch__name">Wind</span>
+          </div>
+          <div class="ch" data-ch="train" style="--level: 0.15">
+            <span class="ch__value" data-value>15</span>
+            <div class="ch__fader" role="slider" tabindex="0" aria-label="Distant trains, in the app" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="15">
+              <span class="ch__scale"></span><span class="ch__slot"><span class="ch__glow"></span></span><span class="ch__cap"></span>
+            </div>
+            <span class="ch__name">Distant train</span>
+          </div>
+        </div>
+        <div class="switch-row">
+          <span class="switch-row__label">Fade out<span>When you fall asleep</span></span>
+          <button class="switch" type="button" role="switch" aria-checked="true" aria-label="Fade out when you fall asleep" data-switch><span class="switch__knob"></span></button>
+        </div>
+        <button class="listen listen--app" type="button" data-listen disabled aria-pressed="false">
+          <span class="listen__icon" aria-hidden="true"></span><span data-listen-label>Listen</span>
+        </button>
+      </div>
+    </figure>
+    <p class="phone__note">Sample levels. Move a fader here or above; the night and the sound follow.</p>
+    </div>
+  </div>
+</section>
+
+<section class="far" aria-labelledby="night-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="night-head">The train stays far off.</h2>
+      <p class="lead">Low in the mix, for ears that notice everything.</p>
+    </div>
+    <figure class="photo far__photo" data-slot="photo-1" data-alt="Night, close: rain on glass, or a train passing far off">
+      <img src="photos/night-train-1920.jpg" width="1920" height="1277" loading="lazy" sizes="(min-width: 90rem) 1312px, 100vw" alt="A dark train sliding past at night, its lit windows drawn out in a blur" style="object-position: 50% 20%">
+    </figure>
+  </div>
+</section>
+
+<section class="fade" id="fade" aria-labelledby="fade-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="fade-head">Then it fades out.</h2>
+      <p class="lead">Once you fall asleep, all three drop away together.</p>
+    </div>
+
+    <figure class="night-chart" data-chart>
+      <div class="night-chart__plot">
+        <svg class="night-chart__svg" viewBox="0 0 1000 300" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+          <path class="night-chart__line night-chart__line--rain" d="M0 120 L300 120 C466.5 120 583.5 300 750 300 L1000 300" vector-effect="non-scaling-stroke"/>
+          <path class="night-chart__line night-chart__line--wind" d="M0 195 L300 195 C466.5 195 583.5 300 750 300 L1000 300" vector-effect="non-scaling-stroke"/>
+          <path class="night-chart__line night-chart__line--train" d="M0 255 L300 255 C466.5 255 583.5 300 750 300 L1000 300" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <span class="night-chart__mark" style="--x: 0.58"></span>
+        <span class="night-chart__mark" style="--x: 0.8"></span>
+      </div>
+      <ol class="night-chart__stages" role="list">
+        <li style="--x: 0">
+          <p class="night-chart__when">While you drift off</p>
+          <p class="night-chart__levels"><span>Rain <b>60</b></span><span>Wind <b>35</b></span><span>Train <b>15</b></span></p>
+        </li>
+        <li style="--x: 0.58">
+          <p class="night-chart__when">Asleep, fading</p>
+          <p class="night-chart__levels"><span>Rain <b>18</b></span><span>Wind <b>9</b></span><span>Train <b>4</b></span></p>
+        </li>
+        <li style="--x: 0.8">
+          <p class="night-chart__when">Quiet until morning</p>
+          <p class="night-chart__levels"><span>All three at <b>0</b></span></p>
+        </li>
+      </ol>
+      <figcaption class="visually-hidden">Rain, wind and the distant train hold at 60, 35 and 15 while you drift off, drop together once you are asleep, and stay silent until morning. Sample levels.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="close" id="price" aria-labelledby="price-head">
+  <div class="container close__grid">
+    <div class="close__text">
+      <h2 id="price-head">One price, every night.</h2>
+      <p class="lead">All three sounds and the fade, for three pounds a month.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#price">Start for &pound;3 a month</a>
+      </div>
+    </div>
+    <p class="close__figure" aria-hidden="true"><span class="close__num">&pound;3</span><span class="close__per">a month</span></p>
+  </div>
+  <div class="horizon" aria-hidden="true" data-horizon>
+    <span class="train"></span>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container footer__grid">
+    <p class="footer__signoff">Goodnight, light sleeper.</p>
+    <nav class="footer__links" aria-label="Footer">
+      <a href="#sounds">The sounds</a>
+      <a href="#fade">The fade</a>
+      <a href="#price">Price</a>
+    </nav>
+    <p class="footer__legal">&copy; 2026 Lull. <span data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:Night_Train.jpg">Tiraspolsky</a> (CC0), via Wikimedia Commons.</span> Sound on this page is generated in your browser, only after you press Listen.</p>
+  </div>
+</footer>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+<script src="night.js" defer></script>
+</body>
+</html>

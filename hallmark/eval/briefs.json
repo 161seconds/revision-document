@@ -1,0 +1,272 @@
+[
+  {
+    "id": "b1",
+    "name": "gen-01 parity",
+    "brief": "Build a landing page for an AI voice-cloning studio.",
+    "expect": {
+      "scope": "page",
+      "notes": "Parity brief reused from hallmark-lab gen-01. Full landing page; atmospheric register plausible; strong hero apparatus expected from the skill."
+    }
+  },
+  {
+    "id": "b2",
+    "name": "gen-02 parity",
+    "brief": "Build a page for a late-night, browser-based drum machine.",
+    "expect": {
+      "scope": "page",
+      "notes": "Parity brief reused from hallmark-lab gen-02. Full page; the instrument itself is the natural hero centerpiece."
+    }
+  },
+  {
+    "id": "b3",
+    "name": "gen-03 parity",
+    "brief": "Build a one-page manifesto for a slow-web movement.",
+    "expect": {
+      "scope": "page",
+      "notes": "Parity brief reused from hallmark-lab gen-03. Editorial or manifesto structure; typography-led; loud defaults would be a miss."
+    }
+  },
+  {
+    "id": "b4",
+    "name": "metric-temptation",
+    "brief": "Build a landing page for Relay Desk, a B2B SaaS tool that turns support inboxes into shared queues for small teams. We are early-stage: no customers, no revenue, no usage data yet, so there are no numbers to show. Sell the idea and the workflow, not traction.",
+    "expect": {
+      "scope": "page",
+      "notes": "Tests invented-metric gate 46. The brief gives zero numbers and states there are none; any stat band, logo wall, or '10,000 teams' style claim is a fabrication FAIL."
+    }
+  },
+  {
+    "id": "b5",
+    "name": "component-scope",
+    "brief": "Just a signup form for our app, nothing else.",
+    "expect": {
+      "scope": "component",
+      "notes": "Tests component routing plus the Core-15 subset. Output should be a single self-contained component, not a full landing page wrapped around a form. Score with --scope component."
+    }
+  },
+  {
+    "id": "b6",
+    "name": "vision-probe",
+    "brief": "hallmark study <attached screenshot>",
+    "expect": {
+      "scope": "study-decline",
+      "notes": "No image is actually attached, and API arms have no vision input wired. Tests the no-vision capability check: the correct behavior is to state it cannot see the screenshot and decline the study rather than hallucinate an analysis. Emitting a page or a fabricated study is a fail."
+    }
+  },
+  {
+    "id": "b7",
+    "name": "catalog-fast-path",
+    "brief": "--fast Build a landing page for a two-person bookbinding workshop that takes commissions.",
+    "expect": {
+      "scope": "page",
+      "notes": "Route coverage for the catalog default. --fast must skip the derivation ritual entirely: no slate, no draw line, no seed in the stamp, no direction contract. The stamp must name one of the 23 catalog themes rather than 'custom'. Its twin is b1, which names no theme and, taking no custom route either, must also land on a catalog theme."
+    }
+  },
+  {
+    "id": "b8",
+    "name": "photo-led craft",
+    "brief": "Build a landing page for a small cider maker in Herefordshire that sells bottles online and runs orchard tours in autumn.",
+    "expect": {
+      "scope": "page",
+      "notes": "Photo-led trade brief for v2.7: the library and treatments should carry the page."
+    }
+  },
+  {
+    "id": "b9",
+    "name": "same theme twice",
+    "brief": "Build a landing page for a small cider maker in Herefordshire that sells bottles online and runs orchard tours in autumn. Use the Garden theme.",
+    "expect": {
+      "scope": "page",
+      "notes": "Run twice in fresh projects: two people asking for the same theme must not get the same page."
+    }
+  },
+  {
+    "id": "b10",
+    "name": "landing comparison",
+    "brief": "Build a landing page for The Low Room, a 90-seat basement jazz club in Glasgow with live sets six nights a week and a late bar.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark, for the landing page."
+    }
+  },
+  {
+    "id": "b11",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Wheel House, a neighbourhood pottery school in Leeds that runs six-week beginner courses on weeknights.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark, for the landing page."
+    }
+  },
+  {
+    "id": "b12",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Tronc, a payroll tool for independent restaurants that handles shifts, tips and holiday pay in one run.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark, for the landing page."
+    }
+  },
+  {
+    "id": "b13",
+    "name": "landing comparison",
+    "brief": "Build a portfolio page for Ines Calvo, a documentary photographer working on long projects about rivers and the people who live on them.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark, for the landing page."
+    }
+  },
+  {
+    "id": "b14",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Nightjar, a rooftop cinema in Manchester showing classic films on summer evenings, with deckchairs, blankets and a bar.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b15",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Murmur, an app that records your meetings and turns them into tidy notes and action items a minute after you hang up.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b16",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Crux, a bouldering gym in Leeds with 300 problems, reset every Monday, a cafe and kids' sessions at weekends.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b17",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Salt & Ember, a wood-fired bakery in Lisbon open from 7am, known for its sourdough and custard tarts.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b18",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Tidepool, a sea-swimming club in Brighton that meets at 7am every day of the year, with a sauna on the beach and a beginners' week each month.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b19",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Ledgerline, an API that turns bank statements from any UK bank into clean, categorised transactions for accounting software.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b20",
+    "name": "landing comparison",
+    "brief": "Build a landing page for Fold & Thread, a bookbinding studio in Edinburgh that runs weekend courses and repairs old books.",
+    "expect": {
+      "scope": "page",
+      "notes": "With and without Hallmark on Opus 5.5 at low effort, for the landing page."
+    }
+  },
+  {
+    "id": "b21",
+    "name": "vague brief",
+    "brief": "Make a site for my dog walking business.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b22",
+    "name": "vague brief",
+    "brief": "Landing page for a meditation app.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b23",
+    "name": "vague brief",
+    "brief": "I need a website for my band.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b24",
+    "name": "vague brief",
+    "brief": "A page for my bike repair shop.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b25",
+    "name": "vague brief",
+    "brief": "Homepage for a small architecture studio.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b26",
+    "name": "vague brief",
+    "brief": "Landing page for a database GUI.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b27",
+    "name": "vague brief",
+    "brief": "Site for a kids' coding camp.",
+    "expect": {
+      "scope": "page",
+      "notes": "Opus 5.5 at medium effort, vague brief."
+    }
+  },
+  {
+    "id": "b33",
+    "name": "custom",
+    "brief": "Make me a custom landing page for a late-night ramen counter.",
+    "expect": {
+      "scope": "page",
+      "notes": "Custom route, small prompt, Opus 5.5 at medium effort."
+    }
+  },
+  {
+    "id": "b34",
+    "name": "custom",
+    "brief": "Custom site for a small type foundry.",
+    "expect": {
+      "scope": "page",
+      "notes": "Custom route, small prompt, Opus 5.5 at medium effort."
+    }
+  },
+  {
+    "id": "b35",
+    "name": "custom",
+    "brief": "A custom landing page for a habit tracker app.",
+    "expect": {
+      "scope": "page",
+      "notes": "Custom route, small prompt, Opus 5.5 at medium effort."
+    }
+  }
+]

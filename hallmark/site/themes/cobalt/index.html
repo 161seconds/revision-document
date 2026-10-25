@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay, typed events from any webhook</title>
+<meta name="description" content="Relay is an API that turns any webhook into a typed event stream, retries failed deliveries and replays any event. Free up to 100,000 events a month.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600&amp;family=IBM+Plex+Sans:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;text=%E2%94%80%E2%94%82%E2%95%B1%E2%95%B2%E2%94%8A%E2%94%84%E2%94%BC%E2%94%9C%E2%94%A4%E2%94%AC%E2%94%B4%E2%96%B8%E2%86%BB%E2%A0%81%E2%A0%83%E2%A0%87%E2%A1%87%E2%A3%87%E2%A3%A7%E2%A3%B7%E2%A3%BF%E2%96%8A%E2%86%92%E2%9C%93%E2%95%8C&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js'); let tick = 0; addEventListener('resize', () => document.documentElement.style.setProperty('--tick', String(tick ^= 1)));</script>
+<script src="wire.js" defer></script>
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="container site__in">
+    <a class="wordmark" href="#top" aria-label="Relay, back to the top"><span class="wordmark__glyph" aria-hidden="true">┊</span>Relay</a>
+    <button class="jump" type="button" popovertarget="jump" aria-keyshortcuts="Meta+K Control+K" aria-label="Jump to a section">
+      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="jump__long">Jump to a section</span><span class="jump__short">Jump</span>
+      <span class="jump__keys" aria-hidden="true"><kbd>⌘</kbd><kbd>K</kbd></span>
+    </button>
+    <div class="jump__menu" id="jump" popover aria-label="Sections">
+      <a href="#stream">The console</a>
+      <a href="#does">What it does</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#start">Your handler</a>
+    </div>
+    <a class="key key--sm" href="#pricing">Start free</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <canvas class="field" aria-hidden="true"></canvas>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-head">Webhooks in, typed events out.</h1>
+        <p class="lead">Relay types every payload, retries failed deliveries and replays any event.</p>
+        <div class="actions">
+          <a class="key key--primary" href="#pricing">Start free</a>
+          <a class="key" href="#p-retry" data-tab-link="t-retry">See a retry</a>
+        </div>
+        <div class="curl" data-copy="curl --json @evt_1042.json https://relay.example.com/in/billing">
+          <code class="curl__cmd"><span class="curl__p" aria-hidden="true">$</span>curl --json @evt_1042.json https://relay.example.com/in/billing</code>
+          <button class="curl__copy" type="button" aria-label="Copy the curl command"><span class="curl__say" aria-live="polite">Copy</span></button>
+        </div>
+        <p class="hero__terms">Free up to 100,000 events a month.</p>
+      </div>
+    </div>
+    <div class="container legend-row">
+    <ul class="legend" aria-label="How to read the field">
+      <li><code class="legend__raw">{"…</code><span>Raw webhook</span></li>
+      <li><code class="legend__typed">invoice.paid</code><span>Typed event</span></li>
+      <li><code class="legend__gap">503 ┄┄</code><span>Retry, waiting</span></li>
+    </ul>
+    </div>
+  </section>
+
+  <section class="live" id="stream" aria-labelledby="s0">
+    <div class="container">
+      <div class="head">
+        <h2 id="s0">One stream for every provider</h2>
+        <p class="lead">Every webhook lands here typed, with its delivery state beside it.</p>
+      </div>
+      <figure class="slot app console" data-slot="hero" data-alt="Your events console, with one delivery retrying and its type open" role="img" aria-label="The Relay events console: nine recent events from four providers; invoice.paid from billing.example.com is retrying on its second attempt, and its inferred type is open beside it.">
+        <div class="ui" aria-hidden="true">
+          <div class="ui__bar">
+            <span class="ui__mark">Relay</span>
+            <span class="ui__chips"><span class="ui__chip is-on">Events</span><span class="ui__chip">Sources</span><span class="ui__chip">Types</span><span class="ui__chip">Replays</span></span>
+            <span class="ui__status"><i class="ui__live"></i>Live</span>
+          </div>
+          <div class="ui__tools">
+            <span class="ui__input"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg><code>type:invoice.*</code></span>
+            <span class="ui__tag">All sources</span>
+            <span class="ui__tag">Last hour</span>
+          </div>
+          <div class="console__body">
+          <div class="stream">
+            <div class="stream__row stream__row--head"><span>Time</span><span>Event</span><span>Source</span><span>Status</span></div>
+            <div class="stream__row"><code>09:42:31</code><code>order.shipped</code><span>shop.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+            <div class="stream__row is-on"><code>09:42:18</code><code>invoice.paid</code><span>billing.example.com</span><span class="state state--retry"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Retrying, attempt 2</span></div>
+            <div class="stream__row"><code>09:41:55</code><code>customer.updated</code><span>crm.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+            <div class="stream__row"><code>09:41:40</code><code>order.created</code><span>shop.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+            <div class="stream__row"><code>09:41:12</code><code>refund.issued</code><span>billing.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered, attempt 3</span></div>
+            <div class="stream__row"><code>09:40:57</code><code>contact.merged</code><span>crm.example.com</span><span class="state state--failed"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Failed, 410</span></div>
+            <div class="stream__row"><code>09:40:31</code><code>order.created</code><span>shop.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+            <div class="stream__row"><code>09:40:12</code><code>invoice.paid</code><span>billing.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+            <div class="stream__row"><code>09:39:40</code><code>form.submitted</code><span>forms.example.com</span><span class="state"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Delivered</span></div>
+          </div>
+          <div class="inspect">
+            <div class="inspect__head">
+              <code class="inspect__event">invoice.paid</code><code class="inspect__id">evt_1042</code>
+              <span class="inspect__tabs"><span class="is-on">Type</span><span>Payload</span><span>Attempts</span></span>
+              <span class="inspect__replay">Replay</span>
+            </div>
+            <div class="inspect__body">
+<pre class="code"><code><span class="c">// inferred from evt_1042</span>
+<span class="k">type</span> <span class="t">InvoicePaid</span> = {
+  type: <span class="s">"invoice.paid"</span>;
+  id: <span class="t">string</span>;
+  amount: <span class="t">number</span>;
+  currency: <span class="s">"GBP"</span>;
+  paid_at: <span class="t">string</span>;
+};</code></pre>
+              <div class="tries">
+                <span class="tries__row"><b>1</b><code>09:42:18</code><code>503</code></span>
+                <span class="tries__row is-next"><b>2</b><code>09:42:48</code><span>next</span></span>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <div class="wire" aria-hidden="true"><canvas class="wire__row"></canvas></div>
+
+  <section class="does" id="does" aria-labelledby="s1">
+    <div class="container">
+      <div class="head">
+        <h2 id="s1">Four jobs, one stream</h2>
+        <p class="lead">What Relay does between your providers and your endpoint.</p>
+      </div>
+      <div class="switch" data-switch>
+        <div class="tabs" role="tablist" aria-label="What Relay does">
+          <button role="tab" id="t-typed" aria-controls="p-typed" aria-selected="true"><span class="tabs__n" aria-hidden="true">1</span>Types</button>
+          <button role="tab" id="t-retry" aria-controls="p-retry" aria-selected="false" tabindex="-1"><span class="tabs__n" aria-hidden="true">2</span>Retries</button>
+          <button role="tab" id="t-replay" aria-controls="p-replay" aria-selected="false" tabindex="-1"><span class="tabs__n" aria-hidden="true">3</span>Replay</button>
+          <button role="tab" id="t-in" aria-controls="p-in" aria-selected="false" tabindex="-1"><span class="tabs__n" aria-hidden="true">4</span>Sources</button>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-typed" aria-labelledby="t-typed" tabindex="0">
+          <p class="panel__say">Relay reads each payload and gives every field a type.</p>
+          <figure class="insp" data-insp>
+            <div class="insp__bar"><code>evt_1042</code><span>Received from billing.example.com</span><span class="insp__to">Inferred by Relay</span></div>
+            <div class="insp__panes">
+              <div class="insp__pane">
+                <p class="insp__file"><code>evt_1042.json</code></p>
+<pre class="code code--insp"><code><span class="p">{</span>
+  <span class="ln" data-k="type"><span class="n">"type"</span><span class="p">:</span> <span class="s">"invoice.paid"</span><span class="p">,</span></span>
+  <span class="ln" data-k="id"><span class="n">"id"</span><span class="p">:</span> <span class="s">"evt_1042"</span><span class="p">,</span></span>
+  <span class="ln" data-k="amount"><span class="n">"amount"</span><span class="p">:</span> <span class="s">4800</span><span class="p">,</span></span>
+  <span class="ln" data-k="currency"><span class="n">"currency"</span><span class="p">:</span> <span class="s">"GBP"</span><span class="p">,</span></span>
+  <span class="ln" data-k="paid_at"><span class="n">"paid_at"</span><span class="p">:</span> <span class="s">"2026-10-08T09:42:16Z"</span></span>
+<span class="p">}</span></code></pre>
+              </div>
+              <div class="insp__pane">
+                <p class="insp__file"><code>invoice-paid.ts</code></p>
+<pre class="code code--insp"><code><span class="c">// inferred from evt_1042</span>
+<span class="k">export type</span> <span class="t">InvoicePaid</span> = {
+  <span class="ln" data-k="type">type: <span class="s">"invoice.paid"</span>;</span>
+  <span class="ln" data-k="id">id: <span class="t">string</span>;</span>
+  <span class="ln" data-k="amount">amount: <span class="t">number</span>;</span>
+  <span class="ln" data-k="currency">currency: <span class="s">"GBP"</span>;</span>
+  <span class="ln" data-k="paid_at">paid_at: <span class="t">string</span>;</span>
+};</code></pre>
+              </div>
+              <div class="insp__wires" aria-hidden="true"></div>
+            </div>
+          </figure>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-retry" aria-labelledby="t-retry" tabindex="0">
+          <p class="panel__say">When your endpoint is down, Relay holds <code>evt_1042</code> and tries again: a 503, a timeout, then 200 OK.</p>
+          <figure class="tl" data-tl>
+            <ol class="tl__at" aria-label="Delivery attempts of evt_1042 to example.com/hooks/billing, spaced by time">
+              <li class="tl__a tl__a--bad" style="--at: 0"><span class="tl__fig">503</span><span class="tl__what">Service Unavailable in 2.1 s</span><code>Attempt 1, 09:42:18</code></li>
+              <li class="tl__a tl__a--bad" style="--at: 0.3333"><span class="tl__fig">10.0 s</span><span class="tl__what">No answer, timed out</span><code>Attempt 2, 09:42:48</code></li>
+              <li class="tl__a tl__a--good" style="--at: 1"><span class="tl__fig">200</span><span class="tl__what">OK in 182 ms</span><code>Attempt 3, 09:43:48</code></li>
+            </ol>
+            <div class="tl__rule" aria-hidden="true"><i class="tl__ink"></i><i class="tl__span tl__span--bad" style="--at: 0; --dur: 0.0233"></i><i class="tl__span tl__span--bad" style="--at: 0.3333; --dur: 0.1111"></i><i class="tl__span tl__span--good" style="--at: 0.998; --dur: 0.002"></i><i class="tl__cursor"></i></div>
+            <div class="tl__dims" aria-hidden="true">
+              <span class="tl__dim" style="--from: 0; --to: 0.3333"><span><code>30 s</code> later</span></span>
+              <span class="tl__dim" style="--from: 0.3333; --to: 1"><span><code>60 s</code> later</span></span>
+            </div>
+          </figure>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-replay" aria-labelledby="t-replay" tabindex="0">
+          <p class="panel__say">Send any past event to your endpoint again, straight from the stream.</p>
+          <div class="rp" data-replay>
+            <canvas class="rp__field" aria-hidden="true"></canvas>
+            <div class="rp__in">
+              <div class="rp__head"><h3 class="rp__title">Replay</h3><code>invoice.paid</code><code class="rp__id">evt_1042</code></div>
+              <dl class="rp__fields">
+                <dt>Event</dt><dd><code>evt_1042, invoice.paid</code></dd>
+                <dt>Destination</dt><dd><code>https://example.com/hooks/billing</code></dd>
+              </dl>
+              <div class="rp__go">
+                <button class="key key--primary" type="button" data-replay-go><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Replay event</button>
+                <span class="rp__hint">Sends the stored payload as it arrived</span>
+              </div>
+              <ol class="rp__log" aria-label="Recent replays" aria-live="polite">
+                <li class="rp__line"><code>09:58:14</code><span>Replayed <code>evt_1042</code></span><code class="ok">200 OK</code><code>164 ms</code></li>
+                <li class="rp__line"><code>09:31:02</code><span>Replayed <code>evt_0987</code></span><code class="ok">200 OK</code><code>201 ms</code></li>
+                <li class="rp__line"><code>08:12:40</code><span>Replayed <code>evt_0961</code></span><code class="ok">200 OK</code><code>176 ms</code></li>
+              </ol>
+              <div class="curl curl--dark" data-copy="curl --json @evt_1042.json https://example.com/hooks/billing">
+                <code class="curl__cmd"><span class="curl__p" aria-hidden="true">$</span>curl --json @evt_1042.json https://example.com/hooks/billing</code>
+                <button class="curl__copy" type="button" aria-label="Copy the same request as curl"><span class="curl__say" aria-live="polite">Copy</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-in" aria-labelledby="t-in" tabindex="0">
+          <p class="panel__say">One address for each provider. Every webhook lands in one stream, whoever sent it.</p>
+          <div class="table-wrap" role="region" aria-label="Sources" tabindex="0">
+            <table class="src">
+              <thead><tr><th scope="col">Source</th><th scope="col">Posts to</th><th scope="col">Event types seen</th><th scope="col" class="r">Last event</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">shop.example.com</th><td><code>relay.example.com/in/shop</code></td><td><code>order.created</code> <code>order.shipped</code></td><td class="r"><code>09:42:31</code></td></tr>
+                <tr class="is-on"><th scope="row">billing.example.com</th><td><code>relay.example.com/in/billing</code></td><td><code>invoice.paid</code> <code>refund.issued</code></td><td class="r"><code>09:42:18</code></td></tr>
+                <tr><th scope="row">crm.example.com</th><td><code>relay.example.com/in/crm</code></td><td><code>customer.updated</code> <code>contact.merged</code></td><td class="r"><code>09:41:55</code></td></tr>
+                <tr><th scope="row">forms.example.com</th><td><code>relay.example.com/in/forms</code></td><td><code>form.submitted</code></td><td class="r"><code>09:39:40</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="src__out">All four deliver to <code>https://example.com/hooks</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="offer" id="pricing" aria-labelledby="s5">
+    <div class="container offer__grid">
+      <div class="offer__head">
+        <h2 class="offer__fig" id="s5">100,000 events a month, free.</h2>
+        <div class="actions">
+          <a class="key key--primary" href="#top" data-needs-url="signup">Start free</a>
+        </div>
+      </div>
+      <form class="calc" aria-labelledby="calc-label" onsubmit="return false">
+        <label id="calc-label" for="per-day">Webhooks your providers send a day</label>
+        <input id="per-day" name="per-day" type="number" inputmode="numeric" min="0" step="100" value="1200">
+        <output class="calc__fig" for="per-day" id="per-month">36,000</output>
+        <span class="calc__unit">events in a 30-day month</span>
+        <span class="calc__meter" aria-hidden="true" id="calc-bar"><b>▊▊▊▊▊▊▊▊▊▊▊▊▊▊▊▊▊▊</b>································</span>
+        <p class="calc__say" id="calc-say" aria-live="polite">Inside the free 100,000.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="band" id="start" aria-labelledby="s6">
+    <div class="container code-close">
+      <div class="code-close__text">
+        <h2 id="s6">Your handler gets a type</h2>
+        <p class="lead">Answer 200 and the event is delivered. Anything else, and Relay tries again.</p>
+      </div>
+      <figure class="pane" data-reveal>
+        <p class="pair__file"><code>app/hooks/billing/route.ts</code><span>Your endpoint</span></p>
+<pre class="code code--lg" tabindex="0" aria-label="The handler, in TypeScript"><code><span class="k">import type</span> { <span class="t">InvoicePaid</span> } <span class="k">from</span> <span class="s">"./invoice-paid"</span>;
+
+<span class="k">export async function</span> POST(req: <span class="t">Request</span>) {
+  <span class="k">const</span> event = (<span class="k">await</span> req.json()) <span class="k">as</span> <span class="t">InvoicePaid</span>;
+<span class="hl">  console.log(event.id, event.amount, event.currency);</span>
+  <span class="k">return new</span> <span class="t">Response</span>(<span class="k">null</span>, { status: <span class="s">200</span> });
+}</code></pre>
+        <figcaption>The type file is the one Relay inferred from <code>evt_1042</code>.</figcaption>
+      </figure>
+    </div>
+  </section>
+</main>
+
+<footer class="colophon">
+  <div class="container colophon__grid">
+    <p class="colophon__mark">Relay</p>
+    <p class="colophon__text">Relay is an API for backend developers.</p>
+    <nav class="colophon__links" aria-label="Footer">
+      <a href="#stream">The console</a>
+      <a href="#does">What it does</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#start">Your handler</a>
+    </nav>
+    <p class="colophon__legal">© 2026 Relay</p>
+  </div>
+  <div class="container"><canvas class="mast" aria-hidden="true"></canvas></div>
+</footer>
+
+<script>
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+const jump = document.getElementById('jump');
+if (jump && jump.showPopover) {
+  addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); jump.togglePopover(); } });
+  jump.addEventListener('toggle', (e) => { if (e.newState === 'open') jump.querySelector('a').focus(); });
+  jump.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => jump.hidePopover()));
+}
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -10% 0px' });
+document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+/* The free tier worked out on the visitor's number; the meter is fifty cells, each 2,000 events */
+const perDay = document.getElementById('per-day');
+if (perDay) {
+  const out = document.getElementById('per-month'), bar = document.getElementById('calc-bar'), say = document.getElementById('calc-say'), fmt = new Intl.NumberFormat('en-GB');
+  const run = () => { const n = Math.max(0, Math.round(Number(perDay.value) || 0)) * 30; out.textContent = fmt.format(n); const on = Math.min(50, Math.round(n / 2000)); bar.innerHTML = '<b>' + '▊'.repeat(on) + '</b>' + '·'.repeat(50 - on); bar.classList.toggle('is-over', n > 100000); say.textContent = n <= 100000 ? 'Inside the free 100,000, with ' + fmt.format(100000 - n) + ' to spare.' : fmt.format(n - 100000) + ' over the free 100,000 a month.'; };
+  perDay.addEventListener('input', run); run();
+}
+/* The switcher: four real panels on a tray of keys; arrows, Home, End and the number keys move between them; without script every panel shows in order */
+document.querySelectorAll('[data-switch]').forEach((sw) => {
+  const tabs = [...sw.querySelectorAll('[role="tab"]')];
+  const pick = (t, focus) => { tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', String(on)); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); if (focus) t.focus(); };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => pick(t));
+    t.addEventListener('keydown', (e) => { const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); pick(tabs[(i + d + tabs.length) % tabs.length], true); } if (e.key === 'Home') { e.preventDefault(); pick(tabs[0], true); } if (e.key === 'End') { e.preventDefault(); pick(tabs[tabs.length - 1], true); } const n = Number(e.key); if (n >= 1 && n <= tabs.length) { e.preventDefault(); pick(tabs[n - 1], true); } });
+  });
+  pick(tabs[0]);
+  document.querySelectorAll('[data-tab-link]').forEach((a) => a.addEventListener('click', (e) => { const t = document.getElementById(a.dataset.tabLink); if (!t) return; e.preventDefault(); pick(t); sw.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); t.focus({ preventScroll: true }); }));
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inlet: sit for ten minutes, then go</title>
+<meta name="description" content="Inlet is a meditation app that counts your breaths, then steps back as you learn to sit on your own.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@1,6..72,300&family=Figtree:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead" data-masthead>
+  <p class="banner"><a href="#sit">Try a sit right here, no account needed</a></p>
+  <nav class="bar container" aria-label="Main">
+    <a class="wordmark" href="#top" aria-label="Inlet, home">Inlet</a>
+    <ul class="bar__links">
+      <li><a href="#how">How a sit goes</a></li>
+      <li><a href="#sits">The sits</a></li>
+      <li><a class="bar__get" href="#get">Get the app</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="container split split--hero">
+      <div class="hero__text">
+        <h1>Sit for ten minutes, then go.</h1>
+        <p class="lead">Inlet counts your breaths, then its voice steps back as you learn.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#get">Get Inlet</a>
+          <a class="btn" href="#how">How a sit goes</a>
+        </div>
+      </div>
+
+      <div class="well timer" id="sit" data-slot="hero" data-kind="product" data-alt="The Inlet session screen, ready to begin a ten-minute sit">
+        <div class="timer__head">
+          <h2 class="well__title">This morning</h2>
+          <p class="chip" role="status" data-status>Ready</p>
+        </div>
+        <fieldset class="seg">
+          <legend>Length</legend>
+          <input type="radio" name="len" id="len3" value="3"><label for="len3">3 min</label>
+          <input type="radio" name="len" id="len10" value="10" checked><label for="len10">10 min</label>
+          <input type="radio" name="len" id="len20" value="20"><label for="len20">20 min</label>
+        </fieldset>
+        <p class="timer__clock num" data-clock>10:00</p>
+        <p class="timer__breath" data-breath>In for four, out for six</p>
+        <div class="row">
+          <label for="voice">Voice</label>
+          <output class="row__value num" for="voice" data-voice-out>60</output>
+          <input class="fader" type="range" id="voice" name="voice" min="0" max="100" value="60" style="--level: 60%">
+        </div>
+        <div class="row row--switch">
+          <label for="bell">Bell at the end <small>One low tone</small></label>
+          <input class="switch" type="checkbox" role="switch" id="bell" name="bell" checked>
+        </div>
+        <button class="btn btn--soft timer__go" type="button" data-go>Begin</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--l" id="how">
+    <div class="container split split--even">
+      <div class="split__text">
+        <h2>A sit, start to bell</h2>
+        <ol class="steps">
+          <li><h3>Pick a length</h3><p>Three, ten or twenty minutes. Nothing else to set.</p></li>
+          <li><h3>Follow the count</h3><p>In for four, out for six, until the breath holds itself.</p></li>
+          <li><h3>Wait for the bell</h3><p>One low tone. No streak and no score afterwards.</p></li>
+        </ol>
+      </div>
+      <div class="well after" data-slot="demo-2" data-kind="product" data-alt="The Inlet screen after the bell, with tomorrow's reminder">
+        <h3 class="well__title">After the bell</h3>
+        <p class="after__figure num">10<span> minutes sat</span></p>
+        <dl class="list">
+          <div><dt>Breath</dt><dd>In 4, out 6</dd></div>
+          <div><dt>Voice</dt><dd>Start and end only</dd></div>
+          <div><dt>Next sit</dt><dd>Tomorrow, 7:30</dd></div>
+        </dl>
+        <div class="row row--switch">
+          <label for="remind">Remind me</label>
+          <input class="switch" type="checkbox" role="switch" id="remind" name="remind" checked>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container split split--photo">
+      <div class="split__text">
+        <h2>Sit where you already are</h2>
+        <p class="lead">On the train, at your desk, on the edge of the bed.</p>
+      </div>
+      <figure class="photo" data-slot="photo-1" data-alt="A quiet place someone sits with Inlet: a window, a bench, a bedroom in early light">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG/1280px-Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG/960px-Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG/1280px-Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG/1920px-Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG 1920w" sizes="(min-width: 60rem) 56vw, 100vw" width="5958" height="2979" alt="Morning fog flowing through a valley below a row of hills" style="object-position: 50% 55%" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--s paper-2">
+    <div class="container split split--compare">
+      <div class="split__text">
+        <h2>The voice steps back</h2>
+        <p class="lead">Week one it speaks each minute. By week four, only the bell.</p>
+      </div>
+      <div class="compare">
+        <div class="well cues" data-slot="demo-3" data-kind="product" data-alt="The Inlet cue list for a ten-minute sit in week one">
+          <h3 class="well__title">Week one</h3>
+          <ol class="cues__list">
+            <li><span class="num">0:00</span>Settle in</li>
+            <li><span class="num">1:00</span>Find the breath</li>
+            <li><span class="num">4:00</span>Count again from one</li>
+            <li><span class="num">7:00</span>Soften the shoulders</li>
+            <li><span class="num">9:30</span>Come back slowly</li>
+          </ol>
+        </div>
+        <div class="well cues" data-slot="demo-4" data-kind="product" data-alt="The Inlet cue list for a ten-minute sit in week four">
+          <h3 class="well__title">Week four</h3>
+          <ol class="cues__list">
+            <li><span class="num">0:00</span>Settle in</li>
+            <li class="cues__quiet"><span class="num">0:30</span>Silence</li>
+            <li><span class="num">10:00</span>The bell</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--l" id="sits">
+    <div class="container split split--rows">
+      <div class="split__text">
+        <h2>Sits for the day’s edges</h2>
+        <p class="lead">Each one is a length and a cue, ready to start.</p>
+      </div>
+      <ul class="sits">
+        <li><div><h3>Before work</h3><p>Coffee cooling, phone face down.</p></div><p class="sits__min num">10</p></li>
+        <li><div><h3>Before a hard call</h3><p>Three minutes to slow the voice.</p></div><p class="sits__min num">3</p></li>
+        <li><div><h3>After lunch</h3><p>Eyes open, at the desk.</p></div><p class="sits__min num">5</p></li>
+        <li><div><h3>Lights out</h3><p>The voice fades halfway through.</p></div><p class="sits__min num">20</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="get">
+    <div class="container split split--form">
+      <div class="split__text">
+        <h2>Send Inlet to your phone</h2>
+        <p class="lead">One email with the download link.</p>
+      <form class="signup" data-endpoint="" novalidate>
+        <label for="email">Email address</label>
+        <div class="signup__row">
+          <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+          <button class="btn btn--primary" type="submit">Send the link</button>
+        </div>
+        <p class="signup__help" id="email-help" aria-live="polite"></p>
+      </form>
+      </div>
+      <figure class="photo photo--close" data-slot="photo-2" data-alt="A calm, low-light place: still water, a window, an empty room at dawn">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg/1280px-Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg/960px-Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg/1280px-Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg/1920px-Langweerderwielen_%28Langwarder_Wielen%29_in_de_mist._01-04-2026._%28d.j.b.%29_08.jpg 1920w" sizes="(min-width: 60rem) 45vw, 100vw" width="4229" height="3172" alt="Golden reeds reflected in still water under a misty sky" style="object-position: 30% 50%" loading="lazy">
+      </figure>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <p class="footer__sign">Sit well,<br>the Inlet team</p>
+    <div class="footer__meta">
+      <p><time datetime="2026-10">October 2026</time></p>
+      <ul class="footer__links">
+        <li><a href="#how">How a sit goes</a></li>
+        <li><a href="#sits">The sits</a></li>
+        <li><a href="#get">Get the app</a></li>
+      </ul>
+      <p class="footer__small" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Blassenstein_Erlauftal_mit_Nebel_02_Panorama.JPG">Uoaei1</a> (CC BY-SA 3.0, Wikimedia Commons), <a href="https://commons.wikimedia.org/wiki/File:Langweerderwielen_(Langwarder_Wielen)_in_de_mist._01-04-2026._(d.j.b.)_08.jpg">Dominicus Johannes Bergsma</a> (CC BY-SA 4.0, Wikimedia Commons)</p>
+      <p class="footer__small">&copy; 2026 Inlet</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const head = document.querySelector('[data-masthead]');
+  let ticking = false;
+  addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { head.classList.toggle('is-tucked', scrollY > 48); ticking = false; });
+  }, { passive: true });
+
+  const clock = document.querySelector('[data-clock]'), breath = document.querySelector('[data-breath]');
+  const status = document.querySelector('[data-status]'), go = document.querySelector('[data-go]');
+  const fmt = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  let left = 600, timer = null, t = 0;
+  const lengthNow = () => Number(document.querySelector('input[name="len"]:checked').value) * 60;
+  const stop = (label) => { clearInterval(timer); timer = null; go.textContent = 'Begin'; status.textContent = label; breath.textContent = 'In for four, out for six'; };
+  document.querySelectorAll('input[name="len"]').forEach((r) => r.addEventListener('change', () => { stop('Ready'); left = lengthNow(); clock.textContent = fmt(left); }));
+  go.addEventListener('click', () => {
+    if (timer) { stop('Paused'); return; }
+    if (left <= 0) left = lengthNow();
+    go.textContent = 'Pause'; status.textContent = 'Sitting';
+    timer = setInterval(() => {
+      left -= 1; t = (t + 1) % 10;
+      clock.textContent = fmt(left);
+      breath.textContent = t < 4 ? 'Breathe in' : 'Breathe out';
+      if (left <= 0) { stop(document.getElementById('bell').checked ? 'The bell' : 'Done'); left = lengthNow(); clock.textContent = fmt(left); }
+    }, 1000);
+  });
+
+  const voice = document.getElementById('voice'), out = document.querySelector('[data-voice-out]');
+  voice.addEventListener('input', () => { out.textContent = voice.value; voice.style.setProperty('--level', voice.value + '%'); });
+
+  document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+    const input = form.querySelector('input'), help = form.querySelector('[aria-live]');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const ok = input.checkValidity();
+      input.toggleAttribute('aria-invalid', !ok);
+      if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+      if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+      fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+        .then((r) => { help.textContent = r.ok ? 'The link is on its way to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+        .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+    });
+  });
+})();
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

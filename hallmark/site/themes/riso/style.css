@@ -1,0 +1,157 @@
+/* Hallmark · shape: Job Sheet, custom: the studio's offer set like a job going through, the pull, the passes, the price, the door, Sunday · genre: editorial · theme: Riso (by request) · draw: manual, v2.8 launch pass
+ * hero: Stage · nav: banner over a bar, the pink drum's one strip with the zine table's day over a plain bar · footer: mast over a colophon, the wordmark large in the blue drum, one paragraph with the address slot, the links, the legal line · imagery: photographs, library 2, both drums (duotone ink paper-2) · signature: the price of a run as a live figure in the blue drum with the pink drum overprinted across it
+ * axes: light/grotesk-heavy/chromatic-pink · posture: committed · contrast: pass · fold: pass · v2.7.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V5 · weakest: E, the library holds no risograph or zine table, so two pictures carry the page and the drums carry the rest: the separations, the overprinted price and the solid blue Sunday band are made of the ink itself */
+/* Hallmark · dismissed 23 · the banner is the pink drum's one strip, 40px tall across the top, about four percent of the fold under the committed posture */
+/* Hallmark · waive 38iii · Riso names the misregistered word as its material and it prints once, on two in the hero head · the studio is called Off Register, so one word comes off the drum out of line */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root {
+  --bar-h: 72px;
+  --banner-h: 40px;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 9 -4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --rule-ink: 1.5px;
+}
+
+h1, h2, h3 { font-weight: var(--display-weight); }
+h1 { line-height: 0.92; }
+h2 { line-height: 0.98; }
+
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+a { color: inherit; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.2em; }
+a:hover { text-decoration-thickness: 4px; }
+
+/* controls: the pink drum fills the primary, the blue drum outlines the other; pressed, a control lands a hair down and right */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--space-lg); border: var(--rule-ink) solid transparent; border-radius: var(--radius-card); font: var(--display-weight) 0.9375rem/1 var(--font-display); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.btn:active { transform: translate(1px, 1px); }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: color-mix(in oklab, var(--color-accent) 86%, var(--color-ink)); }
+.btn--primary:active { background: color-mix(in oklab, var(--color-accent) 74%, var(--color-ink)); }
+.btn--secondary { border-color: var(--color-ink); color: var(--color-ink); }
+.btn--secondary:hover { background: var(--color-paper-2); }
+.btn--secondary:active { background: var(--color-paper-3); }
+.btn:focus-visible, a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+
+/* grain: paper showing where the ink skips, on fills and pictures only */
+.grained { position: relative; isolation: isolate; }
+.grained::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--texture-opacity); background: var(--grain) 0 0 / 200px 200px; }
+
+/* nav: a banner over a bar */
+.banner { background: var(--color-accent); color: var(--color-accent-ink); }
+.banner__inner { display: flex; align-items: center; justify-content: center; min-height: var(--banner-h); }
+.banner a { position: relative; z-index: 3; font: 500 var(--text-sm)/1.2 var(--font-body); text-decoration-color: var(--color-accent-ink); text-decoration-thickness: 1px; }
+.banner a:hover { text-decoration-thickness: 2px; }
+.banner a:focus-visible { outline-color: var(--color-accent-ink); }
+.bar { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.bar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: var(--bar-h); }
+.wordmark { font: var(--display-weight) 1.5rem/1 var(--font-display); letter-spacing: var(--tracking-display); text-decoration: none; white-space: nowrap; }
+.bar__links { display: flex; gap: var(--space-xl); margin: 0; padding: 0; list-style: none; }
+.bar__links a { font: 500 var(--text-sm)/1 var(--font-body); text-decoration-color: transparent; white-space: nowrap; }
+.bar__links a:hover { text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; }
+
+/* photographs: both drums, 2px radius, grain over them */
+.photo { position: relative; margin: 0; border-radius: var(--radius-card); }
+.keep { white-space: nowrap; }
+.fill { padding: 0 0.2em; border-radius: var(--radius-card); color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+
+/* hero: Stage, the head on five columns, the pull on seven */
+.hero__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--space-3xl); align-items: center; min-height: calc(100dvh - var(--bar-h) - var(--banner-h)); padding-block: var(--space-2xl); }
+.hero__text { display: grid; justify-items: start; gap: var(--space-lg); }
+.hero h1 { font-size: clamp(3rem, 4.4vw + 1rem, 5.5rem); max-width: 9ch; }
+.hero .lead { max-width: 30ch; color: var(--color-ink-2); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-xs); }
+.hero__visual .photo { height: min(72dvh, 680px); }
+
+/* the misregistered word: the pink drum a hair off the blue, settling once */
+.misreg { position: relative; display: inline-block; isolation: isolate; }
+.misreg::after { content: attr(data-text); position: absolute; inset: 0; z-index: -1; white-space: nowrap; pointer-events: none; color: var(--color-accent); transform: translate(2px, 3px); animation: settle var(--dur-long) var(--ease-out) both; }
+@keyframes settle { from { transform: translate(9px, -6px); } to { transform: translate(2px, 3px); } }
+
+/* section heads */
+.head-row { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; margin-bottom: var(--space-2xl); }
+.head-row h2 { grid-column: 1 / 7; }
+.head-row .lead { grid-column: 8 / 13; color: var(--color-ink-2); }
+
+/* passes: the separations, three plates on the stock */
+.passes { padding-top: var(--section-gap); }
+.plates { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--gap-columns); margin: 0; padding: 0; list-style: none; }
+.plate h3 { margin-top: var(--space-lg); }
+.plate p { margin-top: var(--space-xs); color: var(--color-ink-2); }
+.plate__sheet { position: relative; aspect-ratio: 4 / 5; overflow: hidden; border: var(--rule-ink) solid var(--color-ink); border-radius: var(--radius-card); background: var(--color-paper); }
+.plate__type { position: absolute; left: 9%; bottom: 7%; font: var(--display-weight) clamp(2.5rem, 4.4vw, 4.75rem)/0.9 var(--font-display); letter-spacing: var(--tracking-display); color: var(--color-ink); }
+.plate__disc { position: absolute; left: 20%; top: 30%; width: 84%; aspect-ratio: 1; border-radius: 50%; background: var(--color-accent); }
+.plate__disc--over { mix-blend-mode: multiply; }
+
+/* price: the light pink screen, a live figure in the blue with the pink overprinted */
+.price { margin-top: var(--section-gap-l); padding-block: var(--section-gap-s); background: var(--color-paper-2); }
+.price__grid { position: relative; z-index: 3; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: center; }
+.price__text { grid-column: 1 / 6; display: grid; gap: var(--space-lg); }
+.price__text .lead { color: var(--color-ink-2); max-width: 30ch; }
+.price__facts { margin: var(--space-lg) 0 0; border-top: var(--rule-hair) solid var(--color-rule); }
+.price__facts div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-md); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.price__facts dt { font: 500 var(--text-sm)/1.5 var(--font-body); color: var(--color-muted); }
+.price__facts dd { margin: 0; }
+.calc { grid-column: 7 / 13; container-type: inline-size; display: grid; justify-items: start; padding: var(--space-xl) var(--space-xl) var(--space-2xl); border: var(--rule-ink) solid var(--color-ink); border-radius: var(--radius-card); background: var(--color-paper); }
+.calc__label { margin: 0; font: 500 var(--text-sm)/1.4 var(--font-body); color: var(--color-muted); }
+.calc__row { display: flex; gap: var(--space-xs); margin: var(--space-xs) 0 var(--space-xl); }
+.calc__step, .calc input { height: 48px; border: var(--rule-ink) solid var(--color-ink); border-radius: var(--radius-card); background: var(--color-paper); color: var(--color-ink); font: var(--display-weight) 1.25rem/1 var(--font-display); }
+.calc__step { width: 48px; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.calc__step:hover { background: var(--color-paper-2); }
+.calc__step:active { background: var(--color-paper-3); transform: translate(1px, 1px); }
+.calc__step:disabled { opacity: 0.55; cursor: not-allowed; }
+.calc input { width: 8.5rem; padding: 0 var(--space-md); font-variant-numeric: tabular-nums; caret-color: var(--color-accent); }
+.calc input:hover { background: var(--color-paper-2); }
+.calc input:disabled { opacity: 0.55; cursor: not-allowed; }
+.calc__total { position: relative; isolation: isolate; display: block; margin: var(--space-md) 0 var(--space-lg); font: var(--display-weight) clamp(3rem, 21cqi, 9rem)/0.9 var(--font-display); letter-spacing: var(--tracking-display); color: var(--color-ink); white-space: nowrap; }
+.calc__total[data-long] { font-size: clamp(2.5rem, 15cqi, 6.5rem); }
+.calc__total::after { content: ""; position: absolute; left: calc(-1 * var(--space-md)); width: 1.35em; top: 2%; bottom: -16%; background: var(--color-accent); mix-blend-mode: multiply; pointer-events: none; }
+.calc__note { max-width: 40ch; margin-bottom: var(--space-xl); color: var(--color-ink-2); }
+
+/* open days: the room across the twelve columns */
+.open { padding-top: var(--section-gap-l); }
+.open__wide { aspect-ratio: 21 / 9; }
+.open__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-lg); margin-top: var(--space-xl); padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); }
+.open__next { margin: 0; font-size: var(--text-lead); }
+
+/* sundays: the blue drum solid, the line knocked out to the stock */
+.sundays { margin-top: var(--section-gap); padding-block: var(--section-gap-s); background: var(--color-ink); color: var(--color-paper); }
+.sundays { overflow: hidden; }
+.sundays__disc { position: absolute; z-index: 0; right: -9%; top: 50%; width: min(46vw, 680px); aspect-ratio: 1; border-radius: 50%; background: var(--color-accent); mix-blend-mode: multiply; transform: translateY(-50%); pointer-events: none; }
+.sundays__grid { position: relative; z-index: 3; }
+.sundays__line { max-width: 13ch; font-size: clamp(3rem, 6.6vw + 0.5rem, 7.5rem); line-height: 0.92; }
+.sundays__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-lg); margin-top: var(--space-2xl); }
+.sundays__foot p { font-size: var(--text-lead); }
+.sundays .btn--primary:focus-visible { outline-color: var(--color-paper); }
+
+/* footer: the wordmark large in the blue drum, then the colophon */
+.colophon { padding-block: var(--section-gap-s) var(--space-2xl); }
+.colophon__mark { margin: 0 0 var(--space-xl); font: var(--display-weight) clamp(3.5rem, 11vw, 11rem)/0.85 var(--font-display); letter-spacing: -0.035em; color: var(--color-ink); overflow-wrap: break-word; min-width: 0; }
+.colophon__body { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; padding-top: var(--space-xl); border-top: var(--rule-ink) solid var(--color-ink); }
+.colophon__text { grid-column: 1 / 8; margin: 0; font-size: var(--text-lead); line-height: 1.5; }
+.colophon__links { grid-column: 9 / 13; display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-lg); margin: 0; padding: 0; list-style: none; justify-content: flex-end; }
+.colophon__links a { font: 500 var(--text-sm)/1.2 var(--font-body); white-space: nowrap; }
+.colophon__credits { margin: var(--space-2xl) 0 0; max-width: 120ch; font-size: var(--text-sm); line-height: 1.6; color: var(--color-muted); }
+.colophon__credits a { text-decoration-color: color-mix(in oklab, var(--color-muted) 45%, transparent); text-decoration-thickness: 1px; }
+.colophon__legal { margin: var(--space-sm) 0 0; font-size: var(--text-sm); color: var(--color-muted); }
+
+@media (max-width: 60rem) {
+  .bar__links { display: none; }
+  .hero__grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xl); min-height: 0; }
+  .hero__visual .photo { height: auto; aspect-ratio: 4 / 5; }
+  .head-row h2, .head-row .lead, .price__text, .calc, .colophon__text, .colophon__links { grid-column: 1 / -1; }
+  .head-row .lead, .calc, .colophon__links { margin-top: var(--space-xl); }
+  .colophon__links { justify-content: flex-start; }
+  .open__wide { aspect-ratio: 4 / 3; }
+  .hero__visual .photo { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 40rem) {
+  .plates { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2xl); }
+  .plate__sheet { aspect-ratio: 1; }
+  .hero__visual .photo { aspect-ratio: 4 / 5; }
+  .calc { padding: var(--space-lg); }
+}
+@media (prefers-reduced-motion: reduce) { .misreg::after { animation: none; } .btn, .calc__step { transition: none; } .btn:active, .calc__step:active { transform: none; } }

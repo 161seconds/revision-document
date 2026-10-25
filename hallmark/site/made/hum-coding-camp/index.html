@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop, a summer coding camp where kids build real things</title>
+<meta name="description" content="A week-long summer coding camp where kids build a game, a bot, a web page and a robot, then show it to you on Friday.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=chillax@500,600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="slab">
+  <div class="container slab__row">
+    <a class="wordmark" href="#main" aria-label="Loop, home">Loop</a>
+    <nav class="slab__links" aria-label="Main">
+      <a href="#week">The week</a>
+      <a href="#letter">For parents</a>
+      <a href="#tracks">Tracks</a>
+    </nav>
+    <a class="slab__action" href="#signup">Save a spot</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1>Your kid writes real code by Friday.</h1>
+        <p class="lead">A week-long summer camp where kids build games, bots and robots.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#signup">Save a spot</a>
+          <a class="btn btn--secondary" href="#week">See the week</a>
+        </div>
+      </div>
+
+      <figure class="editor" data-slot="hero" data-kind="product" data-alt="A camper’s first program running on a camp laptop, screen captured">
+        <div class="editor__bar">
+          <span class="editor__file">monday.py</span>
+          <fieldset class="names">
+            <legend class="visually-hidden">Camper’s name</legend>
+            <input type="radio" name="camper" id="n1" value="Ada" checked><label for="n1">Ada</label>
+            <input type="radio" name="camper" id="n2" value="Sam"><label for="n2">Sam</label>
+            <input type="radio" name="camper" id="n3" value="Noor"><label for="n3">Noor</label>
+          </fieldset>
+        </div>
+        <pre class="editor__code" aria-label="Python program"><code><span class="ln">1</span><span class="k">camper</span> = <mark class="str" data-name>"Ada"</mark>
+<span class="ln">2</span><span class="k">week</span> = [<span class="str">"a maze game"</span>, <span class="str">"a chat bot"</span>,
+<span class="ln">3</span>        <span class="str">"a web page"</span>, <span class="str">"a robot"</span>]
+<span class="ln">4</span>
+<span class="ln">5</span><span class="kw">for</span> thing <span class="kw">in</span> week:
+<span class="ln">6</span>    <span class="fn">print</span>(camper, <span class="str">"built"</span>, thing)</code></pre>
+        <div class="editor__out" role="status" aria-live="polite">
+          <span class="editor__label">Output</span>
+          <ol class="editor__lines">
+            <li><span data-out>Ada</span> built a maze game</li>
+            <li><span data-out>Ada</span> built a chat bot</li>
+            <li><span data-out>Ada</span> built a web page</li>
+            <li><span data-out>Ada</span> built a robot</li>
+          </ol>
+          <span class="editor__done">Ran in 0.1s</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="week" id="week">
+    <div class="container">
+      <div class="head-split">
+        <h2>Five days, five things built</h2>
+        <p class="lead">Each day ends with something that runs.</p>
+      </div>
+      <table class="days">
+        <thead><tr><th scope="col">Day</th><th scope="col">They build</th><th scope="col">They learn</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Monday</th><td>A maze game</td><td>Loops and arrow keys</td></tr>
+          <tr><th scope="row">Tuesday</th><td>A chat bot that answers back</td><td>Variables and if</td></tr>
+          <tr><th scope="row">Wednesday</th><td>Their own web page</td><td>HTML and colour</td></tr>
+          <tr><th scope="row">Thursday</th><td>A robot that follows a line</td><td>Sensors and wires</td></tr>
+          <tr><th scope="row">Friday</th><td>A demo for the family</td><td>Showing their work</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="letter" id="letter">
+    <div class="container letter__grid">
+      <div class="letter__text">
+        <h2>Dear parents,</h2>
+        <p>Nobody sits through a lecture here. We show one idea each morning, then your kid spends the day making it work.</p>
+        <p>Nothing is graded. On Friday they show you what they built, and it comes home with them.</p>
+        <p class="letter__sign">The Loop team</p>
+      </div>
+      <figure class="letter__fig">
+        <div class="photo" data-slot="photo-1" data-alt="A camper wiring their robot on Thursday, hands and parts in frame, no face">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Soldering_a_0805.jpg/1280px-Soldering_a_0805.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Soldering_a_0805.jpg/960px-Soldering_a_0805.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Soldering_a_0805.jpg/1280px-Soldering_a_0805.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Soldering_a_0805.jpg/1920px-Soldering_a_0805.jpg 1920w" sizes="(min-width: 60rem) 45vw, 100vw" width="4064" height="2704" alt="Fingers holding tweezers to place a tiny part on a green circuit board" style="object-position: 45% 45%" loading="lazy">
+        </div>
+        <figcaption class="caption">Thursday is wiring day.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="day">
+    <div class="container">
+      <div class="head-split">
+        <h2>One idea a day, then build it</h2>
+        <p class="lead">Every day runs the same three ways.</p>
+      </div>
+      <ol class="steps">
+        <li class="well step" data-reveal style="--i:0">
+          <h3>We show one idea</h3>
+          <p>Ten minutes, one new word, then hands on keys.</p>
+          <code class="frag"><mark>for</mark> thing in week:</code>
+        </li>
+        <li class="well step" data-reveal style="--i:1">
+          <h3>They make it work</h3>
+          <p>In pairs, with a helper for every small table.</p>
+          <div class="frag frag--bar" role="img" aria-label="Build progress, most of the way there"><span class="bar" data-reveal-bar></span></div>
+        </li>
+        <li class="well step" data-reveal style="--i:2">
+          <h3>They show a friend</h3>
+          <p>Each day closes with a two-minute demo.</p>
+          <span class="frag chip">It runs</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="tracks" id="tracks">
+    <div class="container">
+      <div class="tracks__field">
+        <h2>Pick what they want to make</h2>
+        <fieldset class="seg">
+          <legend class="visually-hidden">Track</legend>
+          <input type="radio" name="track" id="t1" value="games" checked><label for="t1">Games</label>
+          <input type="radio" name="track" id="t2" value="robots"><label for="t2">Robots</label>
+          <input type="radio" name="track" id="t3" value="web"><label for="t3">Websites</label>
+        </fieldset>
+        <p class="tracks__result" aria-live="polite">In the games track, they leave with <mark data-track>a maze game you can play at home</mark>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="signup" id="signup">
+    <div class="container signup__grid">
+      <div class="signup__head">
+        <h2>Hold a spot for summer</h2>
+        <dl class="facts">
+          <div><dt>When</dt><dd><span class="fill" data-fill="dates">Dates to be announced</span></dd></div>
+          <div><dt>Where</dt><dd><span class="fill" data-fill="place">Venue to be announced</span></dd></div>
+          <div><dt>Cost</dt><dd><span class="fill" data-fill="price">Price to be announced</span></dd></div>
+        </dl>
+      </div>
+      <form class="form" data-endpoint="" novalidate>
+        <div class="field">
+          <label for="email">Your email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="age">Your kid’s age</label>
+          <input id="age" name="age" type="number" inputmode="numeric" min="5" max="18">
+        </div>
+        <button class="btn btn--primary" type="submit">Hold a spot</button>
+        <p class="form__help" id="form-help" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__line">See you on Monday.</p>
+    <nav class="foot__links" aria-label="Footer">
+      <a href="#week">The week</a>
+      <a href="#letter">For parents</a>
+      <a href="#tracks">Tracks</a>
+      <a href="#signup">Save a spot</a>
+    </nav>
+    <p class="foot__small" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Soldering_a_0805.jpg">Aisart</a> (CC BY-SA 3.0, Wikimedia Commons)</p>
+    <p class="foot__small">Loop summer coding camp</p>
+  </div>
+</footer>
+
+<script>
+const names = document.querySelectorAll('input[name="camper"]');
+names.forEach((r) => r.addEventListener('change', () => {
+  document.querySelector('[data-name]').textContent = '"' + r.value + '"';
+  document.querySelectorAll('[data-out]').forEach((s) => { s.textContent = r.value; });
+}));
+const tracks = { games: ['games', 'a maze game you can play at home'], robots: ['robots', 'a robot that follows a line'], web: ['websites', 'a web page with its own address'] };
+document.querySelectorAll('input[name="track"]').forEach((r) => r.addEventListener('change', () => {
+  const [t, what] = tracks[r.value];
+  const p = document.querySelector('.tracks__result');
+  p.firstChild.textContent = 'In the ' + t + ' track, they leave with ';
+  p.querySelector('[data-track]').textContent = what;
+}));
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const input = form.querySelector('input[type="email"]'), help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Thanks. We will write to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -10% 0px' });
+document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

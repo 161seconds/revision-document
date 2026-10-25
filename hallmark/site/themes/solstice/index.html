@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Long Meadow, a dry perry for the longest day</title>
+<meta name="description" content="Long Meadow Cider's midsummer release from Somerset: a dry perry, 1,100 bottles of 750ml at £16.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Archivo:wght@400;500&family=Archivo+Narrow:wght@600&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="img/bottle.webp">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the perry</a>
+
+<header class="bar">
+  <div class="container bar__in">
+    <nav class="bar__links" aria-label="Sections"><a href="#perry">The perry</a><a href="#bottle">The bottle</a></nav>
+    <a class="bar__mark" href="#top">Long Meadow</a>
+    <div class="bar__end"><span class="bar__place">Somerset</span><a class="btn btn--sun btn--sm" href="#order">Order, £16</a></div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="sky" aria-hidden="true"><span class="sky__glow"></span></div>
+    <div class="hero__land" aria-hidden="true"></div>
+    <div class="container hero__in">
+      <div class="hero__text">
+        <h1 id="hero-title">Dry perry for the longest&nbsp;day.</h1>
+      </div>
+      <div class="hero__bottle">
+        <img src="img/bottle.webp" width="1024" height="1536" alt="A tall green bottle of Long Meadow dry perry with a gold foil neck" fetchpriority="high">
+        <div class="label" aria-hidden="true">
+          <p class="label__name">Long Meadow</p>
+          <p class="label__kind">Dry perry</p>
+          <p class="label__year">Midsummer 2026</p>
+          <p class="label__no">One of <b>1,100</b></p>
+        </div>
+      </div>
+      <div class="hero__side">
+        <p class="lead">Our midsummer release from Somerset: 1,100 bottles at&nbsp;£16.</p>
+        <div class="actions">
+          <a class="btn btn--sun" href="#order">Order the perry</a>
+          <a class="link" href="#bottle">Read the label</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="perry" id="perry" aria-labelledby="perry-title">
+    <div class="container perry__grid">
+      <figure class="perry__fruit"><div class="photo" data-slot="pears"><img src="photos/pyrus-pyrifolia-fruit-on-tree-ps-2z-lr-1920.jpg" width="1920" height="1280" loading="lazy" alt="Ripe golden pears hanging among green leaves"></div></figure>
+      <div class="perry__text">
+        <h2 id="perry-title">Pears, picked late, pressed&nbsp;slow.</h2>
+        <p class="lead">From one orchard below the Quantocks. Nothing added but&nbsp;time.</p>
+      </div>
+      <ol class="dial" aria-label="From blossom to bottle">
+        <li><span class="dial__m">April</span><b>Blossom</b></li>
+        <li><span class="dial__m">October</span><b>Picked</b></li>
+        <li><span class="dial__m">Winter</span><b>Pressed and laid down</b></li>
+        <li class="is-now"><span class="dial__m">21 June</span><b>Bottled for midsummer</b></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="bottle" id="bottle" aria-labelledby="bottle-title">
+    <div class="container">
+      <div class="tag">
+        <div class="tag__hole" aria-hidden="true"></div>
+        <h2 id="bottle-title">A run of 1,100&nbsp;bottles.</h2>
+        <dl class="tag__list">
+          <div><dt>Style</dt><dd>Dry perry</dd></div>
+          <div><dt>Bottle</dt><dd>750 ml</dd></div>
+          <div><dt>Made</dt><dd>1,100</dd></div>
+          <div><dt>Price</dt><dd>£16</dd></div>
+          <div><dt>Release</dt><dd>Midsummer</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="evening" aria-label="Midsummer evening">
+    <div class="evening__strip">
+      <figure><div class="photo" data-slot="poppies"><img src="photos/d-lmen-brachliegendes-feld-mit-wildblumen-2021-9756-1920.jpg" width="1920" height="1280" loading="lazy" alt="Red poppies and white chamomile in a summer field"></div></figure>
+      <figure><div class="photo" data-slot="heath"><img src="photos/haltern-am-see-westruper-heide-2015-8306-10-1920.jpg" width="1920" height="1280" loading="lazy" alt="Heather and an oak at sunrise, the sun low on the horizon"></div></figure>
+      <figure><div class="photo" data-slot="trees"><img src="photos/d-lmen-umland-2014-7056-1920.jpg" width="1920" height="1280" loading="lazy" alt="A copse of trees in silhouette against a low summer sun"></div></figure>
+    </div>
+    <p class="evening__line">Best opened as the sun goes&nbsp;down.</p>
+  </section>
+
+  <section class="order" id="order" aria-labelledby="order-title">
+    <div class="container order__in">
+      <h2 id="order-title">Before the light&nbsp;goes.</h2>
+      <p class="lead">1,100 bottles, then it’s gone until next&nbsp;midsummer.</p>
+      <div class="qty">
+        <div class="qty__step" role="group" aria-label="Bottles">
+          <button type="button" data-q="-1" aria-label="One fewer bottle">−</button>
+          <output data-qty>2</output>
+          <button type="button" data-q="1" aria-label="One more bottle">+</button>
+        </div>
+        <a class="btn btn--sun" href="#top" data-total>Order 2 bottles, £32</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark">Long Meadow</p>
+    <p class="foot__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Pyrus_pyrifolia_fruit_on_tree_PS_2z_LR.jpg">PumpkinSky</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Umland_--_2014_--_7056.jpg">Dietmar Rabich</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_Brachliegendes_Feld_mit_Wildblumen_--_2021_--_9756.jpg">Dietmar Rabich</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Haltern_am_See,_Westruper_Heide_--_2015_--_8306-10.jpg">Dietmar Rabich</a> (CC BY-SA 4.0), all via Wikimedia Commons. The bottle is a generated picture.</p>
+  </div>
+</footer>
+
+<script src="page.js"></script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+/* Hallmark · shape: Marquee Hero · genre: playful · theme: Overprint · job: visit
+ * hero: Poster, the hours as the head · nav: slab, the ink bar with the wordmark in stock colour, two links and a pass-1 tickets control · footer: mast, the wordmark across the container over the bar rule · imagery: photographs, library 2, mono pulled through one pass each · signature: the month's bill printed on an orange pass field, and the ticket itself in two passes whose stub crosses the body at the tear and prints moss · overprint: newsprint
+ * sections: Poster hero, Index (the month's bill on the orange pass, the month named from the visitor's date), Showcase (the room through the teal pass), Offer (the ticket, built, beside its head), Band (find us in Hull beside the on-sale field, on the ink) · samples: the ticket's act name and night are placeholders of its shape · fills: the line-up, the address
+ * job: visit, a venue whose next dates recur, so the page ends on the address and the on-sale list for what is on next
+ * axes: light/grotesk-heavy/cool · posture: full-palette · contrast: pass · fold: pass · layout fix */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root {
+  --nav-h: 72px;
+  --text-bill: clamp(2.125rem, 6vw, 5.75rem);
+  --text-figure: clamp(5rem, 12vw, 11.5rem);
+  --overlap: 40px;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9 -4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+h1, h2, h3 { font-weight: 900; font-stretch: var(--display-stretch); text-transform: uppercase; line-height: 1.02; }
+
+/* the skip link */
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); outline-color: var(--color-accent); }
+
+/* controls: the pass-1 fill beside an inset ink outline; hover pulls it through the other pass at once */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--space-lg); border: 0; border-radius: 0; background: none; font: 600 var(--text-sm)/1 var(--font-outlier); text-transform: uppercase; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-accent-2); color: var(--color-accent-2-ink); }
+.btn--primary:active { background: color-mix(in oklab, var(--color-accent-2) 80%, var(--color-ink)); }
+.btn--secondary { box-shadow: inset 0 0 0 2px var(--color-ink); color: var(--color-ink); }
+.btn--secondary:hover { background: var(--color-ink); color: var(--color-paper); }
+.btn--knock { box-shadow: inset 0 0 0 2px var(--color-paper); color: var(--color-paper); }
+.btn--knock:hover { background: var(--color-paper); color: var(--color-ink); }
+.btn--knock:active { background: var(--color-paper-3); color: var(--color-ink); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+.onsale input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* the two passes: flat fills, multiplied */
+.pass-1 { background: var(--color-accent); color: var(--color-accent-ink); mix-blend-mode: var(--blend); }
+.pass-2 { background: var(--color-accent-2); color: var(--color-accent-2-ink); mix-blend-mode: var(--blend); }
+.pass-1 > img, .pass-2 > img { mix-blend-mode: var(--blend); }
+.grain { position: relative; isolation: isolate; }
+.grain::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--texture-opacity); background: var(--grain) 0 0 / 200px; }
+.fill { padding: 0 0.2em; border-radius: 2px; font: 400 var(--text-md)/1.5 var(--font-body); text-transform: none; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+
+/* nav: the slab */
+.slab { background: var(--color-ink); color: var(--color-paper); }
+.slab__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: var(--nav-h); }
+.wordmark { font: 900 1.375rem/1 var(--font-display); font-stretch: var(--display-stretch); text-transform: uppercase; letter-spacing: var(--tracking-display); color: var(--color-paper); text-decoration: none; white-space: nowrap; }
+.slab__nav { display: flex; align-items: center; gap: var(--space-xl); }
+.slab__links { display: flex; gap: var(--space-lg); margin: 0; padding: 0; list-style: none; }
+.slab__links a { font: 600 var(--text-sm)/1 var(--font-outlier); color: var(--color-paper); text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 2px; text-underline-offset: 0.35em; white-space: nowrap; }
+.slab__links a:hover { text-decoration-color: var(--color-accent); }
+.slab :focus-visible, .hero :focus-visible, .wordmark:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+
+/* hero: Poster, the bill knocked out to the stock over the photograph's darkest third */
+.hero { position: relative; isolation: isolate; display: grid; align-items: end; min-height: calc(100dvh - var(--nav-h)); background: var(--color-ink); color: var(--color-paper); }
+.hero__photo { position: absolute; inset: 0; margin: 0; z-index: 0; mix-blend-mode: normal; }
+.hero__scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to top, color-mix(in oklab, var(--color-ink) 64%, transparent), transparent 58%); }
+.hero__inner { position: relative; z-index: 3; display: grid; justify-items: start; gap: var(--space-lg); padding-block: var(--space-3xl); }
+.hero__head { max-width: none; font-size: var(--text-bill); color: var(--color-paper); }
+.hero__lead { max-width: 36ch; color: var(--color-paper); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+
+/* the bill: this month printed on the orange pass, the times in wide figures */
+.bill { padding-block: var(--section-gap-s); mix-blend-mode: normal; }
+.bill__head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; }
+.bill__head h2 { grid-column: 1 / -1; max-width: none; font-size: clamp(2rem, 9.6vw, 8rem); line-height: 0.92; white-space: nowrap; }
+.bill__head .lead { grid-column: 1 / span 6; margin-top: var(--space-lg); color: var(--color-ink); }
+.bill__table { width: 100%; margin-top: var(--space-2xl); border-collapse: collapse; border-top: var(--rule-bar) solid var(--color-ink); border-bottom: var(--rule-bar) solid var(--color-ink); font-variant-numeric: tabular-nums; }
+.bill__table th { padding: var(--space-md) var(--space-lg) var(--space-md) 0; border-bottom: var(--rule-hair) solid var(--color-ink); font: 600 var(--text-sm)/1.2 var(--font-outlier); text-align: left; white-space: nowrap; }
+.bill__table td { padding: var(--space-xl) var(--space-lg) var(--space-xl) 0; vertical-align: middle; }
+.bill__table th:nth-child(2), .bill__act { width: 52%; }
+.bill__night { font: 900 var(--text-title)/1.1 var(--font-display); font-stretch: 130%; text-transform: uppercase; white-space: nowrap; }
+.bill__act .fill { font-size: var(--text-lead); color: var(--color-ink-2); background: color-mix(in oklch, var(--color-ink) 12%, transparent); }
+.bill__time { font: 900 var(--text-section)/1 var(--font-display); font-stretch: 150%; text-transform: uppercase; letter-spacing: var(--tracking-display); white-space: nowrap; }
+.bill__tix { padding-right: 0; }
+.bill :focus-visible { outline-color: var(--color-ink); }
+.bill__tix a { white-space: nowrap; font: 600 var(--text-md)/1.3 var(--font-body); color: var(--color-ink); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.25em; }
+.bill__tix a:hover { text-decoration-color: var(--color-paper); }
+
+/* the room: one photograph across the width in the teal pass */
+.room { padding-top: var(--section-gap); }
+.room__head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; margin-bottom: var(--space-2xl); }
+.room__head h2 { grid-column: 1 / 8; }
+.room__head .lead { grid-column: 8 / 13; }
+.photo { position: relative; margin: 0; }
+.photo--wide { aspect-ratio: 2 / 1; width: 100%; }
+
+/* tickets: the ticket itself, printed in two passes; the stub's teal crosses the body's orange at the tear and prints moss */
+.tix { padding-top: var(--section-gap); }
+.tix__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: center; padding-top: var(--space-xl); border-top: var(--rule-bar) solid var(--color-ink); }
+.tix__text { grid-column: 1 / span 5; display: grid; justify-items: start; gap: var(--space-lg); }
+.tix__text .btn { margin-top: var(--space-sm); }
+.ticket { grid-column: 6 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 12rem); margin: 0; isolation: isolate; background: none; overflow: visible; }
+.ticket__body { display: grid; align-content: space-between; gap: var(--space-xl); min-height: 30rem; padding: var(--space-xl) calc(var(--overlap) + var(--space-xl)) var(--space-xl) var(--space-xl); }
+.ticket__stub { display: grid; align-content: space-between; margin-left: calc(-1 * var(--overlap)); padding: var(--space-xl) var(--space-xl) var(--space-xl) calc(var(--overlap) + var(--space-lg)); }
+.ticket p { margin: 0; }
+.ticket__venue, .ticket__night, .ticket__times span { font: 600 var(--text-sm)/1.2 var(--font-outlier); }
+.ticket__act { font: 900 clamp(2.25rem, 4.2vw, 4rem)/0.98 var(--font-display); font-stretch: 150%; text-transform: uppercase; letter-spacing: var(--tracking-display); max-width: 8ch; }
+.ticket__times { display: grid; grid-template-columns: repeat(2, minmax(0, max-content)); gap: var(--space-2xl); padding-top: var(--space-md); border-top: var(--rule-bar) solid var(--color-ink); }
+.ticket__times p { display: grid; gap: var(--space-xs); }
+.ticket__times b { font: 900 clamp(2rem, 3.4vw, 3.25rem)/1 var(--font-display); font-stretch: 150%; font-variant-numeric: tabular-nums; }
+.ticket__admit { font: 900 var(--text-2xl)/1 var(--font-display); font-stretch: 140%; text-transform: uppercase; writing-mode: vertical-rl; transform: rotate(180deg); justify-self: start; }
+
+/* find us: the ink band, the facts under a stock bar beside the on-sale field */
+.visit { margin-top: var(--section-gap-l); padding-block: var(--section-gap-s); background: var(--color-ink); color: var(--color-paper); }
+.visit h2 { color: var(--color-paper); }
+.visit__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-2xl); align-items: end; }
+.visit__text { grid-column: 1 / span 6; }
+.facts { margin: var(--space-2xl) 0 0; border-top: var(--rule-bar) solid var(--color-paper); }
+.facts > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr); gap: var(--space-md); align-items: baseline; padding-block: var(--space-lg); border-bottom: var(--rule-hair) solid color-mix(in oklab, var(--color-paper) 28%, var(--color-ink)); }
+.facts dt { font: 600 var(--text-sm)/1.5 var(--font-outlier); color: var(--color-paper-3); }
+.facts dd { margin: 0; font: 900 var(--text-xl)/1.15 var(--font-display); font-stretch: 120%; text-transform: uppercase; }
+.facts dd .fill { font-size: var(--text-md); color: var(--color-paper-3); background: color-mix(in oklch, var(--color-paper) 16%, transparent); }
+.onsale { grid-column: 8 / -1; }
+.onsale__head { margin-bottom: var(--space-lg); font-size: var(--text-xl); font-stretch: 120%; color: var(--color-paper); max-width: 18ch; }
+.onsale label { display: block; margin-bottom: var(--space-xs); font: 600 var(--text-sm)/1.2 var(--font-outlier); }
+.onsale__row { display: flex; gap: var(--space-xs); }
+.onsale input { flex: 1; min-width: 0; min-height: 52px; padding: 0 var(--space-md); border: 0; border-radius: 0; background: var(--color-ink); color: var(--color-paper); box-shadow: inset 0 0 0 2px var(--color-paper); font: 400 var(--text-md) var(--font-body); outline: 2px solid transparent; outline-offset: 2px; }
+.onsale input:hover { box-shadow: inset 0 0 0 2px var(--color-accent); }
+.onsale .btn { min-height: 52px; }
+.onsale input:focus-visible { outline-color: var(--color-accent); }
+.onsale input[aria-invalid] { box-shadow: inset 0 0 0 2px var(--color-error); }
+.onsale__help { min-height: 1lh; margin-top: var(--space-xs); font-size: var(--text-sm); color: var(--color-paper-3); }
+.visit :focus-visible { outline-color: var(--color-accent); }
+
+/* footer: the mast */
+.mast { padding-block: var(--section-gap-s) var(--space-2xl); }
+.mast__word { margin: 0; font: 900 clamp(1.5rem, 6.85vw, 6.15rem)/1.02 var(--font-display); font-stretch: var(--display-stretch); text-transform: uppercase; letter-spacing: var(--tracking-display); white-space: nowrap; }
+.mast__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-lg); margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: var(--rule-bar) solid var(--color-ink); }
+.mast__links { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin: 0; padding: 0; list-style: none; }
+.mast__links a { font: 600 var(--text-sm)/1.2 var(--font-outlier); text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+.mast__links a:hover { text-decoration-color: var(--color-ink); }
+.mast__note { margin: 0; font-size: var(--text-sm); color: var(--color-ink-2); }
+.mast__credits { max-width: none; margin: var(--space-xl) 0 0; font-size: var(--text-sm); line-height: 1.6; color: var(--color-ink-2); }
+.mast__credits span { white-space: nowrap; }
+.mast__credits a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-rule); text-underline-offset: 0.2em; }
+.mast__credits a:hover { text-decoration-color: var(--color-ink); }
+
+@media (max-width: 60rem) {
+  .slab__links { display: none; }
+  .hero { min-height: calc(92dvh - var(--nav-h)); }
+  .bill__head h2, .bill__head .lead, .room__head h2, .room__head .lead, .tix__text, .ticket, .visit__text, .onsale { grid-column: 1 / -1; }
+  .ticket { margin-top: var(--space-2xl); }
+  .bill__head .lead, .room__head .lead { margin-top: var(--space-lg); }
+  .photo--wide { aspect-ratio: 4 / 3; }
+}
+@media (max-width: 40rem) {
+  .wordmark { font-size: 1rem; }
+  .slab__nav .btn { padding: 0 var(--space-md); }
+  .hero__inner { padding-block: var(--space-2xl) var(--space-xl); }
+  .bill__table thead { display: none; }
+  .bill__table, .bill__table tbody, .bill__table tr { display: block; }
+  .bill__table td { display: block; padding: var(--space-md) 0; border-bottom: var(--rule-hair) solid var(--color-ink); }
+  .bill__table td.bill__time::before { content: attr(data-label); display: block; margin-bottom: var(--space-xs); font: 600 var(--text-sm)/1.2 var(--font-outlier); text-transform: none; }
+  .bill__table td:last-child { border-bottom: 0; }
+  .bill__act { width: auto; }
+  .bill__table td.bill__night { border-bottom: 0; padding-bottom: 0; }
+  .ticket { grid-template-columns: minmax(0, 1fr); }
+  .ticket__body { min-height: 0; padding: var(--space-lg) var(--space-lg) calc(var(--overlap) + var(--space-lg)); }
+  .ticket__stub { margin: calc(-1 * var(--overlap)) 0 0; padding: calc(var(--overlap) + var(--space-md)) var(--space-lg) var(--space-lg); display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); }
+  .ticket__admit { writing-mode: horizontal-tb; transform: none; font-size: var(--text-lg); }
+  .ticket__times { gap: var(--space-xl); }
+  .facts dd { font-size: var(--text-lg); }
+  .facts > div { grid-template-columns: minmax(0, 1fr); gap: var(--space-2xs); }
+  .onsale__row { flex-direction: column; }
+}
+@media (max-width: 75rem) and (min-width: 60.001rem) {
+  .tix__text, .ticket { grid-column: 1 / -1; }
+  .ticket { margin-top: var(--space-2xl); }
+}

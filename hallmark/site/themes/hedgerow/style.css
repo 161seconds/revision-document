@@ -1,0 +1,169 @@
+/* Hallmark · shape: Field Guide, second edition (named here: a poster of the land, the plants as a guide's index, two plates, the batch in figures, the buying on cream) · genre: editorial · theme: Hedgerow (by request) · hedgerow: hedge
+ * hero: Poster · nav: banner over a bar · footer: mast · imagery: photographs, library 4, natural sat=-10 con=8 exp=-8 · a quantity stepper with a running total on the cream band · signature: the five plants set as a field guide's index in Prata, no picture needed
+ * axes: dark/high-contrast-serif/chromatic-green · posture: drenched · contrast: pass · fold: pass · v2.8.0 */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root { --banner-h: 40px; --bar-h: 64px; }
+
+/* Page */
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-accent); color: var(--color-accent-ink); font-weight: 700; }
+.skip:focus-visible { top: var(--space-md); }
+h1, h2, h3 { font-weight: 400; line-height: 1.1; font-synthesis: none; }
+body { color: var(--color-ink); }
+p { color: var(--color-ink-2); }
+
+/* Controls: the theme's pair */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 var(--space-lg); border: 1.5px solid var(--color-accent); border-radius: var(--radius-pill); background: transparent; color: var(--color-accent); font: 700 var(--text-sm)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-accent-2); border-color: var(--color-accent-2); }
+.btn--secondary:hover { background: color-mix(in oklab, var(--color-accent) 14%, transparent); }
+.btn:active { background: var(--color-accent-2); border-color: var(--color-accent-2); color: var(--color-accent-ink); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+.btn[aria-busy="true"] { cursor: progress; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+
+/* Chrome: a banner that scrolls away over a bar that stays */
+.banner { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); min-height: var(--banner-h); margin: 0; padding: var(--space-2xs) var(--gutter); background: var(--color-paper-2); color: var(--color-ink-2); font-size: var(--text-sm); text-align: center; }
+.banner a { color: var(--color-ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: 0.25em; }
+.banner a:hover { text-decoration-thickness: 2px; }
+.banner a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.bar { position: sticky; top: 0; z-index: var(--z-sticky-nav); background: var(--color-paper); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.bar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: var(--bar-h); }
+.wordmark { font: 400 var(--text-xl)/1 var(--font-display); color: var(--color-ink); text-decoration: none; white-space: nowrap; }
+.wordmark:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+.bar__links { display: flex; align-items: center; gap: var(--space-xl); margin: 0; padding: 0; list-style: none; }
+.bar__links .bar__buy { display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--space-md); border: 1.5px solid var(--color-accent); border-radius: var(--radius-pill); color: var(--color-accent); font-weight: 700; text-decoration: none; transition: background-color var(--dur-short) var(--ease-out); }
+.bar__links .bar__buy:hover { background: color-mix(in oklab, var(--color-accent) 14%, transparent); }
+.bar__links a { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.35em; white-space: nowrap; transition: text-decoration-color var(--dur-short) var(--ease-out); }
+.bar__links a:hover { text-decoration-color: var(--color-accent); }
+.bar__links a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+
+/* Photographs: square, a cream ring at 8%, colour kept true */
+.photo { position: relative; margin: 0; }
+.photo > img { outline: var(--rule-hair) solid color-mix(in oklab, var(--color-ink) 8%, transparent); outline-offset: -1px; }
+
+/* Hero: a poster of the land, the promise low and left on a hedge-green scrim */
+.hero { position: relative; display: grid; min-height: calc(100dvh - var(--banner-h) - var(--bar-h)); isolation: isolate; }
+.hero__photo { position: absolute; inset: 0; z-index: var(--z-base); }
+.hero__photo > img { outline: 0; }
+.hero__over { position: relative; z-index: var(--z-raised); align-self: end; color: var(--color-ink); padding-block: var(--space-4xl) var(--space-3xl); background: linear-gradient(to top, color-mix(in oklab, var(--color-paper) 72%, transparent), color-mix(in oklab, var(--color-paper) 45%, transparent) 55%, color-mix(in oklab, var(--color-paper) 0%, transparent)); }
+.hero__text { display: grid; gap: var(--space-lg); max-width: 54rem; }
+.hero__text h1 { max-width: none; font-size: var(--text-display); }
+.hero__text .lead { max-width: 40ch; color: var(--color-ink); }
+.hero__text .actions { margin-top: var(--space-sm); }
+
+@media (max-width: 60rem) {
+  .bar__links { gap: var(--space-lg); }
+  .bar__links li:not(:last-child) { display: none; }
+  .hero { min-height: 0; }
+  .hero__photo { position: relative; inset: auto; aspect-ratio: 4 / 3; }
+  .hero__over { padding-block: var(--space-xl) var(--space-2xl); background: var(--color-paper); color: var(--color-ink); }
+}
+
+.br-wide { display: inline; }
+.figure { font-family: var(--font-display); font-weight: 400; font-variant-numeric: lining-nums tabular-nums; }
+
+/* Head blocks */
+.head { display: grid; gap: var(--space-md); margin-bottom: var(--space-2xl); }
+.head h2 { max-width: 18ch; }
+.head--split { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; }
+.head--split h2 { grid-column: 1 / span 6; }
+.head--split .lead { grid-column: 8 / -1; }
+
+/* The five plants: a field guide's index, full width, under the chartreuse rule */
+.plants { padding-top: var(--section-gap); }
+.index { margin: 0; padding: 0; list-style: none; border-top: 1.5px solid var(--color-accent); }
+.index > li { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: baseline; padding-block: var(--space-lg) var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-rule); transition: border-color var(--dur-short) var(--ease-out); }
+.index > li:hover { border-bottom-color: var(--color-accent); }
+.index h3 { grid-column: 1 / span 5; font-size: var(--text-display-s); line-height: 1; color: var(--color-ink); }
+.index__latin { grid-column: 6 / span 3; font-size: var(--text-md); font-weight: 500; color: var(--color-muted); }
+.index__line { grid-column: 9 / -1; font-size: var(--text-lg); line-height: 1.45; color: var(--color-ink-2); }
+
+/* Two plates: the sloe large, the gorse beside it */
+.field { padding-top: var(--section-gap-l); }
+.field__pair { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: start; }
+.field__a { grid-column: 1 / span 7; }
+.field__b { grid-column: 8 / -1; }
+.field__frame { height: clamp(22rem, 42vw, 40rem); }
+.field__frame > img { outline: var(--rule-hair) solid color-mix(in oklab, var(--color-ink) 8%, transparent); outline-offset: -1px; }
+.field__b .field__frame > img { inset: auto 0 0 0; height: 138%; }
+.photo figcaption { margin-top: var(--space-sm); font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); }
+.latin { color: var(--color-muted); }
+
+/* Figures: the gin as a bottle label */
+.figures { padding-top: var(--section-gap); padding-bottom: var(--section-gap); }
+.figures__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; border-top: 1.5px solid var(--color-accent); }
+.figures__row > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--space-md); padding: var(--space-xl) var(--gap-columns) 0; border-left: var(--rule-hair) solid var(--color-rule); }
+.figures__row > div:first-child { padding-left: 0; border-left: 0; }
+.figures__row dt { font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); }
+.figures__row dd { margin: 0; font-variant-numeric: lining-nums tabular-nums; font-size: clamp(3.5rem, 6.5vw + 0.5rem, 7.5rem); line-height: 0.95; color: var(--color-ink); }
+.figures__row .figure--lit { color: var(--color-accent); }
+
+/* Batch 14: the one cream band, the glass beside the buying */
+.batch { padding-block: var(--section-gap-s); background: var(--color-ink); color: var(--color-paper); }
+.batch__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: center; }
+.batch__photo { grid-column: 1 / span 5; aspect-ratio: 4 / 5; }
+.batch__photo > img { outline: var(--rule-hair) solid color-mix(in oklab, var(--color-paper) 10%, transparent); outline-offset: -1px; }
+.batch__text { grid-column: 7 / -1; display: grid; gap: var(--space-md); }
+.batch h2 { color: var(--color-paper); }
+.batch .lead { color: var(--color-paper); }
+.buy { display: grid; gap: var(--space-xl); margin-top: var(--space-xl); padding-top: var(--space-xl); border-top: 1.5px solid var(--color-accent-deep); }
+.buy__row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-lg); }
+.qty { display: grid; gap: var(--space-xs); }
+.qty label, .total__label { font-size: var(--text-sm); font-weight: 500; color: var(--color-paper); }
+.stepper { display: flex; align-items: stretch; border: var(--rule-hair) solid var(--color-paper); }
+.stepper__btn { display: grid; place-items: center; width: 52px; min-height: 52px; padding: 0; border: 0; background: transparent; color: var(--color-paper); cursor: pointer; transition: background-color var(--dur-short) var(--ease-out); }
+.stepper__btn:hover { background: color-mix(in oklab, var(--color-paper) 10%, transparent); }
+.stepper__btn:active { background: color-mix(in oklab, var(--color-paper) 18%, transparent); }
+.stepper__btn:focus-visible { outline: 2px solid var(--color-accent-deep); outline-offset: -4px; }
+.stepper input { width: 5rem; min-height: 52px; padding: 0; border: 0; border-inline: var(--rule-hair) solid color-mix(in oklab, var(--color-paper) 30%, transparent); background: transparent; color: var(--color-paper); font: 500 var(--text-lead)/1 var(--font-body); text-align: center; font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield; outline: 2px solid transparent; outline-offset: -4px; }
+.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper input:focus-visible { outline-color: var(--color-accent-deep); }
+.total { display: grid; gap: var(--space-2xs); justify-items: end; margin: 0; }
+.total__figure { font-size: clamp(3rem, 5vw + 0.5rem, 6rem); line-height: 1; color: var(--color-accent-deep); }
+.buy__go { justify-self: start; }
+.band--cream .btn { border-color: var(--color-paper); color: var(--color-paper); }
+.band--cream .btn--primary { background: var(--color-paper); color: var(--color-ink); }
+.band--cream .btn--primary:hover { background: var(--color-paper-3); border-color: var(--color-paper-3); }
+.band--cream .btn:focus-visible { outline-color: var(--color-accent-deep); }
+.buy__help { min-height: 1lh; font-size: var(--text-sm); color: var(--color-paper); }
+
+/* Footer: a mast, the wordmark set across the page */
+.mast { padding-block: var(--section-gap) var(--space-2xl); }
+.mast__mark { margin: 0 0 var(--space-xl); padding-bottom: var(--space-lg); border-bottom: var(--rule-hair) solid var(--color-muted); font: 400 clamp(2.75rem, 11.2vw, 10.75rem)/0.95 var(--font-display); letter-spacing: -0.01em; color: var(--color-ink); }
+.mast__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-lg); align-items: start; }
+.mast__text { grid-column: 1 / span 6; max-width: 46ch; }
+.mast__links { grid-column: 8 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-xs) var(--space-xl); margin: 0; padding: 0; list-style: none; }
+.mast__links a { color: var(--color-ink); text-decoration-color: var(--color-accent); text-underline-offset: 0.25em; white-space: nowrap; }
+.mast__links a:hover { text-decoration-thickness: 2px; }
+.mast__links a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.fill { padding: 0 0.2em; border-radius: 2px; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+.legal { margin-top: var(--space-2xl); font-size: var(--text-sm); color: var(--color-muted); }
+.credits { margin-top: var(--space-xs); max-width: 96ch; font-size: var(--text-sm); color: var(--color-muted); }
+.credits a { color: inherit; text-decoration-color: color-mix(in oklab, var(--color-muted) 50%, transparent); text-underline-offset: 0.2em; }
+.credits a:hover { color: var(--color-ink); text-decoration-color: var(--color-accent); }
+.credits a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+@media (max-width: 60rem) {
+  .br-wide { display: none; }
+  .head--split, .batch__grid, .mast__grid, .field__pair { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xl); }
+  .head--split h2, .head--split .lead, .batch__photo, .batch__text, .mast__text, .mast__links, .field__a, .field__b { grid-column: 1; }
+  .mast__links { justify-content: flex-start; }
+  .index > li { grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--space-xs); padding-block: var(--space-lg); }
+  .index h3 { grid-column: 1; font-size: var(--text-3xl); }
+  .index__latin { grid-column: 2; text-align: right; }
+  .index__line { grid-column: 1 / -1; }
+  .field__frame { height: auto; aspect-ratio: 4 / 3; }
+  .figures__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .figures__row > div { padding: var(--space-lg) var(--space-md) var(--space-lg); }
+  .figures__row > div:nth-child(odd) { padding-left: 0; border-left: 0; }
+  .figures__row > div:nth-child(n+3) { border-top: var(--rule-hair) solid var(--color-rule); }
+  .head--split { row-gap: var(--space-md); }
+}
+@media (max-width: 40rem) {
+  .index > li { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2xs); }
+  .index h3, .index__latin, .index__line { grid-column: 1; text-align: left; }
+  .index__line { margin-top: var(--space-xs); }
+}

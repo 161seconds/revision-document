@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Closewise: your bank accounts reconciled against the ledger every night</title>
+<meta name="description" content="Closewise checks every bank account against your ledger every night and flags every mismatch before month end, for finance teams of 3 to 30.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Display:wght@400;500;600&family=Wix+Madefor+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="scene.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" data-nav>
+  <div class="container nav__in">
+    <a class="wordmark" href="#top" aria-label="Closewise, home"><span class="wordmark__dot" aria-hidden="true"></span>Closewise</a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#matching">Matching</a>
+      <a href="#mornings">Mornings</a>
+      <a href="#october">October</a>
+    </nav>
+    <div class="nav__end">
+      <a class="nav__login" href="#walkthrough">Log in</a>
+      <a class="btn btn--sm" href="#walkthrough">Book a walkthrough</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="hero__ground" aria-hidden="true">
+    <img class="photo hero__photo" src="photos/fog.jpg" width="1920" height="1254" alt="" fetchpriority="high">
+    <div class="hero__scrim"></div>
+  </div>
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Month end, already reconciled.</h1>
+      <p class="lead">Closewise checks every bank account against your ledger while you sleep.</p>
+      <form class="join" data-endpoint="" aria-label="Book a walkthrough" novalidate>
+        <label class="visually-hidden" for="hero-email">Work email</label>
+        <input id="hero-email" name="email" type="email" autocomplete="email" placeholder="Work email" required>
+        <button class="btn" type="submit">Book a walkthrough</button>
+      </form>
+      <p class="hero__fine">For finance teams of 3 to 30.</p>
+    </div>
+
+    <div class="glass run" data-slot="hero" data-alt="Your last night's run: each account checked, one card payment left open with its difference">
+      <div class="run__head">
+        <div>
+          <p class="run__title">Last night’s run</p>
+          <p class="run__meta">Wednesday 14 October, finished <span class="num">02:14</span></p>
+        </div>
+        <p class="chip"><span class="chip__dot" aria-hidden="true"></span><span class="num" data-count="1286">1,286</span> lines matched</p>
+      </div>
+      <ul class="accts" aria-label="Accounts checked last night, sample">
+        <li class="acct" style="--d:0"><span class="acct__mark" aria-hidden="true">O</span><span class="acct__name">Operating<span class="acct__sub"><span class="num">412</span> lines</span></span><span class="acct__state is-ok">Matched</span><span class="acct__bal num">184,220<span class="c">.18</span></span></li>
+        <li class="acct" style="--d:1"><span class="acct__mark" aria-hidden="true">P</span><span class="acct__name">Payroll<span class="acct__sub"><span class="num">38</span> lines</span></span><span class="acct__state is-ok">Matched</span><span class="acct__bal num">62,400<span class="c">.00</span></span></li>
+        <li class="acct is-open" style="--d:2"><span class="acct__mark" aria-hidden="true">C</span><span class="acct__name">Card account<span class="acct__sub"><span class="num">129</span> lines</span></span><span class="acct__state">1 open</span><span class="acct__bal num">8,915<span class="c">.42</span></span></li>
+        <li class="acct" style="--d:3"><span class="acct__mark" aria-hidden="true">S</span><span class="acct__name">Reserve<span class="acct__sub"><span class="num">2</span> lines</span></span><span class="acct__state is-ok">Matched</span><span class="acct__bal num">250,000<span class="c">.00</span></span></li>
+        <li class="acct" style="--d:4"><span class="acct__mark" aria-hidden="true">E</span><span class="acct__name">Euro account<span class="acct__sub"><span class="num">17</span> lines</span></span><span class="acct__state is-ok">Matched</span><span class="acct__bal num">€41,380<span class="c">.90</span></span></li>
+      </ul>
+      <a class="run__flag" href="#matching">
+        <span class="run__flag-dot" aria-hidden="true"></span>
+        <span>Example Hosting, <span class="num">1,200<span class="c">.00</span></span> against <span class="num">1,020<span class="c">.00</span></span> in the ledger</span>
+        <span class="run__flag-go">Review</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="sec tour" id="matching" aria-labelledby="tour-head">
+  <div class="container tour__grid">
+    <div class="tour__text">
+      <h2 id="tour-head">Matched by morning.</h2>
+      <p class="lead">Four jobs run every night, on every account.</p>
+      <div class="tabs" role="tablist" aria-label="What runs each night" data-tabs>
+        <button class="tab" role="tab" type="button" id="t-match" aria-selected="true" aria-controls="p-match"><span class="tab__name">Matching</span><span class="tab__line"><span>Each bank line meets its ledger entry by amount, date and reference.</span></span></button>
+        <button class="tab" role="tab" type="button" id="t-flag" aria-selected="false" aria-controls="p-flag" tabindex="-1"><span class="tab__name">Flags</span><span class="tab__line"><span>A line that won’t match shows both sides and the difference.</span></span></button>
+        <button class="tab" role="tab" type="button" id="t-rule" aria-selected="false" aria-controls="p-rule" tabindex="-1"><span class="tab__name">Rules</span><span class="tab__line"><span>Teach it a fee or a batch once, and it posts the rest.</span></span></button>
+        <button class="tab" role="tab" type="button" id="t-close" aria-selected="false" aria-controls="p-close" tabindex="-1"><span class="tab__name">Close</span><span class="tab__line"><span>Every account, reconciled through last night.</span></span></button>
+      </div>
+    </div>
+
+    <div class="tour__stage">
+      <div class="glass pane" role="tabpanel" id="p-match" aria-labelledby="t-match" tabindex="0">
+        <div class="pane__head"><p class="pane__title">Card account, 13 October</p><p class="pane__meta"><span class="num">6</span> of <span class="num">7</span> matched</p></div>
+        <table class="pairs">
+          <caption class="visually-hidden">Bank lines and their ledger entries, sample</caption>
+          <thead><tr><th scope="col">Bank line</th><th scope="col" class="r">Amount</th><th scope="col"><span class="visually-hidden">Status</span></th><th scope="col">Ledger entry</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Example Client</th><td class="num r">3,200<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Invoice 2041</td></tr>
+            <tr><th scope="row">Example Payroll</th><td class="num r">−8,450<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Wages, October</td></tr>
+            <tr class="is-open"><th scope="row">Example Hosting</th><td class="num r">−1,200<span class="c">.00</span></td><td class="gap" aria-label="does not match"></td><td>Hosting, October <span class="num">−1,020<span class="c">.00</span></span></td></tr>
+            <tr><th scope="row">Example Bank</th><td class="num r">−12<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Bank fee</td></tr>
+            <tr><th scope="row">Example Client Co</th><td class="num r">900<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Invoice 2043</td></tr>
+            <tr><th scope="row">Example Insurance</th><td class="num r">−300<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Insurance, October</td></tr>
+            <tr><th scope="row">Example Supplies</th><td class="num r">−64<span class="c">.00</span></td><td class="tick" aria-label="matched"></td><td>Office supplies</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="glass pane" role="tabpanel" id="p-flag" aria-labelledby="t-flag" tabindex="0" hidden>
+        <div class="pane__head"><p class="pane__title">Flagged on 14 October</p><p class="pane__meta">Waiting for you</p></div>
+        <div class="sides">
+          <div class="side"><p class="side__label">Bank</p><p class="side__name">Example Hosting</p><p class="side__meta">Card payment, 13 October</p><p class="side__fig num">1,200<span class="c">.00</span></p></div>
+          <div class="side"><p class="side__label">Ledger</p><p class="side__name">Hosting, October</p><p class="side__meta">Posted 13 October</p><p class="side__fig num">1,020<span class="c">.00</span></p></div>
+        </div>
+        <div class="diff"><p>Difference</p><p class="diff__fig num">180<span class="c">.00</span></p></div>
+        <div class="pane__acts"><button class="btn btn--sm" type="button">Post 180.00 as a fee</button><button class="btn btn--ghost btn--sm" type="button">Leave a note</button></div>
+      </div>
+
+      <div class="glass pane" role="tabpanel" id="p-rule" aria-labelledby="t-rule" tabindex="0" hidden>
+        <div class="pane__head"><p class="pane__title">Rules</p><p class="pane__meta"><span class="num">3</span> on, used <span class="num">214</span> times this month</p></div>
+        <ul class="rules">
+          <li><span class="rule__text">Card fees under <span class="num">25<span class="c">.00</span></span> post to Bank charges</span><span class="switch is-on" role="img" aria-label="On"></span></li>
+          <li><span class="rule__text">Payroll batches match by reference</span><span class="switch is-on" role="img" aria-label="On"></span></li>
+          <li><span class="rule__text">Euro transfers match within <span class="num">0<span class="c">.50</span></span></span><span class="switch is-on" role="img" aria-label="On"></span></li>
+          <li><span class="rule__text">Refunds match their original charge</span><span class="switch" role="img" aria-label="Off"></span></li>
+        </ul>
+      </div>
+
+      <div class="glass pane" role="tabpanel" id="p-close" aria-labelledby="t-close" tabindex="0" hidden>
+        <div class="pane__head"><p class="pane__title">October close</p><p class="pane__meta">Reconciled through <span class="num">29</span> October</p></div>
+        <ul class="close">
+          <li><span>Operating</span><span class="bar" style="--p:100%"></span><span class="num">29/29</span></li>
+          <li><span>Payroll</span><span class="bar" style="--p:100%"></span><span class="num">29/29</span></li>
+          <li class="is-open"><span>Card account</span><span class="bar" style="--p:93%"></span><span class="num">27/29</span></li>
+          <li><span>Reserve</span><span class="bar" style="--p:100%"></span><span class="num">29/29</span></li>
+          <li><span>Euro account</span><span class="bar" style="--p:100%"></span><span class="num">29/29</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec mornings" id="mornings" aria-labelledby="morn-head">
+  <div class="container">
+    <div class="sec__head">
+      <h2 id="morn-head">Your morning takes two minutes.</h2>
+      <p class="lead">One note at seven, and only the lines that need a person.</p>
+    </div>
+    <div class="wells">
+      <figure class="well">
+        <div class="well__stage">
+          <div class="note" data-slot="note" data-alt="Your seven o'clock note: what matched overnight and the one line left open">
+            <div class="note__head"><span class="note__from"><span class="wordmark__dot" aria-hidden="true"></span>Closewise</span><span class="note__time num">07:00</span></div>
+            <p class="note__title">Overnight: <span class="num">1,286</span> matched, <span class="num">1</span> open</p>
+            <p class="note__body">The Card account has one payment that differs from the ledger by <span class="num">180<span class="c">.00</span></span>.</p>
+            <p class="note__link">Open the flag</p>
+          </div>
+        </div>
+        <figcaption><span class="well__title">A note at seven</span>What matched overnight, and what didn’t.</figcaption>
+      </figure>
+      <figure class="well">
+        <div class="well__stage">
+          <div class="hand" data-slot="assign" data-alt="A flag handed to a teammate with a note and a due date">
+            <p class="hand__title">Example Hosting <span class="num">180<span class="c">.00</span></span></p>
+            <div class="hand__row"><span class="who" aria-hidden="true">AM</span><span><b>Assigned to Alex</b><span class="hand__meta">Due before the 31st</span></span></div>
+            <p class="hand__msg">“Looks like the annual add-on. Can you check the invoice?”</p>
+            <div class="hand__acts"><span class="pill pill--on">Assigned</span><span class="pill">Mark cleared</span></div>
+          </div>
+        </div>
+        <figcaption><span class="well__title">Handed to the right person</span>A flag carries its note to whoever clears it.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec month" id="october" aria-labelledby="month-head">
+  <div class="container">
+    <div class="sec__head">
+      <h2 id="month-head">October, night by night.</h2>
+      <p class="lead">Every night ran. Three flagged, one still open.</p>
+    </div>
+    <div class="month__stage"><div class="glass strip" role="img" aria-label="October runs, sample: 29 nights run, flags on the 3rd, 14th and 22nd, the 14th still open, the 30th and 31st still to run">
+      <span class="night" style="--h:85%" data-tip="1 October: 468 lines"><i></i><b class="num">1</b></span>
+      <span class="night" style="--h:94%" data-tip="2 October: 533 lines"><i></i><b class="num">2</b></span>
+      <span class="night is-flag" style="--h:38%" data-tip="3 October: 139 lines, flag 24.00 cleared"><i></i><b class="num">3</b></span>
+      <span class="night" style="--h:38%" data-tip="4 October: 143 lines"><i></i><b class="num">4</b></span>
+      <span class="night" style="--h:95%" data-tip="5 October: 538 lines"><i></i><b class="num">5</b></span>
+      <span class="night" style="--h:92%" data-tip="6 October: 522 lines"><i></i><b class="num">6</b></span>
+      <span class="night" style="--h:100%" data-tip="7 October: 575 lines"><i></i><b class="num">7</b></span>
+      <span class="night" style="--h:87%" data-tip="8 October: 486 lines"><i></i><b class="num">8</b></span>
+      <span class="night" style="--h:88%" data-tip="9 October: 489 lines"><i></i><b class="num">9</b></span>
+      <span class="night" style="--h:38%" data-tip="10 October: 142 lines"><i></i><b class="num">10</b></span>
+      <span class="night" style="--h:34%" data-tip="11 October: 111 lines"><i></i><b class="num">11</b></span>
+      <span class="night" style="--h:88%" data-tip="12 October: 492 lines"><i></i><b class="num">12</b></span>
+      <span class="night" style="--h:96%" data-tip="13 October: 548 lines"><i></i><b class="num">13</b></span>
+      <span class="night is-flag is-open" style="--h:84%" data-tip="14 October: 464 lines, flag 180.00 open"><i></i><b class="num">14</b></span>
+      <span class="night" style="--h:95%" data-tip="15 October: 539 lines"><i></i><b class="num">15</b></span>
+      <span class="night" style="--h:91%" data-tip="16 October: 512 lines"><i></i><b class="num">16</b></span>
+      <span class="night" style="--h:34%" data-tip="17 October: 114 lines"><i></i><b class="num">17</b></span>
+      <span class="night" style="--h:36%" data-tip="18 October: 124 lines"><i></i><b class="num">18</b></span>
+      <span class="night" style="--h:95%" data-tip="19 October: 542 lines"><i></i><b class="num">19</b></span>
+      <span class="night" style="--h:99%" data-tip="20 October: 566 lines"><i></i><b class="num">20</b></span>
+      <span class="night" style="--h:90%" data-tip="21 October: 505 lines"><i></i><b class="num">21</b></span>
+      <span class="night is-flag" style="--h:90%" data-tip="22 October: 505 lines, flag 90.00 cleared"><i></i><b class="num">22</b></span>
+      <span class="night" style="--h:97%" data-tip="23 October: 554 lines"><i></i><b class="num">23</b></span>
+      <span class="night" style="--h:33%" data-tip="24 October: 102 lines"><i></i><b class="num">24</b></span>
+      <span class="night" style="--h:34%" data-tip="25 October: 111 lines"><i></i><b class="num">25</b></span>
+      <span class="night" style="--h:87%" data-tip="26 October: 484 lines"><i></i><b class="num">26</b></span>
+      <span class="night" style="--h:99%" data-tip="27 October: 567 lines"><i></i><b class="num">27</b></span>
+      <span class="night" style="--h:99%" data-tip="28 October: 571 lines"><i></i><b class="num">28</b></span>
+      <span class="night is-last" style="--h:89%" data-tip="29 October: 496 lines, last night"><i></i><b class="num">29</b></span>
+      <span class="night is-next" style="--h:100%" data-tip="30 October: tonight"><i></i><b class="num">30</b></span>
+      <span class="night is-next" style="--h:100%" data-tip="31 October: month end"><i></i><b class="num">31</b></span>
+    </div></div>
+    <dl class="tally">
+      <div><dt>Lines matched</dt><dd class="num">11,942</dd></div>
+      <div><dt>Flags raised</dt><dd class="num">3</dd></div>
+      <div><dt>Still open</dt><dd class="num is-open">180<span class="c">.00</span></dd></div>
+      <div><dt>Days to close</dt><dd class="num">2</dd></div>
+    </dl>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot" id="walkthrough">
+  <section class="close-band" aria-labelledby="book-head">
+    <img class="photo close-band__photo" src="photos/estuary.jpg" width="1920" height="1280" alt="A calm estuary at dusk, boats at their moorings under an amber sky" loading="lazy">
+    <div class="close-band__scrim" aria-hidden="true"></div>
+    <div class="container close-band__in">
+      <div class="glass book">
+        <h2 id="book-head">Close October calmly.</h2>
+        <p class="lead">A walkthrough of one month, from the first run to the close.</p>
+        <form class="join join--dark" data-endpoint="" aria-labelledby="book-head" novalidate>
+          <label class="visually-hidden" for="book-email">Work email</label>
+          <input id="book-email" name="email" type="email" autocomplete="email" placeholder="Work email" required>
+          <button class="btn" type="submit">Book a walkthrough</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <div class="container foot__base">
+    <p class="wordmark"><span class="wordmark__dot" aria-hidden="true"></span>Closewise</p>
+    <nav class="foot__links" aria-label="Footer"><a href="#top">Last night</a><a href="#matching">Matching</a><a href="#mornings">Mornings</a><a href="#october">October</a><a href="#walkthrough">Walkthrough</a></nav>
+    <p class="foot__legal">&copy; 2026 Closewise</p>
+    <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Vallee-brouillard.jpg">Thomas Bresson</a> (CC BY 3.0), <a href="https://commons.wikimedia.org/wiki/File:Conwy_Estuary_at_dusk_-_geograph.org.uk_-_4556293.jpg">Matt Harrop</a> (CC BY-SA 2.0), Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

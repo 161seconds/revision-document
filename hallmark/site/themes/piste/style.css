@@ -1,0 +1,171 @@
+/* Hallmark · shape: Morning Report (poster, then the figures as a lift board, the groups, the field, the steps, the desk) · genre: playful · theme: Piste (by request) · piste: snow
+ * hero: Poster, the class on the slope full-bleed and the head in ink on its snow · nav: floating square bar · footer: colophon block · imagery: photographs, library 3, natural colour · product: the week booking, built
+ * sections: Poster hero, Figures (a lift board), Split (photograph and ruled groups), Statement on the cobalt field, Steps, Form beside a photograph on paper-2, colophon footer
+ * axes: light/display-condensed/cool · posture: committed · contrast: pass · fold: pass · v2.8.0 */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root {
+  --bar-h: 64px;
+  --photo-line: color-mix(in oklab, var(--color-ink) 8%, transparent);
+  --text-hero: clamp(4rem, 8.4vw, 8rem);
+  --text-board: clamp(5rem, 13vw, 12rem);
+}
+
+h1, h2, h3 { font-weight: 800; text-transform: uppercase; line-height: 1; }
+h2 { font-size: var(--text-display-s); }
+h3 { font-size: var(--text-2xl); }
+p { font-size: 1.0625rem; }
+.lead { color: var(--color-ink-2); }
+.fig { font-family: var(--font-display); font-weight: 800; line-height: 0.9; color: var(--color-accent); font-variant-numeric: tabular-nums; }
+
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+/* Controls: the cobalt block and the inset ink outline, cut square */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 var(--space-lg); border: 0;
+  font: 800 var(--text-lg)/1 var(--font-display); text-transform: uppercase; text-decoration: none; white-space: nowrap; cursor: pointer;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+}
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-accent-deep); }
+.btn--primary:active { background: var(--color-ink); }
+.btn--line { background: transparent; box-shadow: inset 0 0 0 var(--rule-bar) var(--color-ink); color: var(--color-ink); }
+.btn--line:hover { background: var(--color-paper-2); }
+.btn--line:active { background: var(--color-paper-3); }
+.btn--s { min-height: 44px; padding: 0 var(--space-md); font-size: var(--text-md); }
+
+/* Nav: a square paper bar floating over the photograph */
+.float { position: fixed; top: var(--space-md); left: 0; right: 0; z-index: var(--z-sticky-nav); pointer-events: none; }
+.float__bar { width: min(100% - 2 * var(--gutter), var(--container) - 2 * var(--gutter)); margin-inline: auto; display: flex; align-items: center; gap: var(--gap-columns); min-height: var(--bar-h); padding: 0 var(--space-xs) 0 var(--space-lg); background: var(--color-paper); border: var(--rule-bar) solid var(--color-ink); pointer-events: auto; }
+.float__mark { margin-right: auto; font: 800 var(--text-xl)/1 var(--font-display); text-transform: uppercase; letter-spacing: var(--tracking-display); text-decoration: none; white-space: nowrap; }
+.float__links { display: flex; gap: var(--space-lg); }
+.float__links a { font-size: var(--text-sm); font-weight: 500; text-decoration: none; white-space: nowrap; }
+.float__links a:hover, .float__mark:hover { text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; text-underline-offset: 0.25em; }
+
+/* Hero: Poster, the class full-bleed and the head in ink on the snow it skis across */
+.hero { position: relative; display: grid; align-items: end; min-height: 100dvh; }
+.hero__photo { position: absolute; inset: 0; margin: 0; }
+.hero__photo > img { object-position: 50% 30%; }
+.hero__base { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; padding-block: var(--space-xl) var(--space-2xl); }
+.hero h1 { grid-column: 1 / span 7; max-width: none; font-size: var(--text-hero); line-height: 1; color: var(--color-ink); }
+.hero__aside { grid-column: 8 / span 5; display: grid; gap: var(--space-lg); padding-bottom: var(--space-xs); }
+.hero__aside .lead { color: var(--color-ink); font-weight: 500; }
+.hero__acts { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+
+/* Shared */
+figure { margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); }
+[data-slot] > img { outline: 1px solid var(--photo-line); outline-offset: -1px; }
+.hero__photo > img { outline: 0; }
+.split-head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: last baseline; margin-bottom: var(--space-2xl); }
+.split-head h2 { grid-column: 1 / span 7; }
+.split-head .lead { grid-column: 8 / span 5; }
+
+/* The board: the school's figures as a lift board */
+.board { padding-top: var(--section-gap); }
+.board h2 { margin-bottom: var(--space-2xl); }
+.board__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: var(--rule-bar) solid var(--color-ink); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.board__row > div { display: flex; flex-direction: column-reverse; justify-content: flex-end; gap: var(--space-md); padding: var(--space-xl) var(--space-xl) var(--space-xl) 0; }
+.board__row > div + div { padding-left: var(--space-xl); border-left: var(--rule-hair) solid var(--color-rule); }
+.board__row dd { margin: 0; font-size: var(--text-board); }
+.board__row dt { font-size: var(--text-lead); font-weight: 500; color: var(--color-ink-2); }
+
+/* The groups: one photograph beside the ruled groups */
+.groups { padding-top: var(--section-gap-l); }
+.groups .grid { align-items: center; }
+.groups__photo { grid-column: 1 / span 6; aspect-ratio: 4 / 5; }
+.groups__photo > img { object-position: 62% 50%; }
+.groups__text { grid-column: 8 / span 5; display: grid; gap: var(--space-lg); }
+.groups__list { list-style: none; margin: var(--space-xl) 0 0; padding: 0; display: grid; }
+.groups__list li { display: grid; gap: var(--space-xs); padding-block: var(--space-lg); border-top: var(--rule-bar) solid var(--color-ink); }
+.groups__list li:last-child { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.groups__list h3 { font-size: var(--text-section); }
+.groups__list p { font-size: var(--text-lead); color: var(--color-ink-2); }
+.groups__list a { justify-self: start; margin-top: var(--space-xs); font-size: var(--text-lead); font-weight: 500; white-space: nowrap; }
+.groups__list a:hover { text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; }
+.fill { padding: 0 0.2em; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+
+/* The shout: one line on the cobalt field */
+.shout { margin-top: var(--section-gap); padding-block: var(--section-gap-s); background: var(--color-field); color: var(--color-accent-ink); }
+.shout__in { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); align-items: end; }
+.shout h2 { grid-column: 1 / span 9; max-width: none; font-size: clamp(4rem, 11vw, 10rem); line-height: 1; }
+.shout__line { grid-column: 10 / span 3; font-size: var(--text-lead); font-weight: 500; padding-bottom: var(--space-sm); }
+
+/* Steps: numerals in the condensed face over ink rules */
+.steps { padding-top: var(--section-gap); }
+.steps__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap-columns); counter-reset: step; }
+.steps__list li { display: grid; align-content: start; gap: var(--space-md); padding-top: var(--space-lg); border-top: var(--rule-bar) solid var(--color-ink); counter-increment: step; }
+.steps__list li::before { content: counter(step); font: 800 clamp(5rem, 10vw, 9rem)/0.85 var(--font-display); color: var(--color-accent); font-variant-numeric: tabular-nums; margin-bottom: var(--space-md); }
+.steps__list h3 { font-size: var(--text-3xl); }
+.steps__list p { color: var(--color-ink-2); max-width: 30ch; font-size: var(--text-lead); line-height: 1.45; }
+
+/* Booking: the form on paper-2 beside a tall photograph */
+.book { margin-top: var(--section-gap); padding-block: var(--section-gap-s); background: var(--color-paper-2); }
+.book .grid { align-items: stretch; }
+.book__main { grid-column: 1 / span 7; display: grid; gap: var(--space-2xl); align-content: center; }
+.book__text { display: grid; gap: var(--space-md); }
+.book__text h2 { font-size: var(--text-display); }
+.book__form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-lg); padding-top: var(--space-xl); border-top: var(--rule-bar) solid var(--color-ink); }
+.book__photo { grid-column: 8 / span 5; margin-block: calc(-1 * var(--section-gap-s)); min-height: 640px; }
+.book__photo > img { object-position: 64% 50%; }
+.field { display: grid; gap: var(--space-xs); }
+.field--wide { grid-column: 1 / -1; }
+.field label, .field__label { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink-2); }
+.field input { width: 100%; min-height: 52px; padding: 0 var(--space-md); border: 1px solid var(--color-ink); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-size: var(--text-md); outline: 2px solid transparent; outline-offset: -3px; }
+.field input:hover { border-color: var(--color-accent); }
+.field input:focus-visible { outline-color: var(--color-focus); }
+.field input[aria-invalid] { border-color: var(--color-focus); }
+.stepper { display: grid; grid-template-columns: 52px minmax(0, 1fr) 52px; }
+.stepper input { text-align: center; border-inline: 0; font: 800 var(--text-xl)/1 var(--font-display); font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.stepper input::-webkit-inner-spin-button, .stepper input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper__btn { min-height: 52px; border: 1px solid var(--color-ink); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font: 800 var(--text-xl)/1 var(--font-display); cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out); }
+.stepper__btn:hover { background: var(--color-paper-3); }
+.stepper__btn:active { background: var(--color-ink); color: var(--color-paper); }
+.stepper__btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; position: relative; z-index: 1; }
+.stepper__btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.book__go { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg); }
+.book__help { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+
+/* Footer: a colophon block */
+.foot { padding-block: var(--space-3xl) var(--space-2xl); }
+.foot__in { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-xl); align-items: start; }
+.foot__mark { grid-column: 1 / span 4; font: 800 var(--text-section)/1 var(--font-display); text-transform: uppercase; letter-spacing: var(--tracking-display); }
+.foot__colophon { grid-column: 5 / span 5; max-width: 46ch; font-size: var(--text-lead); color: var(--color-ink-2); }
+.foot__links { grid-column: 10 / span 3; display: grid; justify-items: start; gap: var(--space-xs); }
+.foot__links a { font-weight: 500; }
+.foot__links a:hover { text-decoration-color: var(--color-accent); text-decoration-thickness: 2px; }
+.foot__legal { grid-column: 1 / -1; padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); font-size: var(--text-sm); color: var(--color-muted); }
+.foot__credits { grid-column: 1 / -1; margin-top: calc(var(--space-xl) * -1 + var(--space-xs)); max-width: none; font-size: var(--text-sm); line-height: 1.5; color: var(--color-muted); }
+.foot__credits a { color: inherit; }
+
+@media (max-width: 60rem) {
+  .float__links { display: none; }
+  .hero { min-height: 0; display: grid; grid-template-rows: auto auto; align-items: stretch; }
+  .hero__photo { position: relative; aspect-ratio: 4 / 3; margin-top: 0; }
+  .hero h1, .hero__aside { grid-column: 1 / -1; }
+  .hero__aside { margin-top: var(--space-lg); }
+  .board__row { grid-template-columns: minmax(0, 1fr); }
+  .board__row > div, .board__row > div + div { flex-direction: row-reverse; justify-content: space-between; align-items: center; padding: var(--space-lg) 0; border-left: 0; }
+  .board__row > div + div { border-top: var(--rule-hair) solid var(--color-rule); }
+  .board__row dd { font-size: clamp(4rem, 18vw, 7rem); }
+  .board__row dt { max-width: 14ch; }
+  .groups__photo, .groups__text, .book__main, .book__photo { grid-column: 1 / -1; }
+  .groups__photo { aspect-ratio: 4 / 3; }
+  .groups__text { margin-top: var(--space-xl); }
+  .shout h2, .shout__line { grid-column: 1 / -1; }
+  .shout__line { margin-top: var(--space-lg); }
+  .split-head h2, .split-head .lead { grid-column: 1 / -1; }
+  .split-head .lead { margin-top: var(--space-md); }
+  .steps__list { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2xl); }
+  .book__photo { min-height: 0; aspect-ratio: 16 / 9; margin-block: var(--space-2xl) 0; }
+  .foot__mark, .foot__colophon, .foot__links { grid-column: 1 / -1; }
+}
+@media (max-width: 40rem) {
+  .float__bar { padding-left: var(--space-md); }
+  .float__mark { font-size: var(--text-lg); }
+  .book__form { grid-template-columns: minmax(0, 1fr); }
+}

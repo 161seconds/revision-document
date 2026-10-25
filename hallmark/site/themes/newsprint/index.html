@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Lantern: Hebden Bridge news, in one weekly email</title>
+  <meta name="description" content="The Lantern is a weekly local news newsletter for Hebden Bridge, free to its 4,800 subscribers and paid for by readers who choose to support it at 5 pounds a month.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@700&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body id="top">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="folio">
+    <div class="container">
+      <div class="folio__bar">
+        <a class="wordmark" href="#top" aria-label="The Lantern, home">The Lantern</a>
+        <p class="folio__dateline">Hebden Bridge, weekly, by email</p>
+        <nav class="folio__links" aria-label="Page">
+          <a href="#edition">The edition</a>
+          <a href="#who-pays">Who pays</a>
+          <a class="btn btn--primary btn--sm" href="#subscribe">Subscribe free</a>
+        </nav>
+      </div>
+      <hr class="rule--double">
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-head">
+      <div class="container hero__sheet">
+        <h1 id="hero-head">The week in Hebden Bridge.</h1>
+        <hr class="rule--double hero__rule">
+        <div class="hero__col">
+          <p class="hero__deck">Local news in one email, free to read, paid for by readers.</p>
+          <nav class="hero__inside" aria-label="Inside every edition">
+            <p>Inside every edition</p>
+            <ul>
+              <li><a href="#edition" data-tab="t-plan">Planning</a></li>
+              <li><a href="#edition" data-tab="t-council">The council</a></li>
+              <li><a href="#edition" data-tab="t-on">What’s on</a></li>
+              <li><a href="#edition" data-tab="t-letters">Letters</a></li>
+            </ul>
+          </nav>
+          <div class="hero__box">
+            <form class="signup signup--box" id="subscribe" data-endpoint="" novalidate>
+              <h2 class="hero__ask">Get it every week.</h2>
+              <label for="s-email">Your email address</label>
+              <input id="s-email" name="email" type="email" inputmode="email" autocomplete="email" required>
+              <button class="btn btn--primary btn--block" type="submit">Subscribe free</button>
+              <p class="signup__help" id="s-help" aria-live="polite"></p>
+            </form>
+            <p class="hero__terms">Join 4,800 readers. Free unless you choose otherwise.</p>
+          </div>
+        </div>
+        <figure class="hero__lead">
+          <div class="photo hero__photo" data-slot="lead" data-alt="Your own lead photograph of Hebden Bridge: the town in the valley, a street in the rain, the canal; black and white">
+            <img src="photos/hebden-bridge-53190059068-1920.jpg" width="2407" height="3009"
+                 alt="A narrowboat moored on the canal below a tall stone mill" style="object-position: 50% 58%" fetchpriority="high">
+          </div>
+          <figcaption>Hebden Bridge: a narrowboat on the canal, below the mill.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="edition" id="edition" aria-labelledby="edition-head">
+      <div class="container">
+        <div class="edition__head">
+          <h2 id="edition-head">A sample edition.</h2>
+          <p class="lead">Four parts, every week. Pick one.</p>
+        </div>
+        <div class="switch" data-switch>
+          <div class="tabs" role="tablist" aria-label="Parts of the edition">
+            <button role="tab" id="t-plan" aria-controls="p-plan" aria-selected="true">Planning</button>
+            <button role="tab" id="t-council" aria-controls="p-council" aria-selected="false" tabindex="-1">The council</button>
+            <button role="tab" id="t-on" aria-controls="p-on" aria-selected="false" tabindex="-1">What’s on</button>
+            <button role="tab" id="t-letters" aria-controls="p-letters" aria-selected="false" tabindex="-1">Letters</button>
+          </div>
+
+          <section class="panel" role="tabpanel" id="p-plan" aria-labelledby="t-plan">
+            <div class="panel__intro">
+              <h3 class="panel__name">Planning</h3>
+              <p>Each application, and where to comment.</p>
+            </div>
+            <ol class="items">
+              <li class="items__lead"><h4>Flats on an old mill floor</h4><p>What is proposed, and how to have your say.</p></li>
+              <li><h4>A rear extension on a terrace</h4><a href="#subscribe">Read the plans</a></li>
+              <li><h4>A dormer in the conservation area</h4><a href="#subscribe">Read the plans</a></li>
+              <li><h4>A tree to come down by the river</h4><a href="#subscribe">Read the plans</a></li>
+            </ol>
+          </section>
+
+          <section class="panel" role="tabpanel" id="p-council" aria-labelledby="t-council">
+            <div class="panel__intro">
+              <h3 class="panel__name">The council</h3>
+              <p>What was decided, and what comes up next.</p>
+            </div>
+            <ol class="items">
+              <li class="items__lead"><h4>What the meeting decided</h4><p>Each vote in one line, and the minutes for the rest.</p></li>
+              <li><h4>The next agenda, item by item</h4><a href="#subscribe">Read the agenda</a></li>
+              <li><h4>A reader’s question, answered</h4><a href="#subscribe">Read the reply</a></li>
+            </ol>
+          </section>
+
+          <section class="panel" role="tabpanel" id="p-on" aria-labelledby="t-on">
+            <div class="panel__intro">
+              <h3 class="panel__name">What’s on</h3>
+              <p>The weekend’s listings, from the town hall to the pubs.</p>
+            </div>
+            <div class="days">
+              <div><h4>Friday</h4><ul><li>A film night</li><li>Live music, in a pub</li></ul></div>
+              <div><h4>Saturday</h4><ul><li>The market</li><li>A walk up from the station</li><li>A quiz</li></ul></div>
+              <div><h4>Sunday</h4><ul><li>A talk at the library</li><li>A choir in a chapel</li></ul></div>
+            </div>
+          </section>
+
+          <section class="panel" role="tabpanel" id="p-letters" aria-labelledby="t-letters">
+            <div class="panel__intro">
+              <h3 class="panel__name">Letters</h3>
+              <p>Readers answer last week’s edition by replying to it.</p>
+            </div>
+            <ol class="items">
+              <li class="items__lead"><h4>On the mill flats</h4><p>A neighbour of the mill on parking, light and the river.</p></li>
+              <li><h4>On market day traffic</h4><a href="#subscribe">Read the letter</a></li>
+              <li><h4>On the library’s hours</h4><a href="#subscribe">Read the letter</a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="street" aria-labelledby="street-head">
+      <div class="container">
+        <div class="street__head">
+          <h2 id="street-head">Reported on foot.</h2>
+          <p class="lead">Rain, queues and notices on lampposts: the week as the town lives it.</p>
+        </div>
+        <figure class="street__wide">
+          <div class="photo" data-slot="street" data-alt="Your own photograph of a Hebden Bridge street on an ordinary day, people from behind; black and white">
+            <img src="photos/english-queue-flickr-gagilas-1920.jpg" width="3224" height="2102" loading="lazy"
+                 alt="People under umbrellas waiting at a crossing on a wet street" style="object-position: 50% 55%">
+          </div>
+          <figcaption>Waiting at the crossing, in the rain.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="front" id="who-pays" aria-labelledby="front-head">
+      <div class="container">
+        <div class="front__sheet">
+          <hr class="rule--double">
+          <h2 id="front-head">Who pays for The Lantern.</h2>
+          <p class="front__dateline">Hebden Bridge</p>
+          <div class="cols">
+            <p class="dropcap">The Lantern goes to 4,800 inboxes in Hebden Bridge every week, and nobody pays to read it.</p>
+            <p>The cost of reporting the town is carried by the readers who choose to support it, at £5 a month.</p>
+            <p>Those who do not pay get the same email, on the same day.</p>
+          </div>
+          <dl class="score">
+            <div><dt>subscribers, every week</dt><dd>4,800</dd></div>
+            <div><dt>to read every edition</dt><dd>£0</dd></div>
+            <div><dt>a month, from those who choose to</dt><dd>£5</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <section class="notice" id="support" aria-labelledby="notice-head">
+      <div class="container notice__grid">
+        <div class="notice__text">
+          <h2 id="notice-head">Read it free, or keep it lit.</h2>
+          <p class="lead">Same email, same day, either way.</p>
+        </div>
+        <form class="offer" data-endpoint="" novalidate>
+          <fieldset class="offer__choice">
+            <legend class="visually-hidden">How you take it</legend>
+            <input type="radio" name="plan" id="o-free" value="free" checked data-label="Subscribe free" data-done="The next edition goes to {email}.">
+            <label for="o-free"><span class="offer__fig">Free</span><span class="offer__line">The whole edition, every week.</span></label>
+            <input type="radio" name="plan" id="o-support" value="support" data-label="Support it at £5 a month" data-done="We will email {email} to set up your 5 pounds a month.">
+            <label for="o-support"><span class="offer__fig">£5 <small>a month</small></span><span class="offer__line">The same email, and the reporting paid for.</span></label>
+          </fieldset>
+          <label class="offer__label" for="p-email">Your email address</label>
+          <div class="offer__row">
+            <input id="p-email" name="email" type="email" inputmode="email" autocomplete="email" required>
+            <button class="btn btn--paper" type="submit" data-offer-btn>Subscribe free</button>
+          </div>
+          <p class="signup__help" id="p-help" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="imprint">
+    <div class="container">
+      <div class="imprint__grid">
+        <p class="imprint__name">The Lantern</p>
+        <p class="imprint__line">A weekly local news email for Hebden Bridge, free to read and paid for by its readers.</p>
+        <nav class="imprint__links" aria-label="Footer">
+          <a href="#subscribe">Subscribe free</a>
+          <a href="#support">Support it</a>
+          <a href="#edition">The edition</a>
+        </nav>
+      </div>
+      <p class="imprint__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Hebden_Bridge_-_53190059068.jpg">Tim Green</a> (CC BY 2.0), <a href="https://commons.wikimedia.org/wiki/File:English_queue_-_Flickr_-_gagilas.jpg">Petras Gagilas</a> (CC BY-SA 2.0), both via Wikimedia Commons. © 2026 The Lantern.</p>
+    </div>
+  </footer>
+
+  <script>
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+
+/* the edition's parts: tabs move with the arrow keys; without script every part shows in order */
+document.querySelectorAll('[data-switch]').forEach((sw) => {
+  const tabs = [...sw.querySelectorAll('[role="tab"]')];
+  const show = (t, focus) => {
+    tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
+    if (focus) t.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => show(t));
+    t.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); show(tabs[(i + d + tabs.length) % tabs.length], true); }
+      if (e.key === 'Home') { e.preventDefault(); show(tabs[0], true); }
+      if (e.key === 'End') { e.preventDefault(); show(tabs[tabs.length - 1], true); }
+    });
+  });
+  show(tabs[0]);
+  document.querySelectorAll('[data-tab]').forEach((a) => a.addEventListener('click', () => { const t = document.getElementById(a.dataset.tab); if (t) show(t); }));
+});
+
+/* the close: the button names the choice */
+document.querySelectorAll('.offer').forEach((f) => {
+  const btn = f.querySelector('[data-offer-btn]');
+  f.querySelectorAll('input[name="plan"]').forEach((r) => r.addEventListener('change', () => { btn.textContent = r.dataset.label; f.dataset.done = r.dataset.done; }));
+  f.dataset.done = f.querySelector('input[name="plan"]:checked').dataset.done;
+});
+
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const input = form.querySelector('input[type="email"]'), help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+    input.removeAttribute('aria-describedby');
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected to the mailing list yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? (form.dataset.done || 'The next edition goes to {email}.').replace('{email}', input.value.trim()) : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+  </script>
+</body>
+</html>

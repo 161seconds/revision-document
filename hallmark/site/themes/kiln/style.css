@@ -1,0 +1,176 @@
+/* Hallmark · shape: Workbench · genre: atmospheric · theme: Kiln (by request) · data: sample · v2.8 launch pass
+ * hero: Stage · sections: showcase (the firing view), statement (the warning), table (the log, peaks keyed to the ramp), showcase pair at 8 and 4, band (the price as the figure) · nav: edge-aligned, two links and a ghost pill · footer: colophon block · kiln: ember
+ * imagery: photographs, library 3, warm con8 exp-6 · product sample in the hero phone, the firing view and the log; the bisque photograph cut for the log at full width
+ * axes: dark/high-contrast-serif/warm · posture: full-palette · contrast: pass · fold: pass · v2.8.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4 · weakest: V, the library still has no kiln at temperature, so the heat stays in the product's curve, the warning set large and the ramp keys in the log */
+@import url("./tokens.css");
+@import url("./base.css");
+
+:root {
+  --nav-h: 80px;
+}
+
+/* Type */
+h1, h2, h3 { font-weight: var(--display-weight); line-height: 1.04; color: var(--color-ink); }
+.lead { color: var(--color-ink-2); }
+.label { font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); }
+.fig, .figure { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: -0.03em; font-variant-numeric: lining-nums tabular-nums; color: var(--color-ink); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Controls: an ember pill beside a ghost pill */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 var(--space-lg); border: 0; border-radius: var(--radius-pill); font: 500 var(--text-md)/1 var(--font-body); text-decoration: none; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.btn--primary { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn--primary:hover { background: var(--color-focus); }
+.btn--ghost { background: transparent; color: var(--color-ink); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule); }
+.btn--ghost:hover { box-shadow: inset 0 0 0 var(--rule-hair) var(--color-ink-2); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+a:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; border-radius: var(--radius-pill); }
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+/* Nav: edge-aligned */
+.nav__inner { display: flex; align-items: center; justify-content: space-between; min-height: var(--nav-h); }
+.nav__mark { font: var(--display-weight) var(--text-xl)/1 var(--font-display); letter-spacing: -0.01em; color: var(--color-ink); text-decoration: none; padding-block: var(--space-xs); }
+.nav__right { display: flex; align-items: center; gap: var(--space-xl); }
+.nav__right a:not(.btn) { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink-2); text-decoration: none; padding-block: var(--space-sm); }
+.nav__right a:not(.btn):hover { color: var(--color-ink); text-decoration: underline; text-underline-offset: 0.3em; }
+.nav .btn { min-height: 44px; font-size: var(--text-sm); }
+
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); }
+
+/* Photographs: close and low, a 28px frame with a cream ring */
+.photo { position: relative; margin: 0; overflow: hidden; border-radius: min(2vw, var(--radius-card)); }
+.photo > img { outline: var(--rule-hair) solid color-mix(in oklab, var(--color-ink) 8%, transparent); outline-offset: -1px; border-radius: inherit; }
+
+/* Hero: Stage, the text on five columns, the wheel and the phone on seven */
+.hero { min-height: calc(100svh - var(--nav-h)); display: grid; align-items: center; padding-block: var(--space-lg) var(--space-xl); box-sizing: border-box; }
+.hero__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--space-2xl); align-items: center; }
+.hero h1 { max-width: 14ch; }
+.hero .lead { margin-top: var(--space-lg); max-width: 30ch; }
+.hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-xl); }
+.hero__visual { position: relative; height: min(640px, calc(100svh - var(--nav-h) - var(--space-3xl))); min-height: 520px; }
+.hero__photo { position: absolute; inset: 0 0 0 18%; }
+.hero__photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* The phone's firing screen, built */
+.phone { position: absolute; left: 0; top: 50%; transform: translateY(-50%); z-index: var(--z-raised); display: grid; gap: var(--space-md); width: 300px; padding: var(--space-lg) var(--space-md) var(--space-md); border-radius: var(--radius-card); background: var(--color-paper-2); box-shadow: var(--shadow-card); box-sizing: border-box; }
+.phone__head { display: flex; justify-content: space-between; align-items: baseline; }
+.phone__title { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); }
+.phone__read { display: grid; gap: var(--space-2xs); }
+.phone__read .fig { font-size: var(--text-3xl); line-height: 1; }
+.phone__meta { display: flex; gap: var(--space-md); }
+.phone svg { width: 100%; height: auto; display: block; }
+.warn { display: grid; gap: var(--space-2xs); padding: var(--space-sm) var(--space-md); border-radius: 16px; background: var(--color-paper-3); box-shadow: inset 0 0 0 var(--rule-hair) var(--color-rule); }
+.warn b { font-weight: 500; color: var(--color-ink); }
+
+/* Chart marks: the heat ramp in steps, the plan in a hairline */
+.grid-line { stroke: var(--color-rule); stroke-width: 1; }
+.plan { fill: none; stroke: var(--color-muted); stroke-width: 1; opacity: 0.5; }
+.curve { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.curve--h3 { stroke: var(--heat-3); } .curve--h4 { stroke: var(--heat-4); } .curve--h5 { stroke: var(--heat-5); } .curve--h6 { stroke: var(--heat-6); }
+.cone-line { stroke: var(--color-ink-2); stroke-width: 1; }
+.now-dot { fill: var(--color-accent); }
+.ahead { fill: none; stroke: var(--color-ink-2); stroke-width: 1.5; stroke-linecap: round; }
+.cone-due { stroke: var(--color-ink); stroke-width: 1.5; }
+.tick { fill: var(--color-muted); font: 500 13px var(--font-body); }
+
+/* The firing, at full size */
+.firing { padding-top: var(--section-gap); }
+.head { align-items: end; }
+.head h2 { grid-column: 1 / span 7; }
+.head .lead { grid-column: 8 / -1; padding-bottom: var(--space-2xs); }
+.view { display: grid; grid-template-columns: minmax(0, 9fr) minmax(0, 3fr); column-gap: var(--space-2xl); margin: var(--space-2xl) 0 0; padding: var(--space-xl); border-radius: var(--radius-card); background: var(--color-paper-2); border: var(--rule-hair) solid var(--color-rule); }
+.view__top { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); justify-content: space-between; align-items: baseline; padding-bottom: var(--space-lg); margin-bottom: var(--space-lg); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.view__name { font: var(--display-weight) var(--text-title)/1.1 var(--font-display); color: var(--color-ink); }
+.view__chart svg { width: 100%; height: auto; display: block; }
+.view__chart .view__mini { display: none; }
+.view__side { display: grid; align-content: start; gap: var(--space-lg); }
+.view__side .fig { font-size: var(--text-3xl); line-height: 1; }
+.segs { margin: 0; padding: 0; list-style: none; border-top: var(--rule-hair) solid var(--color-rule); }
+.segs li { display: grid; gap: var(--space-3xs); padding-block: var(--space-sm); border-bottom: var(--rule-hair) solid var(--color-rule); }
+.segs li b { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink); }
+.segs li span { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* The warning, set as the statement */
+.warnline { padding-top: var(--section-gap-l); }
+.warnline__text { max-width: 60rem; font-size: clamp(3rem, 9.4vw, 9.5rem); line-height: 1; letter-spacing: -0.03em; }
+.warnline__meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-lg) var(--space-2xl); margin-top: var(--space-2xl); padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-rule); }
+.warnline__meta span { max-width: 52ch; font-size: var(--text-lead); color: var(--color-ink-2); }
+
+/* The log, across the page, each peak keyed to its step of the ramp */
+.log { padding-top: var(--section-gap); }
+.log__body { margin-top: var(--space-2xl); }
+.log__table { width: 100%; border-collapse: collapse; }
+.log__table th { padding: 0 var(--space-lg) var(--space-sm) 0; text-align: left; font-size: var(--text-sm); font-weight: 500; color: var(--color-muted); white-space: nowrap; }
+.log__table td { padding: var(--space-lg) var(--space-lg) var(--space-lg) 0; border-top: var(--rule-hair) solid var(--color-rule); color: var(--color-ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; vertical-align: middle; }
+.log__table tr:last-child td { border-bottom: var(--rule-hair) solid var(--color-rule); }
+.log__table td:first-child { color: var(--color-ink); font-weight: 500; }
+.log__table td:last-child { padding-right: 0; width: 34%; }
+.log__peak { display: inline-flex; align-items: center; gap: var(--space-sm); }
+.log__peak .fig { font-size: var(--text-xl); line-height: 1; }
+.key { display: inline-block; width: 28px; height: 6px; border-radius: var(--radius-pill); }
+.key--h4 { background: var(--heat-4); } .key--h5 { background: var(--heat-5); }
+.spark { width: 100%; height: 44px; display: block; }
+.spark polyline { fill: none; stroke: var(--color-ink-2); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+
+/* The ware: two photographs at 8 and 4 */
+.ware { padding-top: var(--section-gap-l); }
+.ware__pair { margin-top: var(--space-2xl); row-gap: var(--space-lg); }
+.ware__photo { grid-column: 1 / span 8; height: 540px; }
+.ware__photo--b { grid-column: 9 / -1; }
+.ware__photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* The offer: the price as the figure on a smoked band */
+.buy { margin-top: var(--section-gap); padding-block: var(--section-gap-s); background: var(--color-paper-2); color: var(--color-ink); box-shadow: inset 0 var(--rule-hair) 0 var(--color-rule), inset 0 calc(-1 * var(--rule-hair)) 0 var(--color-rule); }
+.buy__grid { align-items: end; }
+.buy__text { grid-column: 1 / span 7; }
+.buy__text h2 { font-size: var(--text-section); }
+.buy__price { margin-top: var(--space-md); font-size: clamp(6rem, 15vw, 13.5rem); line-height: 0.85; color: var(--color-ink); }
+.buy__side { grid-column: 9 / -1; display: grid; gap: var(--space-xl); padding-bottom: var(--space-sm); }
+.order__help { min-height: 1lh; margin-top: var(--space-sm); }
+
+/* Footer: a colophon, the wordmark beside one paragraph */
+.foot { padding-block: var(--section-gap-s) var(--space-2xl); }
+.foot__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap-columns); row-gap: var(--space-xl); align-items: start; }
+.foot__mark { grid-column: 1 / span 4; font: var(--display-weight) var(--text-3xl)/1 var(--font-display); letter-spacing: -0.02em; color: var(--color-ink); }
+.foot__colophon { grid-column: 5 / span 6; max-width: 62ch; font-size: var(--text-sm); line-height: 1.7; color: var(--color-muted); }
+.foot__colophon a { color: var(--color-ink-2); text-decoration-color: color-mix(in oklab, var(--color-muted) 50%, transparent); text-underline-offset: 0.2em; }
+.foot__colophon a:hover { color: var(--color-ink); text-decoration-color: var(--color-accent); }
+.foot__links { grid-column: 11 / -1; display: grid; gap: var(--space-xs); justify-items: start; }
+.foot__links a { font-size: var(--text-sm); font-weight: 500; color: var(--color-ink-2); text-decoration: none; padding-block: var(--space-2xs); }
+.foot__links a:hover { color: var(--color-ink); text-decoration: underline; text-underline-offset: 0.3em; }
+
+/* Between the phone and the wide screen, the head steps down to keep its two lines */
+@media (min-width: 60.01rem) and (max-width: 85rem) { .hero h1 { font-size: calc(4.6vw + 0.5rem); } }
+
+/* Tablets and phones: stack in reading order */
+@media (max-width: 60rem) {
+  .nav__right a:not(.btn) { display: none; }
+  .hero { min-height: 0; padding-block: var(--space-xl) var(--space-3xl); }
+  .hero__grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xl); }
+  .hero__visual { height: auto; min-height: 0; display: grid; }
+  .hero__photo { position: relative; inset: auto; aspect-ratio: 4 / 3; }
+  .phone { position: relative; top: auto; transform: none; width: auto; max-width: 340px; margin: calc(-1 * var(--space-3xl)) var(--space-md) 0; }
+  .head h2, .head .lead, .buy__text, .buy__side, .ware__photo, .ware__photo--b, .foot__mark, .foot__colophon, .foot__links { grid-column: 1 / -1; }
+  .head .lead, .buy__side { margin-top: var(--space-lg); }
+  .ware__photo { height: auto; aspect-ratio: 4 / 3; }
+  .foot__links { grid-auto-flow: column; justify-content: start; gap: var(--space-lg); }
+  .view { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-xl); padding: var(--space-lg); }
+  .log__table td:last-child { width: 26%; }
+}
+@media (max-width: 40rem) {
+  .log__table thead { display: none; }
+  .log__table, .log__table tbody { display: block; overflow: visible; }
+  .log__table tr { display: grid; grid-template-columns: auto auto; justify-content: start; column-gap: var(--space-md); row-gap: var(--space-2xs); padding-block: var(--space-md); border-top: var(--rule-hair) solid var(--color-rule); }
+  .log__table td { padding: 0; border: 0; }
+  .log__table tr:last-child td { border: 0; }
+  .log__table td:nth-child(1), .log__table td:last-child { grid-column: 1 / -1; }
+  .log__table td:last-child { width: auto; padding-top: var(--space-xs); }
+  .spark { width: 100%; }
+  .warnline__text { font-size: clamp(2.5rem, 11vw, 3.5rem); }
+  .view__chart > svg:first-child { display: none; }
+  .view__chart .view__mini { display: block; }
+}
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }

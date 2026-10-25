@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprout: read a little, grow a garden</title>
+<meta name="description" content="Sprout is a daily five-minute reading game for kids aged 5 to 8 that grows a little garden as they read. Free for 14 days, then 4 pounds a month.">
+<link href="https://api.fontshare.com/v2/css?f[]=chillax@500,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="container bar__inner">
+    <a class="wordmark" href="#top" aria-label="Sprout, back to the top">Sprout</a>
+    <nav class="knobs" aria-label="Main">
+      <a class="knob" href="#round">A round</a>
+      <a class="knob" href="#garden">The garden</a>
+      <a class="knob" href="#grown-ups">For grown-ups</a>
+    </nav>
+    <a class="btn btn--secondary btn--small" href="#start">Start free</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Read a little.<br> Grow a garden.</h1>
+      <p class="lead">A daily five-minute reading game for kids aged 5 to 8.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#start">Start free</a>
+        <a class="btn btn--secondary" href="#round">See a round</a>
+      </div>
+    </div>
+
+    <figure class="round-wrap">
+      <span class="sheet mat"><i></i><i></i></span>
+      <div class="card">
+        <figure class="play" data-slot="hero" data-alt="A Sprout reading round: one sentence as word tiles, the words read lit in yellow, the five-minute timer and today's plants">
+          <div class="play__top">
+            <span class="tab">Today’s round</span>
+            <span class="timer" aria-hidden="true"><span class="timer__track"><span class="timer__sand"></span></span></span>
+            <span class="timer__time"><span class="num" data-time>4:12</span> left</span>
+          </div>
+          <div class="strip">
+            <span class="sheet paper-strip"><i></i><i></i></span>
+            <p class="words" role="group" aria-label="Read the sentence: tap each word in order"><button class="tile tile--pear" type="button" data-i="0" aria-pressed="true"><span>The</span></button> <button class="tile tile--coral" type="button" data-i="1" aria-pressed="true"><span>fox</span></button> <button class="tile tile--mint" type="button" data-i="2" aria-pressed="true"><span>ran</span></button> <span class="words__br"></span> <button class="tile tile--blue" type="button" data-i="3" aria-pressed="true"><span>up</span></button> <button class="tile tile--pear" type="button" data-i="4" aria-pressed="true"><span>the</span></button> <button class="tile tile--coral" type="button" data-i="5" aria-pressed="true"><span>hill.</span></button></p>
+          </div>
+          <div class="play__bottom">
+            <p class="play__say" aria-live="polite">Six words read, six plants grown.</p>
+            <button class="btn btn--secondary btn--small" type="button" data-again hidden>Read it again</button>
+            <button class="btn btn--secondary btn--small btn--icon" type="button" data-hear hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>Hear it</button>
+          </div>
+          <figcaption class="visually-hidden">A reading round: the sentence “The fox ran up the hill.” as six word tiles; each word read grows one plant in the garden below.</figcaption>
+        </figure>
+        <span class="curl" aria-hidden="true"></span>
+      </div>
+      <p class="sticker"><span class="sticker__in"><b>14 days free</b><span>then £4<br> a month</span></span></p>
+    </figure>
+  </div>
+
+  <div class="hills" aria-hidden="true"><span class="sheet hill hill--1"><i></i><i></i></span><span class="sheet hill hill--2"><i></i><i></i></span></div>
+  <div class="ground" aria-hidden="true">
+    <div class="plot plot--full">
+        <span class="plant plant--far" style="--x: 3%; --s: 0.5; --lean: -3deg; --b: calc(100% - 54.6px)"><i class="plant__head plant__head--coral" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 8%; --s: 0.56; --lean: 2deg; --b: calc(100% - 56.4px)"><i class="plant__head plant__head--pear" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 13.5%; --s: 0.48; --lean: -1deg; --b: calc(100% - 62.3px)"><i class="plant__head plant__head--blue" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 21%; --s: 0.54; --lean: 3deg; --b: calc(100% - 62.9px)"><i class="plant__head plant__head--coral" style="--i: 3">u</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 26%; --s: 0.46; --lean: -2deg; --b: calc(100% - 63.7px)"><i class="plant__head plant__head--pear" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 38%; --s: 0.52; --lean: -3deg; --b: calc(100% - 68.5px)"><i class="plant__head plant__head--coral" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 44%; --s: 0.5; --lean: 2deg; --b: calc(100% - 64.2px)"><i class="plant__head plant__head--coral" style="--i: 2">x</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 57%; --s: 0.5; --lean: -1deg; --b: calc(100% - 52.6px)"><i class="plant__head plant__head--blue" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 63%; --s: 0.46; --lean: 3deg; --b: calc(100% - 50.0px)"><i class="plant__head plant__head--pear" style="--i: 2">*</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 72%; --s: 0.52; --lean: -2deg; --b: calc(100% - 49.0px)"><i class="plant__head plant__head--coral" style="--i: 3">u</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 80%; --s: 0.48; --lean: -3deg; --b: calc(100% - 49.6px)"><i class="plant__head plant__head--pear" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 88%; --s: 0.54; --lean: 2deg; --b: calc(100% - 54.8px)"><i class="plant__head plant__head--coral" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--far" style="--x: 95%; --s: 0.5; --lean: -1deg; --b: calc(100% - 53.9px)"><i class="plant__head plant__head--coral" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+    </div>
+    <span class="sheet soil soil--1"><i></i><i></i></span>
+    <div class="container ground__plants">
+      <div class="plot plot--old">
+        <span class="plant" style="--x: 7%; --s: 0.92; --lean: -4deg"><i class="plant__head plant__head--coral" style="--i: 4">u</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 1; --i: 2">(</i><b class="plant__seed">.</b></span>
+        <span class="plant" style="--x: 10.5%; --s: 0.72; --lean: 3deg"><i class="plant__head plant__head--pear" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant" style="--x: 14.5%; --s: 1; --lean: 2deg"><i class="plant__head plant__head--coral" style="--i: 5">*</i><span class="plant__stem"><i style="--i: 3">l</i><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 1; --i: 2">(</i><i class="leaf leaf--r" style="--at: 2; --i: 3">)</i><b class="plant__seed">.</b></span>
+        <span class="plant" style="--x: 24%; --s: 0.8; --lean: -3deg"><i class="plant__head plant__head--mint" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span>
+        <span class="plant" style="--x: 29%; --s: 0.86; --lean: 3deg"><i class="plant__head plant__head--blue" style="--i: 4">x</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span>
+        <span class="plant" style="--x: 32.5%; --s: 0.7; --lean: -2deg"><i class="plant__head plant__head--coral" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span>
+      </div>
+      <div class="plot plot--today">
+        <span class="plant plant--today" style="--x: 53.5%; --s: 0.95; --lean: -3deg" data-p="0"><i class="plant__head plant__head--pear" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--today" style="--x: 61%; --s: 1.05; --lean: 2deg" data-p="1"><i class="plant__head plant__head--coral" style="--i: 4">x</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 1; --i: 2">(</i><i class="leaf leaf--r" style="--at: 2; --i: 3">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--today" style="--x: 68.5%; --s: 0.85; --lean: -2deg" data-p="2"><i class="plant__head plant__head--mint" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 1; --i: 2">(</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--today" style="--x: 76.5%; --s: 1; --lean: 3deg" data-p="3"><i class="plant__head plant__head--blue" style="--i: 4">u</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><i class="leaf leaf--l" style="--at: 2; --i: 3">(</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--today" style="--x: 84.5%; --s: 0.88; --lean: -2deg" data-p="4"><i class="plant__head plant__head--pear" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--today" style="--x: 92.5%; --s: 1; --lean: 1deg" data-p="5"><i class="plant__head plant__head--coral" style="--i: 4">*</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 1; --i: 2">(</i><i class="leaf leaf--r" style="--at: 2; --i: 3">)</i><b class="plant__seed">.</b></span>
+      </div>
+    </div>
+    <span class="sheet soil soil--2"><i></i><i></i></span>
+    <div class="container ground__plants"><div class="plot plot--seeds"><span class="seed" style="--x: 53.5%">v</span><span class="seed" style="--x: 61%">v</span><span class="seed" style="--x: 68.5%">v</span><span class="seed" style="--x: 76.5%">v</span><span class="seed" style="--x: 84.5%">v</span><span class="seed" style="--x: 92.5%">v</span></div></div>
+    <div class="plot plot--full">
+        <span class="plant plant--front" style="--x: 2.6%; --s: 1.25; --lean: 4deg; --b: calc(26% - 36.9px)"><i class="plant__head plant__head--pear" style="--i: 4">*</i><span class="plant__stem"><i style="--i: 2">l</i><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--front" style="--x: 45.5%; --s: 1.3; --lean: -3deg; --b: calc(26% - 29.1px)"><i class="plant__head plant__head--coral" style="--i: 3">u</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--r" style="--at: 0; --i: 1">)</i><b class="plant__seed">.</b></span>
+        <span class="plant plant--front" style="--x: 96.8%; --s: 1.1; --lean: -5deg; --b: calc(26% - 31.9px)"><i class="plant__head plant__head--blue" style="--i: 2">o</i><span class="plant__stem"><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span>
+    </div>
+    <span class="sheet soil soil--3"><i></i><i></i></span>
+  </div>
+</section>
+
+<section class="moments" id="round" aria-labelledby="round-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="round-head">One round, four moments.</h2>
+      <p class="lead">What your child sees, from the first page to the last.</p>
+    </div>
+    <div class="pin">
+      <div class="pin__stage" aria-hidden="true">
+        <div class="pin__tabs"></div>
+        <div class="pin__screens"></div>
+      </div>
+      <ol class="pin__panels">
+        <li class="moment" id="m-read">
+          <figure class="scr scr--read" data-slot="moment-read" data-alt="A Sprout page: one short sentence, the word being read lit in yellow">
+            <div class="scr__in" aria-hidden="true">
+              <div class="round__top"><span class="chip">Page 2 of 6</span><span class="round__pages" style="--p: 0.33"></span><span class="round__time">4 min left</span></div>
+              <p class="round__sentence"><span>A bee</span> <mark>sat</mark> <span class="is-next">on a red hat.</span></p>
+              <div class="round__bottom"><span class="chip chip--paper">Hear it</span><span class="chip chip--ink round__next">Next page</span></div>
+            </div>
+            <figcaption class="visually-hidden">A page with the sentence “A bee sat on a red hat.”, the word “sat” lit up.</figcaption>
+          </figure>
+          <div class="moment__text">
+            <h3 data-tab="Read">Read a page</h3>
+            <p>One short sentence at a time, with the word being read lit up.</p>
+          </div>
+        </li>
+        <li class="moment" id="m-hear">
+          <figure class="scr scr--hear" data-slot="moment-hear" data-alt="A Sprout word card: a tricky word, large, with a button to hear it said">
+            <div class="scr__in" aria-hidden="true">
+              <div class="round__top"><span class="chip">Tricky word</span></div>
+              <p class="hear__word"><mark>hill</mark></p>
+              <div class="round__bottom"><span class="hear__from">from “The fox ran up the hill.”</span><span class="chip chip--ink"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>Hear it</span></div>
+            </div>
+            <figcaption class="visually-hidden">A word card showing “hill” with a button to hear it.</figcaption>
+          </figure>
+          <div class="moment__text">
+            <h3 data-tab="Hear">Hear a word</h3>
+            <p>Stuck on a word? Tap it and Sprout says it out loud.</p>
+          </div>
+        </li>
+        <li class="moment" id="m-grow">
+          <figure class="scr scr--grow" data-slot="moment-grow" data-alt="The Sprout garden after a page: today's plant growing a little">
+            <div class="scr__in" aria-hidden="true">
+              <div class="round__top"><span class="chip chip--paper">Your garden</span></div>
+              <div class="grow__card">
+                <span class="grow__label">Growing today</span>
+                <span class="grow__name">Peas</span>
+                <span class="grow grow--big" style="--g: 0.7"></span>
+              </div>
+              <div class="round__bottom"><span class="chip chip--paper">Sunflower, in bloom</span><span class="chip chip--paper">Tomato, growing</span></div>
+            </div>
+            <figcaption class="visually-hidden">The garden screen: the peas growing after a page read.</figcaption>
+          </figure>
+          <div class="moment__text">
+            <h3 data-tab="Grow">Grow a plant</h3>
+            <p>Every page they read helps today’s plant along.</p>
+          </div>
+        </li>
+        <li class="moment" id="m-stop">
+          <figure class="scr scr--stop" data-slot="moment-stop" data-alt="The end of a Sprout round: five minutes done, see you tomorrow">
+            <div class="scr__in" aria-hidden="true">
+              <div class="round__top"><span class="chip chip--line">Round done</span></div>
+              <p class="stop__title">That’s five minutes.</p>
+              <div class="round__bottom"><span class="stop__line">See you tomorrow.</span><span class="chip chip--line">Back to the garden</span></div>
+            </div>
+            <figcaption class="visually-hidden">The end of a round: “That’s five minutes. See you tomorrow.”</figcaption>
+          </figure>
+          <div class="moment__text">
+            <h3 data-tab="Stop">Stop at five</h3>
+            <p>The round ends itself at five minutes, before anyone gets tired.</p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="garden-sec" id="garden" aria-labelledby="garden-head">
+  <div class="container garden-sec__grid">
+    <div class="garden-sec__text">
+      <h2 id="garden-head">Watch the garden fill.</h2>
+      <p class="lead">Plants stay put between rounds, so there is always a reason to come back.</p>
+      <div class="seg" role="tablist" aria-label="The garden over the free days">
+        <button role="tab" id="g-t1" aria-controls="g-p1" aria-selected="true">First day</button>
+        <button role="tab" id="g-t2" aria-controls="g-p2" aria-selected="false" tabindex="-1">One week</button>
+        <button role="tab" id="g-t3" aria-controls="g-p3" aria-selected="false" tabindex="-1">Two weeks</button>
+      </div>
+    </div>
+    <div class="garden" data-slot="garden" data-kind="product" data-alt="The Sprout garden screen: the beds a child has planted by reading" data-keep>
+      <section class="garden__state" role="tabpanel" id="g-p1" aria-labelledby="g-t1" data-keep>
+        <div class="garden__top"><h3 class="garden__title">Your garden</h3><p class="garden__when">After the first round</p></div>
+        <div class="beds-wrap"><span class="sheet step step--1"><i></i><i></i></span><span class="sheet step step--2"><i></i><i></i></span><ul class="beds">
+          <li class="bed"><b>Peas</b><span>Just planted</span><span class="plant plant--mini is-seed"><span class="plant__stem"></span><b class="plant__seed">.</b></span></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+        </ul></div>
+        <p class="garden__next"><span class="chip">Tomorrow’s seed: Sunflower</span></p>
+      </section>
+      <section class="garden__state" role="tabpanel" id="g-p2" aria-labelledby="g-t2" data-keep>
+        <div class="garden__top"><h3 class="garden__title">Your garden</h3><p class="garden__when">After a week of rounds</p></div>
+        <div class="beds-wrap"><span class="sheet step step--1"><i></i><i></i></span><span class="sheet step step--2"><i></i><i></i></span><ul class="beds">
+          <li class="bed"><b>Peas</b><span>In bloom</span><span class="plant plant--mini"><i class="plant__head plant__head--coral" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Sunflower</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Tomato</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Daisy</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Carrot</b><span>Sprouting</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 2">v</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Bean</b><span>Sprouting</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 2">v</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Radish</b><span>Just planted</span><span class="plant plant--mini is-seed"><span class="plant__stem"></span><b class="plant__seed">.</b></span></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+          <li class="bed bed--empty"></li>
+        </ul></div>
+        <p class="garden__next"><span class="chip">Tomorrow’s seed: Lettuce</span></p>
+      </section>
+      <section class="garden__state" role="tabpanel" id="g-p3" aria-labelledby="g-t3" data-keep>
+        <div class="garden__top"><h3 class="garden__title">Your garden</h3><p class="garden__when">After two weeks of rounds</p></div>
+        <div class="beds-wrap"><span class="sheet step step--1"><i></i><i></i></span><span class="sheet step step--2"><i></i><i></i></span><ul class="beds">
+          <li class="bed"><b>Peas</b><span>In bloom</span><span class="plant plant--mini"><i class="plant__head plant__head--coral" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Sunflower</b><span>In bloom</span><span class="plant plant--mini"><i class="plant__head plant__head--pear" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Tomato</b><span>In bloom</span><span class="plant plant--mini"><i class="plant__head plant__head--coral" style="--i: 3">o</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Daisy</b><span>In bloom</span><span class="plant plant--mini"><i class="plant__head plant__head--coral" style="--i: 3">*</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><i class="leaf leaf--r" style="--at: 1; --i: 2">)</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Carrot</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Bean</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Radish</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Lettuce</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Poppy</b><span>Growing</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 3">T</i><span class="plant__stem"><i style="--i: 1">l</i><i style="--i: 0">l</i></span><i class="leaf leaf--l" style="--at: 0; --i: 1">(</i><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Pumpkin</b><span>Sprouting</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 2">v</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Onion</b><span>Sprouting</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 2">v</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Leek</b><span>Sprouting</span><span class="plant plant--mini"><i class="plant__head plant__head--green" style="--i: 2">v</i><span class="plant__stem"><i style="--i: 0">l</i></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Marigold</b><span>Just planted</span><span class="plant plant--mini is-seed"><span class="plant__stem"></span><b class="plant__seed">.</b></span></li>
+          <li class="bed"><b>Strawberry</b><span>Just planted</span><span class="plant plant--mini is-seed"><span class="plant__stem"></span><b class="plant__seed">.</b></span></li>
+        </ul></div>
+        <p class="garden__next"><span class="chip">Tomorrow’s seed: Sweet pea</span></p>
+      </section>
+    </div>
+  </div>
+</section>
+
+<section class="grown" id="grown-ups" aria-labelledby="grown-head">
+  <div class="grown__grid">
+    <figure class="photo grown__photo" data-slot="photo-kite" data-alt="Your child after the round, outdoors, seen from behind, no face in frame">
+      <img src="photos/child-playing-with-a-kite-1920.jpg" width="3093" height="2325" loading="lazy" sizes="(min-width: 60rem) 55vw, 100vw" alt="A boy seen from behind holding up a homemade kite against a blue sky" style="object-position: 45% 45%">
+    </figure>
+    <div class="grown__text">
+      <h2 id="grown-head">Five minutes, then off they go.</h2>
+      <dl class="facts">
+        <div><dt>Ages 5 to 8</dt><dd>Made for children who are just starting to read.</dd></div>
+        <div><dt>Once a day</dt><dd>One round, short enough for a school night.</dd></div>
+        <div><dt>14 days free</dt><dd>Then £4 a month.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="start" id="start" aria-labelledby="start-head">
+  <span class="sheet band" aria-hidden="true"><i></i><i></i></span>
+  <div class="container start__grid">
+    <div class="start__plan">
+      <h2 id="start-head">Start their first round.</h2>
+      <fieldset class="pick">
+        <legend>When do they start?</legend>
+        <div class="pick__row">
+          <label class="pill"><input type="radio" name="start" value="today" checked><span>Today</span></label>
+          <label class="pill"><input type="radio" name="start" value="sat"><span>Saturday</span></label>
+          <label class="pill"><input type="radio" name="start" value="mon"><span>Monday</span></label>
+        </div>
+      </fieldset>
+      <p class="pick__out" aria-live="polite">Free for 14 days, then <mark>£4 a month</mark>.</p>
+      <div class="start__go">
+        <button class="btn btn--primary" type="button" data-start>Start 14 free days</button>
+        <p class="start__note" aria-live="polite"></p>
+      </div>
+    </div>
+    <div class="card card--first">
+    <figure class="first" data-slot="first" data-alt="Sprout's first screen: an empty garden waiting for the first page to be read">
+      <div class="first__in" aria-hidden="true">
+        <span class="chip chip--well">Day 1</span>
+        <p class="first__title">Your garden is ready.</p>
+        <div class="first__bed"><span>Read a page to plant your first seed.</span><i class="grow" style="--g: 0"></i></div>
+        <span class="chip chip--ink chip--big">Start reading</span>
+      </div>
+      <figcaption class="visually-hidden">The first screen: an empty garden and a button to start reading.</figcaption>
+    </figure>
+    <span class="curl" aria-hidden="true"></span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="mast">
+  <div class="mast__cut">
+    <div class="container">
+      <p class="mast__word" aria-hidden="true"><span style="--r: -2.5deg; --y: 4px">S</span><span style="--r: 1.5deg; --y: -6px">p</span><span style="--r: -1deg; --y: 2px">r</span><span style="--r: 2deg; --y: -4px">o</span><span style="--r: -1.5deg; --y: 6px">u</span><span style="--r: 1deg; --y: -2px">t</span></p>
+    </div>
+    <div class="ground ground--mast" aria-hidden="true"><span class="sheet soil soil--1"><i></i><i></i></span><span class="sheet soil soil--2"><i></i><i></i></span><span class="sheet soil soil--3"><i></i><i></i></span></div>
+  </div>
+  <div class="container">
+    <div class="mast__row">
+      <p class="mast__line">A daily reading game that grows a garden.</p>
+      <nav class="mast__links" aria-label="Footer">
+        <a href="#round">A round</a>
+        <a href="#garden">The garden</a>
+        <a href="#grown-ups">For grown-ups</a>
+        <a href="#start">Start free</a>
+      </nav>
+      <p class="mast__legal">© 2026 Sprout</p>
+    </div>
+    <p class="mast__credits" data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:Child_playing_with_a_kite.jpg">Wilfredor</a> (CC0), via Wikimedia Commons</p>
+  </div>
+</footer>
+
+<script src="round.js" defer></script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+<script>
+/* The pinned round: the moments' screens are cloned onto one sticky stage on wide screens */
+(() => {
+  const pin = document.querySelector('.pin'); if (!pin) return;
+  const stage = pin.querySelector('.pin__screens'), tabs = pin.querySelector('.pin__tabs');
+  const moments = [...pin.querySelectorAll('.moment')];
+  const shots = moments.map((m) => { const c = m.querySelector('.scr').cloneNode(true); c.removeAttribute('data-slot'); c.querySelector('figcaption')?.remove(); stage.append(c); return c; });
+  const pills = moments.map((m) => { const b = document.createElement('a'); b.className = 'pin__tab'; b.href = '#' + m.id; b.tabIndex = -1; b.textContent = m.querySelector('h3').dataset.tab; tabs.append(b); return b; });
+  const set = (i) => { moments.forEach((m, k) => m.classList.toggle('is-on', k === i)); shots.forEach((s, k) => s.classList.toggle('is-on', k === i)); pills.forEach((p, k) => p.classList.toggle('is-on', k === i)); };
+  set(0);
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) set(moments.indexOf(e.target)); }), { rootMargin: '-45% 0px -45% 0px' });
+  moments.forEach((m) => io.observe(m));
+  pin.classList.add('is-pinned');
+})();
+/* The garden switcher */
+(() => {
+  const tabs = [...document.querySelectorAll('.seg [role="tab"]')]; if (!tabs.length) return;
+  const show = (t, focus) => { tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); if (focus) t.focus(); };
+  tabs.forEach((t, i) => { t.addEventListener('click', () => show(t)); t.addEventListener('keydown', (e) => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) { e.preventDefault(); show(tabs[(i + d + tabs.length) % tabs.length], true); } }); });
+  show(tabs[0]);
+})();
+/* The start day: the free days counted from the day they begin */
+(() => {
+  const out = document.querySelector('.pick__out'); if (!out) return;
+  const fmt = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  const startOf = (v) => { const d = new Date(); d.setHours(12, 0, 0, 0); const want = v === 'sat' ? 6 : v === 'mon' ? 1 : null; if (want !== null) { d.setDate(d.getDate() + (((want - d.getDay()) + 7) % 7 || 7)); } return d; };
+  const show = () => { const v = document.querySelector('input[name="start"]:checked').value; const s = startOf(v), e = new Date(s); e.setDate(e.getDate() + 14); out.innerHTML = 'Free from ' + fmt(s) + ' until <mark>' + fmt(e) + '</mark>, then £4 a month.'; };
+  document.querySelectorAll('input[name="start"]').forEach((r) => r.addEventListener('change', show)); show();
+  const go = document.querySelector('[data-start]'), note = document.querySelector('.start__note');
+  go?.addEventListener('click', () => { note.textContent = 'Not connected yet: the free trial starts here once the app is live.'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kneedle: booking, notes and invoices for physiotherapists</title>
+<meta name="description" content="Kneedle is a booking and notes app for independent physiotherapists: online booking, reminders, treatment notes and invoices in one diary.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="container nav__row">
+    <a class="wordmark" href="#top" aria-label="Kneedle, home">Kneedle</a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#jobs">How it works</a>
+      <a class="btn btn--quiet btn--small" href="#start">Set up your diary</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1>Notes done before the next patient.</h1>
+        <p class="lead">Online booking, reminders, treatment notes and invoices for physios who work alone.</p>
+        <div class="actions">
+          <a class="btn" href="#start">Set up your diary</a>
+          <a class="btn btn--quiet" href="#notes">See a note</a>
+        </div>
+      </div>
+
+      <figure class="app lifted" data-slot="hero" data-alt="Your Kneedle diary for one clinic day, with the current patient's treatment note open" role="img" aria-label="The Kneedle diary for Thursday 16 October: six appointments down the left, and the treatment note for M. Hughes, ACL rehab session 8, open on the right with an invoice drafted from it.">
+        <div class="app__bar">
+          <span class="app__mark">Kneedle</span>
+          <span class="app__tabs"><span class="tab is-on">Diary</span><span class="tab">Patients</span><span class="tab">Invoices</span></span>
+          <span class="app__date">Thursday 16 October</span>
+          <span class="ui-btn ui-btn--ink">New booking</span>
+        </div>
+        <div class="app__body">
+          <ol class="day">
+            <li class="appt"><span class="fig">09:00</span><span class="appt__who">R. Achebe<small>Ankle sprain, week 3</small></span><span class="status status--done">Done</span></li>
+            <li class="appt is-open"><span class="fig">09:45</span><span class="appt__who">M. Hughes<small>ACL rehab, session 8</small></span><span class="status status--now">In session</span></li>
+            <li class="appt"><span class="fig">10:30</span><span class="appt__who">S. Patel<small>Lower back, first visit</small></span><span class="status">Booked online</span></li>
+            <li class="appt"><span class="fig">11:15</span><span class="appt__who">J. Moreno<small>Shoulder review</small></span><span class="status">Reminded</span></li>
+            <li class="appt appt--gap"><span class="fig">12:00</span><span class="appt__who">Lunch<small>Closed to bookings</small></span></li>
+            <li class="appt"><span class="fig">13:30</span><span class="appt__who">T. Brennan<small>Runner’s knee</small></span><span class="status status--late">Unpaid</span></li>
+            <li class="appt"><span class="fig">14:15</span><span class="appt__who">L. Fontaine<small>Hip, after surgery</small></span><span class="status">Booked online</span></li>
+            <li class="appt appt--gap"><span class="fig">15:00</span><span class="appt__who">Free<small>Open on your booking page</small></span></li>
+            <li class="appt"><span class="fig">15:45</span><span class="appt__who">K. Osei<small>Neck and upper back</small></span><span class="status">Reminded</span></li>
+          </ol>
+          <div class="note">
+            <div class="note__head">
+              <p class="note__who">M. Hughes</p>
+              <p class="note__what">ACL rehab, session 8 of 12</p>
+            </div>
+            <div class="note__fields">
+            <div class="note__field">
+              <p class="note__label">Subjective</p>
+              <p class="note__text">Stairs now pain free. Some stiffness first thing, eases after ten minutes. Back to cycling twice a week.<span class="caret" aria-hidden="true"></span></p>
+            </div>
+            <div class="note__field">
+              <p class="note__label">Objective</p>
+              <dl class="measures">
+                <div><dt>Knee flexion</dt><dd><span class="fig">118°</span><small>was <span class="fig">112°</span></small></dd></div>
+                <div><dt>Knee extension</dt><dd><span class="fig">0°</span><small>was <span class="fig">−3°</span></small></dd></div>
+                <div><dt>Single leg squat</dt><dd><span class="fig">60°</span><small>was <span class="fig">45°</span></small></dd></div>
+                <div><dt>Pain</dt><dd><span class="fig">2/10</span><small>was <span class="fig">4/10</span></small></dd></div>
+              </dl>
+            </div>
+            <div class="note__field">
+              <p class="note__label">Plan</p>
+              <p class="note__text">Progress to lateral hops. Review in seven days.</p>
+            </div>
+            <div class="note__field">
+              <p class="note__label">Sent home</p>
+              <ul class="homework"><li>Step downs<span class="fig">3×10</span></li><li>Leg bridge<span class="fig">3×12</span></li></ul>
+            </div>
+            </div>
+            <div class="note__foot">
+              <span>Invoice <span class="fig">0418</span> drafted</span>
+              <span class="fig note__amount">£55.00</span>
+              <span class="ui-btn ui-btn--ink">Finish and send</span>
+            </div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="jobs" id="jobs">
+    <div class="container jobs__grid">
+      <div class="jobs__head">
+        <h2>Four jobs, one diary</h2>
+        <p class="lead">From the first booking to the last payment.</p>
+      </div>
+      <ul class="rows">
+        <li><h3>Online booking</h3><p>Patients pick a free slot in your hours, from their phone.</p></li>
+        <li><h3>Reminders</h3><p>A text the day before, so nine o’clock is never an empty couch.</p></li>
+        <li><h3>Treatment notes</h3><p>Angles and pain scores, written in the room.</p></li>
+        <li><h3>Invoices</h3><p>Finish the note and the invoice is drafted.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="seen" id="patients">
+    <div class="container">
+      <div class="head">
+        <h2>What your patients see</h2>
+        <p class="lead">Your hours on their phone, then a text the day before.</p>
+      </div>
+      <div class="bento">
+        <article class="tile tile--lead">
+          <div class="booker" data-slot="booking" data-alt="Your Kneedle booking page as a patient sees it on a phone or laptop" role="img" aria-label="A booking page for Example Physio: a week of days across the top, Tuesday 21 chosen, and the free times that day, with 10:30 picked for a 45 minute first assessment.">
+            <div class="booker__top">
+              <p class="booker__name">Example Physio</p>
+              <p class="booker__type">First assessment, 45 minutes</p>
+            </div>
+            <ol class="week">
+              <li><span>Mon</span><b class="fig">20</b></li>
+              <li class="is-on"><span>Tue</span><b class="fig">21</b></li>
+              <li><span>Wed</span><b class="fig">22</b></li>
+              <li><span>Thu</span><b class="fig">23</b></li>
+              <li class="is-off"><span>Fri</span><b class="fig">24</b></li>
+            </ol>
+            <ul class="slots">
+              <li class="fig">08:15</li><li class="fig">09:00</li><li class="fig is-on">10:30</li><li class="fig">13:30</li><li class="fig">16:00</li><li class="fig">17:15</li>
+            </ul>
+            <div class="booker__foot">
+              <span>Tuesday 21 October, 10:30</span>
+              <span class="ui-btn ui-btn--ink">Book this time</span>
+            </div>
+          </div>
+          <div class="tile__text">
+            <h3>A booking page with your hours</h3>
+            <p>Only the times you open, with your gaps between patients.</p>
+          </div>
+        </article>
+
+        <article class="tile tile--photo">
+          <figure class="photo photo--fill" data-slot="photo-runner" data-alt="A patient of yours back at their sport: running, cycling, a game">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg/1280px-Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg/960px-Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg/1280px-Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg/1920px-Human_running_gait_-_terminal_swing_to_heel_strike_%28runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon%29.jpg 1920w" sizes="(min-width: 60rem) 36vw, 100vw" width="4512" height="2960" alt="A runner's legs mid stride on a road, in long socks and race shoes" style="object-position: 40% 60%" loading="lazy">
+          </figure>
+          <p class="caption">Booked after hours, before the weekend run.</p>
+        </article>
+
+        <article class="tile tile--photo">
+          <figure class="photo photo--fill" data-slot="photo-phone" data-alt="A patient reading their appointment reminder on a phone">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg/1280px-Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg/960px-Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg/1280px-Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg/1920px-Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg 1920w" sizes="(min-width: 60rem) 36vw, 100vw" width="6016" height="4016" alt="A hand holding a phone over an open notebook and a laptop on a desk" style="object-position: 60% 45%" loading="lazy">
+          </figure>
+          <p class="caption">Confirmed between two other things.</p>
+        </article>
+
+        <article class="tile tile--sms">
+          <div class="thread" data-slot="reminder" data-alt="A reminder text from your Kneedle account, as the patient receives it" role="img" aria-label="A text message thread: a reminder from Example Physio for Tuesday at 10:30, the patient's reply C to confirm, and Kneedle's confirmation back.">
+            <p class="thread__from">Example Physio</p>
+            <p class="thread__time">Saturday <span class="fig">23:41</span></p>
+            <p class="bubble">Booked: Tuesday 21 October, <span class="fig">10:30</span>, first assessment.</p>
+            <p class="thread__time">Monday <span class="fig">10:30</span></p>
+            <p class="bubble">Hi Sam, physio tomorrow at 10:30. Wear shorts. Reply C to confirm or X to cancel.</p>
+            <p class="bubble bubble--them">C</p>
+            <p class="bubble">Thanks Sam, see you then.</p>
+            <p class="thread__time thread__time--end">Read</p>
+            <p class="thread__meta">Confirmed in your diary</p>
+          </div>
+          <div class="tile__text">
+            <h3>Reminders that get a reply</h3>
+            <p>A cancel frees the slot on your booking page.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="notes" id="notes">
+    <div class="container split">
+      <figure class="photo photo--square" data-slot="photo-session" data-alt="A treatment session in your own room: a patient mid exercise, your hands, your equipment">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Close-up_Hand_holding_dumbbell_in_gym.jpg/1280px-Close-up_Hand_holding_dumbbell_in_gym.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Close-up_Hand_holding_dumbbell_in_gym.jpg/960px-Close-up_Hand_holding_dumbbell_in_gym.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Close-up_Hand_holding_dumbbell_in_gym.jpg/1280px-Close-up_Hand_holding_dumbbell_in_gym.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Close-up_Hand_holding_dumbbell_in_gym.jpg/1920px-Close-up_Hand_holding_dumbbell_in_gym.jpg 1920w" sizes="(min-width: 60rem) 40vw, 100vw" width="4016" height="6016" alt="A hand gripping a dumbbell beside a weights bench" style="object-position: 40% 100%" loading="lazy">
+      </figure>
+      <div class="split__text">
+        <h2>Write it during the reps</h2>
+        <p class="lead">The note fills in while the patient works, not at nine at night.</p>
+        <dl class="facts">
+          <div><dt>Templates by body area</dt><dd>Knee, shoulder, back and ankle, each with its tests.</dd></div>
+          <div><dt>Last visit alongside</dt><dd>Last week’s angles sit beside today’s.</dd></div>
+          <div><dt>Locked when finished</dt><dd>A signed note can be added to, never changed.</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="paid" id="invoices">
+    <div class="container">
+      <div class="head head--split">
+        <h2>Who has paid</h2>
+        <p class="lead">Each invoice comes from a finished note, with a payment link.</p>
+      </div>
+      <div class="ledger" data-slot="invoices" data-alt="Your Kneedle invoice list for the week" role="region" aria-label="Sample invoice list">
+        <table>
+          <caption class="visually-hidden">Sample invoices for one week, with their status</caption>
+          <thead>
+            <tr><th scope="col">Invoice</th><th scope="col">Patient</th><th scope="col">Session</th><th scope="col">Date</th><th scope="col" class="r">Amount</th><th scope="col">Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="fig">0418</td><th scope="row">M. Hughes</th><td>ACL rehab, session 8</td><td class="fig">16 Oct</td><td class="fig r">£55.00</td><td><span class="status">Sent</span></td></tr>
+            <tr><td class="fig">0417</td><th scope="row">R. Achebe</th><td>Ankle sprain, week 3</td><td class="fig">16 Oct</td><td class="fig r">£55.00</td><td><span class="status status--done">Paid</span></td></tr>
+            <tr><td class="fig">0416</td><th scope="row">T. Brennan</th><td>Runner’s knee</td><td class="fig">14 Oct</td><td class="fig r">£55.00</td><td><span class="status status--late">Reminded twice</span></td></tr>
+            <tr><td class="fig">0415</td><th scope="row">S. Patel</th><td>First assessment</td><td class="fig">13 Oct</td><td class="fig r">£65.00</td><td><span class="status status--done">Paid</span></td></tr>
+            <tr><td class="fig">0414</td><th scope="row">J. Moreno</th><td>Shoulder review</td><td class="fig">10 Oct</td><td class="fig r">£55.00</td><td><span class="status status--done">Paid by insurer</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="start" id="start">
+    <div class="container start__grid">
+      <div>
+        <h2>Open next week’s diary</h2>
+        <p class="lead">Set your hours tonight and send your booking page tomorrow.</p>
+      </div>
+      <form class="signup" data-endpoint="" novalidate>
+        <label for="email">Your work email</label>
+        <div class="signup__row">
+          <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+          <button class="btn" type="submit">Set up your diary</button>
+        </div>
+        <p class="signup__help" id="email-help" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container foot__grid">
+    <p class="wordmark wordmark--foot">Kneedle</p>
+    <div class="foot__body">
+      <p class="foot__colophon">Kneedle keeps the diary, notes and invoices for physiotherapists who run their own room. Names and figures shown are samples.</p>
+      <p class="foot__links"><a href="#jobs">How it works</a> <a href="#patients">Booking and reminders</a> <a href="#notes">Treatment notes</a> <a href="#invoices">Invoices</a></p>
+      <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Human_running_gait_-_terminal_swing_to_heel_strike_(runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon).jpg">Petar Milošević</a> (CC BY-SA 4.0, Wikimedia Commons), <a href="https://commons.wikimedia.org/wiki/File:Young_businesswoman_holding_her_smartphone_in_the_home_office.jpg">Shixart1985</a> (CC BY 2.0, Wikimedia Commons), <a href="https://commons.wikimedia.org/wiki/File:Close-up_Hand_holding_dumbbell_in_gym.jpg">Nenad Stojkovic</a> (CC BY 2.0, Wikimedia Commons).</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const input = form.querySelector('input'), help = form.querySelector('[aria-live]');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const ok = input.checkValidity();
+    input.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+    fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+      .then((r) => { help.textContent = r.ok ? 'Your diary link goes to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+      .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+  });
+});
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

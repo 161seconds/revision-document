@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afterimage: an overnight render farm, billed by the frame</title>
+<meta name="description" content="A render farm for freelance 3D artists. Send a job tonight and collect every frame by morning, billed from 4p a frame.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100,400;100,500;125,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="container nav__in">
+    <a class="wordmark" href="#top" aria-label="Afterimage, home">Afterimage</a>
+    <div class="nav__end">
+      <a class="nav__link" href="#night">The night</a>
+      <a class="nav__link" href="#price">Price</a>
+      <a class="btn btn--secondary btn--nav" href="#price">Send a job</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="container hero__grid">
+    <div class="hero__text settle">
+      <h1 id="hero-head">Every frame, done by morning.</h1>
+      <p class="lead">An overnight render farm for freelance 3D artists, billed by the frame.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="#price">Send tonight’s job</a>
+        <a class="btn btn--secondary" href="#night">See a night’s run</a>
+      </div>
+    </div>
+
+    <div class="hero__visual" data-kind="product">
+      <div class="app" data-slot="hero" data-alt="Your render queue tonight: the job rendering, its current frame, the frames already finished and the jobs waiting">
+        <div class="app__bar">
+          <span class="app__mark">Afterimage</span>
+          <span class="app__tabs"><span class="app__tab is-on">Tonight</span><span class="app__tab">Done</span></span>
+          <span class="app__state">1 rendering, 2 queued</span>
+        </div>
+        <div class="app__job">
+          <figure class="frame">
+            <img class="frame__img" src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="Sample frame: a curved white tunnel lit along one wall, empty" fetchpriority="high">
+            <figcaption class="frame__tag">Frame 183, rendering</figcaption>
+          </figure>
+          <dl class="facts">
+            <div><dt>Scene</dt><dd>Tunnel, v12</dd></div>
+            <div><dt>Frames</dt><dd class="num">1 to 240</dd></div>
+            <div><dt>Size</dt><dd class="num">3840 × 2160</dd></div>
+            <div><dt>Rate</dt><dd class="num">4p a frame</dd></div>
+            <div><dt>Finishes</dt><dd class="num">about 05:50</dd></div>
+          </dl>
+        </div>
+        <div class="app__progress">
+          <div class="meter" role="progressbar" aria-label="Frames rendered" aria-valuemin="0" aria-valuemax="240" aria-valuenow="182"><span class="meter__fill"></span></div>
+          <span class="num">182 of 240 frames</span><span class="num app__cost">£7.28 so far</span>
+        </div>
+        <ol class="strip" aria-label="Frames 177 to 182, finished">
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+          <li><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt=""></li>
+        </ol>
+        <table class="queue">
+          <caption class="visually-hidden">Jobs waiting tonight</caption>
+          <tbody>
+            <tr><th scope="row">Lobby, turntable</th><td class="num">120 frames</td><td>Queued</td><td class="num">from £4.80</td></tr>
+            <tr><th scope="row">Foyer, still</th><td class="num">1 frame</td><td>Queued</td><td class="num">4p</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="rate" aria-labelledby="rate-head">
+  <div class="container rate__grid">
+    <p class="rate__fig fig" aria-hidden="true">4p</p>
+    <div class="rate__text">
+      <h2 id="rate-head">A frame costs 4p.</h2>
+      <p class="lead">Count the frames in a shot and you know the bill before you send it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="night" id="night" aria-labelledby="night-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="night-head">Send it, then sleep.</h2>
+      <p class="lead">One sample shot, 240 frames, through one night.</p>
+    </div>
+    <ol class="steps" data-kind="product">
+      <li class="step">
+        <div class="step__text"><h3>Evening</h3><p>Send the scene and see its price before it starts.</p></div>
+        <div class="app app--step" data-slot="night-1" data-alt="Your job once sent: the scene, its frames and its price before it starts">
+          <div class="job__head"><span class="job__name">Tunnel, v12</span><span class="chip">Queued</span></div>
+          <div class="frame frame--wait"><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="Sample first frame of the tunnel shot" loading="lazy"><span class="frame__tag">Frame 1, waiting</span></div>
+          <dl class="facts facts--pad">
+            <div><dt>Frames</dt><dd class="num">1 to 240</dd></div>
+            <div><dt>Price</dt><dd class="num">from £9.60</dd></div>
+          </dl>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step__text"><h3>Overnight</h3><p>The farm works through the frames while you sleep.</p></div>
+        <div class="app app--step" data-slot="night-2" data-alt="Your job mid-render: frames finished each hour and the cost so far">
+          <div class="job__head"><span class="job__name">Tunnel, v12</span><span class="chip chip--on">Rendering</span></div>
+          <div class="hours" role="img" aria-label="Sample frames finished each hour: 10, then 20, 34 and 32">
+            <span class="hours__label">Frames an hour</span>
+            <div class="hours__bars">
+              <span style="--v: 10"><b class="num">10</b><i>23:00</i></span>
+              <span style="--v: 20"><b class="num">20</b><i>00:00</i></span>
+              <span style="--v: 34"><b class="num">34</b><i>01:00</i></span>
+              <span style="--v: 32"><b class="num">32</b><i>02:00</i></span>
+            </div>
+          </div>
+          <div class="app__progress app__progress--low">
+            <div class="meter" role="progressbar" aria-label="Frames rendered" aria-valuemin="0" aria-valuemax="240" aria-valuenow="96"><span class="meter__fill meter__fill--96"></span></div>
+            <span class="num">96 of 240</span>
+          </div>
+        </div>
+      </li>
+      <li class="step">
+        <div class="step__text"><h3>Morning</h3><p>Every frame is back and ready to take.</p></div>
+        <div class="app app--step" data-slot="night-3" data-alt="Your finished job: a contact sheet of its frames, the count and the cost">
+          <div class="job__head"><span class="job__name">Tunnel, v12</span><span class="chip">Done</span></div>
+          <ol class="sheet" aria-label="Contact sheet, sample frames 1 to 240">
+            <li><span class="sheet__img"><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="" loading="lazy"></span><span class="num">1</span></li>
+            <li><span class="sheet__img"><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="" loading="lazy"></span><span class="num">60</span></li>
+            <li><span class="sheet__img"><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="" loading="lazy"></span><span class="num">120</span></li>
+            <li><span class="sheet__img"><img src="photos/kings-cross-subway-tunnel-pipette-1920.jpg" width="1920" height="1074" alt="" loading="lazy"></span><span class="num">180</span></li>
+          </ol>
+          <div class="job__foot"><span class="num">240 frames, £9.60</span><span class="btnlike">Download</span></div>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="morning" aria-labelledby="morning-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="morning-head">Waiting at breakfast.</h2>
+      <p class="lead">Play the shot through on the farm, then take the frames home.</p>
+    </div>
+    <div class="app app--player" data-kind="product" data-slot="morning" data-alt="Your finished shot in the player, on its last frame">
+      <div class="player__view"><img src="photos/symmetric-view-of-the-staircase-at-the-fullerton-hotel-singa-1920.jpg" width="1920" height="1080" alt="Sample last frame of a lobby turntable: a hotel lobby with a double staircase" loading="lazy"><span class="frame__tag">Lobby, turntable: frame 120 of 120</span></div>
+      <div class="player__bar">
+        <span class="btnlike">Play</span>
+        <div class="scrub" aria-hidden="true"><span class="scrub__fill"></span></div>
+        <span class="num">24 fps</span>
+        <span class="num">120 frames, £4.80</span>
+        <span class="btnlike">Download frames</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="why" aria-labelledby="why-head">
+  <div class="container why__grid">
+    <h2 id="why-head">Let the night do it.</h2>
+    <dl class="rows">
+      <div><dt>Your machine is yours again</dt><dd>The farm takes the render, so your workstation is free for the next shot.</dd></div>
+      <div><dt>The bill is a count</dt><dd>Frames times the rate. No machine hours to estimate.</dd></div>
+      <div><dt>The deadline is morning</dt><dd>Send in the evening; the frames are back before your day starts.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="price" id="price" aria-labelledby="price-head">
+  <div class="container price__grid">
+    <div class="price__head">
+      <h2 id="price-head">Price tonight’s shot.</h2>
+      <p class="lead">Frames times 4p, worked out before you send.</p>
+    </div>
+
+    <form class="calc" data-endpoint="" novalidate>
+      <fieldset class="seg">
+        <legend>Start from</legend>
+        <div class="seg__row">
+          <input type="radio" name="preset" id="p-still" value="still"><label for="p-still">One still</label>
+          <input type="radio" name="preset" id="p-ten" value="ten" checked><label for="p-ten">Ten seconds</label>
+          <input type="radio" name="preset" id="p-two" value="two"><label for="p-two">Two minutes</label>
+        </div>
+      </fieldset>
+      <div class="calc__fields">
+        <div class="field"><label for="len">Length in seconds</label><input class="input" id="len" name="length" type="number" inputmode="numeric" min="0" max="3600" step="1" value="10"></div>
+        <div class="field"><label for="fps">Frame rate</label><div class="select"><select class="input" id="fps" name="fps"><option value="24" selected>24 fps</option><option value="25">25 fps</option><option value="30">30 fps</option></select></div></div>
+      </div>
+      <output class="calc__out" for="len fps" aria-live="polite"><span class="calc__frames num" data-frames>240 frames</span><span class="calc__price fig" data-price>£9.60</span></output>
+      <div class="calc__send">
+        <label for="email">Email for your account</label>
+        <div class="calc__row"><input class="input" id="email" name="email" type="email" autocomplete="email" required><button class="btn btn--primary" type="submit">Send tonight’s job</button></div>
+        <p class="calc__help" id="email-help" aria-live="polite"></p>
+      </div>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__say">Good night.</p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#night">The night</a>
+        <a href="#price">Price</a>
+      </nav>
+      <p class="foot__legal">Afterimage, a render farm for freelance 3D artists.</p>
+    </div>
+    <p class="foot__credit" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Kings_Cross_Subway_Tunnel_%22Pipette%22.jpg">Colin</a> (CC&nbsp;BY-SA&nbsp;4.0), <a href="https://commons.wikimedia.org/wiki/File:Symmetric_view_of_the_staircase_at_The_Fullerton_Hotel_Singapore.jpg">Basile Morin</a> (CC&nbsp;BY-SA&nbsp;4.0), on Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+document.documentElement.classList.add('js');
+(function () {
+  var form = document.querySelector('.calc');
+  if (!form) return;
+  var len = form.querySelector('#len'), fps = form.querySelector('#fps');
+  var outF = form.querySelector('[data-frames]'), outP = form.querySelector('[data-price]');
+  var presets = { still: [0, 24], ten: [10, 24], two: [120, 25] };
+  function money(frames) { var p = frames * 4; return p < 100 ? p + 'p' : '£' + (p / 100).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function update() {
+    var s = Math.max(0, Math.min(3600, Number(len.value) || 0));
+    var frames = s === 0 ? 1 : Math.round(s * Number(fps.value));
+    outF.textContent = frames.toLocaleString('en-GB') + (frames === 1 ? ' frame, from' : ' frames, from');
+    outP.textContent = money(frames);
+  }
+  form.querySelectorAll('input[name="preset"]').forEach(function (r) {
+    r.addEventListener('change', function () { var v = presets[r.value]; len.value = v[0]; fps.value = String(v[1]); update(); });
+  });
+  [len, fps].forEach(function (el) { el.addEventListener('input', function () { form.querySelectorAll('input[name="preset"]').forEach(function (r) { r.checked = false; }); update(); }); });
+  update();
+  var email = form.querySelector('#email'), help = form.querySelector('#email-help');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ok = email.checkValidity();
+    email.toggleAttribute('aria-invalid', !ok);
+    if (!ok) { email.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; email.focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+  });
+})();
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

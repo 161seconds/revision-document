@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calder Valley Half Marathon, Sunday 19 April</title>
+<meta name="description" content="The Calder Valley Half Marathon: 13.1 miles on Sunday 19 April, 1,800 places, chip timed with every split posted live. Entry £34.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@800&family=Albert+Sans:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="container bar__in">
+    <a class="bar__mark" href="#top" aria-label="Calder Valley Half Marathon, back to the top">Calder Valley Half</a>
+    <form class="bar__find" role="search" action="#live" data-find>
+      <label class="visually-hidden" for="find">Find a runner by bib number or surname</label>
+      <input id="find" name="runner" type="search" placeholder="Find a runner: bib or surname" autocomplete="off" enterkeyhint="search">
+    </form>
+    <nav class="bar__links" aria-label="Sections">
+      <a href="#pace">Pace</a>
+      <a href="#enter">Enter</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <figure class="hero__photo" data-slot="hero" data-alt="The pack on the Calder Valley course on race morning, from behind, at road level">
+    <img src="photos/human-running-gait-terminal-swing-to-heel-strike-runner-with-1920.jpg" width="1920" height="1260" alt="A runner's legs in compression socks and racing shoes, mid stride on the road" style="object-position: 50% 70%" fetchpriority="high">
+  </figure>
+  <div class="hero__scrim" aria-hidden="true"></div>
+  <div class="container hero__in">
+    <h1 id="hero-head">Run the<br>Calder Valley</h1>
+    <p class="lead hero__lead">Sunday 19 April. Chip timed, with every split posted live.</p>
+    <div class="hero__acts">
+      <a class="btn btn--primary" href="#enter">Enter for £34</a>
+      <a class="btn btn--ghost" href="#live">Follow a runner</a>
+    </div>
+  </div>
+</section>
+
+<section class="race" id="race" aria-labelledby="race-head">
+  <div class="container">
+    <h2 id="race-head" class="visually-hidden">The race in four numbers</h2>
+    <dl class="figs">
+      <div><dt>Miles</dt><dd>13.1</dd></div>
+      <div><dt>Kilometres</dt><dd>21.1</dd></div>
+      <div><dt>Places</dt><dd>1,800</dd></div>
+      <div><dt>Entry</dt><dd>£34</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="timing" id="timing" aria-labelledby="timing-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="timing-head">Your clock starts at the mat</h2>
+      <p class="lead">Chip timing, in the order the chip reads you.</p>
+    </div>
+    <ol class="stages">
+      <li><h3>Wear the chip</h3><p>It times you, not the crowd ahead.</p></li>
+      <li><h3>Start mat</h3><p>Your clock starts as you cross it.</p></li>
+      <li class="stages__live"><h3>Splits, live</h3><p>Each split posts as you run it.</p></li>
+      <li><h3>Finish mat</h3><p>Your time stops as you cross.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="valley" id="valley" aria-labelledby="valley-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="valley-head">One Sunday in the valley</h2>
+      <p class="lead">The race runs through the West Yorkshire valley it is named for.</p>
+    </div>
+    <figure class="valley__photo" data-slot="valley" data-alt="The course road climbing through the Calder Valley, wide">
+      <img src="photos/2014-track-on-fremington-edge-1920.jpg" width="1920" height="1440" alt="A sandy track across heather moor past a lone wind-bent tree, the dale below" style="object-position: 50% 62%" loading="lazy">
+    </figure>
+  </div>
+</section>
+
+<section class="pace" id="pace" aria-labelledby="pace-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="pace-head">Every mile at your pace</h2>
+      <p class="lead">Every mile split for the time you want.</p>
+    </div>
+    <div class="planner" data-planner>
+      <div class="planner__time">
+        <label class="planner__label" for="finish">Finish time</label>
+        <output class="fig planner__out" for="finish" id="finish-out">2:00:00</output>
+        <p class="planner__pace"><span class="fig" data-pace-mile>9:09</span> a mile, <span class="fig" data-pace-km>5:41</span> a km</p>
+      </div>
+      <div class="planner__range">
+        <input type="range" id="finish" name="finish" min="65" max="210" step="1" value="120" aria-valuetext="2 hours" aria-describedby="finish-ends">
+        <p class="planner__ends" id="finish-ends"><span class="fig">1:05</span><span class="fig">3:30</span></p>
+      </div>
+      <ol class="splits" aria-label="Elapsed time at each mile">
+        <li><span>Mile 1</span><span class="fig" data-mile="1">9:09</span></li>
+        <li><span>Mile 2</span><span class="fig" data-mile="2">18:18</span></li>
+        <li><span>Mile 3</span><span class="fig" data-mile="3">27:28</span></li>
+        <li><span>Mile 4</span><span class="fig" data-mile="4">36:37</span></li>
+        <li><span>Mile 5</span><span class="fig" data-mile="5">45:46</span></li>
+        <li><span>Mile 6</span><span class="fig" data-mile="6">54:55</span></li>
+        <li><span>Mile 7</span><span class="fig" data-mile="7">1:04:05</span></li>
+        <li><span>Mile 8</span><span class="fig" data-mile="8">1:13:14</span></li>
+        <li><span>Mile 9</span><span class="fig" data-mile="9">1:22:23</span></li>
+        <li><span>Mile 10</span><span class="fig" data-mile="10">1:31:32</span></li>
+        <li><span>Mile 11</span><span class="fig" data-mile="11">1:40:41</span></li>
+        <li><span>Mile 12</span><span class="fig" data-mile="12">1:49:51</span></li>
+        <li><span>Mile 13</span><span class="fig" data-mile="13">1:59:00</span></li>
+        <li class="splits__finish"><span>Finish, 13.1</span><span class="fig" data-mile="finish">2:00:00</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="live" id="live" aria-labelledby="live-head">
+  <div class="container">
+    <div class="split-head">
+      <h2 id="live-head">Follow any of the 1,800, live</h2>
+      <p class="lead">Search a bib number or a surname.</p>
+    </div>
+    <div class="tracker" data-slot="tracker" data-alt="The live results page on race morning, following one runner">
+      <div class="tracker__top">
+        <form class="tracker__find" role="search" data-endpoint="" data-tracker novalidate>
+          <label class="visually-hidden" for="runner">Bib number or surname</label>
+          <input id="runner" name="runner" type="search" value="1042" autocomplete="off" enterkeyhint="search" aria-describedby="runner-help">
+          <button class="btn btn--secondary btn--s" type="submit">Find</button>
+          <p class="tracker__help" id="runner-help" aria-live="polite"></p>
+        </form>
+        <p class="tracker__status" role="status">Running, updated 20 seconds ago</p>
+      </div>
+      <div class="tracker__who">
+        <h3>Example Runner</h3>
+        <p>Bib <span class="fig">1042</span></p>
+      </div>
+      <dl class="tracker__figs">
+        <div><dt>Elapsed</dt><dd class="fig">1:02:14</dd></div>
+        <div><dt>Mile 7 split</dt><dd class="fig">8:41</dd></div>
+        <div><dt>Average a mile</dt><dd class="fig">8:53</dd></div>
+        <div class="tracker__proj"><dt>On course for</dt><dd class="fig">1:56:33</dd></div>
+      </dl>
+      <div class="course">
+        <p class="course__label">Mile <span class="fig">7</span> of <span class="fig">13.1</span></p>
+        <div class="course__bar" role="img" aria-label="Course progress: mile 7 of 13.1"><span class="course__done"></span></div>
+        <p class="course__ends" aria-hidden="true"><span>Start</span><span class="fig">5</span><span class="fig">10</span><span class="fig">13.1</span></p>
+      </div>
+      <table class="tracker__splits">
+        <caption class="visually-hidden">Latest splits for bib 1042</caption>
+        <thead><tr><th scope="col">Mile</th><th scope="col">Split</th><th scope="col">Elapsed</th></tr></thead>
+        <tbody>
+          <tr><td class="fig">3</td><td class="fig">8:55</td><td class="fig">26:48</td></tr>
+          <tr><td class="fig">4</td><td class="fig">9:02</td><td class="fig">35:50</td></tr>
+          <tr><td class="fig">5</td><td class="fig">8:58</td><td class="fig">44:48</td></tr>
+          <tr><td class="fig">6</td><td class="fig">8:45</td><td class="fig">53:33</td></tr>
+          <tr class="is-latest"><td class="fig">7</td><td class="fig">8:41</td><td class="fig">1:02:14</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="enter" id="enter" aria-labelledby="enter-head">
+  <div class="container grid">
+    <figure class="enter__photo" data-slot="enter" data-alt="A runner on a Calder Valley hilltop at first light, in silhouette">
+      <img src="photos/jogging-20210116-161032-1920.jpg" width="1920" height="1080" alt="A lone runner silhouetted on a hill crest against a pale sky" style="object-position: 64% 50%" loading="lazy">
+    </figure>
+    <div class="enter__text">
+      <h2 id="enter-head">Enter for £34</h2>
+      <p class="lead">1,800 places; entry closes when they are gone.</p>
+    <form class="entry" data-endpoint="" novalidate>
+      <div class="entry__field">
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required>
+      </div>
+      <div class="entry__field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+      </div>
+      <div class="entry__field entry__field--wide">
+        <label for="target">Expected finish, optional</label>
+        <select id="target" name="target">
+          <option value="">Not sure yet</option>
+          <option>Under 1:30</option>
+          <option>1:30 to 2:00</option>
+          <option>2:00 to 2:30</option>
+          <option>Over 2:30</option>
+        </select>
+      </div>
+      <div class="entry__go">
+        <button class="btn btn--primary" type="submit">Take a place</button>
+        <p class="entry__help" id="entry-help" aria-live="polite"></p>
+      </div>
+    </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__line">See you at the start mat.</p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#timing">Timing</a>
+        <a href="#pace">Pace planner</a>
+        <a href="#live">Follow a runner</a>
+        <a href="#enter">Enter</a>
+      </nav>
+      <p class="foot__legal">Calder Valley Half Marathon</p>
+    </div>
+    <p class="foot__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Human_running_gait_-_terminal_swing_to_heel_strike_(runner_with_Asics_Metaspeed_Edge_Paris_-_2024_Ljubljana_Marathon).jpg">Petar Milošević</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Jogging_20210116_161032.jpg">Ka23 13</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:2014_Track_on_Fremington_Edge.jpg">Kreuzschnabel</a> (CC BY-SA 3.0), all via Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const HALF = 13.1094, KM = 21.0975;
+  const fmt = (s) => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
+  const planner = document.querySelector('[data-planner]');
+  if (planner) {
+    const range = planner.querySelector('#finish'), out = planner.querySelector('#finish-out');
+    const update = () => {
+      const t = Number(range.value) * 60, pace = t / HALF;
+      out.textContent = fmt(t);
+      const h = Math.floor(range.value / 60), m = range.value % 60;
+      range.setAttribute('aria-valuetext', `${h} hour${h === 1 ? '' : 's'}${m ? ` ${m} minute${m === 1 ? '' : 's'}` : ''}`);
+      planner.querySelector('[data-pace-mile]').textContent = fmt(pace);
+      planner.querySelector('[data-pace-km]').textContent = fmt(t / KM);
+      planner.querySelectorAll('[data-mile]').forEach((el) => { const n = el.dataset.mile; el.textContent = fmt(n === 'finish' ? t : Number(n) * pace); });
+    };
+    range.addEventListener('input', update);
+  }
+  const tracker = document.querySelector('[data-tracker]'), runner = document.querySelector('#runner');
+  const find = document.querySelector('[data-find]');
+  if (find && runner) find.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const q = find.querySelector('input').value.trim();
+    if (q) runner.value = q;
+    document.querySelector('#live').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    runner.focus({ preventScroll: true });
+  });
+  if (tracker) tracker.addEventListener('submit', (e) => {
+    e.preventDefault();
+    tracker.querySelector('[aria-live]').textContent = 'Live results are not connected yet: this panel shows a sample runner.';
+  });
+  document.querySelectorAll('form.entry[data-endpoint]').forEach((form) => {
+    const help = form.querySelector('[aria-live]');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const bad = [...form.querySelectorAll('input[required]')].find((i) => !i.checkValidity());
+      form.querySelectorAll('input').forEach((i) => i.toggleAttribute('aria-invalid', !i.checkValidity()));
+      if (bad) { bad.setAttribute('aria-describedby', help.id); help.textContent = bad.type === 'email' ? 'That address looks incomplete. Write it as name@example.com.' : 'Add your full name as it should appear in the results.'; bad.focus(); return; }
+      if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: entries are not connected yet.'; return; }
+      fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+        .then((r) => { help.textContent = r.ok ? 'Entry received.' : 'That did not go through. Try again in a minute.'; })
+        .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+    });
+  });
+})();
+</script>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fieldbook, farm records kept from your phone</title>
+<meta name="description" content="Fieldbook keeps a small livestock farm's records: animal movements, medicines and field work logged from a phone, ready for inspection. 12 pounds a month per farm.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@600&amp;family=Red+Hat+Text:wght@400;500&amp;family=Red+Hat+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js'); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { document.documentElement.classList.add('stage'); setTimeout(() => { if (!window.__fieldbookMap) document.documentElement.classList.remove('stage'); }, 2500); } let tick = 0; addEventListener('resize', () => document.documentElement.style.setProperty('--tick', String(tick ^= 1)));</script>
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="container bar__in">
+    <a class="wordmark" href="#top" aria-label="Fieldbook, back to the top">Fieldbook</a>
+    <nav class="bar__links" aria-label="Page"><a href="#book">The book</a><a href="#day">A day</a><a href="#inspection">Inspection</a><a href="#start">Price</a></nav>
+    <div class="bar__end">
+      <p class="bar__price"><span class="num">£12</span> a month per farm</p>
+      <a class="btn btn--sm" href="#start">Open a farm book</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <div class="hero__ground" aria-hidden="true"><canvas class="hero__canvas"></canvas></div>
+    <canvas class="loupe" aria-hidden="true"></canvas>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-head">Farm records, kept at the gate.</h1>
+        <p class="lead">Movements, medicines and field work, logged on your phone, ready for inspection.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#start">Open a farm book</a>
+          <a class="btn" href="#book">See the book</a>
+        </div>
+        <p class="hero__terms"><span class="num">£12</span> a month per farm.</p>
+      </div>
+      <div class="hero__map" role="group" aria-label="Today’s entries on a sample farm map">
+        <div class="farm">
+          <svg class="route" viewBox="0 0 1250 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+            <defs><mask id="route-draw" maskUnits="userSpaceOnUse" x="0" y="0" width="1250" height="1000"><path class="route__reveal" pathLength="1" d="M525 170 C 470 210 330 280 262 346 S 180 440 162 480"/></mask></defs>
+            <path class="route__line" mask="url(#route-draw)" d="M525 170 C 470 210 330 280 262 346 S 180 440 162 480"/>
+            <circle class="route__start" cx="525" cy="170" r="6"/>
+          </svg>
+          <button class="pin" type="button" data-entry="fld" style="--u: 0.47; --v: 0.44" aria-controls="entry" aria-pressed="false"><span class="pin__dot" aria-hidden="true"></span><span class="pin__tag"><span class="num">06:10</span> Field work</span></button>
+          <button class="pin" type="button" data-entry="med" style="--u: 0.31; --v: 0.69" aria-controls="entry" aria-pressed="false"><span class="pin__dot" aria-hidden="true"></span><span class="pin__tag"><span class="num">06:55</span> Medicine</span></button>
+          <button class="pin is-on" type="button" data-entry="mov" style="--u: 0.13; --v: 0.48" aria-controls="entry" aria-pressed="true"><span class="pin__dot" aria-hidden="true"></span><span class="pin__tag"><span class="num">07:40</span> Movement</span></button>
+        </div>
+        <div class="entry hero__entry" id="entry" data-slot="demo-1" data-alt="An entry from the log, opened from its pin on the farm map" data-keep>
+          <article class="entry__page" data-entry="mov" aria-label="Movement at 07:40, sample">
+            <header class="entry__head"><span class="entry__kind"><i class="mark" data-kind="mov" aria-hidden="true"></i>Movement</span><span class="entry__date num">Thu 8 Oct</span><time class="entry__time num" datetime="2026-10-08T07:40">07:40</time></header>
+            <dl class="entry__cells">
+              <div><dt>Animals</dt><dd><span class="num">24</span> ewes</dd></div>
+              <div><dt>By</dt><dd>You</dd></div>
+              <div><dt>From</dt><dd>Hill field</dd></div>
+              <div><dt>To</dt><dd>Home paddock</dd></div>
+            </dl>
+          </article>
+          <article class="entry__page" data-entry="med" aria-label="Medicine at 06:55, sample" hidden>
+            <header class="entry__head"><span class="entry__kind"><i class="mark" data-kind="med" aria-hidden="true"></i>Medicine</span><span class="entry__date num">Thu 8 Oct</span><time class="entry__time num" datetime="2026-10-08T06:55">06:55</time></header>
+            <dl class="entry__cells">
+              <div><dt>Animal</dt><dd>Ewe <span class="num">0417</span></dd></div>
+              <div><dt>Dose</dt><dd><span class="num">10</span> ml</dd></div>
+              <div><dt>Medicine</dt><dd>Wormer</dd></div>
+              <div><dt>Batch</dt><dd class="num">B2241</dd></div>
+            </dl>
+          </article>
+          <article class="entry__page" data-entry="fld" aria-label="Field work at 06:10, sample" hidden>
+            <header class="entry__head"><span class="entry__kind"><i class="mark" data-kind="fld" aria-hidden="true"></i>Field work</span><span class="entry__date num">Thu 8 Oct</span><time class="entry__time num" datetime="2026-10-08T06:10">06:10</time></header>
+            <dl class="entry__cells">
+              <div><dt>Field</dt><dd>Long acre</dd></div>
+              <div><dt>Area</dt><dd><span class="num">3.6</span> ha</dd></div>
+              <div><dt>Job</dt><dd>Rolled</dd></div>
+              <div><dt>By</dt><dd>You</dd></div>
+            </dl>
+          </article>
+          <div class="entry__foot">
+            <button class="entry__step entry__step--prev" type="button" aria-label="Earlier entry" disabled></button>
+            <p class="entry__state"><i class="chip chip--ok" data-entry="mov">In the book</i><i class="chip chip--held" data-entry="med" hidden>Withdrawal to <span class="num">5 Nov</span></i><i class="chip chip--ok" data-entry="fld" hidden>In the book</i></p>
+            <button class="entry__step entry__step--next" type="button" aria-label="Later entry" disabled></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="book" id="book" aria-labelledby="book-head">
+    <div class="container">
+      <div class="sheet index" data-slot="demo-2" data-alt="Your farm book: every movement, medicine and field job, newest first">
+        <div class="index__top">
+          <div class="index__title">
+            <h2 id="book-head">The book</h2>
+            <p class="index__farm">Example Farm, holding <span class="num">12/345/6789</span></p>
+          </div>
+          <div class="seg" role="group" aria-label="Show entries from">
+            <button class="seg__tab" type="button" aria-pressed="true" data-log="all">All logs</button>
+            <button class="seg__tab" type="button" aria-pressed="false" data-log="mov">Movements</button>
+            <button class="seg__tab" type="button" aria-pressed="false" data-log="med">Medicines</button>
+            <button class="seg__tab" type="button" aria-pressed="false" data-log="fld">Field work</button>
+          </div>
+        </div>
+        <table class="tbl">
+          <caption class="visually-hidden">The farm book, newest first, sample entries</caption>
+          <thead><tr><th scope="col">Date</th><th scope="col">Log</th><th scope="col">Entry</th><th scope="col" class="r">Amount</th><th scope="col">Withdrawal</th><th scope="col">By</th></tr></thead>
+          <tbody>
+            <tr data-log="mov" class="is-lead"><td class="num">08 Oct <span class="t">07:40</span></td><td><i class="chip chip--kind" data-kind="mov">Movement</i></td><th scope="row">Ewes, Hill field to Home paddock</th><td class="num r">24 head</td><td></td><td>You</td></tr>
+            <tr data-log="med"><td class="num">08 Oct <span class="t">06:55</span></td><td><i class="chip chip--kind" data-kind="med">Medicine</i></td><th scope="row">Ewe <span class="num">0417</span>, wormer, batch <span class="num">B2241</span></th><td class="num r">10 ml</td><td><i class="chip chip--held">To <span class="num">05 Nov</span></i></td><td>You</td></tr>
+            <tr data-log="fld"><td class="num">08 Oct <span class="t">06:10</span></td><td><i class="chip chip--kind" data-kind="fld">Field work</i></td><th scope="row">Long acre, rolled</th><td class="num r">3.6 ha</td><td></td><td>You</td></tr>
+            <tr data-log="fld"><td class="num">06 Oct <span class="t">10:00</span></td><td><i class="chip chip--kind" data-kind="fld">Field work</i></td><th scope="row">Hill field, topped</th><td class="num r">5.2 ha</td><td></td><td>Contractor</td></tr>
+            <tr data-log="mov"><td class="num">05 Oct <span class="t">14:15</span></td><td><i class="chip chip--kind" data-kind="mov">Movement</i></td><th scope="row">Lambs, off the holding to market</th><td class="num r">30 head</td><td></td><td>Farm hand</td></tr>
+            <tr data-log="med"><td class="num">01 Oct <span class="t">08:45</span></td><td><i class="chip chip--kind" data-kind="med">Medicine</i></td><th scope="row">Lambs, vaccine, batch <span class="num">V0918</span></th><td class="num r">2 ml each</td><td><i class="chip chip--ok">Clear</i></td><td>Farm hand</td></tr>
+            <tr data-log="med"><td class="num">24 Sep <span class="t">17:05</span></td><td><i class="chip chip--kind" data-kind="med">Medicine</i></td><th scope="row">Tup <span class="num">0033</span>, antibiotic, batch <span class="num">A7730</span></th><td class="num r">5 ml</td><td><i class="chip chip--held">To <span class="num">22 Oct</span></i></td><td>Vet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="field-band" id="field" aria-labelledby="field-head">
+    <div class="field-band__pic">
+      <figure class="field-band__photo" data-slot="photo-2" data-alt="Your own fields, walls and barns">
+        <img src="photos/2014-fields-swaledale-gunnerside-1920.jpg" width="1920" height="1440" loading="lazy" decoding="async" alt="Stone field barns among drystone walls on green dale meadows" style="object-position: 60% 62%">
+      </figure>
+      <div class="container field-band__in">
+        <h2 id="field-head">Logged in the field, not later</h2>
+      </div>
+    </div>
+  </section>
+
+  <section class="day" id="day" aria-labelledby="day-head">
+    <div class="container">
+      <div class="day__head">
+        <h2 id="day-head">One day, by the hour</h2>
+        <p class="day__date">Thursday <span class="num">8 Oct</span>, Example Farm</p>
+      </div>
+      <div class="sched" role="table" aria-label="Thursday 8 October, entries by log and time, sample">
+        <div class="sched__scale" role="row" aria-hidden="true"><span class="sched__name"></span><span class="sched__hours"><span class="num" style="--t:0">05:00</span><span class="num" style="--t:2">07:00</span><span class="num" style="--t:4">09:00</span><span class="num" style="--t:6">11:00</span><span class="num" style="--t:8">13:00</span><span class="num" style="--t:10">15:00</span><span class="num" style="--t:12">17:00</span></span></div>
+        <div class="sched__row" role="row">
+          <span class="sched__name" role="rowheader">Movements</span>
+          <span class="sched__track" role="cell">
+            <span data-kind="mov" class="ev" style="--t:2.67"><time class="num" datetime="2026-10-08T07:40">07:40</time><b>Ewes to Home paddock</b><small class="num">24 head</small></span>
+          </span>
+        </div>
+        <div class="sched__row" role="row">
+          <span class="sched__name" role="rowheader">Medicines</span>
+          <span class="sched__track" role="cell">
+            <span data-kind="med" class="ev ev--med" style="--t:1.92"><time class="num" datetime="2026-10-08T06:55">06:55</time><b>Ewe <span class="num">0417</span>, wormer</b><small class="num">10 ml</small></span>
+          </span>
+        </div>
+        <div class="sched__row" role="row">
+          <span class="sched__name" role="rowheader">Field work</span>
+          <span class="sched__track" role="cell">
+            <span data-kind="fld" class="ev" style="--t:1.17"><time class="num" datetime="2026-10-08T06:10">06:10</time><b>Long acre, rolled</b><small class="num">3.6 ha</small></span>
+            <span data-kind="fld" class="ev ev--last ev--end" style="--t:10.5"><time class="num" datetime="2026-10-08T15:30">15:30</time><b>Top meadow, harrowed</b><small class="num">4.0 ha</small></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="inspect" id="inspection" aria-labelledby="inspect-head">
+    <div class="container inspect__grid">
+      <div class="inspect__text">
+        <h2 id="inspect-head">Ready when the inspector calls</h2>
+        <p class="lead">The three records an inspection reads, kept as you go.</p>
+        <dl class="logs">
+          <div><dt><i class="mark" data-kind="mov" aria-hidden="true"></i>Movements</dt><dd>Every move on or off, with the count.</dd></div>
+          <div><dt><i class="mark" data-kind="med" aria-hidden="true"></i>Medicines</dt><dd>Every dose, its batch and withdrawal.</dd></div>
+          <div><dt><i class="mark" data-kind="fld" aria-hidden="true"></i>Field work</dt><dd>Every job by field, in hectares.</dd></div>
+        </dl>
+      </div>
+      <div class="grid-page">
+        <div class="entry entry--still inspect__entry" data-slot="demo-3" data-alt="A medicine entry with its batch and withdrawal" data-keep>
+          <article class="entry__page" aria-label="Medicine entry at 17:05 on 24 September, sample">
+            <header class="entry__head"><span class="entry__kind"><i class="mark" data-kind="med" aria-hidden="true"></i>Medicine</span><span class="entry__date num">Wed 24 Sep</span><time class="entry__time num" datetime="2026-09-24T17:05">17:05</time></header>
+            <dl class="entry__cells entry__cells--six">
+              <div><dt>Animal</dt><dd>Tup <span class="num">0033</span></dd></div>
+              <div><dt>Dose</dt><dd><span class="num">5</span> ml</dd></div>
+              <div><dt>Medicine</dt><dd>Antibiotic</dd></div>
+              <div><dt>Batch</dt><dd class="num">A7730</dd></div>
+              <div><dt>Withdrawal</dt><dd><span class="num">28</span> days</dd></div>
+              <div><dt>Given by</dt><dd>Vet</dd></div>
+            </dl>
+            <p class="entry__state"><i class="chip chip--held">Withdrawal to <span class="num">22 Oct</span></i></p>
+          </article>
+          <div class="entry__foot entry__foot--save"><span class="entry__save">Save to the book</span></div>
+        </div>
+        <figure class="doc" data-slot="demo-4" data-alt="The inspection record, exported and folded" data-keep>
+          <div class="doc__sheet">
+            <span class="doc__crease" style="top: 33.33%" aria-hidden="true"></span><span class="doc__crease" style="top: 66.67%" aria-hidden="true"></span>
+            <div class="doc__top">
+              <p class="doc__title">Inspection record</p>
+              <p class="doc__farm">Example Farm, holding <span class="num">12/345/6789</span></p>
+            </div>
+            <p class="doc__sub">Medicines</p>
+            <table class="doc__tbl">
+              <caption class="visually-hidden">Medicines given, sample</caption>
+              <thead><tr><th scope="col">Date</th><th scope="col">Animal</th><th scope="col">Dose</th><th scope="col">Batch</th><th scope="col">Clear</th></tr></thead>
+              <tbody>
+                <tr><td class="num">08 Oct</td><td class="num">Ewe 0417</td><td class="num">10 ml</td><td class="num">B2241</td><td class="num">05 Nov</td></tr>
+                <tr><td class="num">01 Oct</td><td>Lambs</td><td class="num">2 ml</td><td class="num">V0918</td><td class="num">01 Oct</td></tr>
+                <tr><td class="num">24 Sep</td><td class="num">Tup 0033</td><td class="num">5 ml</td><td class="num">A7730</td><td class="num">22 Oct</td></tr>
+              </tbody>
+            </table>
+            <p class="doc__sub">Movements</p>
+            <table class="doc__tbl">
+              <caption class="visually-hidden">Movements, sample</caption>
+              <tbody>
+                <tr><td class="num">08 Oct</td><td>Ewes, Hill field to Home paddock</td><td class="num r">24</td></tr>
+              </tbody>
+            </table>
+            <p class="doc__sub">Field work</p>
+            <table class="doc__tbl">
+              <caption class="visually-hidden">Field work, sample</caption>
+              <tbody>
+                <tr><td class="num">08 Oct</td><td>Long acre, rolled</td><td class="num r">3.6 ha</td></tr>
+                <tr><td class="num">06 Oct</td><td>Hill field, topped</td><td class="num r">5.2 ha</td></tr>
+              </tbody>
+            </table>
+            <p class="doc__foot"><i class="chip chip--ok">Inspection ready</i><span class="num">08 Oct 08:02</span></p>
+          </div>
+          <figcaption class="visually-hidden">The inspection record as exported: medicines and movements for Example Farm, sample entries.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="band offer" id="start" aria-labelledby="start-head">
+    <canvas class="band__map" aria-hidden="true"></canvas>
+    <div class="container band__grid">
+      <div class="band__text">
+        <h2 id="start-head">One price, the whole book</h2>
+        <p class="lead">For one farm, from the first job of the day.</p>
+      </div>
+      <p class="band__pin" aria-hidden="true"><span class="pin__dot"></span><span class="pin__tag">Your first entry</span></p>
+      <div class="sheet offer__sheet">
+        <div class="offer__bill">
+        <ol class="bill">
+          <li><span>Movement log</span><span>Included</span></li>
+          <li><span>Medicine log</span><span>Included</span></li>
+          <li><span>Field work log</span><span>Included</span></li>
+          <li><span>Ready for inspection</span><span>Included</span></li>
+        </ol>
+        <div class="offer__foot">
+          <p class="offer__price"><b>£12</b><span>a month, per farm</span></p>
+        </div>
+        </div>
+      <form class="open" data-endpoint="" novalidate aria-labelledby="open-head">
+        <p class="open__head" id="open-head">Your farm’s book</p>
+        <div class="field"><label for="farm">Farm name</label><input id="farm" name="farm" type="text" autocomplete="organization" required></div>
+        <div class="field"><label for="cph">Holding number</label><input class="num" id="cph" name="cph" type="text" inputmode="numeric" placeholder="12/345/6789" pattern="[0-9]{2}/[0-9]{3}/[0-9]{4}" required></div>
+        <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+        <button class="btn btn--primary" type="submit">Open a farm book</button>
+        <p class="open__help" id="open-help" aria-live="polite"></p>
+      </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="close">
+  <div class="container">
+    <p class="close__line">The book is done before you’re back indoors.</p>
+    <div class="close__row">
+      <nav class="close__links" aria-label="Footer"><a href="#book">The book</a><a href="#day">A day</a><a href="#inspection">Inspection</a><a href="#start">Price</a></nav>
+      <p class="close__legal">© 2026 Fieldbook. Records for small livestock farms.</p>
+    </div>
+    <p class="close__credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Swaledale_Sheep,_Lake_District,_England_-_June_2009.jpg">Diliff</a> (CC BY-SA 3.0), <a href="https://commons.wikimedia.org/wiki/File:2014_Fields_Swaledale_Gunnerside.jpg">Kreuzschnabel</a> (CC BY-SA 3.0), both via Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script src="map.js" defer></script>
+<script>
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+  const help = form.querySelector('[aria-live]');
+  const say = { farm: 'Add the name of your farm.', cph: 'Write the holding number as 12/345/6789.', email: 'That address looks incomplete. Write it as name@example.com.' };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const bad = [...form.querySelectorAll('input')].filter((i) => { const ok = i.checkValidity(); i.toggleAttribute('aria-invalid', !ok); if (!ok) i.setAttribute('aria-describedby', help.id); else i.removeAttribute('aria-describedby'); return !ok; });
+    if (bad.length) { help.textContent = say[bad[0].name]; bad[0].focus(); return; }
+    if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+  });
+});
+(() => {
+  const btns = [...document.querySelectorAll('[data-log][aria-pressed]')];
+  const rows = [...document.querySelectorAll('tr[data-log]')];
+  btns.forEach((b) => b.addEventListener('click', () => {
+    btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    rows.forEach((r) => { r.hidden = b.dataset.log !== 'all' && r.dataset.log !== b.dataset.log; });
+  }));
+})();
+</script>
+</body>
+</html>

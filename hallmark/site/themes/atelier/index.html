@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maison Orla, a fragrance atelier in Ghent</title>
+<meta name="description" content="Maison Orla makes four scents in Ghent, each in batches of 300 bottles. Visits by appointment, Tuesday to Saturday.">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://api.fontshare.com/v2/css?f[]=sentient@300,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the atelier</a>
+
+<div class="air" aria-hidden="true"><canvas class="air__field" data-air></canvas></div>
+
+<header class="mast">
+  <div class="container mast__in">
+    <nav class="mast__start" aria-label="Sections">
+      <ul>
+        <li><a href="#four">The four</a></li>
+        <li><a href="#room">The room</a></li>
+      </ul>
+    </nav>
+    <a class="wordmark" href="#top" aria-label="Maison Orla, back to the top">Maison Orla</a>
+    <a class="btn btn--nav mast__end" href="#visit">Book a visit</a>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-title" data-air-zone>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-title">Four scents, made in Ghent.</h1>
+        <p class="lead">Each made in batches of 300&nbsp;bottles, and smelled by&nbsp;appointment.</p>
+        <div class="actions">
+          <a class="btn" href="#visit">Book a visit</a>
+          <p class="actions__days">Tuesday to Saturday</p>
+        </div>
+      </div>
+
+      <div class="hero__art">
+        <figure class="hero__print">
+          <div class="photo hero__photo" data-slot="hero" data-alt="One of the four bottles on stone or plaster, in the atelier's daylight">
+            <img src="photos/perfume-glass-bottle-1920.jpg" width="1920" height="1440" fetchpriority="high" style="object-position: 49% 62%"
+                 alt="A ribbed glass perfume bottle with a black cap on a pale wooden shelf against a limewashed wall">
+          </div>
+          <figcaption class="edition">
+            <span class="edition__no" aria-hidden="true"><span class="edition__blank"></span>/300</span>
+            <span class="visually-hidden">One bottle of 300 in a batch.</span>
+            <span class="edition__by">Maison Orla, Ghent</span>
+          </figcaption>
+        </figure>
+
+        <div class="fan" data-plume=".blotter__stain" data-plume-r="360" role="group" aria-label="The four scents on blotters; choose one to scent the air">
+          <button class="blotter" type="button" data-scent="1" aria-pressed="false" style="--i: 0">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 1</span>Dog rose</span></span>
+          </button>
+          <button class="blotter" type="button" data-scent="2" aria-pressed="false" style="--i: 1">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 2</span>Rosemary</span></span>
+          </button>
+          <button class="blotter" type="button" data-scent="3" aria-pressed="false" style="--i: 2">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 3</span>Clove</span></span>
+          </button>
+          <button class="blotter" type="button" data-scent="4" aria-pressed="false" style="--i: 3">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 4</span>Eucalyptus</span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="four" id="four" aria-labelledby="four-title" data-air-zone>
+    <div class="container">
+      <div class="head-split">
+        <h2 id="four-title">The four scents</h2>
+        <p class="lead">One scent to a batch. Smell them side by side on a&nbsp;visit.</p>
+      </div>
+      <div class="switch" data-switch>
+        <div class="rack" data-plume="[aria-selected=&quot;true&quot;] .blotter__stain" data-plume-end="bottom" data-plume-r="240" data-plume-s="0.8" role="tablist" aria-label="The four scents">
+          <button class="blotter blotter--tall" role="tab" id="t1" data-scent="1" aria-controls="s1" aria-selected="true">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 1</span>Dog rose</span></span>
+          </button>
+          <button class="blotter blotter--tall" role="tab" id="t2" data-scent="2" aria-controls="s2" aria-selected="false" tabindex="-1">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 2</span>Rosemary</span></span>
+          </button>
+          <button class="blotter blotter--tall" role="tab" id="t3" data-scent="3" aria-controls="s3" aria-selected="false" tabindex="-1">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 3</span>Clove</span></span>
+          </button>
+          <button class="blotter blotter--tall" role="tab" id="t4" data-scent="4" aria-controls="s4" aria-selected="false" tabindex="-1">
+            <span class="blotter__paper"><span class="blotter__stain"></span><span class="blotter__name"><span class="blotter__no">No. 4</span>Eucalyptus</span></span>
+          </button>
+        </div>
+
+        <div class="scent" role="tabpanel" id="s1" aria-labelledby="t1">
+          <figure class="photo scent__photo" data-slot="scent-1" data-alt="The first scent, or what it is made from, in daylight">
+            <img src="photos/rosa-canina-focus-stacked-20220522-rm-123334-1920.jpg" width="1920" height="1440" loading="lazy" decoding="async" style="object-position: 50% 45%"
+                 alt="A single pale pink dog rose with gold stamens against a dark green ground">
+          </figure>
+          <div class="scent__text">
+            <p class="scent__no">No. 1</p>
+            <h3>Dog rose</h3>
+            <p>Petal and green stem, kept quiet.</p>
+            <a class="textlink" href="#visit">Smell it on a visit</a>
+          </div>
+        </div>
+
+        <div class="scent" role="tabpanel" id="s2" aria-labelledby="t2">
+          <figure class="photo scent__photo" data-slot="scent-2" data-alt="The second scent, or what it is made from, in daylight">
+            <img src="photos/rosemary-oil-in-a-bottle-and-rosemary-herb-1920.jpg" width="1920" height="1280" loading="lazy" decoding="async" style="object-position: 50% 60%"
+                 alt="An unlabelled amber dropper bottle among rosemary sprigs on a wooden table">
+          </figure>
+          <div class="scent__text">
+            <p class="scent__no">No. 2</p>
+            <h3>Rosemary</h3>
+            <p>The herb, bruised, and a little wood.</p>
+            <a class="textlink" href="#visit">Smell it on a visit</a>
+          </div>
+        </div>
+
+        <div class="scent" role="tabpanel" id="s3" aria-labelledby="t3">
+          <figure class="photo scent__photo" data-slot="scent-3" data-alt="The third scent, or what it is made from, in daylight">
+            <img src="photos/gewuerze-004-2024-08-10-1920.jpg" width="1920" height="1295" loading="lazy" decoding="async" style="object-position: 50% 50%"
+                 alt="Star anise, cinnamon sticks and cloves scattered on a white ground">
+          </figure>
+          <div class="scent__text">
+            <p class="scent__no">No. 3</p>
+            <h3>Clove</h3>
+            <p>Clove and cinnamon bark, dry and warm.</p>
+            <a class="textlink" href="#visit">Smell it on a visit</a>
+          </div>
+        </div>
+
+        <div class="scent" role="tabpanel" id="s4" aria-labelledby="t4">
+          <figure class="photo scent__photo" data-slot="scent-4" data-alt="The fourth scent, or what it is made from, in daylight">
+            <img src="photos/eucalypt-oils-1-1920.jpg" width="1920" height="1440" loading="lazy" decoding="async" style="object-position: 50% 58%"
+                 alt="Rows of tall glass cylinders holding amber and gold oils on a white bench">
+          </figure>
+          <div class="scent__text">
+            <p class="scent__no">No. 4</p>
+            <h3>Eucalyptus</h3>
+            <p>Cool leaf over amber oil.</p>
+            <a class="textlink" href="#visit">Smell it on a visit</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="entry" aria-labelledby="entry-title">
+    <div class="container entry__grid">
+      <h2 id="entry-title" class="visually-hidden">How a batch is made</h2>
+      <p class="statement">Made three hundred bottles at a time, for people who buy fragrance&nbsp;slowly.</p>
+      <div class="entry__foot">
+        <p class="edition edition--line" aria-hidden="true"><span class="edition__no"><span class="edition__blank"></span>/300</span><span class="edition__by">One batch, one scent</span></p>
+        <p class="dropcap">A batch is one making of one scent, so every bottle in it is the same. The next scent waits until the bench is&nbsp;clear.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="room" id="room" aria-labelledby="room-title">
+    <div class="container room__grid">
+      <figure class="room__photo">
+        <div class="photo room__slot" data-slot="room" data-alt="The atelier's room in daylight, where visitors sit with the four">
+          <img src="photos/lobby-lounge-of-amantaka-suite-amantaka-luxury-resort-hotel--1920.jpg" width="1920" height="1280" loading="lazy" decoding="async" style="object-position: 62% 66%"
+               alt="A quiet room with a teak daybed, a cane armchair and tall shuttered doors">
+        </div>
+        <figcaption class="label"><b>The room</b>In the atelier, Ghent</figcaption>
+      </figure>
+      <div class="room__text">
+        <h2 id="room-title">A room for choosing</h2>
+        <p class="lead">By appointment, so the room is yours while you&nbsp;choose.</p>
+        <ol class="steps">
+          <li><h3>Ask for a day</h3><p>Any day from Tuesday to Saturday.</p></li>
+          <li><h3>Hear back</h3><p>The reply names the hour and the&nbsp;street.</p></li>
+          <li><h3>Smell all four</h3><p>Side by side, with nobody waiting behind&nbsp;you.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="visit" id="visit" aria-labelledby="visit-title" data-air-zone>
+    <div class="container visit__grid">
+      <div class="visit__info">
+        <h2 id="visit-title">Book a visit</h2>
+        <p class="lead">Tuesday to Saturday, by appointment. The street comes with the&nbsp;reply.</p>
+        <table class="timetable">
+          <caption class="visually-hidden">Visiting days</caption>
+          <tbody>
+            <tr class="off"><th scope="row">Monday</th><td>No visits</td></tr>
+            <tr data-row="Tuesday"><th scope="row">Tuesday</th><td>By appointment</td></tr>
+            <tr data-row="Wednesday"><th scope="row">Wednesday</th><td>By appointment</td></tr>
+            <tr data-row="Thursday"><th scope="row">Thursday</th><td>By appointment</td></tr>
+            <tr data-row="Friday"><th scope="row">Friday</th><td>By appointment</td></tr>
+            <tr data-row="Saturday"><th scope="row">Saturday</th><td>By appointment</td></tr>
+            <tr class="off"><th scope="row">Sunday</th><td>No visits</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invite">
+        <div class="invite__strips" data-plume=".blotter__stain" data-plume-r="260" data-plume-s="0.85" aria-hidden="true">
+          <span class="blotter blotter--strip" data-scent="1" style="--i: 0"><span class="blotter__paper"><span class="blotter__stain"></span></span></span>
+          <span class="blotter blotter--strip" data-scent="2" style="--i: 1"><span class="blotter__paper"><span class="blotter__stain"></span></span></span>
+          <span class="blotter blotter--strip" data-scent="3" style="--i: 2"><span class="blotter__paper"><span class="blotter__stain"></span></span></span>
+          <span class="blotter blotter--strip" data-scent="4" style="--i: 3"><span class="blotter__paper"><span class="blotter__stain"></span></span></span>
+        </div>
+        <form class="card" data-endpoint="" novalidate aria-labelledby="card-title">
+          <p class="card__house">Maison Orla</p>
+          <p class="card__title" id="card-title">An hour with the four</p>
+
+          <fieldset class="days">
+            <legend>Day</legend>
+            <div class="days__row">
+              <input type="radio" name="day" id="day-tuesday" value="Tuesday" checked><label for="day-tuesday">Tue<span class="visually-hidden">sday</span></label>
+              <input type="radio" name="day" id="day-wednesday" value="Wednesday"><label for="day-wednesday">Wed<span class="visually-hidden">nesday</span></label>
+              <input type="radio" name="day" id="day-thursday" value="Thursday"><label for="day-thursday">Thu<span class="visually-hidden">rsday</span></label>
+              <input type="radio" name="day" id="day-friday" value="Friday"><label for="day-friday">Fri<span class="visually-hidden">day</span></label>
+              <input type="radio" name="day" id="day-saturday" value="Saturday"><label for="day-saturday">Sat<span class="visually-hidden">urday</span></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="hours">
+            <legend>Hour <span class="hours__note">sample hours</span></legend>
+            <div class="hours__row">
+              <input type="radio" name="hour" id="h-1030" value="10:30"><label for="h-1030">10:30</label>
+              <input type="radio" name="hour" id="h-1200" value="12:00"><label for="h-1200">12:00</label>
+              <input type="radio" name="hour" id="h-1400" value="14:00" checked><label for="h-1400">14:00</label>
+              <input type="radio" name="hour" id="h-1530" value="15:30"><label for="h-1530">15:30</label>
+              <input type="radio" name="hour" id="h-1700" value="17:00"><label for="h-1700">17:00</label>
+            </div>
+          </fieldset>
+
+          <div class="lines">
+            <div class="line">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" autocomplete="name" required aria-required="true">
+            </div>
+            <div class="line">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required aria-required="true">
+            </div>
+            <div class="line">
+              <label for="note">Note</label>
+              <input id="note" name="note" type="text" autocomplete="off" aria-describedby="note-hint"><span class="line__hint" id="note-hint">If you like</span>
+            </div>
+          </div>
+
+          <div class="send">
+            <button class="btn" type="submit"><span>Ask for <span data-day-out>Tuesday</span>, <span data-hour-out>14:00</span></span></button>
+            <p class="help" id="form-help" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container foot__in">
+    <p class="foot__line">Four scents, and the time to choose&nbsp;one.</p>
+    <div class="foot__base">
+      <p class="foot__name">Maison Orla<br><span>Fragrance atelier, Ghent</span></p>
+      <nav aria-label="Footer">
+        <ul>
+          <li><a href="#four">The four</a></li>
+          <li><a href="#room">The room</a></li>
+          <li><a href="#visit">Book a visit</a></li>
+        </ul>
+      </nav>
+      <p class="legal">© 2026 Maison Orla</p>
+    </div>
+    <p class="credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Perfume_glass_bottle.jpg">Santeri Viinamäki</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Rosa_canina_focus_stacked-20220522-RM-123334.jpg">Ermell</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Rosemary_Oil_in_a_bottle_and_rosemary_herb.jpg">formulatehealth</a> (CC BY 2.0), <a href="https://commons.wikimedia.org/wiki/File:Gewuerze_004_2024_08_10.jpg">Friedrich Haag</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Eucalypt_oils_1.jpg">Mx. Granger</a> (CC0), <a href="https://commons.wikimedia.org/wiki/File:Lobby_lounge_of_Amantaka_Suite_Amantaka_luxury_Resort_%26_Hotel_Luang_Prabang_Laos.jpg">Basile Morin</a> (CC BY-SA 4.0), all via Wikimedia Commons.</p>
+  </div>
+</footer>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+<script src="air.js"></script>
+<script src="page.js"></script>
+</body>
+</html>

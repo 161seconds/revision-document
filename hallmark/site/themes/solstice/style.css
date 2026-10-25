@@ -1,0 +1,120 @@
+/* Hallmark · shape: Midsummer (custom: the bottle standing in a setting sun over a dark field, the year from blossom to bottle, the run on a hanging tag, three evening photographs in a row, the order with a quantity) · genre: editorial · theme: Solstice (by request)
+ * hero: Stage, the head left, the bottle centred in the sun, the offer right · nav: split, links left, the name centred, the place and the order right · footer: the name over the credits on dusk · imagery: four library photographs, one generated object with its label set in type · signature: the low sun behind the bottle, its glow travelling the page
+ * axes: light/high-contrast-serif/warm · posture: committed · contrast: pass · fold: pass · v2.7.0 */
+/* Hallmark · waive 77 · the run sits on one hanging tag, 760px, five ruled rows under a two-line head · a bottle tag is sized like a tag; stretched to ten columns it stops reading as the tag tied to the bottle */
+@import url("tokens.css");
+@import url("base.css");
+
+h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: var(--tracking-display); }
+.skip { position: absolute; left: var(--space-md); top: -100px; z-index: var(--z-modal); padding: var(--space-sm) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus { top: var(--space-md); }
+.lead { color: var(--color-ink-2); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 var(--space-xl); border: 0; border-radius: var(--radius-pill); font: 600 0.9375rem/1 var(--font-outlier); letter-spacing: 0.01em; text-decoration: none; cursor: pointer; transition: transform var(--dur-short) var(--ease-out), box-shadow var(--dur-short) var(--ease-out); }
+.btn--sun { background: var(--color-accent); color: var(--color-accent-ink); box-shadow: 0 10px 26px -12px var(--color-accent); }
+.btn--sun:hover { transform: translateY(-1px); box-shadow: 0 16px 34px -12px var(--color-accent); }
+.btn:active { transform: scale(0.97); }
+.btn:disabled, .qty__step button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn--sm { min-height: 40px; padding: 0 var(--space-lg); font-size: var(--text-sm); }
+.link { display: inline-flex; align-items: center; min-height: 48px; font: 600 0.9375rem/1 var(--font-outlier); color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-gold); text-decoration-thickness: 2px; text-underline-offset: 0.35em; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg); margin-top: var(--space-xl); }
+
+/* nav */
+.bar { position: absolute; inset: 0 0 auto; z-index: var(--z-sticky-nav); }
+.bar__in { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 88px; }
+.bar__links { display: flex; gap: var(--space-xl); }
+.bar__links a, .bar__place { font: 500 var(--text-sm)/1 var(--font-body); color: var(--color-ink-2); text-decoration: none; }
+.bar__links a:hover { color: var(--color-accent); }
+.bar__mark { font: 400 1.75rem/1 var(--font-display); color: var(--color-ink); text-decoration: none; white-space: nowrap; }
+.bar__end { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-xl); }
+
+/* hero: the bottle in a setting sun */
+.hero { position: relative; min-height: max(100svh, 780px); display: grid; align-items: end; overflow: clip; isolation: isolate; background: linear-gradient(180deg, var(--color-paper) 0%, var(--color-dusk-1) 46%, var(--color-dusk-2) 70%); }
+.sky { position: absolute; inset: 0; z-index: -2; }
+/* the low sun is part of the sky layer, a glow behind the bottle, not a picture of its own */
+.sky::before { content: ""; position: absolute; left: 50%; top: 62%; width: min(56vw, 760px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(closest-side, var(--color-sun-core), var(--color-sun) 55%, transparent 72%); }
+.sky__glow { position: absolute; left: 50%; top: 62%; width: 120vw; height: 60%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(closest-side, var(--c-solstice-1), transparent); }
+.hero__land { position: absolute; left: 0; right: 0; bottom: 0; height: 24%; z-index: -1; background: linear-gradient(180deg, var(--color-field), var(--color-field-2)); clip-path: polygon(0 32%, 14% 22%, 30% 30%, 46% 18%, 62% 26%, 78% 14%, 100% 24%, 100% 100%, 0 100%); }
+.hero__in { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap-columns); align-items: end; padding-block: 120px 0; }
+.hero__text { grid-column: 1 / span 4; align-self: center; padding-bottom: 12vh; }
+.hero h1 { font-size: clamp(3rem, 4vw + 0.5rem, 4.25rem); line-height: 0.98; max-width: 10ch; }
+.hero__bottle { grid-column: 5 / span 4; position: relative; justify-self: center; height: min(80svh, 720px); aspect-ratio: 1024 / 1536; margin-bottom: -2%; }
+.hero__bottle img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 30px 30px var(--c-solstice-2)); }
+.label { background: var(--c-solstice-9); position: absolute; left: 37%; width: 26%; top: 62.4%; height: 18.6%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4%; text-align: center; color: var(--color-ink); container-type: inline-size; mix-blend-mode: multiply; }
+.label__name { font: 400 15cqi/1 var(--font-display); }
+.label__kind { font: 600 9cqi/1 var(--font-outlier); color: var(--color-accent); letter-spacing: 0.02em; }
+.label__year { font: 400 8cqi/1.2 var(--font-body); color: var(--color-ink-2); border-top: 1px solid var(--color-gold); padding-top: 4%; }
+.label__no { font: 400 7cqi/1.2 var(--font-body); color: var(--color-muted); }
+.label__no b { font-weight: 500; color: var(--color-ink); }
+.hero__side { grid-column: 9 / span 4; align-self: center; padding-bottom: 12vh; }
+.hero__side .lead { font-size: var(--text-lead); max-width: 26ch; }
+.js .sky::before { transform: translate(-50%, -30%); opacity: 0.4; }
+.js .is-ready .sky::before { transform: translate(-50%, -50%); opacity: 1; transition: transform 2200ms var(--ease-out), opacity 1600ms var(--ease-out); }
+.js .hero__bottle { opacity: 0; transform: translateY(40px); }
+.js .is-ready .hero__bottle { opacity: 1; transform: none; transition: opacity 900ms var(--ease-out) 300ms, transform 1300ms var(--ease-out) 300ms; }
+
+/* the perry */
+.perry { padding-block: var(--section-gap); background: var(--color-field-2); color: var(--color-paper-2); }
+.perry__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap-columns); align-items: center; }
+.perry__fruit { grid-column: 1 / span 6; margin: 0; }
+.perry__fruit .photo { aspect-ratio: 1; border-radius: 50% 50% 0 0; }
+.perry__text { grid-column: 8 / span 5; }
+.perry h2 { font-size: clamp(2.75rem, 3.2vw + 1rem, 4.75rem); line-height: 1; color: var(--color-gold-2); }
+.perry .lead { margin-top: var(--space-lg); color: var(--c-solstice-3); }
+.dial { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: var(--space-3xl) 0 0; padding: 0; list-style: none; border-top: 1px solid var(--c-solstice-4); }
+.dial li { position: relative; padding-top: var(--space-lg); }
+.dial li::before { content: ""; position: absolute; left: 0; top: -6px; width: 11px; height: 11px; border-radius: 50%; background: var(--c-solstice-4); }
+.dial li.is-now::before { background: var(--color-sun); box-shadow: 0 0 0 6px var(--c-solstice-5); }
+.dial__m { display: block; font: 600 var(--text-sm)/1 var(--font-outlier); color: var(--color-gold); }
+.dial b { display: block; margin-top: var(--space-sm); font: 400 1.5rem/1.15 var(--font-display); color: var(--color-paper-2); }
+
+/* the tag */
+.bottle { padding-block: var(--section-gap); }
+.tag { position: relative; max-width: 760px; margin-inline: auto; padding: var(--space-3xl) var(--space-2xl) var(--space-2xl); background: var(--color-paper-2); clip-path: polygon(12% 0, 88% 0, 100% 9%, 100% 100%, 0 100%, 0 9%); box-shadow: inset 0 0 0 1px var(--color-rule); transform: rotate(-1.5deg); }
+.tag::before { content: ""; position: absolute; inset: 14px; border: 1px solid var(--color-gold); clip-path: polygon(12% 0, 88% 0, 100% 9%, 100% 100%, 0 100%, 0 9%); pointer-events: none; }
+.tag__hole { position: absolute; left: 50%; top: 28px; width: 24px; height: 24px; margin-left: calc(var(--space-sm) * -1); border-radius: 50%; background: var(--color-paper); box-shadow: inset 0 0 0 3px var(--color-gold); }
+.tag h2 { text-align: center; font-size: clamp(2.5rem, 3vw + 1rem, 4.25rem); line-height: 1; }
+.tag__list { margin: var(--space-2xl) 0 0; }
+.tag__list div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-md); padding-block: var(--space-md); border-bottom: 1px dotted var(--color-gold); }
+.tag__list dt { font: 600 var(--text-sm)/1 var(--font-outlier); color: var(--color-muted); }
+.tag__list dd { margin: 0; font: 400 1.5rem/1 var(--font-display); }
+
+/* evening */
+.evening { padding-bottom: var(--section-gap); }
+.evening__strip { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-sm); padding-inline: var(--space-sm); }
+.evening figure { margin: 0; }
+.evening .photo { aspect-ratio: 3 / 4; }
+.evening figure:nth-child(2) .photo { aspect-ratio: auto; height: 100%; }
+.evening__line { margin-top: var(--space-2xl); text-align: center; font: 400 clamp(2rem, 2vw + 1rem, 3rem)/1.1 var(--font-display); }
+
+/* order */
+.order { padding-block: var(--section-gap); background: linear-gradient(180deg, var(--color-paper), var(--color-dusk-1)); }
+.order__in { display: grid; justify-items: center; text-align: center; gap: var(--space-lg); }
+.order h2 { font-size: clamp(3rem, 5vw + 1rem, 6.5rem); line-height: 0.95; }
+.qty { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-md); margin-top: var(--space-md); }
+.qty__step { display: inline-flex; align-items: center; height: 50px; border-radius: var(--radius-pill); background: var(--color-paper-2); box-shadow: inset 0 0 0 1px var(--color-rule); }
+.qty__step button { appearance: none; width: 50px; height: 50px; border: 0; border-radius: 50%; background: transparent; font: 400 1.5rem/1 var(--font-body); color: var(--color-ink); cursor: pointer; }
+.qty__step button:hover { background: var(--color-paper-3); }
+.qty__step output { min-width: 2ch; text-align: center; font: 400 1.5rem/1 var(--font-display); }
+
+/* footer */
+.foot { padding-block: var(--space-2xl); background: var(--color-field-2); color: var(--color-paper-2); }
+.foot__mark { font: 400 clamp(3rem, 8vw, 7rem)/1 var(--font-display); color: var(--color-gold-2); }
+.foot__credit { margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--c-solstice-7); font-size: var(--text-xs); color: var(--c-solstice-8); max-width: 100ch; }
+.foot__credit a { color: inherit; }
+.perry :focus-visible, .foot :focus-visible { outline-color: var(--color-gold-2); }
+
+@media (max-width: 60rem) {
+  .bar__links, .bar__place { display: none; }
+  .bar__in { grid-template-columns: 1fr auto; }
+  .hero__text, .hero__bottle, .hero__side, .perry__fruit, .perry__text { grid-column: 1 / -1; }
+  .hero__text, .hero__side { padding-bottom: 0; text-align: center; justify-self: center; }
+  .hero h1 { margin-inline: auto; }
+  .hero__side .actions { justify-content: center; }
+  .hero__bottle { height: 56svh; order: 3; }
+  .dial { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: var(--space-xl); }
+  .evening__strip { grid-template-columns: minmax(0, 1fr); }
+  .evening figure:nth-child(2) .photo { aspect-ratio: 4 / 3; }
+  .tag { padding: var(--space-3xl) var(--space-lg) var(--space-lg); }
+}
+@media (max-width: 22.5rem) { .bar__mark { font-size: 1.5rem; } }

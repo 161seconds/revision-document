@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Cellar: natural wine after five, Thursday to Sunday</title>
+<meta name="description" content="Night Cellar is a natural wine shop and bar with 140 bottles on the list, open Thursday to Sunday from 5pm, with a tasting once a month at 25 pounds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <nav class="nav__pill" aria-label="Main">
+    <a class="wordmark" href="#top" aria-label="Night Cellar, home">Night Cellar</a>
+    <ul class="nav__links" role="list">
+      <li><a href="#shelf">The shelf</a></li>
+      <li><a href="#tastings">Tastings</a></li>
+      <li><a href="#find">Find us</a></li>
+    </ul>
+    <a class="nav__door" href="#find" id="door"><span id="door-text">Open Thursday to Sunday</span></a>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-title">Natural wine after five.</h1>
+        <p class="lead">A natural wine shop and bar, open Thursday to Sunday from 5pm.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#find">Find us</a>
+          <a class="btn btn--secondary" href="#shelf">See the shelf</a>
+        </div>
+      </div>
+      <figure class="photo hero__photo" data-slot="hero" data-alt="A bottle poured at the bar after five">
+        <img src="photos/pouring-wine-into-a-decanter-1920.jpg" width="3872" height="2592" fetchpriority="high" alt="Wine poured from a bottle into a glass decanter in low light" style="object-position: 46% 50%">
+      </figure>
+    </div>
+  </section>
+
+  <section class="shelf" id="shelf" aria-labelledby="shelf-title">
+    <div class="container shelf__head">
+      <h2 id="shelf-title" class="shelf__title"><span class="figure shelf__figure">140</span><span class="shelf__unit">bottles on the list</span></h2>
+      <p class="lead shelf__line">Natural wine only, set out on the shelf by style.</p>
+    </div>
+    <ul class="rail" tabindex="0" aria-label="The shelf, by style" role="list">
+      <li class="label grained"><h3>Pét-nat</h3><p class="label__second">pétillant naturel</p><p class="label__line">Bottled early, so it sparkles.</p></li>
+      <li class="label grained"><h3>Skin contact</h3><p class="label__second">orange wine</p><p class="label__line">White grapes left on their skins.</p></li>
+      <li class="label grained"><h3>Fresh white</h3><p class="label__second">pressed straight off</p><p class="label__line">Bright and lean, for the first glass.</p></li>
+      <li class="label grained"><h3>Rosé</h3><p class="label__second">a night on the skins</p><p class="label__line">Pale, dry, and gone by closing.</p></li>
+      <li class="label grained"><h3>Light red</h3><p class="label__second">served cool</p><p class="label__line">Juicy, poured from the fridge.</p></li>
+      <li class="label grained"><h3>Deep red</h3><p class="label__second">for the late hours</p><p class="label__line">Darker fruit, for a slower glass.</p></li>
+    </ul>
+  </section>
+
+  <section class="racks" aria-labelledby="racks-title">
+    <figure class="photo racks__photo" data-slot="photo-1" data-alt="The bottles on the list, racked in the shop">
+      <img src="photos/schramsberg-vineyards-july-2019-7579-7580-1920.jpg" width="6244" height="3903" loading="lazy" sizes="100vw" alt="A long cellar aisle between racks of bottles laid neck down" style="object-position: 50% 58%">
+    </figure>
+    <div class="racks__over">
+      <div class="container">
+        <h2 id="racks-title" class="statement">Open a bottle here, or take it home.</h2>
+      </div>
+    </div>
+  </section>
+
+  <section class="tastings" id="tastings" aria-labelledby="tastings-title">
+    <div class="container">
+      <div class="tastings__well grained">
+        <p class="price"><span class="price__figure figure">£25</span><span class="price__unit">a place at the monthly tasting</span></p>
+        <div class="tastings__text">
+          <h2 id="tastings-title">A tasting, once a month.</h2>
+          <p class="tastings__next">Next tasting: <span class="fill" data-fill="date">date to be announced</span></p>
+          <form class="signup" data-endpoint="" novalidate>
+            <label for="email">Your email, for the date</label>
+            <div class="signup__row">
+              <input id="email" name="email" type="email" autocomplete="email" inputmode="email" required>
+              <button class="btn btn--secondary" type="submit">Send me the date</button>
+            </div>
+            <p class="signup__help" id="email-help" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="find grained" id="find" aria-labelledby="find-title">
+    <div class="container">
+      <div class="find__head">
+        <div class="find__text">
+          <h2 id="find-title">Find us.</h2>
+          <p class="find__where"><span class="fill" data-fill="address">Address to come</span></p>
+          <p class="find__note">The shop and the bar open together.</p>
+        </div>
+        <figure class="photo find__photo" data-slot="photo-2" data-alt="The bar after dark, candles lit">
+          <img src="photos/paris-a-waiter-lighting-candles-in-a-bar-3418-1920.jpg" width="4368" height="2912" loading="lazy" sizes="(max-width: 60rem) 100vw, 55vw" alt="Candles in red glass lit along a dark bar counter" style="object-position: 40% 66%">
+        </figure>
+      </div>
+      <ol class="week" role="list" aria-label="Opening days">
+        <li data-day="1" class="is-closed"><span class="week__day">Monday</span><span class="week__time">Closed</span></li>
+        <li data-day="2" class="is-closed"><span class="week__day">Tuesday</span><span class="week__time">Closed</span></li>
+        <li data-day="3" class="is-closed"><span class="week__day">Wednesday</span><span class="week__time">Closed</span></li>
+        <li data-day="4"><span class="week__day">Thursday</span><span class="week__time"><small>From</small> 5pm</span></li>
+        <li data-day="5"><span class="week__day">Friday</span><span class="week__time"><small>From</small> 5pm</span></li>
+        <li data-day="6"><span class="week__day">Saturday</span><span class="week__time"><small>From</small> 5pm</span></li>
+        <li data-day="0"><span class="week__day">Sunday</span><span class="week__time"><small>From</small> 5pm</span></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <p class="footer__line">Natural wine, after dark.</p>
+      <ul class="footer__links" role="list">
+        <li><a href="#shelf">The shelf</a></li>
+        <li><a href="#tastings">Tastings</a></li>
+        <li><a href="#find">Find us</a></li>
+      </ul>
+    </div>
+    <p class="footer__mast" aria-hidden="true">Night Cellar</p>
+    <div class="footer__base">
+      <p class="legal">&copy; 2026 Night Cellar</p>
+      <p class="credits" data-credits>Photographs: <a href="https://commons.wikimedia.org/wiki/File:Pouring_wine_into_a_decanter.jpg">suksim</a> <span>(CC BY 2.0)</span>, <a href="https://commons.wikimedia.org/wiki/File:Schramsberg_Vineyards,_July_2019-7579%2B7580.jpg">Frank Schulenburg</a> <span>(CC BY-SA 4.0)</span>, <a href="https://commons.wikimedia.org/wiki/File:Paris_-_A_waiter_lighting_candles_in_a_bar_-_3418.jpg">Jorge Royan</a> <span>(CC BY-SA 3.0)</span>, via Wikimedia Commons.</p>
+    </div>
+  </div>
+</footer>
+
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+<script>
+  (() => {
+    const day = new Date().getDay();
+    const open = [4, 5, 6, 0].includes(day);
+    const door = document.getElementById('door-text');
+    if (door) { door.textContent = open ? 'Open tonight from 5pm' : 'Opens Thursday at 5pm'; door.parentElement.classList.toggle('is-open', open); }
+    const cell = document.querySelector(`.week li[data-day="${day}"]`);
+    if (cell) { cell.classList.add('is-today'); cell.setAttribute('aria-current', 'date'); cell.insertAdjacentHTML('afterbegin', `<span class="chip">${open ? 'Tonight' : 'Today'}</span>`); }
+    document.querySelectorAll('form[data-endpoint]').forEach((form) => {
+      const input = form.querySelector('input'), help = form.querySelector('[aria-live]');
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const ok = input.checkValidity();
+        input.toggleAttribute('aria-invalid', !ok);
+        if (!ok) { input.setAttribute('aria-describedby', help.id); help.textContent = 'That address looks incomplete. Write it as name@example.com.'; input.focus(); return; }
+        if (!form.dataset.endpoint) { help.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+        fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) })
+          .then((r) => { help.textContent = r.ok ? 'The date goes to ' + input.value.trim() + '.' : 'That did not go through. Try again in a minute.'; })
+          .catch(() => { help.textContent = 'That did not go through. Try again in a minute.'; });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

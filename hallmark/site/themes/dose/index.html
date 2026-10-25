@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tandem, medication reminders the whole family can see</title>
+<meta name="description" content="Tandem reminds a family to give an older parent their medication at dose time and lets everyone see what was taken. Free for one household.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@700&amp;family=Instrument+Sans:wght@400;500&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script>let tick = 0; addEventListener('resize', () => document.documentElement.style.setProperty('--tick', String(tick ^= 1)));</script>
+</head>
+<body id="top">
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site">
+  <div class="container">
+    <nav class="tray" aria-label="Page">
+      <a class="wordmark" href="#top" aria-label="Tandem, back to the top">Tandem</a>
+      <span class="tray__links"><a href="#day">A day of doses</a><a href="#family">The family</a></span>
+      <span class="tray__end"><span class="tray__note">Free for one household</span><a class="btn btn--primary btn--sm" href="#start">Set up</a></span>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-head">
+    <div class="hero__ground" aria-hidden="true"><i class="hero__window"></i></div>
+    <div class="container hero__grid">
+      <div class="hero__text">
+        <h1 id="hero-head">Mum took her tablets at eight.</h1>
+        <p class="lead">Tandem reminds the family at dose time and shows what was taken.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#start">Set up your household</a>
+          <a class="btn btn--secondary" href="#day">See a day of doses</a>
+        </div>
+        <p class="hero__terms">Free for one household.</p>
+      </div>
+
+      <figure class="hero__visual" aria-label="Mum’s week in a pill organiser: today open, its label risen and ticked on three phones">
+        <div class="scene">
+          <div class="org" role="group" aria-label="Mum’s weekly pill organiser. Open a day to read its label.">
+            <i class="org__shade" aria-hidden="true"></i>
+            <div class="box" style="--i:0; --t: var(--p-mon)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="0" aria-label="Monday"><span class="lid__top" aria-hidden="true"><b data-l="M"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box" style="--i:1; --t: var(--p-tue)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="1" aria-label="Tuesday"><span class="lid__top" aria-hidden="true"><b data-l="T"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box" style="--i:2; --t: var(--p-wed)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="2" aria-label="Wednesday"><span class="lid__top" aria-hidden="true"><b data-l="W"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box is-open" style="--i:3; --t: var(--p-thu)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <article class="label" id="label" aria-live="polite" aria-atomic="true" aria-label="Today’s label">
+                <div class="label__main">
+                  <p class="label__head"><span>Mum’s tablets</span><span data-f="day">Thursday</span></p>
+                  <p class="label__what dose" data-f="title">Morning tablets</p>
+                  <p class="label__row"><span data-f="amt">With breakfast</span><span class="dose" data-f="time">08:00</span></p>
+                  <p class="stamp" data-kind="given"><span class="dose" data-f="s1">Given at 08:04</span><span data-f="s2">by your brother</span></p>
+                </div>
+                <p class="label__stub">To all three</p>
+              </article>
+              <button class="lid" type="button" aria-pressed="true" aria-controls="label" data-day="3" aria-label="Thursday, today"><span class="lid__top" aria-hidden="true"><b data-l="T"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box" style="--i:4; --t: var(--p-fri)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="4" aria-label="Friday"><span class="lid__top" aria-hidden="true"><b data-l="F"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box" style="--i:5; --t: var(--p-sat)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="5" aria-label="Saturday"><span class="lid__top" aria-hidden="true"><b data-l="S"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+            <div class="box" style="--i:6; --t: var(--p-sun)"><i class="box__pool" aria-hidden="true"></i><i class="box__floor" aria-hidden="true"></i><i class="box__wall box__wall--back" aria-hidden="true"></i><i class="box__wall box__wall--l" aria-hidden="true"></i><i class="box__wall box__wall--r" aria-hidden="true"></i><i class="box__wall box__wall--front" aria-hidden="true"></i>
+              <button class="lid" type="button" aria-pressed="false" aria-controls="label" data-day="6" aria-label="Sunday"><span class="lid__top" aria-hidden="true"><b data-l="S"></b></span><span class="lid__under" aria-hidden="true"></span><span class="lid__edge" aria-hidden="true"></span><span class="lid__tab" aria-hidden="true"></span></button></div>
+          </div>
+        </div>
+        <i class="ripple" aria-hidden="true"></i>
+        <ul class="kin" aria-label="The family’s phones">
+          <li class="chip is-ticked"><span class="chip__screen" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span class="chip__text"><b>Your brother</b><span data-s>Gave it</span></span></li>
+          <li class="chip is-ticked"><span class="chip__screen" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span class="chip__text"><b>You</b><span data-s>Seen</span></span></li>
+          <li class="chip is-ticked"><span class="chip__screen" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><span class="chip__text"><b>Your sister</b><span data-s>Seen</span></span></li>
+        </ul>
+      </figure>
+    </div>
+  </section>
+
+  <section class="day" id="day" aria-labelledby="day-head">
+    <div class="container">
+      <div class="day__head">
+        <h2 id="day-head">Thursday, phone by phone</h2>
+        <p class="lead">One day of Mum’s doses, as the family’s phones saw it.</p>
+      </div>
+      <ol class="stages">
+        <li class="stage plastic" style="--t: var(--p-wed)">
+          <div class="stage__text">
+            <h3>A reminder on every phone</h3>
+            <ul class="stage__times">
+              <li><span class="dose">08:00</span> The reminder reaches all three phones.</li>
+              <li><span class="dose">13:00</span> At lunch, it waits on your lock screen.</li>
+            </ul>
+          </div>
+          <div class="stage__phones">
+            <figure class="slot phone" data-slot="demo-2" data-alt="The reminder screen at dose time" role="img" aria-label="The 08:00 reminder for Mum's morning tablets, with breakfast, with Mark as given and Not yet, sent to all three of you.">
+              <div class="ui ph" aria-hidden="true">
+                <div class="ph__top"><span class="ph__day">Mum’s tablets</span><span class="ph__title">Due now</span></div>
+                <div class="due"><span class="dose due__time">08:00</span><span class="due__what">Morning tablets</span><span class="due__amt">With breakfast</span></div>
+                <div class="due__acts"><span class="due__go">Mark as given</span><span class="due__wait">Not yet</span></div>
+                <p class="due__note">Sent to all three of you</p>
+              </div>
+            </figure>
+            <figure class="slot phone phone--lock" data-slot="demo-4" data-alt="A dose reminder on the lock screen" role="img" aria-label="Your lock screen at 13:00 on Thursday, with a Tandem reminder: lunchtime tablet, due for Mum.">
+              <div class="ui ph lock" aria-hidden="true">
+                <span class="lock__day">Thursday</span>
+                <span class="dose lock__time">13:00</span>
+                <span class="lock__note"><b>Tandem</b><span>Lunchtime tablet, due for Mum</span></span>
+              </div>
+            </figure>
+          </div>
+        </li>
+        <li class="stage plastic" style="--t: var(--p-thu)">
+          <div class="stage__text">
+            <h3>Ticked by whoever gives it</h3>
+            <ul class="stage__times">
+              <li><span class="dose">08:04</span> Your brother is there, and taps Given.</li>
+              <li><span class="dose">13:10</span> You give it, and her list ticks.</li>
+            </ul>
+          </div>
+          <div class="stage__phones">
+            <figure class="slot phone" data-slot="demo-3" data-alt="The screen after a dose is ticked" role="img" aria-label="Morning tablets given at 08:04 by your brother, with a note that you and your sister can see it now.">
+              <div class="ui ph" aria-hidden="true">
+                <div class="ph__top"><span class="ph__day">Mum’s tablets</span><span class="ph__title">Morning tablets</span></div>
+                <div class="given">
+                  <span class="given__mark"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+                  <span class="given__what">Given</span>
+                  <span class="given__when"><span class="dose">08:04</span>, by your brother</span>
+                </div>
+                <p class="given__note">You and your sister can see this now.</p>
+              </div>
+            </figure>
+            <figure class="slot phone" data-slot="hero" data-alt="The Today screen for your parent's tablets" role="img" aria-label="The Today screen at 13:10: morning tablets given by your brother, lunchtime tablet given by you, evening tablets and eye drops still due.">
+              <div class="ui ph" aria-hidden="true">
+                <div class="ph__top"><span class="ph__day">Thursday</span><span class="ph__title">Mum’s tablets</span></div>
+                <ol class="ph__doses">
+                  <li class="is-given"><span class="dose ph__time">08:00</span><span class="ph__what">Morning tablets<span class="ph__by">your brother</span></span><i class="ph__chip">Given</i></li>
+                  <li class="is-given"><span class="dose ph__time">13:00</span><span class="ph__what">Lunchtime tablet<span class="ph__by">you, <span class="dose">13:10</span></span></span><i class="ph__chip">Given</i></li>
+                  <li><span class="dose ph__time">20:00</span><span class="ph__what">Evening tablets</span><i class="ph__chip">Due</i></li>
+                  <li><span class="dose ph__time">22:00</span><span class="ph__what">Eye drops</span><i class="ph__chip">Due</i></li>
+                </ol>
+              </div>
+            </figure>
+          </div>
+        </li>
+        <li class="stage plastic" style="--t: var(--p-sat)">
+          <div class="stage__text">
+            <h3>Seen by everyone, at once</h3>
+            <ul class="stage__times">
+              <li><span class="dose">20:06</span> Your sister sees it, wherever she lives.</li>
+              <li><span class="dose">22:00</span> The week, the same on every phone.</li>
+            </ul>
+          </div>
+          <div class="stage__phones">
+            <figure class="slot phone" data-slot="demo-5" data-alt="A sister's updates screen, showing who gave each dose" role="img" aria-label="Your sister's updates screen: evening tablets given at 20:06 by you, lunchtime tablet at 13:10 by you, morning tablets at 08:04 by your brother.">
+              <div class="ui ph" aria-hidden="true">
+                <div class="ph__top"><span class="ph__day">Your sister’s phone</span><span class="ph__title">Updates</span></div>
+                <ol class="ph__doses ph__doses--feed">
+                  <li class="is-given"><span class="ph__what">Evening tablets<span class="ph__by">by you, <span class="dose">20:06</span></span></span><i class="ph__chip">Given</i></li>
+                  <li class="is-given"><span class="ph__what">Lunchtime tablet<span class="ph__by">by you, <span class="dose">13:10</span></span></span><i class="ph__chip">Given</i></li>
+                  <li class="is-given"><span class="ph__what">Morning tablets<span class="ph__by">by your brother, <span class="dose">08:04</span></span></span><i class="ph__chip">Given</i></li>
+                </ol>
+              </div>
+            </figure>
+            <figure class="slot phone" data-slot="demo-6" data-alt="The week screen, each day's doses" role="img" aria-label="The week screen: Monday and Tuesday four of four given, Wednesday three of four with the eye drops missed, Thursday three of four so far.">
+              <div class="ui ph" aria-hidden="true">
+                <div class="ph__top"><span class="ph__day">Mum’s tablets</span><span class="ph__title">This week</span></div>
+                <ol class="ph__doses ph__doses--feed">
+                  <li class="is-given"><span class="ph__what">Monday</span><i class="ph__chip">4 of 4</i></li>
+                  <li class="is-given"><span class="ph__what">Tuesday</span><i class="ph__chip">4 of 4</i></li>
+                  <li><span class="ph__what">Wednesday<span class="ph__by">eye drops missed</span></span><i class="ph__chip">3 of 4</i></li>
+                  <li class="is-today"><span class="ph__what">Thursday<span class="ph__by">so far</span></span><i class="ph__chip">3 of 4</i></li>
+                </ol>
+              </div>
+            </figure>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="say band--ink" aria-labelledby="say-head">
+    <div class="container">
+      <h2 id="say-head" class="say__line">No more ringing Mum to check.</h2>
+      <p class="say__sub">The list already knows.</p>
+    </div>
+  </section>
+
+  <section class="family" id="family" aria-labelledby="family-head">
+    <div class="container family__grid">
+      <figure class="photo family__photo" data-slot="photo-2" data-alt="Your family's hands together">
+        <img src="photos/grandmothers-hand-childrens-hands-1920.jpg" width="2210" height="2071" loading="lazy" decoding="async" alt="Small children's hands laid together on their grandmother's hand" style="object-position: 50% 45%">
+      </figure>
+      <div class="family__side">
+        <h2 id="family-head" class="family__head">The same tick on every phone</h2>
+        <p class="lead">Whoever gives the dose, the rest of the family sees it.</p>
+        <div class="family__labels">
+          <article class="label label--flat" aria-label="Evening tablets with dinner at 20:00, given at 20:06 by you">
+            <div class="label__main">
+              <p class="label__head"><span>Mum’s tablets</span><span>Thursday</span></p>
+              <p class="label__what dose">Evening tablets</p>
+              <p class="label__row"><span>With dinner</span><span class="dose">20:00</span></p>
+              <p class="stamp" data-kind="given"><span class="dose">Given at 20:06</span><span>by you</span></p>
+            </div>
+            <p class="label__stub">Seen by all three of you</p>
+          </article>
+          <article class="label label--flat label--missed" aria-label="Eye drops at 22:00 on Wednesday, missed, shown in grey">
+            <div class="label__main">
+              <p class="label__head"><span>Mum’s tablets</span><span>Wednesday</span></p>
+              <p class="label__what dose">Eye drops</p>
+              <p class="label__row"><span>Before bed</span><span class="dose">22:00</span></p>
+              <p class="stamp" data-kind="missed"><span>Missed</span><span>a miss stays grey</span></p>
+            </div>
+            <p class="label__stub">Seen by all three of you</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="start" id="start" aria-labelledby="start-head">
+    <div class="container">
+      <div class="start__tray plastic">
+        <form class="start__text setup" data-endpoint="" novalidate>
+          <h2 id="start-head">Free for one household</h2>
+          <p class="lead">Start with who the tablets are for, then invite the family.</p>
+          <fieldset class="keys">
+            <legend>Who is it for?</legend>
+            <input type="radio" name="who" id="w-mum" value="Mum" checked><label for="w-mum">Mum</label>
+            <input type="radio" name="who" id="w-dad" value="Dad"><label for="w-dad">Dad</label>
+            <input type="radio" name="who" id="w-gran" value="Gran"><label for="w-gran">Gran</label>
+            <input type="radio" name="who" id="w-grandad" value="Grandad"><label for="w-grandad">Grandad</label>
+          </fieldset>
+          <button class="btn btn--primary" type="submit">Set up your household</button>
+          <p class="setup__help" id="setup-help" aria-live="polite"></p>
+        </form>
+        <div class="start__phone">
+          <figure class="slot phone" data-slot="demo-7" data-alt="The household screen, where the family is added" role="img" aria-label="The household screen: Mum, who the tablets are for, then you, your brother and your sister, and a button to invite someone.">
+            <div class="ui ph" aria-hidden="true">
+              <div class="ph__top"><span class="ph__day">Set up</span><span class="ph__title"><span data-who>Mum</span>’s household</span></div>
+              <ol class="ph__doses ph__doses--feed hh">
+                <li class="hh__lead"><span class="ph__what"><span data-who>Mum</span><span class="ph__by">the tablets are for</span></span></li>
+                <li><span class="ph__what">You<span class="ph__by">set it up</span></span><i class="ph__chip">Added</i></li>
+                <li><span class="ph__what">Your brother</span><i class="ph__chip">Invited</i></li>
+                <li><span class="ph__what">Your sister</span><i class="ph__chip">Invited</i></li>
+              </ol>
+              <span class="hh__add">Invite someone</span>
+            </div>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="container foot__grid">
+    <p class="foot__mark">Tandem</p>
+    <nav class="foot__links" aria-label="Footer"><a href="#day">A day of doses</a><a href="#family">The family</a><a href="#start">Set up your household</a></nav>
+    <p class="foot__legal">© 2026 Tandem</p>
+    <p class="foot__credits" data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:%D7%99%D7%93%D7%99%D7%99%D7%9D_%D7%A9%D7%9C_%D7%99%D7%9C%D7%93%D7%99%D7%9D_%D7%A2%D7%9C_%D7%99%D7%93_%D7%A9%D7%9C_%D7%A1%D7%91%D7%AA%D7%90.jpg">Hlmb</a> (CC BY-SA 4.0), via Wikimedia Commons</p>
+  </div>
+</footer>
+
+<script>
+window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+document.querySelectorAll('form.setup').forEach((form) => {
+  const help = form.querySelector('[aria-live]');
+  const names = [...document.querySelectorAll('[data-who]')];
+  form.addEventListener('change', (e) => { if (e.target.name === 'who') { names.forEach((n) => { n.textContent = e.target.value; }); help.textContent = ''; } });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const who = form.querySelector('input[name="who"]:checked').value;
+    help.textContent = form.dataset.endpoint ? '' : 'Nothing was set up yet: this button is not connected. ' + who + '’s household is shown on the right.';
+  });
+});
+
+/* The organiser: today plays its story once; any lid opens for real */
+(() => {
+  const hero = document.querySelector('.hero');
+  const vis = hero.querySelector('.hero__visual');
+  const boxes = [...vis.querySelectorAll('.box')];
+  const label = vis.querySelector('#label');
+  const chips = [...vis.querySelectorAll('.chip')];
+  const ripple = vis.querySelector('.ripple');
+  const f = (k) => label.querySelector(`[data-f="${k}"]`);
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const keys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const days = names.map((n, i) => i < 2 ? { day: n, title: n, amt: 'Four doses', time: '', s1: '4 of 4 given', s2: 'seen by all three', kind: 'given', chip: ['Seen', 'Seen', 'Seen'] }
+    : i === 2 ? { day: n, title: n, amt: 'Four doses', time: '', s1: '3 of 4 given', s2: 'eye drops missed', kind: 'missed', chip: ['Seen', 'Seen', 'Seen'] }
+    : i === 3 ? { day: n, title: 'Morning tablets', amt: 'With breakfast', time: '08:00', s1: 'Given at 08:04', s2: 'by your brother', kind: 'given', chip: ['Gave it', 'Seen', 'Seen'] }
+    : { day: n, title: n, amt: 'Four doses', time: '', s1: 'Not yet', s2: 'reminder at 08:00', kind: 'due', chip: ['Not yet', 'Not yet', 'Not yet'] });
+  let current = 3, busy = false;
+  const wait = (ms) => new Promise((r) => setTimeout(r, still.matches ? 0 : ms));
+
+  const fill = (i) => {
+    const d = days[i];
+    for (const k of ['day', 'title', 'amt', 'time', 's1', 's2']) f(k).textContent = d[k];
+    label.querySelector('.stamp').dataset.kind = d.kind;
+    label.style.setProperty('--cast', `var(--p-${keys[i]})`);
+    chips.forEach((c, j) => { c.querySelector('[data-s]').textContent = d.chip[j]; });
+  };
+  const spread = (d) => {
+    if (d.kind !== 'given') return;
+    const s = label.querySelector('.stamp').getBoundingClientRect();
+    const v = vis.getBoundingClientRect();
+    const cx = s.left + s.width / 2 - v.left, cy = s.top + s.height / 2 - v.top;
+    ripple.style.left = `${cx}px`; ripple.style.top = `${cy}px`;
+    ripple.classList.remove('is-on'); void ripple.offsetWidth; ripple.classList.add('is-on');
+    chips.forEach((c) => {
+      const r = c.querySelector('.chip__screen').getBoundingClientRect();
+      const far = Math.hypot(r.left + r.width / 2 - v.left - cx, r.top + r.height / 2 - v.top - cy);
+      setTimeout(() => c.classList.add('is-ticked'), still.matches ? 0 : 120 + far * 1.5);
+    });
+  };
+  const rise = async (i) => {
+    label.classList.add('is-unstamped');
+    label.classList.remove('is-sunk');
+    await wait(1000);
+    label.classList.remove('is-unstamped');
+    await wait(160);
+    spread(days[i]);
+  };
+  const open = async (i) => {
+    if (busy || i === current) return;
+    busy = true;
+    chips.forEach((c) => c.classList.remove('is-ticked'));
+    label.classList.add('is-sunk');
+    await wait(560);
+    boxes[current].classList.remove('is-open');
+    boxes[current].querySelector('.lid').setAttribute('aria-pressed', 'false');
+    current = i;
+    boxes[i].classList.add('is-open');
+    boxes[i].querySelector('.lid').setAttribute('aria-pressed', 'true');
+    label.classList.add('is-moving');
+    boxes[i].insertBefore(label, boxes[i].querySelector('.lid'));
+    fill(i);
+    void label.offsetWidth;
+    label.classList.remove('is-moving');
+    await wait(620);
+    await rise(i);
+    busy = false;
+  };
+  boxes.forEach((b, i) => b.querySelector('.lid').addEventListener('click', () => open(i)));
+
+  // pause the window light when the hero is off screen; the nav takes the paper once the hero has gone by
+  const nav = document.querySelector('.site');
+  new IntersectionObserver(([e]) => { hero.classList.toggle('is-away', !e.isIntersecting); }).observe(hero);
+  const sentinel = document.createElement('i'); sentinel.className = 'nav-sentinel'; hero.prepend(sentinel);
+  new IntersectionObserver(([e]) => nav.classList.toggle('is-over', !e.isIntersecting)).observe(sentinel);
+  nav.classList.add('is-live');
+
+  // the story, once: the lid lifts, the label rises out of the box, the stamp lands, the tick travels
+  if (!still.matches) {
+    label.classList.add('is-moving', 'is-sunk', 'is-unstamped');
+    boxes[3].classList.remove('is-open');
+    chips.forEach((c) => c.classList.remove('is-ticked'));
+    void label.offsetWidth;
+    label.classList.remove('is-moving');
+    (async () => {
+      await wait(450);
+      boxes[3].classList.add('is-open');
+      await wait(650);
+      await rise(3);
+    })();
+  }
+})();
+</script>
+</body>
+</html>

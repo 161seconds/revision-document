@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>shift: reversible migrations for Postgres and MySQL</title>
+<meta name="description" content="shift is an open-source CLI that runs safe, reversible database migrations for Postgres and MySQL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav" aria-label="Main">
+  <div class="nav__bar">
+    <a class="wordmark" href="#main" aria-label="shift, home">shift</a>
+    <ul class="links">
+      <li><a href="#map">The map</a></li>
+      <li><a href="#engines">Postgres and MySQL</a></li>
+      <li><a href="#commands">Commands</a></li>
+    </ul>
+    <a class="btn" href="#install">Install</a>
+  </div>
+</nav>
+
+<main id="main">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+      <div class="corridor">
+        <h1 id="hero-title">Every migration ships with its undo.</h1>
+        <p class="lead">shift runs safe, reversible migrations for Postgres and MySQL from one CLI.</p>
+        <div class="install">
+          <div class="cmd"><code><span class="prompt">$ </span>brew install shift-cli</code><button class="btn btn--primary" type="button" data-copy="brew install shift-cli">Copy</button></div>
+          <a class="btn" href="#map">See the map</a>
+        </div>
+        <figure class="session session--hero" data-slot="hero-session" data-alt="A real terminal recording of shift plan, shift up and shift down on your own schema" aria-label="A sample shift session">
+<pre><span class="prompt">~ $ </span><b>shift plan</b>
+<span class="dim">  0043_add_order_status.up.sql</span><span class="note">     ALTER TABLE orders ADD COLUMN status text</span>
+<span class="dim">  0043_add_order_status.down.sql</span><span class="note">   <span class="ok">found</span>   ALTER TABLE orders DROP COLUMN status</span>
+<span class="dim">  nothing applied: this was a plan</span>
+<span class="prompt">~ $ </span><b>shift up</b>
+<span class="dim">  0043_add_order_status</span>   <span class="ok">applied</span><span class="note">    in one transaction, lock_timeout 3s</span>
+<span class="prompt">~ $ </span><b>shift down</b>
+<span class="dim">  0043_add_order_status</span>   <span class="ok">reverted</span><span class="note">   schema matches 0042 again</span></pre>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="section gap-s" aria-labelledby="claim-title">
+    <div class="container">
+      <div class="statement">
+        <h2 id="claim-title">shift won’t apply a migration until its down file has run cleanly on a scratch copy.</h2>
+        <a class="text-link" href="#map">How the check works</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section gap-l" id="map" aria-labelledby="map-title">
+    <div class="container">
+      <div class="head head--split">
+        <h2 id="map-title">One migration, start to undo</h2>
+        <p class="lead">Each box is a command; the dashed line is the way back.</p>
+      </div>
+      <figure class="map" data-slot="map" data-alt="The migration map, kept as built">
+        <svg class="map__svg diagram" viewBox="0 0 1312 470" role="img" aria-labelledby="map-desc">
+          <title id="map-desc">Diagram of one migration: write the up and down files, shift plan, shift check, shift up to production at 0043; the way back runs from production through shift down to the schema at 0042.</title>
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="map__head"/></marker>
+            <marker id="arr-back" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="map__head--back"/></marker>
+          </defs>
+          <g class="map__edges">
+            <line x1="212" y1="130" x2="268" y2="130" marker-end="url(#arr)"/>
+            <line x1="490" y1="130" x2="546" y2="130" marker-end="url(#arr)"/>
+            <line x1="768" y1="130" x2="824" y2="130" marker-end="url(#arr)"/>
+            <line x1="1046" y1="130" x2="1102" y2="130" marker-end="url(#arr)"/>
+          </g>
+          <path class="map__back" d="M1207 190 V 400 H 1046" marker-end="url(#arr-back)"/>
+          <path class="map__back" d="M824 400 H 222" marker-end="url(#arr-back)"/>
+          <text class="map__back-label" x="1220" y="300">the way back</text>
+          <g class="map__node">
+            <rect x="0" y="70" width="212" height="120"/>
+            <text x="20" y="114" class="map__file">0043.up.sql</text>
+            <text x="20" y="142" class="map__file">0043.down.sql</text>
+            <text x="20" y="172" class="map__sub">written together</text>
+          </g>
+          <g class="map__node">
+            <rect x="278" y="70" width="212" height="120"/>
+            <text x="298" y="120" class="map__title">shift plan</text>
+            <text x="298" y="150" class="map__sub">prints the SQL,</text>
+            <text x="298" y="172" class="map__sub">applies nothing</text>
+          </g>
+          <g class="map__node">
+            <rect x="556" y="70" width="212" height="120"/>
+            <text x="576" y="120" class="map__title">shift check</text>
+            <text x="576" y="150" class="map__sub">up, then down,</text>
+            <text x="576" y="172" class="map__sub">on a scratch copy</text>
+          </g>
+          <g class="map__node">
+            <rect x="834" y="70" width="212" height="120"/>
+            <text x="854" y="120" class="map__title">shift up</text>
+            <text x="854" y="150" class="map__sub">applies, records</text>
+            <text x="854" y="172" class="map__sub">its checksum</text>
+          </g>
+          <g class="map__node map__node--live">
+            <rect x="1102" y="70" width="210" height="120"/>
+            <text x="1122" y="120" class="map__title">production</text>
+            <text x="1122" y="150" class="map__status">at 0043</text>
+          </g>
+          <g class="map__node">
+            <rect x="834" y="340" width="212" height="120"/>
+            <text x="854" y="390" class="map__title">shift down</text>
+            <text x="854" y="420" class="map__sub">runs 0043.down.sql</text>
+          </g>
+          <g class="map__node">
+            <rect x="0" y="340" width="212" height="120"/>
+            <text x="20" y="390" class="map__title">schema</text>
+            <text x="20" y="420" class="map__status">at 0042 again</text>
+          </g>
+        </svg>
+        <ol class="map__list">
+          <li><b>Write</b> 0043.up.sql and 0043.down.sql together.</li>
+          <li><b>shift plan</b> prints the SQL and applies nothing.</li>
+          <li><b>shift check</b> runs up, then down, on a scratch copy.</li>
+          <li><b>shift up</b> applies it and records its checksum: production is at 0043.</li>
+          <li><b>shift down</b> runs 0043.down.sql: the schema is at 0042 again.</li>
+        </ol>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section gap-m" aria-label="Server racks">
+    <div class="container">
+      <figure class="photo-band">
+        <div class="photo photo--band" data-slot="band" data-alt="The machines shift runs against: your own servers or the CI box, shot plainly">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg/1280px-NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg" srcset="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg/960px-NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg 960w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg/1280px-NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg 1280w, https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg/1920px-NOIRLab_HQ_Server_Racks_%286V6A0395-CC%29.jpg 1920w" sizes="(min-width: 90rem) 1312px, 100vw" width="5167" height="3445" alt="Rows of server racks with their status lights on" loading="lazy" style="object-position: 50% 45%">
+        </div>
+        <figcaption>One binary on your laptop or in CI; nothing runs on the server.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section gap-l" id="engines" aria-labelledby="engines-title">
+    <div class="container">
+      <div class="head">
+        <h2 id="engines-title">Postgres and MySQL, handled differently</h2>
+        <p class="lead">Two engines, two ways to fail.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="engines">
+          <thead><tr><th scope="col">When</th><th scope="col">On Postgres</th><th scope="col">On MySQL</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">A migration fails</th><td data-label="On Postgres">Rolls back with the transaction</td><td data-label="On MySQL">Runs the down file</td></tr>
+            <tr><th scope="row">A lock is held</th><td data-label="On Postgres"><code>SET lock_timeout</code> before each statement</td><td data-label="On MySQL"><code>SET SESSION lock_wait_timeout</code></td></tr>
+            <tr><th scope="row">An index is added</th><td data-label="On Postgres"><code>CREATE INDEX CONCURRENTLY</code></td><td data-label="On MySQL"><code>ALGORITHM=INPLACE, LOCK=NONE</code></td></tr>
+            <tr><th scope="row">History is kept</th><td colspan="2" data-label="On both"><code>shift_migrations</code>, one row a file</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section gap-l" aria-labelledby="plan-title">
+    <div class="container">
+      <div class="head head--split">
+        <h2 id="plan-title">Read the plan before it runs</h2>
+        <p class="lead">Every statement and the lock it takes.</p>
+      </div>
+      <figure class="session session--wide" data-slot="plan" data-alt="A real shift plan run against your own schema" aria-label="A sample shift plan output">
+<pre><span class="prompt">~/shop $ </span><b>shift plan --to 0045</b>
+
+<span class="dim">  file                               statement                                      lock        down</span>
+<span class="dim">  ─────────────────────────────────  ─────────────────────────────────────────────  ──────────  ─────</span>
+  0044_index_orders_customer.up.sql  CREATE INDEX CONCURRENTLY orders_customer_idx  none        <span class="ok">found</span>
+  0045_add_refunds_table.up.sql      CREATE TABLE refunds (id bigserial, …)         new table   <span class="ok">found</span>
+
+  2 to apply, <span class="ok">0 changes made</span></pre>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section gap-l" id="commands" aria-labelledby="commands-title">
+    <div class="container rows-wrap">
+      <div class="head">
+        <h2 id="commands-title">From shift new to shift down</h2>
+        <p class="lead">Plain SQL files, five commands.</p>
+      </div>
+      <ol class="rows" role="list">
+        <li><code>shift new &lt;name&gt;</code><p>Writes <code>0046_&lt;name&gt;.up.sql</code> and its <code>.down.sql</code></p></li>
+        <li><code>shift plan</code><p>Takes <code>--db</code> and <code>--to</code>, like every command</p></li>
+        <li><code>shift check</code><p>Needs a throwaway database in <code>--scratch</code></p></li>
+        <li><code>shift up --to &lt;n&gt;</code><p>Stops at file <code>&lt;n&gt;</code>, checksums each one</p></li>
+        <li><code>shift down --to &lt;n&gt;</code><p>Reverts newest first, back to <code>&lt;n&gt;</code></p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band" id="install" aria-labelledby="install-title">
+    <div class="container band__grid">
+      <div class="band__head">
+        <h2 id="install-title">Run shift plan on staging first</h2>
+        <p class="lead">Install it, then read what it would do.</p>
+      </div>
+      <div class="band__cmds">
+        <div class="cmd"><code><span class="prompt">$ </span>brew install shift-cli</code><button class="btn btn--primary" type="button" data-copy="brew install shift-cli">Copy</button></div>
+        <div class="cmd"><code><span class="prompt">$ </span>shift plan --db $STAGING_URL</code><button class="btn" type="button" data-copy="shift plan --db $STAGING_URL">Copy</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p class="footer__mark">shift</p>
+    <div class="footer__cols">
+      <div><p class="footer__head">Use</p><ul><li><a href="#install">Install</a></li><li><a href="#commands">Commands</a></li><li><a href="#plan-title">The plan</a></li></ul></div>
+      <div><p class="footer__head">Engines</p><ul><li><a href="#engines">Both engines</a></li><li><a href="#plan-title">Locks</a></li></ul></div>
+      <div><p class="footer__head">Source</p><p>Open source at <span class="fill" data-fill="repo">repository URL to come</span></p></div>
+    </div>
+    <p class="credits" data-credits>Photograph: <a href="https://commons.wikimedia.org/wiki/File:NOIRLab_HQ_Server_Racks_(6V6A0395-CC).jpg">NOIRLab/NSF/AURA/T. Slovinský</a> (CC BY 4.0, Wikimedia Commons).</p>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+  navigator.clipboard?.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1600); }).catch(() => {});
+}));
+</script>
+<script>window.hallmarkSlots = (m) => { for (const [k, v] of Object.entries(m)) { const s = document.querySelector(`[data-slot="${k}"]`); if (!s) continue; const im = new Image(); im.src = typeof v === 'string' ? v : v.src; im.alt = (typeof v === 'object' && v.alt) || s.dataset.alt || ''; s.querySelectorAll(':scope > img').forEach((o) => o.remove()); s.prepend(im); } };
+document.querySelectorAll('[data-slot] img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });</script>
+</body>
+</html>

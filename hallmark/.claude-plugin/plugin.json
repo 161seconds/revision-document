@@ -1,0 +1,13 @@
+{
+  "name": "hallmark",
+  "version": "2.0.0",
+  "description": "A design skill for Claude Code, Codex, Cursor and OpenCode that refuses to look AI-generated. Powered by Together AI.",
+  "author": {
+    "name": "Nutlope",
+    "url": "https://github.com/Nutlope"
+  },
+  "homepage": "https://www.usehallmark.com",
+  "repository": "https://github.com/Nutlope/hallmark",
+  "license": "MIT",
+  "keywords": ["design", "ui", "landing-page", "redesign", "anti-ai-slop", "themes", "together-ai"]
+}

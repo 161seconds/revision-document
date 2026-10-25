@@ -1,0 +1,21 @@
+name: verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: References, gates, fixtures, versions and links agree
+        run: node skills/hallmark/scripts/refcheck.mjs
+      - name: Every theme validates
+        run: node skills/hallmark/scripts/theme.mjs validate skills/hallmark/references/themes/*.md
+      - name: The theme index is current
+        run: |
+          node skills/hallmark/scripts/theme.mjs index
+          git diff --exit-code -- skills/hallmark/references/themes/index.json

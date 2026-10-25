@@ -1,0 +1,127 @@
+/* Hallmark · shape: the symptom thread (one choice in a sticky lane, read by the translator and the booking form) · genre: editorial · theme: custom · job: book · idea: "Riders know the noise, not the part: the page runs on what the bike is doing, and every symptom ends with a mechanic at your door." · vibe: "street-side, plain-spoken, lane-paint green, road-sign type"
+ * paper: oklch(95.5% 0.007 250) pavement grey · accent: oklch(76% 0.16 148) cycle-lane green, also the translator's field · display: Overpass 800 · body: Overpass 400 · hero: Banner, the head on the paper, the lane-green strip of symptom chips and Send a mechanic across the screen, the bike in a full-bleed band under it · nav: wordmark and one quiet action, no links · footer: one row, wordmark and line, two links, credits under · imagery: photographs, library 2, natural · signature: the lane, a green strip of symptom chips in the rider's own words beside Send a mechanic, sticky down the page, choosing what the translator shows and what the form books
+ * axes: light/grotesk/green · posture: Committed (the lane green carries the sticky lane and the translator band; the primary action is ink) · contrast: pass · fold: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: S, the photographs are library stand-ins (an old bike at a wall, a cargo bike in snow) with no mechanic in them; the specificity rides on the symptom thread and the rider's own words instead */
+/* Hallmark · hero-review: fix · 5 findings · 3 resolved 2 partial (the picture shows no mechanic; chip state shows on use) */
+/* Hallmark · finish-review: subagent · 7 findings · 6 resolved 1 partial (the nav keeps Book a visit, the category's word, so the first screen never says one action twice) · gap: no picture of a mechanic at a door until the owner sends one */
+@import url("./tokens.css");
+@import url("./base.css");
+
+/* Skip link */
+.skip { position: absolute; left: var(--space-md); top: calc(-1 * var(--space-3xl)); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); background: var(--color-ink); color: var(--color-paper); }
+.skip:focus-visible { top: var(--space-md); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 52px; padding: 0 var(--space-lg); border: 1px solid var(--color-ink); border-radius: var(--radius-input); background: var(--color-ink); color: var(--color-paper); font: 800 var(--text-md)/1 var(--font-body); white-space: nowrap; text-decoration: none; cursor: pointer; transition: background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+.btn:hover { background: var(--color-ink-2); border-color: var(--color-ink-2); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; transform: none; }
+.btn[aria-busy="true"] { cursor: progress; }
+.btn--quiet { min-height: 44px; background: transparent; color: var(--color-ink); border-color: var(--color-ink-2); font-weight: 600; }
+.btn--quiet:hover { background: var(--color-paper-2); border-color: var(--color-ink); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: background-color var(--dur-short) linear; } }
+
+/* Nav */
+.nav { position: relative; z-index: var(--z-raised); background: var(--color-paper); }
+.nav__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); min-height: var(--nav-h); }
+.wordmark { font: 800 var(--text-lg)/1 var(--font-display); letter-spacing: -0.02em; text-decoration: none; color: var(--color-ink); white-space: nowrap; }
+.wordmark:hover { color: var(--color-ink-2); }
+.wordmark:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }
+
+/* Hero: Banner, the type on the paper, a lane of symptoms that stays with the reader, the bike in the band under it */
+.hero__body { display: grid; gap: var(--space-lg); padding-block: var(--space-xl) var(--space-2xl); }
+.hero h1 { font-size: clamp(3rem, 5vw + 1rem, 6rem); font-weight: 800; line-height: 0.96; letter-spacing: var(--tracking-display); max-width: 18ch; }
+.hero__lede { font-size: var(--text-lead); line-height: 1.45; max-width: 40ch; color: var(--color-ink-2); }
+.lane { position: sticky; top: 0; z-index: var(--z-sticky); background: var(--color-field); color: var(--color-ink); border-bottom: 2px solid var(--color-ink); --color-focus: var(--color-ink); }
+.lane__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); padding-block: var(--space-md); }
+.hero__photo { position: relative; margin: 0; height: max(280px, calc(100svh - 494px)); max-height: 760px; }
+.hero__photo > img { object-position: 50% 18%; }
+
+.chips { display: flex; align-items: center; gap: var(--space-md); margin: 0; padding: 0; border: 0; min-width: 0; }
+.chips legend { float: left; padding: 0; margin-right: var(--space-md); font-weight: 800; font-size: var(--text-md); color: var(--color-ink); white-space: nowrap; }
+.chips__row { display: flex; gap: var(--space-xs); min-width: 0; }
+.chips input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chips label { display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--space-md); border: 1px solid var(--color-field-rule); border-radius: var(--radius-input); color: var(--color-ink); font-size: var(--text-md); cursor: pointer; white-space: nowrap; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
+.chips label:hover { background: var(--color-field-2); border-color: var(--color-ink); }
+.chips input:checked + label { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-field); }
+.chips input:focus-visible + label { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.chips input:disabled + label { opacity: 0.55; cursor: not-allowed; }
+
+/* Sections */
+.section-head { display: grid; gap: var(--space-md); }
+h2 { font-size: var(--text-section); font-weight: 800; line-height: 1.02; letter-spacing: var(--tracking-display); max-width: 18ch; }
+.intro { font-size: var(--text-lead); line-height: 1.45; color: var(--color-ink-2); max-width: 40ch; }
+
+/* Translator: the lane-green field, the rider's words beside the mechanic's */
+.fix { background: var(--color-field); color: var(--color-ink); padding-block: var(--section-gap); --color-focus: var(--color-ink); }
+.fix h2 { max-width: none; }
+.panels { display: grid; gap: var(--space-3xl); margin-top: var(--space-2xl); }
+.panel { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-xl) var(--gap-columns); align-items: start; padding-top: var(--space-xl); border-top: 2px solid var(--color-ink); }
+.said { grid-column: 1 / span 5; font: 400 var(--text-section)/1.08 var(--font-display); letter-spacing: -0.02em; max-width: 14ch; }
+.panel__answer { grid-column: 7 / span 6; display: grid; gap: var(--space-xl); }
+.panel h3 { font-size: var(--text-display-s); font-weight: 800; line-height: 1.02; letter-spacing: var(--tracking-display); max-width: 16ch; }
+.checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl) var(--gap-columns); margin: 0; }
+.checks div { border-top: 1px solid var(--color-field-rule); padding-top: var(--space-sm); }
+.checks dt { font-weight: 800; font-size: var(--text-lg); }
+.checks dd { margin: var(--space-2xs) 0 0; line-height: 1.45; }
+
+.photo { margin: 0; border-radius: var(--radius-card); }
+.photo > img { border-radius: var(--radius-card); outline: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent); outline-offset: -1px; }
+
+/* Booking */
+.book { background: var(--color-paper-2); padding-block: var(--section-gap); }
+.book__grid { display: grid; gap: var(--space-2xl); }
+.book__head { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-md) var(--gap-columns); align-items: end; }
+.book__head h2 { grid-column: 1 / span 7; grid-row: span 2; font-size: var(--text-display-s); }
+.book__head .intro, .book__head .area { grid-column: 8 / span 5; }
+.area { font-size: var(--text-md); color: var(--color-ink-2); }
+.fill { padding: 0 0.2em; border-radius: 2px; color: var(--color-muted); background: color-mix(in oklch, var(--color-muted) 14%, transparent); }
+.form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg) var(--space-md); }
+.field { display: grid; gap: var(--space-xs); min-width: 0; }
+.field--wide { grid-column: span 2; }
+.field label { font-size: var(--text-sm); font-weight: 600; color: var(--color-ink); }
+.field input, .field select { width: 100%; min-height: 52px; padding: 0 var(--space-md); border: 1px solid var(--color-muted); border-radius: var(--radius-input); background: var(--color-paper); color: var(--color-ink); font-size: var(--text-md); outline: 2px solid transparent; outline-offset: -3px; }
+.field input:hover, .field select:hover { border-color: var(--color-ink-2); }
+.field input:focus-visible, .field select:focus-visible { outline-color: var(--color-focus); }
+.field input[aria-invalid], .field select[aria-invalid] { border-color: var(--color-error); }
+.field input:disabled, .field select:disabled { opacity: 0.55; cursor: not-allowed; }
+.form__foot { align-self: end; display: grid; gap: var(--space-xs); }
+.form__help { min-height: 1lh; font-size: var(--text-sm); color: var(--color-ink-2); }
+
+/* Ride */
+.ride { padding-block: var(--section-gap-l) var(--section-gap); }
+.ride__grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gap-columns); align-items: center; }
+.ride .photo { grid-column: 1 / span 7; aspect-ratio: 5 / 4; min-height: 440px; }
+.ride__text { grid-column: 9 / span 4; display: grid; gap: var(--space-lg); justify-items: start; }
+
+/* Footer */
+.footer { border-top: 1px solid var(--color-rule); padding-block: var(--space-2xl) var(--space-xl); }
+.footer__row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-lg); }
+.footer__brand { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-md); }
+.footer__brand p { color: var(--color-ink-2); }
+.footer nav ul { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin: 0; padding: 0; list-style: none; }
+.footer nav a { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-rule); white-space: nowrap; transition: text-decoration-color var(--dur-short) var(--ease-out); }
+.footer nav a:hover { text-decoration-color: var(--color-focus); }
+.credits { margin-top: var(--space-xl); font-size: var(--text-sm); color: var(--color-muted); max-width: none; }
+.credits a { color: var(--color-ink-2); }
+
+/* Responsive */
+@media (max-width: 60rem) {
+  .said, .panel__answer, .book__head h2, .book__head .intro, .book__head .area, .ride .photo, .ride__text { grid-column: 1 / -1; }
+  .book__head h2 { grid-row: auto; }
+  .form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lane { position: static; }
+  .ride .photo { min-height: 0; }
+  .lane__inner { flex-direction: column; align-items: stretch; }
+  .lane .btn { justify-content: center; }
+}
+@media (max-width: 40rem) {
+  .checks, .form { grid-template-columns: minmax(0, 1fr); }
+  .field--wide { grid-column: 1 / -1; }
+  .chips { display: grid; gap: var(--space-xs); }
+  .chips legend { float: none; margin: 0 0 var(--space-xs); }
+  .chips__row { flex-wrap: wrap; }
+  .hero__body { gap: var(--space-md); padding-block: var(--space-lg); }
+  .nav .btn--quiet { padding: 0 var(--space-md); }
+}
