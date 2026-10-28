@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 27 Domains](https://img.shields.io/badge/Knowledge%20Base-27%20Domains-orange.svg)](#knowledge-base-directory-27-domains)
+[![Topics: 28 Domains](https://img.shields.io/badge/Knowledge%20Base-28%20Domains-orange.svg)](#knowledge-base-directory-28-domains)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Project Overview](#project-overview)
 2. [Key Highlights](#key-highlights)
-3. [Knowledge Base Directory (27 Domains)](#knowledge-base-directory-27-domains)
+3. [Knowledge Base Directory (28 Domains)](#knowledge-base-directory-28-domains)
 4. [Standardized Module Architecture](#standardized-module-architecture)
 5. [Repository Structure](#repository-structure)
 6. [Installation & Automated Testing](#installation--automated-testing)
@@ -37,7 +37,7 @@
 
 ## Key Highlights
 
-- **27 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
+- **28 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
 - **Practical Automated Testing (TDD & Assertions)**: Every practice lab includes executable test suites evaluated directly in the terminal via assertions.
 - **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
@@ -48,7 +48,7 @@
 
 ---
 
-## Knowledge Base Directory (27 Domains)
+## Knowledge Base Directory (28 Domains)
 
 | # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
@@ -79,6 +79,7 @@
 | **25** | **Hallmark UI Design** | 48 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
 | **26** | **Claude SEO Skills** | Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search/GEO, local and international SEO, e-commerce, and Google APIs | [seo-skills/](seo-skills/README.md) \| [Skill Guide](seo-skills/skills/seo/SKILL.md) \| [Commands](seo-skills/docs/COMMANDS.md) |
 | **27** | **Superpowers Development Skills** | Brainstorming, implementation plans, TDD, root-cause debugging, code review, Git worktrees, parallel execution, and skill authoring | [superpowers/](superpowers/README.md) \| [Skill Guide](superpowers/skills/using-superpowers/SKILL.md) \| [Testing](superpowers/docs/testing.md) |
+| **28** | **VNZ Training Camp: CI/CD** | Manual deployment, CI build/test/security checks, Continuous Delivery vs Deployment, health checks, rollback, and deployment strategies | [vnz-ci-cd/](vnz-ci-cd/README.md) |
 
 ---
 
@@ -154,6 +155,7 @@ revision-document/
 ├── swt301/                       # Software testing & LLM test generation research
 ├── system-design/                # 8 System Design & ByteByteGo architectural patterns
 ├── typescript/                   # 4 Advanced TypeScript type gymnastics modules
+├── vnz-ci-cd/                    # VNZ Training Camp P1: CI/CD, deployment & rollback
 ├── AGENTS.md                     # Context routing index for AI agents
 ├── CAVEMAN.md                    # Output token compression rules
 ├── DOCUMENTATION-ROADMAP.md      # Topic expansion roadmap, gaps & priority labs
