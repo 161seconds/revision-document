@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Python syntax and lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Check Python syntax
+        run: |
+          mapfile -t PYFILES < <(git ls-files 'scripts/*.py')
+          python3 -m py_compile "${PYFILES[@]}"
+          echo "All ${#PYFILES[@]} scripts passed syntax check"
+
+      - name: Lint with ruff
+        # Uses the [tool.ruff] settings in pyproject.toml. Pinned so a new ruff
+        # release cannot turn the job red without a change in this repo.
+        run: |
+          pip install ruff==0.17.1
+          ruff check .
+
+  test:
+    name: Test suite (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The supported floor, a middle release, and the newest release.
+        python-version: ["3.11", "3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install runtime + test deps
+        # Tests import scripts that import url_safety.py (and others), which
+        # require the full runtime dependency set at module-import time. The
+        # prior minimal install (pytest + beautifulsoup4) broke when Phase J/K
+        # tests added imports through url_safety -> requests. Installing from
+        # requirements.txt matches the documented user install path and keeps
+        # CI in sync with the runtime contract.
+        run: pip install -r requirements.txt pytest
+
+      - name: Run pytest
+        env:
+          # The live GitHub API tests run on the 3.11 leg only, so the matrix
+          # does not triple the calls (the portability job also runs them on
+          # Windows and macOS). gh honors GH_TOKEN, which keeps sync_flow.py
+          # clear of the anonymous 60/hr per-IP rate limit on shared runners.
+          CLAUDE_SEO_NETWORK_TESTS: ${{ matrix.python-version == '3.11' && '1' || '' }}
+          GH_TOKEN: ${{ github.token }}
+        run: pytest tests/ -v
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Scan tracked files for leaked credentials
+        run: |
+          set -uo pipefail
+          # High-signal credential patterns. Test fixtures and documented
+          # placeholders are allowlisted; auth-setup.md ships a private-key
+          # placeholder (BEGIN PRIVATE KEY\n...) that is not a real key.
+          PATTERN='AIza[0-9A-Za-z_-]{35}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|gh[ous]_[A-Za-z0-9]{36}|AKIA[0-9A-Z]{16}|GOCSPX-[A-Za-z0-9_-]{20,}|sk-(proj-)?[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}'
+          HITS=$(git ls-files -z \
+            | xargs -0 grep -nIEH "$PATTERN" 2>/dev/null \
+            | grep -vE 'DUMMY|EXAMPLE|YOUR_|REDACTED|placeholder|<[A-Z_]+>' \
+            | grep -vE '^tests/|/auth-setup\.md:' || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::Potential leaked credentials in tracked files:"
+            echo "$HITS"
+            exit 1
+          fi
+          echo "Secret scan clean: no credentials detected in tracked files."
+
+  portability:
+    name: Portability (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Report both legs independently; a failure on one platform should not
+      # hide the result on the other.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install runtime + test deps
+        run: pip install -r requirements.txt pytest
+
+      - name: Run pytest
+        # The whole suite, not a hand-picked subset. The tests that assert
+        # POSIX mode bits (the executable bit, chmod 0o600/0o644) skip on
+        # Windows via os.name; everything else must hold on every platform.
+        env:
+          CLAUDE_SEO_NETWORK_TESTS: "1"
+          GH_TOKEN: ${{ github.token }}
+        run: pytest tests/ -v
+
+  dep-audit:
+    # Bounded ranges resolve to different releases per Python (numpy and
+    # contourpy differ between 3.11 and 3.14), so audit both ends of the range.
+    name: Dependency audit (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit requirements.txt against the PyPI advisory database
+        # requirements.txt documents CVE floors per dependency in comments, but
+        # nothing verified them; this closes that loop. Because the pins are
+        # bounded ranges rather than exact versions, pip-audit resolves the
+        # newest allowed release, so a newly published advisory can turn this
+        # job red without a commit to the repo. That is the intended signal:
+        # it means a floor in requirements.txt needs raising. To land an
+        # unavoidable advisory in the meantime, add
+        # `--ignore-vuln GHSA-xxxx-xxxx-xxxx` with a comment naming the reason.
+        run: pip-audit -r requirements.txt --progress-spinner off

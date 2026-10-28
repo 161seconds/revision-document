@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 25 Domains](https://img.shields.io/badge/Knowledge%20Base-25%20Domains-orange.svg)](#knowledge-base-directory-25-domains)
+[![Topics: 26 Domains](https://img.shields.io/badge/Knowledge%20Base-26%20Domains-orange.svg)](#knowledge-base-directory-26-domains)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Project Overview](#project-overview)
 2. [Key Highlights](#key-highlights)
-3. [Knowledge Base Directory (25 Domains)](#knowledge-base-directory-25-domains)
+3. [Knowledge Base Directory (26 Domains)](#knowledge-base-directory-26-domains)
 4. [Standardized Module Architecture](#standardized-module-architecture)
 5. [Repository Structure](#repository-structure)
 6. [Installation & Automated Testing](#installation--automated-testing)
@@ -43,10 +43,11 @@
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
 - **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
 - **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
+- **Claude SEO**: A complete upstream source snapshot with 26 skills, 19 specialist agents, and 9 extensions for technical SEO, content, structured data, and AI search.
 
 ---
 
-## Knowledge Base Directory (25 Domains)
+## Knowledge Base Directory (26 Domains)
 
 | # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
@@ -75,6 +76,7 @@
 | **23** | **DDD & Modular Monolith** | Context mapping, Aggregates, Invariants, Bounded Context ownership, module contracts, domain events, and Ordering-Billing lab | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
 | **24** | **Reliable Payments & Webhooks** | Signatures, idempotency keys, inbox/outbox patterns, retries, reconciliation, and PostgreSQL replay/rollback lab | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
 | **25** | **Hallmark UI Design** | 48 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
+| **26** | **Claude SEO Skills** | Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search/GEO, local and international SEO, e-commerce, and Google APIs | [seo-skills/](seo-skills/README.md) \| [Skill Guide](seo-skills/skills/seo/SKILL.md) \| [Commands](seo-skills/docs/COMMANDS.md) |
 
 ---
 
@@ -145,6 +147,7 @@ revision-document/
 ├── react/                        # 4 Modern React, Hooks, State & Profiler modules
 ├── rust/                         # 5 Rust systems programming modules
 ├── security/                     # 8 Web Security, OWASP Top 10 & DevSecOps modules
+├── seo-skills/                   # Complete Claude SEO source, skills, agents, extensions & tests
 ├── swt301/                       # Software testing & LLM test generation research
 ├── system-design/                # 8 System Design & ByteByteGo architectural patterns
 ├── typescript/                   # 4 Advanced TypeScript type gymnastics modules
@@ -243,6 +246,18 @@ Supplementary skills covering agent harnesses, context compaction, tool design, 
 - **Codex usage after installation**: `$hallmark <prompt>`, `$hallmark redesign <path>`, or `$hallmark audit <path>`.
 - **Requirements**: Node.js `>= 18`; browser checks additionally require Chrome and `puppeteer-core`. Static checks remain available without the browser setup.
 
+### Claude SEO
+
+[Claude SEO](seo-skills/README.md) covers technical audits, Core Web Vitals, E-E-A-T content analysis, Schema.org markup, AI search/GEO, local SEO, hreflang, e-commerce, and Google API integrations. The snapshot includes 26 skills, 19 specialist agents, and 9 optional extensions.
+
+- **Source snapshot**: [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo), version `2.5.0`, imported on **2026-10-28**, pinned to commit [`6be93f45064ffbadced572b5d5c95f55fd263af0`](https://github.com/AgriciDaniel/claude-seo/tree/6be93f45064ffbadced572b5d5c95f55fd263af0).
+- **Integrity**: All 467 upstream files (7,001,813 bytes), including hidden configuration, assets, scripts, tests, and licenses, were copied and verified against their Git blob hashes.
+- **Start here**: [Skill guide](seo-skills/skills/seo/SKILL.md), [command reference](seo-skills/docs/COMMANDS.md), and [architecture](seo-skills/docs/ARCHITECTURE.md).
+- **Installation**: Source is stored in `seo-skills/`; plugin activation and runtime setup remain separate. Follow the [upstream installation guide](seo-skills/docs/INSTALLATION.md). Skills are not registered in `.agents/skills/`.
+- **Usage after installation**: `/seo page <url>`, `/seo audit <url>`, `/seo schema <url>`, or `/seo geo <url>`.
+- **Requirements**: Claude Code `>= 1.0.33` and Python `>= 3.11`; `/seo setup` prepares the isolated runtime and Chromium. Optional API integrations require their own credentials.
+- **License**: [MIT](seo-skills/LICENSE); the bundled [FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution) retain Daniel Agrici's CC BY 4.0 attribution. Runtime behavior and live SEO audits have not been verified here.
+
 ---
 
 ## Documentation Roadmap
@@ -258,7 +273,7 @@ Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic 
   1. Adhere to the standardized 3-tier structure for every module.
   2. Ensure all automated tests pass (`npm run test:ts:practice` and `npm run test:react:practice`).
   3. Keep code concise, idiomatic, and clearly commented.
-- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence).
+- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence); Claude SEO uses [MIT](seo-skills/LICENSE), with [CC BY 4.0 attribution for its bundled FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution).
 
 ---
 

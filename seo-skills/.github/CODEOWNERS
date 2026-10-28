@@ -1,0 +1,33 @@
+# CODEOWNERS for claude-seo
+#
+# Every change to this repository routes review to @AgriciDaniel.
+# Sections below let us call out security-critical paths so a future
+# co-maintainer cannot accidentally land a change without the right
+# eyes on it.
+
+# Default owner — every file unless overridden below.
+*                                   @AgriciDaniel
+
+# Security-critical: SSRF + DNS rebinding + credential handling.
+scripts/url_safety.py               @AgriciDaniel
+scripts/google_auth.py              @AgriciDaniel
+scripts/backlinks_auth.py           @AgriciDaniel
+scripts/render_page.py              @AgriciDaniel
+scripts/fetch_page.py               @AgriciDaniel
+scripts/capture_screenshot.py       @AgriciDaniel
+tests/test_url_safety.py            @AgriciDaniel
+SECURITY.md                         @AgriciDaniel
+
+# Release + distribution: install scripts and version pinning are the
+# supply-chain surface.
+install.sh                          @AgriciDaniel
+install.ps1                         @AgriciDaniel
+.claude-plugin/plugin.json          @AgriciDaniel
+.claude-plugin/marketplace.json     @AgriciDaniel
+requirements.txt                    @AgriciDaniel
+pyproject.toml                      @AgriciDaniel
+CITATION.cff                        @AgriciDaniel
+
+# CI / governance.
+.github/                            @AgriciDaniel
+tests/test_manifest_consistency.py  @AgriciDaniel

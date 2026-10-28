@@ -1,0 +1,86 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agricidaniel-claude-seo",
+  "owner": {
+    "name": "AgriciDaniel"
+  },
+  "metadata": {
+    "description": "Comprehensive SEO analysis plugin for Claude Code. 26 sub-skills and 19 sub-agents, plus 9 optional MCP extensions for live data. v2.5.0 fixes Claude Desktop installs and hardens Google sign-in, page rendering and agent prompts; v2.4.2 added seo-cockpit (a mods companion: spend guard, live audit band, and a visual cockpit) and Google sign-in through your own gcloud account; v2.4.1 brought Google guidance current through 2026-09-28; v2.4.0 added /seo agentic for agent readiness (Lighthouse Agentic Browsing, WebMCP, AI agent access)."
+  },
+  "plugins": [
+    {
+      "name": "claude-seo",
+      "source": "./",
+      "description": "Comprehensive SEO analysis plugin for Claude Code. 26 sub-skills and 19 sub-agents, plus 9 optional MCP extensions. v2.5.0 fixes Claude Desktop installs and hardens Google sign-in, page rendering and agent prompts; v2.4.2 added the seo-cockpit companion and gcloud sign-in; v2.4.1 brought Google guidance current through 2026-09-28; v2.4.0 added /seo agentic for agent readiness (Lighthouse Agentic Browsing, WebMCP, AI agent access).",
+      "author": {
+        "name": "AgriciDaniel",
+        "url": "https://github.com/AgriciDaniel"
+      },
+      "category": "marketing",
+      "homepage": "https://claude-seo.md",
+      "keywords": [
+        "seo",
+        "technical-seo",
+        "content-quality",
+        "e-e-a-t",
+        "schema-markup",
+        "core-web-vitals",
+        "local-seo",
+        "geo",
+        "ai-search",
+        "sitemap",
+        "image-optimization",
+        "image-serp",
+        "google-images",
+        "hreflang",
+        "google-search-console",
+        "pagespeed",
+        "crux",
+        "ga4",
+        "backlinks",
+        "moz",
+        "bing-webmaster",
+        "common-crawl",
+        "backlink-verification",
+        "semantic-clustering",
+        "topic-clusters",
+        "sxo",
+        "search-experience",
+        "drift-monitoring",
+        "ecommerce-seo",
+        "google-shopping",
+        "cultural-profiles",
+        "content-parity",
+        "mcp-extensions",
+        "headless-rendering",
+        "ssrf-safe-fetchers",
+        "ai-citation-optimization",
+        "synthesis-framework"
+      ]
+    },
+    {
+      "name": "seo-cockpit",
+      "source": {
+        "source": "git-subdir",
+        "url": "AgriciDaniel/claude-seo",
+        "path": "plugins/seo-cockpit",
+        "ref": "seo-cockpit",
+        "sha": "cf97b4785f4241b9367d654c60c7207dc3afcf68"
+      },
+      "description": "Optional mods companion for claude-seo (needs Claude Code 2.1.287+). A spend guard that holds paid SEO API calls against the claude-seo budget, and zero-token /seo-spend and /seo-doctor commands.",
+      "author": {
+        "name": "AgriciDaniel",
+        "url": "https://github.com/AgriciDaniel"
+      },
+      "category": "marketing",
+      "homepage": "https://github.com/AgriciDaniel/claude-seo/tree/seo-cockpit/plugins/seo-cockpit",
+      "keywords": [
+        "seo",
+        "mods",
+        "cost-guard",
+        "dataforseo",
+        "budget"
+      ]
+    }
+  ]
+}

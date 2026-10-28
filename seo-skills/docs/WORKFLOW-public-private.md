@@ -1,0 +1,175 @@
+# Public + private repo workflow
+
+claude-seo is mirrored across two GitHub remotes. This document is the
+canonical reference for how work flows between them.
+
+Release evidence: [v2.2.5 final verification](FINAL-VERIFICATION-v2.2.5-2026-08-26.md).
+
+## Topology
+
+```
+                 REVIEWED RELEASE WORK
+                (isolated clean worktree)
+                       │
+        ┌──────────────┼──────────────┐
+        │                             │
+        ▼                             ▼
+  origin (public)              aimh (private)
+  AgriciDaniel/claude-seo      AI-Marketing-Hub/claude-seo
+  - Release destination        - Daily development
+  - main = released history    - main = reviewed private release history
+  - Tags = release history     - v2 = active development
+  - Users discover here        - Dependabot + CI run here
+```
+
+Both remotes share historical ancestry because they were initialized from the
+same local repository. Reviewed back-ports, private-only research, and public
+branding mean their current release commits can have different SHAs. Neither
+repository is a GitHub fork of the other.
+
+## Day-to-day development
+
+```bash
+# Work on the active development branch
+git checkout v2
+
+# ...make changes, run tests...
+git add <files>
+git commit -m "feat: ..."
+
+# Push to the PRIVATE remote (default for in-progress work)
+git push aimh v2
+```
+
+The private repo runs Dependabot, GitHub Actions CI, and any pre-release
+test gates. No need to touch the public remote for routine work.
+
+## Promoting reviewed release changes
+
+1. Start from an isolated clean worktree for the target repository.
+2. Fast-forward only when ancestry proves it is safe. When release lines have
+   diverged, cherry-pick the exact reviewed commits with `-x`.
+3. Resolve only documented repository-specific differences, then run the full
+   test, portability, consistency, security, and plugin-validation gates.
+4. Compare the final private/public trees and explain every remaining path.
+5. Create an annotated tag on each repository's reviewed release commit.
+6. Push private changes first. Push each tag before moving its repository's
+   `main`, or push the tag and branch atomically, so pinned installers resolve.
+7. Create the GitHub release on the public repository only.
+   ```bash
+   gh release create v2.0.1 \
+     --repo AgriciDaniel/claude-seo \
+     --notes-from-tag \
+     --verify-tag
+   ```
+
+8. Publish the release blog post.
+   ```
+   /release-blog
+   ```
+
+## Verification commands
+
+Run these from a maintainer checkout with authenticated access to the private
+repository. Add the private remote once if it is absent:
+
+```bash
+git remote get-url aimh >/dev/null 2>&1 || \
+  git remote add aimh https://github.com/AI-Marketing-Hub/claude-seo.git
+```
+
+```bash
+# Confirm both remotes are wired up
+git remote -v
+
+# Confirm both remotes' main heads, then compare their documented divergence.
+# Equal SHAs are not expected after repository-specific back-ports.
+git ls-remote --heads aimh main
+git ls-remote --heads origin main
+
+# List tags on each (private will lead during pre-release work)
+git ls-remote --tags aimh | grep -v '\^{}' | awk '{print $2}'
+git ls-remote --tags origin | grep -v '\^{}' | awk '{print $2}'
+
+# Confirm private has a v2 branch ahead of release
+git fetch aimh
+git log --oneline aimh/main..aimh/v2
+```
+
+## Reviewed public/private divergence
+
+The repositories are intentionally not byte-identical:
+
+| File | `aimh` (private) | `origin` (public) |
+|---|---|---|
+| `.claude-plugin/marketplace.json` `name` | `ai-marketing-hub-claude-seo` | `agricidaniel-claude-seo` |
+| `.claude-plugin/marketplace.json` `owner.name` | `AI Marketing Hub` | `AgriciDaniel` |
+
+The private repository can also retain private-only `research/` reports, Pro
+documentation, and links to those materials. Workflow state is repository
+specific. Any other difference must be reviewed and explained before release.
+Never force-sync the repositories to make their SHAs or trees identical.
+
+## seo-cockpit branch
+
+seo-cockpit is a separate plugin, so its files must not sit inside the
+claude-seo plugin folder (the whole repository, `source: "./"`). Claude
+Desktop skips a plugin whose folder contains another plugin's
+`.claude-plugin/plugin.json` (issue #344). The cockpit therefore lives on the
+`seo-cockpit` branch, under `plugins/seo-cockpit/`, and `main` carries no
+`plugins/` folder. `tests/test_manifest_consistency.py` enforces both rules.
+
+- **Base.** The branch is built on public release history only, never on a
+  private commit, because the same commit is published on `origin`. It must
+  never contain `research/` or other private-only files.
+- **Marketplace entry.** Both marketplaces install the cockpit with a
+  `git-subdir` source: `url` `AgriciDaniel/claude-seo`, `path`
+  `plugins/seo-cockpit`, `ref` `seo-cockpit` and a pinned 40-character `sha`.
+  The private marketplace points at the public repository too, so this entry
+  is identical in both trees and is not part of the identity divergence.
+- **Cockpit release.** Commit the change on `seo-cockpit`, run
+  `claude plugin validate plugins/seo-cockpit --strict` and
+  `claude plugin test plugins/seo-cockpit`, push the branch to `origin` (and
+  `aimh`), then bump `sha` in `.claude-plugin/marketplace.json` on `main` in
+  the next claude-seo release. Users get the new cockpit only when that `sha`
+  moves, so cockpit updates stay release-controlled.
+- **Order.** Push the `seo-cockpit` branch before the `main` commit that pins
+  its `sha`, so no published marketplace points at a commit GitHub lacks.
+
+## Why two repos?
+
+- The **public** repo is the user-facing artifact. Everything visible
+  there is releasable, documented, and supported.
+- The **private** repo is the workshop. Work-in-progress branches,
+  experimental phases (J, K, future phases), pre-release security audits,
+  and unfinished thoughts live here. Dependabot churn and CI noise stay
+  off the public timeline.
+
+Public is for users. Private is for the work that becomes users' next
+upgrade.
+
+## Common pitfalls
+
+| Pitfall | Avoid by |
+|---|---|
+| Moving `origin/main` before the release tag exists | Push the tag first, then `main`, or push both atomically |
+| `git push --tags` without specifying remote | Be explicit: `git push aimh --tags` or `git push origin v2.0.1` |
+| Force-pushing to either remote | Don't, except with explicit per-operation authorization |
+| Assuming `aimh/main` and `origin/main` should have equal SHAs | Compare and explain the reviewed tree differences; never force-sync |
+| Confusing `aimh/v2` with `origin/v2` | `origin` should never have an unreleased `v2` branch |
+
+## State after v2.4.0 (2026-09-24)
+
+- Public `main` and the annotated `v2.4.0` tag point to `e77e783`; the tag was
+  pushed before `main` moved, and all 12 checks passed on that commit.
+- Private `main` and `v2` point to `a11a4d3`, tagged `v2.4.0-private`.
+- Both trees differ only in the documented identity files.
+- v2.4.1 was cut from `e77e783` on `release/v2.4.1`.
+
+## Email-privacy caveat (one-time)
+
+Two very old tags (`v1.2.0`, `v1.4.0`) could not be pushed to the
+private repo because the underlying commits use a private email address
+that GitHub now blocks. These tags remain available on `origin` only.
+Not a regression: those releases shipped on public and are reachable
+there.
