@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# SessionStart hook for superpowers plugin
+
+set -euo pipefail
+
+# Determine plugin root directory.
+# Splits $0 on its last / or \ (run-hook.cmd's cmd half passes a Windows
+# path), with no separator meaning the current directory. This avoids
+# dirname because a SessionStart:startup hook can run with a broken/empty
+# PATH (anthropics/claude-code#43127) before any PATH-repairing sibling hook
+# in the same startup batch takes effect.
+case "$0" in
+  */*|*\\*) SCRIPT_DIR="$(cd "${0%[/\\]*}" && pwd)" ;;
+  *) SCRIPT_DIR="$(pwd)" ;;
+esac
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Read using-superpowers content via bash's builtin $(< file) instead of
+# cat, for the same PATH-independence reason.
+skill_md="${PLUGIN_ROOT}/skills/using-superpowers/SKILL.md"
+if [ -r "$skill_md" ]; then
+  using_superpowers_content="$(<"$skill_md")"
+else
+  using_superpowers_content="Error reading using-superpowers skill"
+fi
+
+# Escape string for JSON embedding using bash parameter substitution.
+# Each ${s//old/new} is a single C-level pass - orders of magnitude
+# faster than the character-by-character loop this replaces.
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+using_superpowers_escaped=$(escape_for_json "$using_superpowers_content")
+session_context="<EXTREMELY_IMPORTANT>\nYou have superpowers.\n\n**Below is the full content of your 'superpowers:using-superpowers' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_superpowers_escaped}\n</EXTREMELY_IMPORTANT>"
+
+# Output context injection as JSON.
+# Cursor hooks expect additional_context (snake_case).
+# Claude Code hooks expect hookSpecificOutput.additionalContext (nested).
+# Copilot CLI (v1.0.11+) and others expect additionalContext (top-level, SDK standard).
+# Claude Code reads BOTH additional_context and hookSpecificOutput without
+# deduplication, so we must emit only the field the current platform consumes.
+# Muse sets MUSE_PLUGIN_ROOT and expects additionalContext (SDK standard).
+#
+# Uses printf instead of heredoc to work around bash 5.3+ heredoc hang.
+# See: https://github.com/obra/superpowers/issues/571
+#
+# emit_json pipes printf through `cat` when cat is on PATH, to absorb EPIPE
+# on Windows. On Windows + Git Bash, the harness can close the hook's stdout
+# before printf finishes, and Git Bash's printf reports that EPIPE as
+# "printf: write error: Permission denied", which `set -euo pipefail` lets
+# escape as a startup diagnostic every session. Letting cat receive the EPIPE
+# keeps it out of the hook's error path (#1612). When PATH is broken and cat
+# can't be found (#2310), it falls back to printf alone so context still
+# gets injected.
+emit_json() {
+  # shellcheck disable=SC2059 # every caller passes a literal format string
+  if command -v cat >/dev/null 2>&1; then
+    printf "$@" | cat
+  else
+    printf "$@"
+  fi
+}
+
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  # Cursor sets CURSOR_PLUGIN_ROOT (may also set CLAUDE_PLUGIN_ROOT)
+  emit_json '{\n  "additional_context": "%s"\n}\n' "$session_context"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ] && [ -z "${MUSE_PLUGIN_ROOT:-}" ]; then
+  # Claude Code sets CLAUDE_PLUGIN_ROOT without COPILOT_CLI/MUSE_PLUGIN_ROOT
+  emit_json '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+elif [ -n "${MUSE_PLUGIN_ROOT:-}" ]; then
+  # Muse sets MUSE_PLUGIN_ROOT — try Claude-style nested output for Muse Spark
+  emit_json '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+else
+  # Copilot CLI (sets COPILOT_CLI=1) or unknown platform — SDK standard format
+  emit_json '{\n  "additionalContext": "%s"\n}\n' "$session_context"
+fi
+
+exit 0

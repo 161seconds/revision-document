@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 26 Domains](https://img.shields.io/badge/Knowledge%20Base-26%20Domains-orange.svg)](#knowledge-base-directory-26-domains)
+[![Topics: 27 Domains](https://img.shields.io/badge/Knowledge%20Base-27%20Domains-orange.svg)](#knowledge-base-directory-27-domains)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
@@ -15,7 +15,7 @@
 
 1. [Project Overview](#project-overview)
 2. [Key Highlights](#key-highlights)
-3. [Knowledge Base Directory (26 Domains)](#knowledge-base-directory-26-domains)
+3. [Knowledge Base Directory (27 Domains)](#knowledge-base-directory-27-domains)
 4. [Standardized Module Architecture](#standardized-module-architecture)
 5. [Repository Structure](#repository-structure)
 6. [Installation & Automated Testing](#installation--automated-testing)
@@ -37,17 +37,18 @@
 
 ## Key Highlights
 
-- **25 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
+- **27 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
 - **Practical Automated Testing (TDD & Assertions)**: Every practice lab includes executable test suites evaluated directly in the terminal via assertions.
 - **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
 - **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
 - **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
 - **Claude SEO**: A complete upstream source snapshot with 26 skills, 19 specialist agents, and 9 extensions for technical SEO, content, structured data, and AI search.
+- **Superpowers**: A complete upstream source snapshot with 15 development skills covering brainstorming, implementation plans, TDD, debugging, code review, and Git worktrees.
 
 ---
 
-## Knowledge Base Directory (26 Domains)
+## Knowledge Base Directory (27 Domains)
 
 | # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
@@ -77,6 +78,7 @@
 | **24** | **Reliable Payments & Webhooks** | Signatures, idempotency keys, inbox/outbox patterns, retries, reconciliation, and PostgreSQL replay/rollback lab | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
 | **25** | **Hallmark UI Design** | 48 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
 | **26** | **Claude SEO Skills** | Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search/GEO, local and international SEO, e-commerce, and Google APIs | [seo-skills/](seo-skills/README.md) \| [Skill Guide](seo-skills/skills/seo/SKILL.md) \| [Commands](seo-skills/docs/COMMANDS.md) |
+| **27** | **Superpowers Development Skills** | Brainstorming, implementation plans, TDD, root-cause debugging, code review, Git worktrees, parallel execution, and skill authoring | [superpowers/](superpowers/README.md) \| [Skill Guide](superpowers/skills/using-superpowers/SKILL.md) \| [Testing](superpowers/docs/testing.md) |
 
 ---
 
@@ -148,6 +150,7 @@ revision-document/
 ├── rust/                         # 5 Rust systems programming modules
 ├── security/                     # 8 Web Security, OWASP Top 10 & DevSecOps modules
 ├── seo-skills/                   # Complete Claude SEO source, skills, agents, extensions & tests
+├── superpowers/                  # Complete Superpowers source, 15 skills, hooks & tests
 ├── swt301/                       # Software testing & LLM test generation research
 ├── system-design/                # 8 System Design & ByteByteGo architectural patterns
 ├── typescript/                   # 4 Advanced TypeScript type gymnastics modules
@@ -258,6 +261,17 @@ Supplementary skills covering agent harnesses, context compaction, tool design, 
 - **Requirements**: Claude Code `>= 1.0.33` and Python `>= 3.11`; `/seo setup` prepares the isolated runtime and Chromium. Optional API integrations require their own credentials.
 - **License**: [MIT](seo-skills/LICENSE); the bundled [FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution) retain Daniel Agrici's CC BY 4.0 attribution. Runtime behavior and live SEO audits have not been verified here.
 
+### Superpowers
+
+[Superpowers](superpowers/README.md) provides 15 composable development skills for clarifying requirements, writing implementation plans, TDD, debugging, review, Git worktrees, parallel execution, and authoring skills. The snapshot retains the upstream hooks, harness integrations, documentation, assets, and tests.
+
+- **Source snapshot**: [obra/superpowers](https://github.com/obra/superpowers), version `7.0.1`, imported on **2026-10-28**, pinned to commit [`2ce8aa15d05bd57213e6f746f953aafb7ded7a8b`](https://github.com/obra/superpowers/tree/2ce8aa15d05bd57213e6f746f953aafb7ded7a8b).
+- **Integrity**: All 231 upstream files (1,534,073 bytes) were copied and verified against their Git blob hashes, with executable Git modes preserved.
+- **Start here**: [Skill guide](superpowers/skills/using-superpowers/SKILL.md), [skill library](superpowers/skills/), and [testing guide](superpowers/docs/testing.md).
+- **Installation**: Source is stored in `superpowers/`; enable the plugin through the [installation instructions for your harness](superpowers/README.md#installation). Plugin activation and runtime tests have not been performed here.
+- **Existing integration**: The older `systematic-debugging` and `verification-before-completion` copies in `.agents/skills/` remain unchanged. Their pinned source and local adaptations are documented in [HARNESS.md](HARNESS.md); this snapshot does not replace or activate additional skills there.
+- **License**: [MIT](superpowers/LICENSE), copyright Jesse Vincent.
+
 ---
 
 ## Documentation Roadmap
@@ -273,7 +287,7 @@ Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic 
   1. Adhere to the standardized 3-tier structure for every module.
   2. Ensure all automated tests pass (`npm run test:ts:practice` and `npm run test:react:practice`).
   3. Keep code concise, idiomatic, and clearly commented.
-- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence); Claude SEO uses [MIT](seo-skills/LICENSE), with [CC BY 4.0 attribution for its bundled FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution).
+- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence); Claude SEO uses [MIT](seo-skills/LICENSE), with [CC BY 4.0 attribution for its bundled FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution); Superpowers uses [MIT](superpowers/LICENSE).
 
 ---
 
