@@ -5,7 +5,7 @@
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![Node: >=22.0.0](https://img.shields.io/badge/Node-%3E%3D22.0.0-green.svg)](https://nodejs.org/)
 [![TypeScript: ^7.0.2](https://img.shields.io/badge/TypeScript-%5E7.0.2-3178C6.svg)](https://www.typescriptlang.org/)
-[![Topics: 28 Domains](https://img.shields.io/badge/Knowledge%20Base-28%20Domains-orange.svg)](#knowledge-base-directory-28-domains)
+[![Topics: 29 Domains](https://img.shields.io/badge/Knowledge%20Base-29%20Domains-orange.svg)](#knowledge-base-directory-29-domains)
 [![AI Agent Ready](https://img.shields.io/badge/AI%20Agent-RTK%20%7C%20Headroom%20%7C%20ECC-purple.svg)](README-AI-TOOLS.md)
 [![RMIT Hackathon 2026](https://img.shields.io/badge/RMIT%20Hackathon%202026-Champion%20Playbook-crimson.svg)](hackathon-rmit-2026/README.md)
 
@@ -15,13 +15,14 @@
 
 1. [Project Overview](#project-overview)
 2. [Key Highlights](#key-highlights)
-3. [Knowledge Base Directory (28 Domains)](#knowledge-base-directory-28-domains)
+3. [Knowledge Base Directory (29 Domains)](#knowledge-base-directory-29-domains)
 4. [Standardized Module Architecture](#standardized-module-architecture)
 5. [Repository Structure](#repository-structure)
 6. [Installation & Automated Testing](#installation--automated-testing)
 7. [AI Agent Optimization & Standards (ECC + Token Stack)](#ai-agent-optimization--standards-ecc--token-stack)
-8. [Documentation Roadmap](#documentation-roadmap)
-9. [Contributing & License](#contributing--license)
+8. [Imported GitHub Projects](#imported-github-projects)
+9. [Documentation Roadmap](#documentation-roadmap)
+10. [Contributing & License](#contributing--license)
 
 ---
 
@@ -37,7 +38,7 @@
 
 ## Key Highlights
 
-- **28 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
+- **29 Technical Domains**: Spanning fundamental computer science (Memory, Pointers, Concurrency) to large-scale distributed systems (ByteByteGo patterns, Sharding, Saga, Kafka), Clean Architecture, and modern full-stack development (Next.js, RSC).
 - **Practical Automated Testing (TDD & Assertions)**: Every practice lab includes executable test suites evaluated directly in the terminal via assertions.
 - **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
@@ -45,10 +46,11 @@
 - **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
 - **Claude SEO**: A complete upstream source snapshot with 26 skills, 19 specialist agents, and 9 extensions for technical SEO, content, structured data, and AI search.
 - **Superpowers**: A complete upstream source snapshot with 15 development skills covering brainstorming, implementation plans, TDD, debugging, code review, and Git worktrees.
+- **Imported GitHub Projects**: 12 additional source snapshots in root directories, with a Vietnamese catalog, pinned commits, and integrity checks; existing projects and integrations are skipped.
 
 ---
 
-## Knowledge Base Directory (28 Domains)
+## Knowledge Base Directory (29 Domains)
 
 | # | Domain & Technology | Core Topics | Documentation & Cheat Sheets |
 | :-: | :--- | :--- | :--- |
@@ -80,6 +82,7 @@
 | **26** | **Claude SEO Skills** | Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search/GEO, local and international SEO, e-commerce, and Google APIs | [seo-skills/](seo-skills/README.md) \| [Skill Guide](seo-skills/skills/seo/SKILL.md) \| [Commands](seo-skills/docs/COMMANDS.md) |
 | **27** | **Superpowers Development Skills** | Brainstorming, implementation plans, TDD, root-cause debugging, code review, Git worktrees, parallel execution, and skill authoring | [superpowers/](superpowers/README.md) \| [Skill Guide](superpowers/skills/using-superpowers/SKILL.md) \| [Testing](superpowers/docs/testing.md) |
 | **28** | **VNZ Training Camp: CI/CD** | Manual deployment, CI build/test/security checks, Continuous Delivery vs Deployment, health checks, rollback, and deployment strategies | [vnz-ci-cd/](vnz-ci-cd/README.md) |
+| **29** | **Imported GitHub Projects** | 3D visualization, agent skills, AI/RAG tutorials, public APIs, context tools, and interface components | [Vietnamese catalog](#imported-github-projects) \| [Pinned sources](github-sources.json) \| [Integrity check](verify-github-sources.py) |
 
 ---
 
@@ -151,6 +154,18 @@ revision-document/
 ├── rust/                         # 5 Rust systems programming modules
 ├── security/                     # 8 Web Security, OWASP Top 10 & DevSecOps modules
 ├── seo-skills/                   # Complete Claude SEO source, skills, agents, extensions & tests
+├── 3dviz-pro-max/                # viettranx/3dviz-pro-max
+├── addyosmani-agent-skills/      # addyosmani/agent-skills
+├── ai-clean-handoff/             # bentran1vn/ai-clean-handoff
+├── ai-engineering-hub/           # patchy631/ai-engineering-hub
+├── ai-website-cloner-template/   # JCodesMore/ai-website-cloner-template
+├── anthropics-skills/            # anthropics/skills
+├── context-mode/                 # mksglu/context-mode
+├── impeccable/                   # pbakaus/impeccable
+├── jakubkrehel-skills/           # jakubkrehel/skills
+├── public-apis/                  # public-apis/public-apis
+├── react-bits/                   # DavidHDev/react-bits
+├── vietmap-testing-4pmm/         # bentran1vn/vietmap-testing-4pmm
 ├── superpowers/                  # Complete Superpowers source, 15 skills, hooks & tests
 ├── swt301/                       # Software testing & LLM test generation research
 ├── system-design/                # 8 System Design & ByteByteGo architectural patterns
@@ -160,11 +175,13 @@ revision-document/
 ├── CAVEMAN.md                    # Output token compression rules
 ├── DOCUMENTATION-ROADMAP.md      # Topic expansion roadmap, gaps & priority labs
 ├── ECC.md                        # Engineering & TDD workflow standardization framework
+├── github-sources.json           # Pinned GitHub sources, file hashes & modes
 ├── HEADROOM.md                   # Input context compression rules
 ├── PONYTAIL.md                   # Code generation simplification rules
 ├── RTK.md                        # Terminal output token compression rules
 ├── README-AI-TOOLS.md            # AI agent token optimization guide
 ├── package.json                  # Project configuration & automated test scripts
+├── verify-github-sources.py      # Source snapshot and Git index integrity check
 └── tsconfig.json                 # TypeScript compiler configuration
 ```
 
@@ -276,6 +293,65 @@ Supplementary skills covering agent harnesses, context compaction, tool design, 
 
 ---
 
+## Imported GitHub Projects
+
+Đối chiếu 27 repository công khai trong [danh sách star của 161seconds](https://github.com/161seconds?tab=stars) ngày **2026-11-11**. Giữ **12 nguồn mới ở thư mục gốc**; **10 dự án đã có** được bỏ qua, kể cả trường hợp đã tích hợp skill hoặc có tài liệu cấu hình. Chính repository này không được nhập vào bản thân nó.
+
+Không lưu bản sao bốn dự án cá nhân `161seconds/accrue-merit`, `161seconds/shuttle-connect`, `161seconds/shuttle-flux` và `161seconds/shuttle-sync` trong bộ sưu tập này.
+
+### Dự án đã nhập
+
+Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và commit cố định; các thư mục skills được đặt tên theo tác giả để tránh trùng tên.
+
+| Dự án và README | Nội dung | Commit nguồn | File | Dung lượng | Giấy phép |
+| --- | --- | --- | ---: | ---: | --- |
+| [addyosmani/agent-skills](addyosmani-agent-skills/README.md) | Skill kỹ thuật cho quy trình đặc tả, lập kế hoạch, phát triển, kiểm thử, review và tối ưu hiệu năng web. | [`301b02b12bff`](https://github.com/addyosmani/agent-skills/tree/301b02b12bff98e4688e6984af6556802322bbde) | 240 | 1.16 MB | [MIT](addyosmani-agent-skills/LICENSE) |
+| [anthropics/skills](anthropics-skills/README.md) | Bộ skill mẫu của Anthropic, gồm thiết kế, phát triển, xử lý tài liệu và đặc tả Agent Skills. | [`2c5958ecac7c`](https://github.com/anthropics/skills/tree/2c5958ecac7cee2b583967a2c4981d0f4a75c579) | 446 | 11.97 MB | [Theo từng skill; Apache-2.0](anthropics-skills/THIRD_PARTY_NOTICES.md) |
+| [bentran1vn/ai-clean-handoff](ai-clean-handoff/README.md) | Quy trình Copybara/Roslyn chuẩn bị bàn giao mã C#, lọc cấu hình agent và bảo toàn file phía nhận. | [`06704e83f410`](https://github.com/bentran1vn/ai-clean-handoff/tree/06704e83f41013d83e9d64b4d5e5f3f05ca8ecbc) | 33 | 3.18 MB | [MIT](ai-clean-handoff/LICENSE) |
+| [bentran1vn/vietmap-testing-4pmm](vietmap-testing-4pmm/README.md) | Dự án thử nghiệm tích hợp Vietmap; xem README và package.json trong bản nguồn. | [`99a888ed5f06`](https://github.com/bentran1vn/vietmap-testing-4pmm/tree/99a888ed5f06bfd047dbe4dec324495278b8d993) | 33 | 2.31 MB | Chưa khai báo |
+| [DavidHDev/react-bits](react-bits/README.md) | Thư viện component React có animation và tương tác, kèm nhiều biến thể triển khai và website tài liệu. | [`9d9c687dc4f5`](https://github.com/DavidHDev/react-bits/tree/9d9c687dc4f55b23539aa5417b703078047efa74) | 8,823 | 399.76 MB | [MIT + Commons Clause](react-bits/LICENSE.md) |
+| [jakubkrehel/skills](jakubkrehel-skills/README.md) | Các skill xây dựng giao diện, animation và trải nghiệm người dùng. | [`8b254eb75dad`](https://github.com/jakubkrehel/skills/tree/8b254eb75dadf3615a6abce87aed28e1b6e4d77c) | 104 | 0.55 MB | [MIT](jakubkrehel-skills/LICENSE) |
+| [JCodesMore/ai-website-cloner-template](ai-website-cloner-template/README.md) | Template dùng coding agent sao chép giao diện website, kèm cấu hình chạy dự án. | [`5426e0e2ec35`](https://github.com/JCodesMore/ai-website-cloner-template/tree/5426e0e2ec35dbc173a7a18f47a3dfe2a765313e) | 49 | 1.32 MB | [MIT](ai-website-cloner-template/LICENSE) |
+| [mksglu/context-mode](context-mode/README.md) | Plugin giảm lượng đầu ra tool đưa vào context, hỗ trợ tìm kiếm SQLite FTS5 và duy trì phiên. | [`f681b4580fe8`](https://github.com/mksglu/context-mode/tree/f681b4580fe8340364384b04d9936a645cb05c53) | 861 | 27.59 MB | [Elastic-2.0](context-mode/LICENSE) |
+| [patchy631/ai-engineering-hub](ai-engineering-hub/README.md) | Tutorial và notebook về LLM, RAG, agent AI, xử lý dữ liệu và triển khai ứng dụng AI. | [`042aeb506738`](https://github.com/patchy631/ai-engineering-hub/tree/042aeb5067384981eeba6a07fa882f436bb1660d) | 1,519 | 377.35 MB | [MIT](ai-engineering-hub/LICENSE) |
+| [pbakaus/impeccable](impeccable/README.md) | Bộ skill và công cụ hướng dẫn thiết kế, đánh giá, tinh chỉnh giao diện và nhận diện mẫu thiết kế kém. | [`c1e0e5492fbb`](https://github.com/pbakaus/impeccable/tree/c1e0e5492fbb524f5df84d635ecfae7dc438ec45) | 4,527 | 88.07 MB | [Apache-2.0](impeccable/LICENSE) |
+| [public-apis/public-apis](public-apis/README.md) | Danh mục API công khai được phân loại theo chủ đề, kèm công cụ kiểm tra liên kết. | [`88706670ac0f`](https://github.com/public-apis/public-apis/tree/88706670ac0ffaad7bf3c6307747e2515f638bed) | 23 | 0.49 MB | [MIT](public-apis/LICENSE) |
+| [viettranx/3dviz-pro-max](3dviz-pro-max/README.md) | Skill dựng cảnh 3D bằng Three.js/Blender, có recipe, dữ liệu tham chiếu, kit và ví dụ tương tác. | [`d077e0e68915`](https://github.com/viettranx/3dviz-pro-max/tree/d077e0e68915c25be8e71d74684d3144fd1c2aca) | 2,112 | 85.70 MB | [MIT](3dviz-pro-max/LICENSE) |
+
+### Dự án đã có
+
+| Nguồn | Nội dung hiện có |
+| --- | --- |
+| mattpocock/skills | [mattpocock-skills/](mattpocock-skills/README.md) |
+| obra/superpowers | [superpowers/](superpowers/README.md) |
+| AgriciDaniel/claude-seo | [seo-skills/](seo-skills/README.md) |
+| Nutlope/hallmark | [hallmark/](hallmark/README.md) |
+| cloudflare/security-audit-skill | [.agents/skills/security-audit/](.agents/skills/security-audit/README.md) |
+| affaan-m/ECC | [ECC.md](ECC.md), [TDD](.agents/skills/tdd-workflow/SKILL.md), [Security Review](.agents/skills/security-review/SKILL.md), [Code Review](.agents/skills/code-review/SKILL.md) |
+| JuliusBrussee/caveman | [CAVEMAN.md](CAVEMAN.md), [skill](.agents/skills/caveman/SKILL.md) |
+| DietrichGebert/ponytail | [PONYTAIL.md](PONYTAIL.md) |
+| rtk-ai/rtk | [RTK.md](RTK.md) |
+| headroomlabs-ai/headroom | [HEADROOM.md](HEADROOM.md), [launcher](codex-headroom.ps1) |
+
+### Nguồn gốc và kiểm tra
+
+Phần mới gồm **18,770 file**, **999,442,362 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
+
+```powershell
+rtk proxy python -X utf8 -B verify-github-sources.py
+```
+
+Lệnh kiểm tra toàn bộ cây file và Git index. Trên Windows, dùng `git -c core.longpaths=true` khi checkout/stage; script kiểm tra xử lý đường dẫn dài và symlink lưu dưới dạng file đích liên kết khi `core.symlinks=false`.
+
+### Giấy phép nguồn GitHub
+
+Các nguồn giữ LICENSE/NOTICE riêng; ISC của kho tài liệu không thay thế các giấy phép này. Context Mode dùng Elastic-2.0, Anthropic đặt giấy phép ở từng skill. `vietmap-testing-4pmm` chưa khai báo giấy phép ở gốc.
+
+**React Bits dùng MIT + Commons Clause**, hạn chế phân phối lại component, tool, âm thanh và export như sản phẩm riêng hoặc bộ sưu tập. Đọc [LICENSE.md](react-bits/LICENSE.md) trước khi chia sẻ bản nguồn này.
+
+Đây là snapshot mã nguồn, không kèm lịch sử Git. Chưa cài dependency, chạy ứng dụng, đăng ký skill hoặc kích hoạt hook/plugin của các nguồn mới. Dataset, model và nội dung ngoài Git không thuộc snapshot. Các tích hợp sẵn có được giữ nguyên.
+---
+
 ## Documentation Roadmap
 
 Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic expansions. Current development priorities include DDD/modular monoliths, API contracts, advanced PostgreSQL concurrency, integration testing patterns, and resilient payment integrations with automated retries. Each topic defines existing coverage, known gaps, and proposed labs.
@@ -289,7 +365,7 @@ Refer to [DOCUMENTATION-ROADMAP.md](DOCUMENTATION-ROADMAP.md) for planned topic 
   1. Adhere to the standardized 3-tier structure for every module.
   2. Ensure all automated tests pass (`npm run test:ts:practice` and `npm run test:react:practice`).
   3. Keep code concise, idiomatic, and clearly commented.
-- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence); Claude SEO uses [MIT](seo-skills/LICENSE), with [CC BY 4.0 attribution for its bundled FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution); Superpowers uses [MIT](superpowers/LICENSE).
+- **License**: Original repository content is released under the [ISC License](LICENSE). Third-party sources retain their own licenses: Hallmark uses [MIT](hallmark/LICENSE), with [separate licenses for its listed photographs](hallmark/README.md#licence); Claude SEO uses [MIT](seo-skills/LICENSE), with [CC BY 4.0 attribution for its bundled FLOW framework and prompts](seo-skills/skills/seo-flow/SKILL.md#attribution); Superpowers uses [MIT](superpowers/LICENSE). Additional GitHub sources retain their [documented licenses](#giấy-phép-nguồn-github).
 
 ---
 
