@@ -40,6 +40,8 @@ Bản gốc nằm trong [project-kickoff](.agents/skills/project-kickoff/SKILL.m
 
 Skill giữ kiến trúc của dự án đang có; chỉ áp dụng chuyển đổi cấu trúc khi nằm trong yêu cầu. Các skill phụ là tùy chọn, không tự cài thêm thư viện hay bộ skill. [Nguồn tổng hợp và giấy phép](.agents/skills/project-kickoff/references/sources.md) ghi rõ tài liệu đã dùng.
 
+`project-kickoff` tích hợp [Caveman](CAVEMAN.md) để trả lời ngắn, [RTK](RTK.md) để nén đầu ra lệnh và [Headroom](HEADROOM.md) để dùng wrapper/proxy hiện có. Skill kiểm tra công cụ sẵn có, phân biệt đã cài với đang hoạt động và báo trạng thái thực tế; thiếu công cụ tùy chọn vẫn tiếp tục khảo sát. RTK và Headroom là công cụ CLI, không phải hai skill riêng.
+
 ## Nguồn và giấy phép
 
 Các snapshot Superpowers và Context Engineering được nhập ngày **2026-10-20**; Cloudflare và wshobson được nhập ngày **2026-10-22**; morluto/rea và ruvnet/ruflo được nhập ngày **2026-10-24**. Ba nguồn đầu dùng `skills/<tên-skill>/`; wshobson dùng `plugins/<plugin>/skills/<tên-skill>/`; morluto dùng `.agents/skills/<tên-skill>/`; ruvnet dùng gốc repo và `docs/`.

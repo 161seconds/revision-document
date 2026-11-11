@@ -28,6 +28,8 @@ Architecture selection also uses this repository's [architecture comparison](htt
 
 The parent repository's `HARNESS.md` provides the available skill routing. Optional skill names in the entrypoint refer to separately available integrations; their instructions and licenses remain with those skills. Missing integrations do not prevent the core workflow.
 
+Communication and tooling follow the repository's [Caveman guide](https://github.com/161seconds/revision-document/blob/86fc966e8a4baa2f559f6869d870ba13d1f0f3b3/CAVEMAN.md), [RTK guide](https://github.com/161seconds/revision-document/blob/86fc966e8a4baa2f559f6869d870ba13d1f0f3b3/RTK.md), [Headroom guide](https://github.com/161seconds/revision-document/blob/86fc966e8a4baa2f559f6869d870ba13d1f0f3b3/HEADROOM.md), and [Caveman skill](https://github.com/161seconds/revision-document/blob/86fc966e8a4baa2f559f6869d870ba13d1f0f3b3/.agents/skills/caveman/SKILL.md). Caveman is a skill; RTK and Headroom are CLI/runtime integrations. The entrypoint includes portable fallback guidance rather than requiring those repository files on another machine. Installed CLI help governs version-specific setup commands.
+
 ## License
 
 The skill's [MIT license](../LICENSE) retains Addy Osmani's copyright notice for adapted guidance and the repository author's notice for the synthesis. Upstream snapshots remain unchanged. Their individual licenses continue to apply to their original contents.

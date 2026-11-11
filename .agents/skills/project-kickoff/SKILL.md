@@ -7,6 +7,14 @@ description: Start a new project or onboard an unfamiliar repository by inspecti
 
 Understand the target before building. Use the bundled Pegaxus layout for new application structure; preserve an existing project's conventions unless the user requests a migration.
 
+## Communication and tooling
+
+- At kickoff, read the target's `CAVEMAN.md`, `RTK.md`, and `HEADROOM.md` when present. Reuse current session settings and discover available binaries before choosing command prefixes. Missing optional tools do not block discovery; honor explicit target requirements.
+- **Caveman:** load the available `caveman` skill for concise updates and replies in the user's language. Preserve the user's selected level and any explicit opt-out. Keep code, identifiers, commands, errors, numbers, and necessary explanations intact; saved documents and commit/PR text use normal prose. If the skill is unavailable, keep replies concise directly.
+- **RTK:** use the installed CLI for shell output compression, such as `rtk git status --short`. Use `rtk proxy <command>` for unsupported commands or raw verification evidence; avoid wrapping a command twice. If RTK is optional and unavailable, use the native command and report that compression is unavailable.
+- **Headroom:** reuse the configured wrapper/proxy when active. Check the installed CLI with `headroom --version`; use its current help and `headroom doctor` when setup or diagnosis is relevant. An installed binary does not prove the current session is compressed. Installing, wrapping agents, starting services, or changing proxy settings belongs to a requested setup task, not ordinary inspection.
+- Preserve failures, decisive output, and verification counts through compression. Obtain raw output when a compressed result cannot substantiate a conclusion. Report tools as unavailable, installed, or verified active according to actual evidence. When persisting project instructions, link only tooling guides that exist in the target.
+
 ## 1. Discover the target
 
 - Resolve the requested directory and applicable `AGENTS.md` instructions. Read the relevant README, contribution rules, coding conventions, architecture docs, and ADRs before proposing structure.
@@ -42,6 +50,7 @@ Resolve optional skills through the host's available-skill catalog or the target
 
 | Need | Optional skills, when available |
 | --- | --- |
+| Concise communication | `caveman` |
 | Clarify a large or ambiguous request | `spec-driven-development`, `planning-and-task-breakdown` |
 | Verify version-sensitive APIs | `source-driven-development` |
 | Implement a .NET backend within the chosen layers | `dotnet-backend-patterns` |
@@ -63,7 +72,7 @@ Keep the kickoff proportional to the project. Return:
 2. **Folder map:** relevant paths with their responsibilities; label proposed paths clearly.
 3. **Design:** the first flow, component/data boundaries, important trade-offs, and preserved contracts.
 4. **Conventions:** code/module/test rules plus evidence-backed branch and commit examples.
-5. **Verification:** exact commands, working directories, prerequisites, and actual execution status.
+5. **Verification:** exact commands, working directories, prerequisites, actual execution status, and Caveman/RTK/Headroom availability or active state.
 6. **First slice:** the smallest useful implementation, its acceptance checks, optional skills selected, and any blocking decision.
 
 For onboarding or planning only, deliver this in the response. When asked to persist project setup, update existing context/convention/architecture documents; add a short root `AGENTS.md` or decision record only where needed. Link canonical documents instead of duplicating their contents. Do not overwrite existing instructions with a template. When implementation is requested, continue into the first slice within the user's scope instead of stopping at the plan.
