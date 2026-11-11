@@ -2,12 +2,13 @@
 
 Hướng dẫn sử dụng theo task, prompt mẫu và lab RED/GREEN: [Harness thực chiến](harness-practice/README.md).
 
-Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT. `AGENTS.md` nạp bảng định tuyến này; chỉ đọc `SKILL.md` phù hợp với công việc, không nạp toàn bộ bộ sưu tập.
+Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT, cùng skill tổng hợp `project-kickoff` dùng cấu trúc Pegaxus làm mẫu. `AGENTS.md` nạp bảng định tuyến này; chỉ đọc `SKILL.md` phù hợp với công việc, không nạp toàn bộ bộ sưu tập.
 
 ## Định tuyến
 
 | Skill | Khi sử dụng |
 | --- | --- |
+| [project-kickoff](.agents/skills/project-kickoff/SKILL.md) | Bắt đầu dự án mới hoặc làm quen repo: khảo sát cấu trúc, system design, quy ước code/Git, lệnh kiểm tra; dùng mẫu Pegaxus khi tạo mới và chọn skill phụ theo nhu cầu. |
 | [harness-engineering](.agents/skills/harness-engineering/SKILL.md) | Thiết kế vòng lặp agent, giới hạn vùng được sửa, evaluator cố định, rollback và nhật ký bền vững. |
 | [context-compression](.agents/skills/context-compression/SKILL.md) | Tóm tắt hoặc bàn giao phiên dài, giữ nguyên quyết định, đường dẫn, trạng thái kiểm thử và việc còn lại. |
 | [tool-design](.agents/skills/tool-design/SKILL.md) | Thiết kế schema, mô tả, kết quả và lỗi của tool/MCP; loại bỏ tool trùng chức năng. |
@@ -26,6 +27,18 @@ Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT. `AGENT
 Có thể gọi trực tiếp bằng tên, ví dụ `$systematic-debugging`, `$harness-engineering`, `$reverse-engineer-anything` hoặc `$ruflo`. Skill mới có thể được nhận diện từ lượt chat tiếp theo.
 
 `security-review` của ECC dùng để phòng ngừa lỗi khi phát triển; `security-audit` của Cloudflare dùng để điều tra và xác minh lỗ hổng. `security-audit` mặc định chỉ hướng dẫn theo câu hỏi; chỉ chạy toàn bộ quy trình khi người dùng yêu cầu audit/pentest codebase, review bảo mật toàn diện hoặc tạo báo cáo. Ví dụ: `$security-audit audit toàn bộ repo này, profile quick`. Full audit cần agent hỗ trợ subagent độc lập; chạy mã của mục tiêu cần sandbox cô lập ở cấp hệ điều hành, không có mạng ngoài, giới hạn tài nguyên và quyền ghi. Thiếu điều kiện thực thi thì giữ kết luận `needs_validation` cùng thông tin còn thiếu.
+
+## Khởi động dự án
+
+```text
+$project-kickoff khảo sát repo này, chỉ ra cấu trúc, system design và quy ước commit.
+$project-kickoff khởi tạo dự án quản lý đơn hàng, dùng cấu trúc Pegaxus với React/TypeScript và ASP.NET Core.
+$project-kickoff ghi lại quy ước dự án vào tài liệu hiện có và AGENTS.md, giữ các contract hiện tại.
+```
+
+Bản gốc nằm trong [project-kickoff](.agents/skills/project-kickoff/SKILL.md); [mẫu Pegaxus](.agents/skills/project-kickoff/references/pegaxus-layout.md) được đóng gói cùng skill, không cần checkout gốc để sử dụng. Muốn dùng ở repo khác, sao chép nguyên thư mục vào `$CODEX_HOME/skills/` hoặc `~/.codex/skills/` khi chưa đặt `CODEX_HOME`. Bản dùng chung là bản sao; khi sửa bản gốc cần đồng bộ lại. Skill có thể được nhận diện từ lượt chat tiếp theo.
+
+Skill giữ kiến trúc của dự án đang có; chỉ áp dụng chuyển đổi cấu trúc khi nằm trong yêu cầu. Các skill phụ là tùy chọn, không tự cài thêm thư viện hay bộ skill. [Nguồn tổng hợp và giấy phép](.agents/skills/project-kickoff/references/sources.md) ghi rõ tài liệu đã dùng.
 
 ## Nguồn và giấy phép
 

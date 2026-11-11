@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Kickoff"
+  short_description: "Đọc kiến trúc, cấu trúc Pegaxus và quy ước dự án"
+  default_prompt: "Dùng $project-kickoff khảo sát dự án này, áp dụng cấu trúc Pegaxus khi tạo mới, xác định system design, quy ước code/Git, lệnh kiểm tra và phần triển khai đầu tiên."

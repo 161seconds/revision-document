@@ -258,6 +258,12 @@ For automated setup and in-depth configuration, refer to the **[AI Agent Optimiz
 
 Supplementary skills covering agent harnesses, context compaction, tool design, evaluation, debugging, and verification are detailed in [HARNESS.md](HARNESS.md), including upstream references, pinned commits, and MIT licensing.
 
+### Project Kickoff
+
+Use [`$project-kickoff`](.agents/skills/project-kickoff/SKILL.md) to inspect a new or unfamiliar project before implementation: folder responsibilities, system design, code/Git conventions, validation commands, and the first useful feature. New applications follow the bundled [Pegaxus folder baseline](.agents/skills/project-kickoff/references/pegaxus-layout.md); existing projects retain their established structure. Supporting skills load only when relevant and available.
+
+See [usage and installation](HARNESS.md#khởi-động-dự-án) and [source attribution](.agents/skills/project-kickoff/references/sources.md). The skill folder can be copied into the user skill directory to work across repositories.
+
 ### Hallmark UI Design
 
 [Hallmark](hallmark/README.md) provides design guidance for Claude Code, Codex, Cursor, and OpenCode. It includes 48 themes, custom design directions, redesign workflows that preserve content and wiring, and UI audits with static and browser-based checks.
