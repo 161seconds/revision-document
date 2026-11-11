@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Heading rhythm fixture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Georgia, serif; font-size: 16px; line-height: 24px; width: 1200px; padding: 32px 20px; }
+  main { display: grid; grid-template-columns: 560px 560px; gap: 40px; align-items: start; }
+  .col > h1 { font-size: 32px; line-height: 40px; margin: 0 0 24px; }
+  h2 { font-size: 28px; line-height: 36px; }
+  h3 { font-size: 20px; line-height: 28px; }
+  h4 { font-size: 18px; line-height: 24px; }
+
+  /* Each case opens with a rule, so no walk crosses from one case into the next. */
+  .case { border-top: 1px solid #d8d2c8; padding-top: 24px; margin-bottom: 48px; }
+  .blk { height: 48px; overflow: hidden; }
+  .tiles { height: 120px; background: #e6e6e6; }
+  .above-4 { margin-top: 4px; }
+  .above-10 { margin-top: 10px; }
+  .above-12 { margin-top: 12px; }
+  .above-20 { margin-top: 20px; }
+  .above-24 { margin-top: 24px; }
+  .above-48 { margin-top: 48px; }
+  .above-64 { margin-top: 64px; }
+  .above-72 { margin-top: 72px; }
+  .below-16 { margin-bottom: 16px; }
+  .below-24 { margin-bottom: 24px; }
+  .below-36 { margin-bottom: 36px; }
+  .below-40 { margin-bottom: 40px; }
+  .below-48 { margin-bottom: 48px; }
+
+  /* FLAG: a carousel ends, its pagination sits ten pixels above a section title
+     wrapped in flush wrappers, and the tiles the title introduces are forty pixels away */
+  .carousel { height: 200px; }
+  .carousel .slide { height: 176px; }
+  .carousel .dots { height: 16px; margin-top: 8px; text-align: center; }
+  .carousel .dot { display: inline-block; width: 10px; height: 10px; border-radius: 5px; background: #c9bfe0; }
+
+  /* PASS: an eyebrow label in a wrapper of its own, the title in another */
+  .eyebrow { font-size: 12px; line-height: 16px; height: 16px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* PASS: the previous block ends in a rule */
+  .ruled { border-bottom: 1px solid #b8b0a4; padding-bottom: 12px; }
+  hr.rule { border: 0; border-top: 1px solid #b8b0a4; height: 0; }
+
+  /* PASS: accordion rows, each trigger the last thing in a padded row */
+  .acc-row { padding-bottom: 24px; }
+  .acc-row + .acc-row { margin-top: 24px; }
+
+  /* PASS: a caption tight under its photo */
+  .thumb { display: block; width: 240px; height: 120px; }
+
+  /* FLAG: a module box filled with the page's own white shows no edge */
+  .white-module { background: #fff; }
+  .shadow-carousel { display: block; }
+
+  /* PASS: a run-in heading set inline beside its paragraph (stripe.com) */
+  .run-in { display: inline; font-size: 16px; line-height: 24px; }
+
+  /* PASS: a title band that draws its own rules */
+  .banded { border-top: 1px solid #84263f; border-bottom: 1px solid #84263f; padding: 15px 0; }
+
+  /* PASS: the standfirst sits behind a display: contents wrapper */
+  .contents { display: contents; }
+  .standfirst { height: 24px; }
+
+  /* PASS: small card, its boundary provides the separation */
+  .pass-card { box-shadow: 0 1px 4px rgba(0,0,0,0.2); background: #f4f4f4; padding: 16px; width: 320px; height: 150px; }
+  .pass-card h3 { margin: 0 0 20px; }
+
+  /* PASS: heading first inside a banded section; the band edge separates */
+  .pass-band { background: #ececec; padding: 8px 0 32px; }
+  .pass-band h2 { margin: 0 0 24px; }
+  /* observations-1006 row 10: a one-line subtitle touching its heading, and
+     an eyebrow that opens its group closer to the heading than the heading
+     is to its content, belong to the heading. */
+  .subtitle { font-size: 20px; line-height: 28px; }
+  .subtitle-narrow { font-size: 20px; line-height: 28px; width: 240px; }
+  .eyebrow-plain { font-size: 12px; line-height: 16px; text-transform: uppercase; }
+  .above-60 { margin-top: 60px; }
+  .above-160 { margin-top: 160px; }
+  .below-100 { margin-bottom: 100px; }
+</style>
+</head>
+<body>
+<main>
+  <section class="col" aria-label="Should flag">
+    <h1>Should flag</h1>
+
+    <section class="case">
+      <p class="blk">A closing paragraph of the previous block of content, sitting directly above the crowded heading with no gap at all.</p>
+      <h2 class="below-40">Flag Crowded One</h2>
+      <p class="blk">The content this heading introduces sits forty pixels away while the previous block touches the heading.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">Another closing paragraph of a previous content block, again flush against the heading that follows it in the flow.</p>
+      <h2 class="below-40">Flag Crowded Two</h2>
+      <p class="blk">Second crowded case. Two or more headings must violate the principle before the rule fires on a page.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A third closing paragraph that the next heading will visually attach to, which is the inversion this rule measures.</p>
+      <h3 class="below-36">Flag Crowded Three</h3>
+      <p class="blk">Third crowded case, this time an h3, to confirm the rule reads h2 through h4 and not only the top level.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph of running prose, set with one uniform margin, so the subhead below sits as close to it as to its own text.</p>
+      <h2 class="above-20 below-24">Flag Near Equal Under Prose</h2>
+      <p class="blk">Twenty pixels above and twenty-four below, under two lines of body copy: the subhead reads as part of the run above.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">Another paragraph of running prose. The subhead below keeps exactly the gap it keeps to the paragraph it introduces.</p>
+      <h3 class="above-24 below-24">Flag Even Under Prose</h3>
+      <p class="blk">Twenty-four pixels on both sides of the subhead, under body copy that runs across the column.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph ten pixels above a title whose module box is painted the same white as the page around it.</p>
+      <div class="white-module above-10"><h2 class="below-40">Flag White Module Title</h2><p class="blk">The white fill shows no edge, so the paragraph above is still the title's neighbour.</p></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph ten pixels above a title over a carousel that draws its slides in a shadow tree.</p>
+      <h2 class="above-10 below-40">Flag Title Over Shadow Carousel</h2>
+      <x-carousel class="shadow-carousel"><template shadowrootmode="open"><style>:host { display: block; } .track { display: flex; gap: 12px; } .slide { width: 160px; height: 120px; background: #d9d4ea; }</style><div class="track"><div class="slide">One</div><div class="slide">Two</div><div class="slide">Three</div></div></template></x-carousel>
+      <div class="above-72"><p class="blk">The next module starts well below the carousel; the title introduces the carousel, not this.</p></div>
+    </section>
+
+    <section class="case">
+      <div class="carousel">
+        <div class="slide"></div>
+        <div class="dots"><span class="dot"></span> <span class="dot"></span> <span class="dot"></span></div>
+      </div>
+      <div class="above-10"><div><h2 class="below-40">Flag Wrapped Section Title</h2></div></div>
+      <div class="tiles"></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a subtitle that wraps onto two lines and rests on the heading below it.</p>
+      <div class="above-72"><p class="subtitle-narrow">Pick a plan in one click and fly with peace of mind</p><h2 class="below-24">Flag Two Line Subtitle</h2></div>
+      <p class="blk">A subtitle on two lines is a block of its own, and the heading sits on it with no room.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph that closes with a short line of its own, set flat in the same box as the heading.</p>
+      <p>Read the full report on our site.</p>
+      <h2 class="below-24">Flag Tail Line Touching</h2>
+      <p class="blk">The short line closes the block above; it does not open the heading's group.</p>
+    </section>
+  </section>
+
+  <section class="col" aria-label="Should pass">
+    <h1>Should pass</h1>
+
+    <section class="case">
+      <h2 class="below-16">Pass First Heading</h2>
+      <p class="blk">The first heading in its case has nothing above it, so it is exempt from the rhythm comparison entirely.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph with plenty of room after it. The heading below keeps sixty-four pixels above and sixteen below.</p>
+      <h2 class="above-64 below-16">Pass Generous Above</h2>
+      <p class="blk">Sixty-four pixels above and sixteen below. The heading clearly binds to this paragraph, the healthy shape.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A short line of copy.</p>
+      <h2 class="above-24 below-24">Pass Even Under One Line</h2>
+      <p class="blk">Even spacing under a single line is not running prose: a closing line, a kicker, a caption.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a heading whose spacing above and below is nearly equal, with more room above than the crowded test asks.</p>
+      <h2 class="above-24 below-20">Pass More Room Above</h2>
+      <p class="blk">Twenty-four pixels above and twenty below. The heading sits closer to its own content, the healthy direction.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before an eyebrow label. The label belongs to the heading cluster, and the cluster has room above it.</p>
+      <p class="eyebrow above-72">Chapter Four</p>
+      <h2 class="above-12 below-24">Pass Eyebrow Cluster</h2>
+      <p class="blk">Space is measured from the top of the cluster, where seventy-two pixels separate it from the text above.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before an eyebrow that a site builder wrapped in its own box, with the title wrapped in another box.</p>
+      <div class="above-72"><p class="eyebrow">Introducing</p></div>
+      <div class="above-24"><h2 class="below-48">Pass Eyebrow In Wrapper</h2></div>
+      <p class="blk">The wrapped label is still the heading's own label, and seventy-two pixels separate the pair from the text above.</p>
+    </section>
+
+    <section class="case">
+      <div class="ruled"><p class="blk">A block of content that ends in a rule. The rule is the section break, so the heading below starts a section.</p></div>
+      <h3 class="above-24 below-48">Pass Divider Above</h3>
+      <p class="blk">Twenty-four pixels to the rule above and forty-eight to this paragraph; the rule already separates the blocks.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A block of content followed by a horizontal rule, then a heading twelve pixels under that rule.</p>
+      <hr class="rule above-24">
+      <h3 class="above-12 below-40">Pass Rule Above</h3>
+      <p class="blk">The measured block above is the rule itself, which separates the sections rather than crowding the heading.</p>
+    </section>
+
+    <section class="case">
+      <div class="acc-row"><h4>Pass Accordion Question That Opens The List</h4></div>
+      <div class="acc-row"><h4>Pass Accordion Question In The Middle Row</h4></div>
+      <div class="acc-row"><h4>Pass Accordion Question On The Last Row</h4></div>
+    </section>
+
+    <section class="case">
+      <div>
+        <img class="thumb" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAMzMzAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==">
+        <h3 class="above-4 below-24">Pass Caption Under Photo</h3>
+        <p class="blk">A caption set tight under its own photo belongs to that photo. The gap below leads to the card's copy.</p>
+      </div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A block of content directly above a section title that draws a rule above and below its own text.</p>
+      <h2 class="banded below-24">Pass Banded Title</h2>
+      <p class="blk">The title band's own rule is the separator above it, so the zero gap to the block above is not crowding.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph twenty-four pixels above a heading whose standfirst sits behind a wrapper that generates no box at all.</p>
+      <h2 class="above-24">Pass Standfirst Behind Contents</h2>
+      <div class="contents"><p class="standfirst above-12">A short standfirst twelve pixels under the heading.</p></div>
+      <div class="tiles above-48"></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a small card. The card boundary provides the separation for the heading inside it.</p>
+      <div class="pass-card above-12">
+        <h3>Pass Card Heading</h3>
+        <p class="blk">A heading inside a small card. The rule exempts headings inside panels shorter than two hundred pixels.</p>
+      </div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a banded section. The heading is the first content inside a section with its own background.</p>
+      <div class="pass-band above-4">
+        <h2>Pass Band Heading</h2>
+        <p class="blk">This heading is the first content inside a section that draws its own background, so the band edge separates.</p>
+      </div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph that a pull quote follows without a gap, as an article sets a quotation into its running text.</p>
+      <blockquote style="margin: 0;"><h2 class="below-40">Pass Pull Quote Heading</h2></blockquote>
+      <p class="blk">A heading set inside a quotation is the quotation set large. It heads no section, so its spacing sets no rhythm.</p>
+    </section>
+  </section>
+
+  <section class="col" aria-label="Wrapper spacing">
+    <style>
+      /* FLAG: the title's wrapper holds the spacing, as padding or as the row an icon or a button stretches */
+      .pad-head { padding: 16px 0 48px; }
+      .pad-6 { padding-bottom: 6px; margin: 16px 0 42px; }
+      .icon-row { display: flex; align-items: center; gap: 12px; margin: 16px 0 48px; }
+      .icon { width: 48px; height: 48px; border-radius: 24px; background: #e4e0f5; flex: none; }
+      .title-row { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 48px; }
+      .btn-tall { display: inline-block; padding: 16px 28px; line-height: 24px; background: #222; color: #fff; }
+      /* FLAG: the title ends one column of a row, and its content runs under the row */
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+      /* FLAG: builder layouts that hold every gap open with an empty box */
+      .stack { display: flex; flex-direction: column; }
+      .spacer-16 { height: 16px; }
+      .spacer-48 { height: 48px; }
+      /* PASS: an empty spacer row painted the colour of its band (citigroup.com's
+         navy GridRow on the navy footer) is space; FLAG: one in a colour of its own
+         is a divider, and the title sits 0px under it */
+      .navy-band { background: #0f1632; color: #f4f4f4; padding: 16px; }
+      .navy-fill { background: #0f1632; }
+      .divider-fill { height: 16px; background: #c9bfe0; }
+      /* FLAG: a white strip across a band painted only with a gradient is a divider */
+      .grad-band { background-image: linear-gradient(#0f1632, #0f1632); color: #f4f4f4; padding: 16px; }
+      .white-fill { background: #ffffff; }
+      /* FLAG: a code block framed on every side is content, not a rule */
+      .code { border: 1px solid #d0d7de; background: #f6f8fa; padding: 16px; font: 14px/20px monospace; }
+      /* FLAG: a title alone in a layout row, then a row of feature columns with the same class */
+      .lrow { display: flex; gap: 24px; }
+      .lrow > div { flex: 1; }
+      .lrow h2 { margin: 16px 0 48px; }
+      /* PASS: a label at body size set apart by colour, italics or a light weight
+         (cnnbrasil.com.br's grey section links, outreign.io's italic eyebrows) */
+      .kick-grey { color: #6b7280; text-decoration: none; }
+      .kick-italic { font-style: italic; }
+      .kick-light { font-weight: 100; }
+      /* PASS: a band painted with a background image, not a colour (jyes.com.tw
+         tiles a url() texture; a gradient at the box's own size paints it too) */
+      .img-band { background-image: linear-gradient(#ececec, #ececec); padding: 25px 0; }
+      .tile-band { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='8' height='8' fill='%23ececec'/%3E%3Crect width='4' height='4' fill='%23e2e2e2'/%3E%3C/svg%3E"); padding: 25px 0; }
+      /* FLAG: a coloured link or a grey date closes the block above, laid out
+         in the same box as that block, with the next title twelve pixels under it */
+      .more-link { color: #1d4ed8; text-decoration: none; }
+      .post-date { color: #6b7280; }
+      /* FLAG: a heading's own background image decorates it without drawing a
+         top edge: an icon placed once beside the text, a short accent bar under it */
+      .icon-head { padding-left: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%231d4ed8'/%3E%3C/svg%3E") no-repeat left center; }
+      .bar-head { padding-bottom: 10px; background-image: linear-gradient(90deg, #f59e0b 0 48px, transparent 48px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
+    </style>
+    <h1>Wrapper spacing</h1>
+
+    <section class="case">
+      <p class="blk">A closing paragraph above a section header whose own padding holds sixteen pixels above the title.</p>
+      <header class="pad-head"><h2>Flag Header Padding</h2></header>
+      <p class="blk">The header's forty-eight pixels of bottom padding sit between the title and this, the content it introduces.</p>
+    </section>
+
+    <section class="case">
+      <div><p class="blk">A block editor wraps every text in a box. This one is the previous block, closing its content.</p></div>
+      <div class="pad-head"><h2>Flag Block Padding</h2></div>
+      <div><p class="blk">The heading block's own padding holds the spacing: sixteen above the title, forty-eight below it.</p></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph above a title wrapper with a few pixels of bottom padding and a margin under it.</p>
+      <div class="pad-6"><h2>Flag Small Padding</h2></div>
+      <p class="blk">Six pixels of padding and forty-two of margin still put forty-eight pixels between the title and this.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph above a title set beside an icon that is taller than the title's own line.</p>
+      <div class="icon-row"><span class="icon"></span><h2>Flag Icon Beside Heading</h2></div>
+      <p class="blk">The icon stretches the row, and the row's margin puts this content well away from the title.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph above a pricing title row whose button is taller than the title.</p>
+      <div class="title-row"><h2>Flag Tall Button Row</h2><a class="btn-tall" href="#">View all plans</a></div>
+      <p class="blk">The plans the title introduces start under the whole row, fifty-eight pixels below the title.</p>
+    </section>
+
+    <section class="case">
+      <div class="grid2">
+        <div><p class="blk">The left column closes with a paragraph and then a title.</p><h3 class="above-12">Flag Column Heading</h3></div>
+        <div><p class="blk">The right column holds a shorter paragraph.</p></div>
+      </div>
+      <p class="blk">What the column title introduces runs under the whole row, forty-eight pixels below the title.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph ten pixels above a heading whose gap below is an empty spacer box.</p>
+      <h2 class="above-10">Flag Spacer Below</h2>
+      <div class="spacer-48"></div>
+      <p class="blk">The spacer holds forty-eight pixels open between the heading and this content.</p>
+    </section>
+
+    <section class="case">
+      <div class="stack">
+        <div><p class="blk">A builder's flex stack puts every text in a wrapper of its own and every gap in an empty box.</p></div>
+        <div class="spacer-16"></div>
+        <div><h2>Flag Stack Heading</h2></div>
+        <div class="spacer-48"></div>
+        <div><p class="blk">Sixteen pixels of spacer above the title, forty-eight below it before this content.</p></div>
+      </div>
+    </section>
+
+    <section class="case">
+      <div class="stack navy-band">
+        <div><p class="blk">A navy band closes a paragraph, then holds forty-eight pixels open with an empty row painted navy.</p></div>
+        <div class="spacer-48 navy-fill"></div>
+        <div><h2 class="below-24">Pass Filled Spacer Row</h2></div>
+        <div><p class="blk">The row is the band's own colour, so the title has forty-eight pixels above and twenty-four below.</p></div>
+      </div>
+    </section>
+
+    <section class="case">
+      <div class="stack">
+        <div><p class="blk">A paragraph, then a sixteen pixel row painted a colour of its own.</p></div>
+        <div class="divider-fill"></div>
+        <div><h2 class="below-24">Flag Divider Row</h2></div>
+        <div><p class="blk">The row is a divider the title sits right under, with twenty-four pixels below it.</p></div>
+      </div>
+    </section>
+
+    <section class="case">
+      <div class="stack grad-band">
+        <div><p class="blk">A band painted with a gradient, then a forty-eight pixel white strip across it.</p></div>
+        <div class="spacer-48 white-fill"></div>
+        <div><h2 class="below-24">Flag Strip Over Gradient Band</h2></div>
+        <div><p class="blk">The strip is a divider the title sits right under, with twenty-four pixels below it.</p></div>
+      </div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then a date line in a wrapper, set like the body copy rather than as a label.</p>
+      <div><p class="above-24">Updated March 2026</p></div>
+      <div><h2 class="above-10 below-48">Flag Plain Line Above</h2></div>
+      <p class="blk">The date is content of its own, so the title sits ten pixels under it and forty-eight above this.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then a code block framed on every side, twelve pixels above the next heading.</p>
+      <pre class="code">npm install impeccable
+npx impeccable detect src/</pre>
+      <h3 class="above-12 below-36">Flag Code Block Above</h3>
+      <p class="blk">The frame is the code block's own box, not a rule, so the heading still sits closer to it than to this.</p>
+    </section>
+
+    <section class="case">
+      <div class="lrow"><div><p class="blk">A builder puts every block in a layout row. This row closes the previous block's content.</p></div></div>
+      <div class="lrow"><div><h2>Flag Title Alone In A Row</h2></div></div>
+      <div class="lrow">
+        <div><h3>Feature One</h3><p class="blk">The first column of the row the title introduces.</p></div>
+        <div><h3>Feature Two</h3><p class="blk">The second column of the row the title introduces.</p></div>
+      </div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph above a heading that ends a box drawing a rule under it.</p>
+      <div class="ruled above-10 below-36"><h3>Pass Heading Ends Ruled Box</h3></div>
+      <p class="blk">The rule under the box ends the heading's box, so this content belongs to the next one.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then a news card whose grey section link sits a few pixels above its headline.</p>
+      <div class="above-24"><a class="kick-grey" href="#">Política</a><div><h3 class="below-24">Pass Grey Kicker</h3></div></div>
+      <p class="blk">The grey link is the headline's label, so the cluster starts at the link, twenty-four pixels under the block above.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then an italic eyebrow at body size that opens the box holding a section title.</p>
+      <div class="above-48"><p class="kick-italic">Five screens</p><h2 class="above-12 below-24">Pass Italic Eyebrow</h2></div>
+      <p class="blk">The italic line is the title's label, and the cluster sits forty-eight pixels under the block above.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then a hairline eyebrow at body size that opens the box holding a section title.</p>
+      <div class="above-48"><p class="kick-light">Compare plans</p><h2 class="above-12 below-24">Pass Light Eyebrow</h2></div>
+      <p class="blk">The weight sets the line apart from the copy around it, so it is read as the title's label.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A block of tiles closes with a blue link to the full list, laid out in the same box as the tiles.</p>
+      <div class="tiles above-12"></div>
+      <p class="above-24"><a class="more-link" href="#">View all essays</a></p>
+      <h2 class="above-12 below-40">Flag Link Closing Block</h2>
+      <p class="blk">The link ends the tiles above, so the title sits twelve pixels under it and forty above this.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A post excerpt closes with its grey date, and the next post's title follows twelve pixels under the date.</p>
+      <p class="post-date above-24">March 3, 2026</p>
+      <h2 class="above-12 below-40">Flag Date Closing Post</h2>
+      <p class="blk">The date belongs to the post above, so the title sits twelve pixels under it and forty above this.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph twelve pixels above a heading that carries a small icon as its own background image.</p>
+      <h3 class="icon-head above-12 below-40">Flag Icon Heading</h3>
+      <p class="blk">The icon decorates the heading and draws no edge above it, so the heading is measured as any other.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph twelve pixels above a title that draws a short accent bar under itself with a gradient.</p>
+      <h2 class="bar-head above-12 below-40">Flag Accent Bar Heading</h2>
+      <p class="blk">The bar sits under the title and draws nothing along its top, so the title is measured as any other.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph, then a grey sentence ten pixels above the next title, too long to read as a label.</p>
+      <p class="kick-grey above-24">Filed under politics and the week in review</p>
+      <h2 class="above-10 below-48">Flag Grey Sentence Above</h2>
+      <p class="blk">A sentence is content of its own whatever its colour, so the title sits ten pixels under it and forty-eight above this.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph directly above a band whose grey is a background image rather than a colour.</p>
+      <div class="img-band"><h2 class="below-40">Pass Image Band Heading</h2><p class="blk">The band's edge separates the title from the paragraph above, as a colour band's does.</p></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A closing paragraph directly above a band painted with a small tiled texture instead of a colour.</p>
+      <div class="tile-band"><h2 class="below-40">Pass Tiled Band Heading</h2><p class="blk">The tiled texture covers the band, and its edge separates the title from the paragraph above.</p></div>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a subtitle set like body copy that rests on the heading it introduces.</p>
+      <div class="above-72"><p class="subtitle">Pick a plan in one click</p><h2 class="below-24">Pass Touching Subtitle</h2></div>
+      <p class="blk">The subtitle touches the heading on one line, so it is the heading's own and the gap above is the cluster's.</p>
+    </section>
+
+    <section class="case">
+      <p class="blk">A paragraph before a group that opens with an eyebrow set well apart from its heading.</p>
+      <div class="above-160"><p class="eyebrow-plain">01 / Language and tools</p><h2 class="above-60 below-100">Pass Distant Eyebrow</h2></div>
+      <p class="blk">The eyebrow opens its group and sits closer to the heading than the heading sits to this paragraph.</p>
+  
+
+    <section class="case">
+      <p class="blk">A paragraph before a run-in heading set inline at the start of the paragraph it leads.</p>
+      <div class="above-10 below-48"><h3 class="run-in">Pass Run In Heading</h3> <p class="run-in">The heading starts this line of prose, so the gap below it is not a gap at all.</p></div>
+      <p class="blk">The next block sits forty-eight pixels below the paragraph the heading opened.</p>
+    </section>
+  </section>
+</main>
+</body>
+</html>

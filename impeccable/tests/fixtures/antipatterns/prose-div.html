@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prose written straight into a div</title>
+  <style>
+    /* URL engine. line-length and body-text-viewport-edge measure prose a
+       CMS writes straight into a div (cencora.com's div.module__body,
+       aina-tech.io's div.mt-10.text-base between two measured paragraphs)
+       the way they measure a p: a block box with text of its own and only
+       phrasing inside. Every case below is 1264px wide with an 8px gutter,
+       so each one that is taken for prose reports both rules. */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    .band { width: 1264px; padding: 0 8px; margin: 0 0 32px; }
+    .band h2 { font-size: 20px; line-height: 28px; margin: 0 0 8px; }
+    .cms { display: block; width: 1264px; }
+    .row { display: flex; width: 1264px; }
+    .code { display: block; width: 1264px; white-space: pre-wrap; font-family: ui-monospace, monospace; }
+    .card-link { display: block; width: 1264px; color: #1c1c24; text-decoration: none; }
+    .card-link .cms { width: 1264px; }
+  </style>
+</head>
+<body>
+  <section class="band" aria-label="Should flag">
+    <h2>Should flag: a CMS body in a div</h2>
+    <div class="cms" id="flag-cms-body" data-expect="flag" data-case="Flag Prose Div">We combine global capabilities with local expertise to help partners bring therapies to the patients who need them, and we keep that work going through every stage of the product lifecycle, from the first clinical trial to the pharmacy counter, <em>with the same team</em> answering the phone at each step along the way for every partner we serve.</div>
+  </section>
+  <section class="band" aria-label="Should pass">
+    <h2>Should pass: not prose in a block</h2>
+    <div class="row" id="pass-flex-row" data-expect="pass" data-case="Pass Flex Row">Prose in a flex row is a line of items, not a paragraph: its words are laid out by the row, and the row decides where each item sits along the whole width of the band.</div>
+    <div class="code" id="pass-code-block" data-expect="pass" data-case="Pass Preformatted Block">npx some-tool --with-a-long-flag value --and-another-flag value --and-a-third-flag value --and-a-fourth-flag value --and-a-fifth-flag value --and-a-sixth-flag value</div>
+    <a class="card-link" href="#more"><div class="cms" id="pass-link-body" data-expect="pass" data-case="Pass Prose In A Link">A whole card set as one link holds its summary as the link's label, and a label is not a paragraph a reader tracks back across a column, however long the summary runs on the card.</div></a>
+  </section>
+</body>
+</html>

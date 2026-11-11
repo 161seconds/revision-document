@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side tab: pseudo-element stripes read from the stylesheet</title>
+  <!--
+    A pseudo-element stripe is read twice in a browser: off the rendered
+    element, and off the stylesheet text. Two things about the stylesheet
+    form:
+    - when the element it resolves to already carries the element form, the
+      two describe one stripe and it reports once, on the element;
+    - a stripe whose background is an image and names no colour is a picture,
+      not an accent colour, and does not report in any engine.
+    A stripe on any edge reports only on a rounded card (decision
+    r6-t2-side-tab-bands): the same band under a square block is a rule
+    across a section, and stays silent.
+    Explicit pixel dimensions throughout.
+  -->
+  <style>
+    body { margin: 0; padding: 24px 40px; width: 1000px; font: 16px/24px system-ui, sans-serif; color: #1a1a1a; background: #fff; }
+    h2 { font-size: 14px; line-height: 20px; margin: 32px 0 8px; color: #475569; }
+    p { margin: 0; }
+    .band, .card, .photo-rule, .photo-rule-tinted { position: relative; width: 640px; height: 96px; padding: 16px 24px; box-sizing: border-box; background: #f8fafc; }
+    .band, .card, .photo-rule, .photo-rule-tinted { border-radius: 12px; overflow: hidden; }
+    .square-band { position: relative; width: 640px; height: 96px; padding: 16px 24px; box-sizing: border-box; background: #f8fafc; }
+
+    /* FLAG, once: a 3px brand band under a rounded card. */
+    .band::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background-color: #84bc34; }
+    /* FLAG, once: a 5px stripe down the left of a rounded card. */
+    .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: #e11d48; }
+    /* FLAG: an image with a colour beside it still names an accent. */
+    .photo-rule-tinted::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: url("rule.jpg") left center / auto 10px repeat-x #e11d48; }
+
+    /* PASS: the same band under a square header block. */
+    .square-band::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 3px; background-color: #84bc34; }
+    /* PASS: a 10px strip of a repeated photograph, no colour named. */
+    .photo-rule::after { content: ""; position: absolute; bottom: 0; height: 10px; left: 0; right: 0; background: url("rule.jpg") left center / auto 10px repeat-x; }
+  </style>
+</head>
+<body>
+  <h2>Flag, once: a brand band under a rounded card</h2>
+  <div class="band flag-band"><p>A rounded card closed off by a green band along its bottom edge.</p></div>
+
+  <h2>Flag, once: a stripe down the left of a rounded card</h2>
+  <div class="card flag-card"><p>A rounded card with a red stripe painted down its left edge.</p></div>
+
+  <h2>Flag: an image stripe that also names a colour</h2>
+  <div class="photo-rule-tinted flag-tinted"><p>A strip along the bottom with a red fill under its image.</p></div>
+
+  <h2>Pass: a brand band under a square header block</h2>
+  <div class="square-band pass-square-band"><p>The header block of a portal, closed off by a green band along its bottom edge.</p></div>
+
+  <h2>Pass: a stripe drawn by an image alone</h2>
+  <div class="photo-rule pass-image"><p>A news block closed off by a strip of a repeated photograph.</p></div>
+</body>
+</html>

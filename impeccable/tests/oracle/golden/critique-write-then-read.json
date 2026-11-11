@@ -1,0 +1,41 @@
+{
+  "steps": [
+    {
+      "stdout": "<WS>/.impeccable/critique/<STAMP>__src-app-tsx.md\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "stdout": "",
+      "stderr": "",
+      "exit": 2,
+      "signal": null
+    },
+    {
+      "stdout": "<WS>/.impeccable/critique/<STAMP>~0001__src-app-tsx.md\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "stdout": "",
+      "stderr": "",
+      "exit": 2,
+      "signal": null
+    },
+    {
+      "stdout": "[\n  {\n    \"total_score\": 81,\n    \"p0_count\": 0,\n    \"p1_count\": 2,\n    \"target\": \"src/App.tsx\",\n    \"note\": \"ratio 3:1 #hero\",\n    \"slug\": \"src-app-tsx\",\n    \"timestamp\": \"<STAMP>\",\n    \"target_identity\": \"file:<WS>/src/App.tsx\",\n    \"closed\": true\n  },\n  {\n    \"target_identity\": \"file:<WS>/src-app-tsx\",\n    \"timestamp\": \"<STAMP>\",\n    \"slug\": \"src-app-tsx\",\n    \"closed\": true\n  }\n]\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "stdout": "[\n  {\n    \"target_identity\": \"file:<WS>/src-app-tsx\",\n    \"timestamp\": \"<STAMP>\",\n    \"slug\": \"src-app-tsx\",\n    \"closed\": true\n  }\n]\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    }
+  ],
+  "files": {}
+}

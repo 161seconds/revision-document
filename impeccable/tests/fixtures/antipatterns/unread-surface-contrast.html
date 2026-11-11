@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unread surfaces: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for surfaces off the ancestor chain (corpus observations-28,
+       section 6 branch 1: rows 1, 3, 10, and the parts of rows 21 and 27
+       named there; walkthroughs-28 issue 1).
+
+       The contrast walk reads the text's ancestors, so paint laid beside the
+       content is never read: an `absolute inset-0` gradient or photo, a scrim
+       over a photo, a layer that ignores pointer events, an SVG circle under
+       an initial. The structural layer climb finds that paint on every
+       contrast path, and reads it for what it can make of the surface:
+       - a dark gradient laid beside the content passes light copy (the walk
+         read the white page) and still fails dim copy;
+       - a faint grain tile over the page leaves a pale link failing;
+       - a photo, a scrim over a photo, an SVG shape and an outline around
+         each glyph depend on what paints, and the URL engine's pixel pass
+         reads them: it flags cream copy on a cream photo the walk never saw
+         (under a pointer-events-none layer) and a faint link over a photo
+         below the fold, and clears white captions on a dark scrim, an
+         initial on its dark circle and outlined sticker type;
+       - a card photo faded to 0.16 over a white card is read faded;
+       - a glow on a light panel laid over a dark section is not "on dark
+         background"; one under a dark vignette still is.
+
+       - below the fold, where no hit test answers and only the climb reads
+         the layers, a pseudo-element or a negative z-index layer decides
+         only where it paints over the text: a "Most popular" badge at a
+         card's corner, an offset shadow or ring drawn with
+         `::before { z-index: -1 }` behind a white card, and a `-z-10`
+         gradient inside a `relative` white section are under the card's or
+         the section's fill, and grey copy on that white still fails; the
+         same `-z-10` gradient in an `isolate` section, a stretched dark
+         `::before` over a card, and a `z-index: -1` dark `::before` in a card
+         that opens its own stacking context are the surface, and light copy
+         on them passes.
+
+       The static HTML engine has no layout, so it scores what the cascade
+       gives against the page: the dim copy, and two pass cases, the emerald
+       copy and the outlined sticker; both glows as on dark, plus its
+       page-level dark glow; and every card and section case below the
+       fold against white, the three light pass cases included, since it
+       places no pseudo-element and no layer. The URL behavior is pinned by
+       crates/browser/tests/unread_surfaces.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    h1 { font: 600 28px/1.2 system-ui; margin: 0; padding: 16px 20px 8px; color: #111; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 0 20px; }
+    .col { position: relative; width: 600px; }
+    .col h2 { font: 600 15px/1.2 system-ui; margin: 0 0 8px; color: #111; }
+    .case { position: relative; width: 560px; margin: 0 0 16px; }
+
+    .band { position: relative; width: 560px; height: 96px; overflow: hidden; }
+    .band .layer { position: absolute; inset: 0; }
+    .band .content { position: relative; z-index: 10; padding: 20px 24px; }
+    .dark-gradient { background-image: linear-gradient(to right, rgb(10, 31, 17), rgb(14, 37, 29)); }
+    .dim-copy { margin: 0; font-size: 20px; line-height: 28px; color: rgba(100, 116, 139, 0.9); }
+    .emerald-copy { margin: 0; font-size: 20px; line-height: 28px; color: #6ee7b7; }
+
+    .grain { position: absolute; inset: 0; opacity: 0.08; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect width='160' height='160' fill='%23000'/%3E%3C/svg%3E");
+      background-repeat: repeat; background-size: 160px 160px; }
+    .pale-link { position: relative; font-size: 16px; line-height: 24px; color: #a3a3a3; text-decoration: none; }
+
+    .dark-section { position: relative; width: 560px; height: 120px; background-color: #16120f; overflow: hidden; }
+    .cream-photo { position: absolute; inset: 0; pointer-events: none; background-size: cover; background-position: center;
+      background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR42mP48fkVVsQwtCQA1WK1QQXXNygAAAAASUVORK5CYII="); }
+    .cream-copy { position: relative; margin: 0; padding: 40px 24px; font-size: 14px; line-height: 20px; color: #a89b8c; }
+
+    .story { position: relative; width: 420px; height: 160px; margin: 0; }
+    .story figure { margin: 0; width: 420px; height: 160px; overflow: hidden; }
+    .story picture { position: relative; display: block; width: 420px; height: 160px; }
+    .story img { position: absolute; left: 0; top: 0; width: 420px; height: 160px; }
+    .story .scrim { position: absolute; left: 0; bottom: 0; width: 420px; height: 96px;
+      background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.9)); padding: 40px 16px 0; }
+    .story h3 { margin: 0; font: 700 24px/32px system-ui; color: #ffffff; }
+
+    .avatar { position: relative; width: 48px; height: 48px; }
+    .avatar svg { width: 48px; height: 48px; display: block; }
+
+    .sky { position: relative; width: 560px; height: 120px; background-color: #c9eafb; padding: 16px 24px; }
+    .sticker { display: inline-block; font: 800 60px/80px system-ui; color: #ffce3e;
+      text-shadow: rgb(20, 34, 74) -2px -2px 0px, rgb(20, 34, 74) 2px -2px 0px, rgb(20, 34, 74) -2px 2px 0px,
+        rgb(20, 34, 74) 2px 2px 0px, rgb(20, 34, 74) -2px 0px 0px, rgb(20, 34, 74) 2px 0px 0px,
+        rgb(20, 34, 74) 0px -2px 0px, rgb(20, 34, 74) 0px 2px 0px; }
+
+    .white-card { position: relative; z-index: 0; width: 420px; height: 120px; background-color: #ffffff; border: 1px solid #e5e7eb; overflow: hidden; }
+    .white-card img { position: absolute; left: 0; top: 0; width: 420px; height: 120px; opacity: 0.16; z-index: -2; }
+    .white-card .card-text { position: relative; margin: 0; padding: 40px 24px; font: 500 26px/34px system-ui; color: #2c4f61; }
+
+    .night { position: relative; width: 560px; height: 120px; background-color: #0b0b0f; overflow: hidden; }
+    .night .light-panel { position: absolute; inset: 0; background-color: #f5f5f5; }
+    .night .vignette { position: absolute; inset: 0; pointer-events: none;
+      background-image: radial-gradient(rgba(0, 0, 0, 0) 25%, rgba(4, 1, 9, 0.78) 100%); }
+    .night .actions { position: relative; padding: 36px 24px; }
+    .glow-button { display: inline-block; width: 160px; height: 44px; border: 0; border-radius: 22px;
+      background-color: #7c3aed; color: #ffffff; font: 600 16px/44px system-ui; text-align: center;
+      box-shadow: 0 4px 24px rgba(146, 99, 233, 0.9); }
+
+    .fold-spacer { height: 900px; }
+    .pricing { position: relative; width: 560px; height: 120px; overflow: hidden; }
+    .pricing img { position: absolute; left: 0; top: 0; width: 560px; height: 120px; }
+    .pricing .inner { position: relative; padding: 48px 24px; }
+    .faint-link { font-size: 14px; line-height: 21px; color: rgba(255, 255, 255, 0.3); text-decoration: none; }
+
+    .plan { position: relative; width: 420px; margin: 24px 0 16px; padding: 28px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; }
+    .plan::before { content: "MOST POPULAR"; position: absolute; top: -12px; right: 20px; padding: 4px 10px;
+      border-radius: 999px; background-color: #111827; color: #ffffff; font: 600 11px/13px system-ui; letter-spacing: 0.08em; }
+    .plan p, .offset p, .ring p, .hidden-layer p { margin: 0; font-size: 14px; line-height: 21px; }
+    .offset { position: relative; width: 420px; margin: 0 0 24px; padding: 24px; background-color: #ffffff; border: 2px solid #000000; }
+    .offset::before { content: ""; position: absolute; inset: 0; transform: translate(8px, 8px); background-color: #000000; z-index: -1; }
+    .ring { position: relative; width: 420px; margin: 0 0 16px; padding: 24px; background-color: #ffffff; border-radius: 12px; }
+    .ring::before { content: ""; position: absolute; inset: -3px; border-radius: 14px; background-color: #312e81; z-index: -1; }
+    .hidden-layer { position: relative; width: 560px; margin: 0 0 16px; padding: 24px; background-color: #ffffff; }
+    .hidden-layer .deep { position: absolute; inset: 0; z-index: -10; background-image: linear-gradient(135deg, #0f172a, #1e293b); }
+    .hidden-layer .inner { position: relative; }
+    .hidden-layer.isolate { isolation: isolate; }
+    .overlay-card { position: relative; width: 420px; margin: 0 0 16px; padding: 24px; background-color: #ffffff; }
+    .overlay-card::before { content: ""; position: absolute; inset: 0; background-color: #0f172a; }
+    .overlay-card p { position: relative; margin: 0; font-size: 14px; line-height: 21px; }
+    .context-card { position: relative; z-index: 0; width: 420px; margin: 0 0 16px; padding: 24px; background-color: #ffffff; }
+    .context-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background-color: #1e1b4b; }
+    .context-card p { margin: 0; font-size: 14px; line-height: 21px; }
+  </style>
+</head>
+<body>
+  <h1>Unread surfaces</h1>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+
+      <div class="case">
+        <div class="band">
+          <div class="layer dark-gradient"></div>
+          <div class="content"><p class="dim-copy" id="flag-dim-on-dark-panel">Dim copy on a dark gradient panel</p></div>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="grain"></div>
+        <a class="pale-link" id="flag-link-over-grain" href="#grain">Pale link over a faint grain</a>
+      </div>
+
+      <div class="case">
+        <div class="dark-section">
+          <div class="cream-photo" aria-hidden="true"></div>
+          <p class="cream-copy" id="flag-cream-copy-on-photo">Join today and start earning</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="night">
+          <div class="vignette"></div>
+          <div class="actions"><button class="glow-button" id="flag-glow-under-vignette" type="button">Start free</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>Should pass</h2>
+
+      <div class="case">
+        <div class="band">
+          <div class="layer dark-gradient"></div>
+          <div class="content"><p class="emerald-copy" id="pass-emerald-on-dark-panel">Emerald copy on a dark gradient</p></div>
+        </div>
+      </div>
+
+      <div class="case">
+        <article class="story">
+          <figure>
+            <picture><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAD0lEQVR42mNQwAEYhpYEAGFPGAHY2OnFAAAAAElFTkSuQmCC"></picture>
+          </figure>
+          <div class="scrim"><h3 id="pass-caption-on-scrim">Caption over a scrim and a photo</h3></div>
+        </article>
+      </div>
+
+      <div class="case">
+        <div class="avatar">
+          <svg viewBox="0 0 48 48" aria-hidden="false">
+            <circle cx="24" cy="24" r="24" fill="#1f2937"></circle>
+            <g fill="#ffffff" style="color: #ffffff; fill: #ffffff;"><text id="pass-svg-initial" x="24" y="32" text-anchor="middle" font-size="22" font-weight="600">M</text></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="sky"><span class="sticker" id="pass-outline-sticker">POOL</span></div>
+      </div>
+
+      <div class="case">
+        <div class="white-card">
+          <img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAD0lEQVR42mNQwAEYhpYEAGFPGAHY2OnFAAAAAElFTkSuQmCC">
+          <div class="card-text" id="pass-card-over-faded-photo">Business Operations</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="night">
+          <div class="light-panel"></div>
+          <div class="actions"><button class="glow-button" id="pass-glow-on-light-panel" type="button">Get started</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fold-spacer"></div>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag below the fold</h2>
+      <div class="pricing">
+        <img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR42mPQVQ7FihiGlgQAFLgpQXwfaUgAAAAASUVORK5CYII=">
+        <div class="inner"><a class="faint-link" id="flag-faint-link-below-fold" href="#pricing">View full pricing details</a></div>
+      </div>
+      <div class="plan"><p id="flag-note-in-badged-card" style="color: #9ca3af">Billed yearly</p></div>
+      <div class="offset"><p id="flag-note-in-offset-card" style="color: #d1d5db">Shared workspaces and single sign-on</p>
+        <a class="pale-link" id="flag-link-in-offset-card" href="#team" style="color: #a1a1aa">See every feature</a></div>
+      <div class="ring"><p id="flag-note-in-ringed-card" style="color: #b8bcc4">Dedicated manager and custom contracts</p></div>
+      <div class="hidden-layer"><div class="deep"></div><div class="inner"><p id="flag-note-over-hidden-layer" style="color: #c4c8cf">Every workspace includes guest seats</p></div></div>
+    </div>
+    <div class="col">
+      <h2>Should pass below the fold</h2>
+      <div class="hidden-layer isolate"><div class="deep"></div><div class="inner"><p id="pass-light-on-isolated-layer" style="color: #e5e7eb">Light copy on a layer the section shows</p></div></div>
+      <div class="overlay-card"><p id="pass-light-on-dark-pseudo" style="color: #e2e8f0">Light copy on a stretched dark pseudo-element</p></div>
+      <div class="context-card"><p id="pass-light-on-context-pseudo" style="color: #ede9fe">Light copy on a pseudo-element in its own context</p></div>
+    </div>
+  </div>
+</body>
+</html>

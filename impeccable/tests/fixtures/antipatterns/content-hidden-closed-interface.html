@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content hidden at rest, closed interface only (browser-only pass case)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #ffffff; font-size: 16px; line-height: 1.6; }
+    header { width: 1120px; margin: 0 auto; padding: 24px 0; position: relative; }
+    main { width: 1120px; margin: 0 auto; display: flex; gap: 48px; }
+    .column { width: 536px; }
+    h1 { font-size: 36px; line-height: 1.2; }
+    h2 { font-size: 24px; line-height: 1.3; }
+    h3 { font-size: 18px; line-height: 1.4; }
+    p { width: 500px; }
+
+    /* Closed interface: laid out, kept invisible until its trigger opens it. */
+    nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; }
+    nav li { position: relative; }
+    .flyout { position: absolute; top: 32px; left: 0; width: 320px; visibility: hidden; opacity: 0; }
+    .offcanvas { position: fixed; top: 0; left: 0; width: 280px; height: 600px; transform: translateX(-280px); visibility: hidden; }
+    .panels { position: relative; height: 96px; }
+    [role="tabpanel"] { position: absolute; top: 0; left: 0; width: 500px; }
+    [role="tabpanel"].unselected { visibility: hidden; }
+    .sp-tab-content { visibility: hidden; height: 0; overflow: hidden; }
+    .sp-tab-content.is-current { visibility: visible; height: auto; }
+    .answer { opacity: 0; height: 0; overflow: hidden; }
+    [role="dialog"] { position: fixed; top: 120px; left: 400px; width: 480px; height: 240px; opacity: 0; pointer-events: none; }
+    .whole-menu { position: fixed; top: 0; left: 100%; width: 390px; height: 600px; opacity: 0; }
+    .trip-layer { position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0; visibility: hidden; background: #fff; }
+    .megamenu { position: absolute; top: -400px; left: 0; width: 1075px; height: 300px; opacity: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- PASS: flyouts inside the site nav, hidden until hover -->
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#shoes">Shoes</a>
+          <div class="flyout">Running shoes, trail shoes, court shoes, slides and sandals, kids' shoes, wide sizes, last season's colours, the full size guide and the care guide for knit uppers.</div>
+        </li>
+        <li><a href="#clothing">Clothing</a>
+          <div class="flyout">Jackets and shells, base layers, shorts and tights, socks, caps and headbands, rain gear, reflective gear for dark mornings and the fit guide for every cut.</div>
+        </li>
+      </ul>
+    </nav>
+    <!-- PASS: an inert mega-menu parked above the page -->
+    <section class="megamenu" inert>Our company, our people, our history since 1912, where we operate, how we are governed, the annual report, the sustainability report and the newsroom archive.</section>
+  </header>
+
+  <!-- PASS: an off-canvas drawer that slides in from the left -->
+  <div class="offcanvas offcanvas-start" id="sidebar">Register an account, sign in, saved items, order history, delivery addresses, payment methods, newsletter settings, gift cards and store finder.</div>
+
+  <!-- PASS: a whole-site menu parked right of the viewport, with nothing but its position to name it -->
+  <div class="whole-menu">All sections, latest news, politics, economy, markets, sport, culture, weather, photo desk, video desk and the reader service pages.</div>
+
+  <!-- PASS: a dialog that is not open -->
+  <div role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h3 id="dialog-title">Leave this page?</h3>
+    <p>You are about to open a partner site. Its terms, privacy notice and security practices are its own, and what you enter there is not covered by ours.</p>
+  </div>
+
+  <!-- PASS: a layer fixed over the whole viewport at visibility: hidden, waiting for its trigger, with no role or class word to name it -->
+  <div class="trip-layer">Create itinerary. What is the trip name? Name your trip, pick the dates you travel, add the places you want to see, invite the people you travel with and save it to your account for later. Every trip keeps its own list of hotels, restaurants, museums, beaches and desert tours, with opening hours, prices, the distance between stops and a map you can share with everyone on the trip. Trips you build here sync to the app on your phone, so the plan you made at home is the plan you follow when you land, with every booking and every note in one place.</div>
+
+  <main>
+    <section class="column">
+      <h1>Closed menus are not hidden content</h1>
+      <p>Everything invisible on this page is interface waiting for its trigger: nav flyouts,
+      an inert mega-menu, a drawer, a dialog, unselected tab panels and collapsed accordion
+      sections. Together they hold well over a third of the page's text, and the page must
+      produce no content-hidden-at-rest finding.</p>
+    </section>
+    <section class="column">
+      <h2>Closed interface</h2>
+      <!-- PASS: the two tab panels that are not selected, by role -->
+      <div role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="panel-news">News</button>
+        <button role="tab" aria-selected="false" aria-controls="panel-ranking">Ranking</button>
+        <button role="tab" aria-selected="false" aria-controls="panel-video">Video</button>
+      </div>
+      <div class="panels">
+        <div role="tabpanel" id="panel-news">The selected panel shows: this week's tour news in two short lines.</div>
+        <div role="tabpanel" id="panel-ranking" class="unselected">Money ranking after round eleven, the season points table, the scoring average table and the driving distance table for every player.</div>
+        <div role="tabpanel" id="panel-video" class="unselected">Highlights from the final round, the winner's interview, the hole-by-hole flyover and the archive of every broadcast this season.</div>
+      </div>
+      <!-- PASS: tab panels known only by their class -->
+      <div class="sp-tab-content sp-tab-content-1 is-current">The current panel of a class-only tab set shows its two lines.</div>
+      <div class="sp-tab-content sp-tab-content-2">Tournament pickup, the pairing sheet, the course guide, the ticket desk and the shuttle timetable for the weekend rounds.</div>
+      <!-- PASS: accordion sections whose buttons say collapsed -->
+      <h3><button id="q1" aria-expanded="false" aria-controls="a1">How do I change my delivery address?</button></h3>
+      <div id="a1" aria-labelledby="q1"><div class="answer">Open your order before it ships, choose the address line, pick a saved address or enter a new one, and confirm with your password.</div></div>
+      <h3><button id="q2" aria-expanded="false" aria-controls="a2">Can I return a gift?</button></h3>
+      <div id="a2" aria-labelledby="q2"><div class="answer">Yes, within thirty days with the gift receipt. The refund goes to a gift card in your name, not to the buyer's payment method.</div></div>
+      <!-- PASS: an accordion that names no aria-controls: the answer follows its collapsed button -->
+      <button aria-expanded="false">Where is my invoice?</button>
+      <div class="answer">Under Orders, open the order and choose Documents. The invoice is a PDF, issued when the parcel leaves the warehouse and not before.</div>
+    </section>
+  </main>
+</body>
+</html>

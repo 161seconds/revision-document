@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>undersized-ui-text, focusable regions and code runs</title>
+<!--
+  Should pass: a tabindex names no control on its own. A footer taken out of
+  the tab order (tabindex="-1", a skip-link target) holds fine print, which
+  keeps the 10px small-print floor; a focusable region around a whole
+  component is not a control either.
+
+  Should pass: a monospace run with its whitespace kept that reads as code is
+  code, whatever its class names say (directus.io's JSON sample in a Framer
+  box with hashed classes).
+
+  Should flag: a real custom control (a short label in a focusable box), and
+  a monospace pricing label, which is a label however it is set.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #1a1a1a; background: #ffffff; margin: 24px; }
+  .col { display: inline-block; width: 440px; vertical-align: top; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  .row { margin: 0 0 16px; }
+  .small { font-size: 9px; }
+  .mono { font-family: "IBM Plex Mono", Menlo, monospace; white-space: pre-wrap; }
+  .sample { background: #0b0b0b; color: #d4d4d4; padding: 12px; width: 360px; }
+  .sample p { margin: 0; font-size: 8px; line-height: 11px; }
+  footer { font-size: 10px; margin-top: 24px; }
+</style>
+</head>
+<body>
+
+<div class="col" id="should-flag">
+  <h2>Should flag</h2>
+  <div class="row"><div tabindex="0" class="chip"><span class="flag-focusable-control small">Compare every plan in one table</span></div></div>
+  <div class="row"><p class="flag-mono-price small mono">$50/seat</p></div>
+  <div class="row"><p class="flag-mono-count small mono">200+</p></div>
+</div>
+
+<div class="col" id="should-pass">
+  <h2>Should pass</h2>
+  <div class="row sample">
+    <p class="pass-json-key mono">"data": {</p>
+    <p class="pass-json-pair mono">  "id": 7,</p>
+    <p class="pass-json-string mono">  "title": "Introducing Directus",</p>
+    <p class="pass-json-close mono">},</p>
+  </div>
+  <div class="row" tabindex="0">
+    <p>A focusable region holds a whole component: a paragraph of copy at an ordinary size, long enough that the box is plainly not one control with one label.</p>
+  </div>
+  <footer tabindex="-1"><span class="pass-footer-skip-target">© 2026 Example, Inc.</span></footer>
+</div>
+
+</body>
+</html>

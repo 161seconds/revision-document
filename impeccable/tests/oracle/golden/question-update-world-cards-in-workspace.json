@@ -1,0 +1,11 @@
+{
+  "stdout": "next round delivered; the page reloads itself\nNEXT read <REPO>/skill/reference/visualize.md now, before writing any decision comp prompt; it and the MODE RULES block concept-seed printed for this surface govern every card's image. Then generate each declared comp into its slot, lead first, and record the exact prompt in its sidecar, the image's full file name plus .json (a.png gets a.png.json). The catalog worlds dealt in this roll have card images, listed at the end of this line: when a card's direction builds on one of these worlds, attach that world's board and hero as reference images to that card's comp (the harness image tool's input images, or `<IMPECCABLE> generate-image --ref <board> --ref <hero>`; any image listed as a URL could not be fetched, so download it into the workspace first when the tool takes files), as style inspiration only, never to copy layout or content; a card for a direction you invented yourself has no card images and gets none. WORLD CARDS: fixture-press board .impeccable/mocks/worlds/fixture-press-board.webp hero .impeccable/mocks/worlds/fixture-press-hero.webp | fixture-signal board .impeccable/mocks/worlds/fixture-signal-board.png hero https://cards.example/fixture-signal-hero.webp\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {
+    ".impeccable/mocks/worlds/fixture-press-board.webp": "card",
+    ".impeccable/mocks/worlds/fixture-press-hero.webp": "card",
+    ".impeccable/mocks/worlds/fixture-signal-board.png": "card"
+  }
+}

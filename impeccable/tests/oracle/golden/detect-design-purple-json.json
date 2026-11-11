@@ -1,0 +1,7 @@
+{
+  "stdout": "[\n  {\n    \"antipattern\": \"design-system-color\",\n    \"name\": \"Color outside DESIGN.md\",\n    \"description\": \"A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.\",\n    \"severity\": \"advisory\",\n    \"category\": \"quality\",\n    \"file\": \"<WS>/src/page.html\",\n    \"line\": 6,\n    \"snippet\": \"text color rgb(124, 58, 237) on p \\\"The brand purple on a promotion.\\\" is outside DESIGN.md colors\",\n    \"advisory\": true,\n    \"ignoreValue\": \"rgb(124, 58, 237)\"\n  }\n]\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

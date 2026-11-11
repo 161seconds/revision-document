@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "\n1 file scanned with regex matching only (.css).\nRules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.\nFor the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.\n\n0 anti-patterns found.\n\n── Advisory (not counted as failures) ──\n\n<WS>/src/styles.css\n  line 1: [bounce-easing] cubic-bezier(0.68, -0.55, 0.265, 1.55)\n    → Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.\n  line 2: [design-system-color] Undocumented color rgba(99, 102, 241, 0.6) is outside DESIGN.md colors\n    → A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.\n\n2 advisory notes. Suppress with --no-advisory.\n",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gray on color fixture</title>
+<!--
+  gray-on-color asks whether a background reads as colour. The channel spread
+  it needs rises as the colour darkens under a luminance of 0.01, so light gray
+  on a navy so dark it reads as black is gray on black, while a mid navy, a
+  dark navy and a deep teal still read as colour. A state variant utility
+  (`hover:bg-*`) paints only in that state and is not the resting background.
+  Gray is low chroma at the lightness the ink sits at, and a coloured surface
+  carries two neutral inks that are not gray. One is off-white (`#e5e7eb`,
+  lightness 0.91). The other is near-black: an ink at lightness 0.3 or under
+  (`#393939`, `#413c38`, `text-gray-800`) is the dark neutral, while
+  `#4b5563` (0.34) and `text-gray-600` are still gray. Every Tailwind neutral
+  at `-700` and darker sits under that floor, every `-600` and lighter over it.
+  A pale tint is not colour either: at OKLCH lightness 0.9 and above a
+  background also needs chroma 0.09, so cream `#feeed4` (C 0.038) and
+  amber-100 `#fef3c7` (C 0.06) carry gray ink as an off-white would.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #111111; }
+  .swatch { width: 420px; padding: 16px; margin: 0 0 16px; font-size: 16px; line-height: 24px; }
+</style>
+</head>
+<body>
+  <section aria-label="Should flag">
+    <div class="swatch" id="flag-gray-on-navy" style="background: #1e3a8a; color: #d1d5db">Gray copy on a mid navy panel reads washed out.</div>
+    <div class="swatch" id="flag-gray-on-teal" style="background: #115e59; color: #d1d5db">Gray copy on a deep teal panel reads washed out.</div>
+    <div class="swatch" id="flag-gray-on-dark-navy" style="background: #001c47; color: #d4d4d8">Gray copy on a dark navy that still reads as navy.</div>
+    <div class="swatch text-gray-400 bg-blue-600" id="flag-tailwind-classes">Utility classes name gray text on a blue fill.</div>
+    <div class="swatch" id="flag-gray-600-on-amber" style="background: #fcd34d; color: #4b5563">A gray-600 just over the near-black floor on an amber fill.</div>
+    <div class="swatch text-gray-600 bg-amber-400" id="flag-tailwind-gray-600">A gray-600 utility on an amber fill is still gray.</div>
+  </section>
+
+  <section aria-label="Should pass">
+    <div class="swatch" id="pass-gray-on-near-black-navy" style="background: #04002d; color: #d1d1d1">Light gray copy on a navy so dark it reads as black.</div>
+    <div class="swatch" id="pass-off-white-on-navy" style="background: #1e3a8a; color: #e5e7eb">Off-white copy on a mid navy panel is the light neutral ink.</div>
+    <div class="swatch" id="pass-off-white-on-teal" style="background: #115e59; color: #e5e7eb">Off-white copy on a deep teal panel is the light neutral ink.</div>
+    <div class="swatch text-gray-500 bg-white hover:bg-emerald-400" id="pass-hover-variant">A hover fill is not the resting background.</div>
+    <div class="swatch" id="pass-near-black-on-yellow" style="background: #ffc224; color: #393939">Near-black copy on a yellow card is the dark neutral ink.</div>
+    <div class="swatch" id="pass-warm-near-black-on-green" style="background: #38e07b; color: #413c38">Warm near-black copy on a green button is the dark neutral ink.</div>
+    <div class="swatch text-gray-800 bg-yellow-400" id="pass-tailwind-gray-800">A gray-800 utility on a yellow fill is near-black ink.</div>
+    <div class="swatch" id="pass-gray-on-cream" style="background: #feeed4; color: #685a54">Grey-brown copy on a pale cream band reads as near-neutral.</div>
+    <div class="swatch" id="pass-gray-on-amber-100" style="background: #fef3c7; color: #4b5563">Gray copy on an amber-100 tint reads as gray on off-white.</div>
+    <div class="swatch" id="pass-gray-on-neutral-panel" style="background: #f3f4f6; color: #4b5563">Gray copy on a pale neutral panel has no colour to wash out against.</div>
+  </section>
+</body>
+</html>

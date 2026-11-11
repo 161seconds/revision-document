@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pulsing status dot fixture</title>
+<style>
+  :root { --dot: 8px; }
+
+  /* FLAG: tiny circular live dot on an infinite opacity pulse. */
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* FLAG: box-shadow ripple variant, var-sized, pill radius. */
+  .status .dot {
+    width: var(--dot); height: var(--dot);
+    border-radius: 999px;
+    background: #ef4444;
+    animation: ripple 1.8s linear infinite;
+  }
+  @keyframes ripple {
+    0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    100% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  }
+
+  /* FLAG: longhand animation-name + iteration-count. */
+  .beacon {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #f59e0b;
+    animation-name: pulse;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+  }
+
+  /* PASS: rotation-only spinner — same size class, must never flag. */
+  .spinner {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* PASS: named pulse but the local keyframes only rotate. */
+  .fake-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: pulse-ring 1s linear infinite;
+  }
+  @keyframes pulse-ring { to { transform: rotate(180deg); } }
+
+  /* PASS: large breathing card — not a dot. */
+  .breathing-card {
+    width: 240px; height: 120px;
+    border-radius: 16px;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  /* PASS: finite attention pulse (no infinite). */
+  .nudge {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: pulse 0.6s ease-out 3;
+  }
+
+  /* PASS: square badge, not circular. */
+  .square-badge {
+    width: 12px; height: 12px;
+    border-radius: 2px;
+    animation: pulse 2s infinite;
+  }
+
+  /* FLAG (error): header logo dot whose size and animation live in
+     separate rule blocks, animation added inside a matching media query,
+     with a reduced-motion reset that must not mask the default. */
+  .rec-mark {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #dc2626;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .rec-mark { animation: pulse 2.4s ease-in-out infinite; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rec-mark { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <a href="#top"><span class="rec-mark"></span> Brand</a>
+  </header>
+  <span class="live-dot"></span>
+  <span class="status"><i class="dot"></i> Online</span>
+  <span class="beacon"></span>
+  <span class="spinner"></span>
+  <span class="fake-pulse"></span>
+  <div class="breathing-card">Card</div>
+  <span class="nudge"></span>
+  <span class="square-badge"></span>
+  <!-- FLAG: Tailwind utility variant -->
+  <span class="animate-ping w-2 h-2 rounded-full bg-emerald-500"></span>
+  <!-- PASS: Tailwind pulse on a large skeleton block -->
+  <div class="animate-pulse rounded-md w-48 h-6 bg-gray-200"></div>
+</body>
+</html>

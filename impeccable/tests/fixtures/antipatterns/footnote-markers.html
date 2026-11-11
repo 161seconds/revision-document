@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Footnote markers fixture</title>
+<!--
+  undersized-ui-text skips footnote and subscript markers set in `sup` and
+  `sub`, and the links inside them: `<sup><a>[7]</a></sup>` is a citation mark
+  set small by convention. A small link outside a marker still reports.
+-->
+<style>
+  body { font-family: Georgia, serif; margin: 0; padding: 24px; background: #ffffff; color: #1a1a1a; }
+  p { font-size: 17px; line-height: 1.6; max-width: 640px; }
+  sup, sub { font-size: 10px; }
+  .tiny-link { font-size: 10px; }
+</style>
+</head>
+<body>
+  <section aria-label="Should flag">
+    <nav><a class="tiny-link" id="flag-tiny-nav-link" href="#pricing">Pricing</a></nav>
+  </section>
+
+  <section aria-label="Should pass">
+    <p>The board was routed in one pass<sup><a id="pass-footnote-link" href="#fn7">[7]</a></sup> and checked against the schematic.</p>
+    <p>A chemical formula keeps its subscript small<sub><a id="pass-sub-link" href="#fn12">[12]</a></sub> the same way.</p>
+    <p>A marker can sit inside emphasis too<em><sup><a id="pass-em-sup-link" href="#fn8">[8]</a></sup></em>.</p>
+  </section>
+</body>
+</html>

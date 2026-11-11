@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surface resolution: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the surfaces low-contrast misread on cohort 2 of the corpus
+       (observations-20 rows 11, 17, 22, 38, 42 and 43, and the walkthrough
+       misses).
+
+       - A `display: contents` box paints nothing. Framer writes its page root
+         that way with `background-color: #000`, and the walk used to score
+         dark copy on white against black and pass gold copy against black.
+       - A surface in exactly the text's own colour is the walk landing on a
+         fill the text does not sit on: a white heading over a sibling photo
+         scored `#ffffff on #ffffff`. No path prints that verdict; one shade
+         off the surface still reports.
+       - Open shadow trees are walked for the surface and the ink, through
+         declarative shadow roots here (`tcg-promo`, `tcg-button`).
+       - The page's one report of a colour pair goes to a copy wholly on
+         screen, not to a marquee copy cut by the page's left edge. The
+         marquee (#flag-onscreen-copy, #pass-offscreen-copy) sits in the
+         flag column.
+       - An icon font's ligature and a close control's `x` are not read.
+       - A single digit, 8px wide, is scored inside a run of text (`1/8`);
+         a numeral alone in its circle is a mark, as before.
+       - Two translucent inks on one gradient box are two reports; the same
+         ink again on that box stays one. #pass-same-ink-copy sits inside the
+         flag column's blue band for that reason.
+       - The hit-test layer check answers a title cut by the viewport's right
+         edge from the part inside it (the two edge titles at the top).
+       - The visual pass reads a frosted header whose own fill is 95%
+         opaque; its backdrop blur blocks nothing.
+
+       The static HTML engine has no layout, no shadow trees and no hit tests,
+       so it reports the flag column's cases it can read and also
+       #pass-edge-photo-title, #pass-offscreen-copy (the first copy in
+       document order), #pass-shadow-button-label (the host's own pale
+       ink) and #pass-step-numeral (it measures no boxes). It reports neither translucent ink on the blue band (with no
+       layout it stands down on translucent text over a gradient), and the
+       frosted taglines are URL-engine only; it also reads the black contents
+       root as a box with flush children. The URL behavior is pinned by
+       crates/browser/tests/surface_resolution.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    h1 { font: 600 28px/1.2 system-ui; margin: 0; padding: 16px 20px 0; color: #111; }
+    .edge-row { position: relative; width: 1280px; height: 250px; }
+    .edge-label { position: absolute; left: 20px; margin: 0; font: 600 15px/1.2 system-ui; color: #111; }
+    .edge-photo { position: absolute; left: 880px; top: 20px; width: 560px; height: 90px; z-index: 0; }
+    .edge-title { position: absolute; left: 900px; width: 500px; margin: 0; font: 600 22px/30px system-ui; z-index: 1; }
+    .edge-over-photo { top: 50px; color: #f0f0f0; }
+    .edge-over-page { top: 170px; color: #c8c8c8; }
+
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 12px 20px; }
+    .col { position: relative; width: 600px; }
+    .col h2 { font: 600 15px/1.2 system-ui; margin: 0 0 8px; color: #111; }
+    .case { position: relative; margin: 0 0 18px; }
+
+    .contents-root { display: contents; background-color: #000000; }
+    .eyebrow { margin: 0; font-size: 12px; font-weight: 500; line-height: 20px; color: #d49522; text-transform: uppercase; }
+    .dark-copy { margin: 0; font-size: 16px; line-height: 24px; color: #212224; }
+    .near-white { margin: 0; font-size: 16px; line-height: 24px; color: #fdfdfd; }
+
+    .photo-card { position: relative; width: 420px; height: 120px; margin: 0; }
+    .photo-card img { position: absolute; inset: 0; width: 420px; height: 120px; }
+    .photo-card figcaption { position: absolute; left: 16px; bottom: 12px; pointer-events: none; }
+    .photo-card h3 { margin: 0; font: 700 24px/32px system-ui; color: #ffffff; }
+
+    tcg-band, tcg-promo { display: block; width: 420px; }
+    tcg-band h3, tcg-promo h3 { margin: 0; font: 600 18px/26px system-ui; }
+    tcg-band h3 { color: #9ca3af; }
+    tcg-promo h3 { color: #ffffff; }
+    tcg-button { display: inline-block; color: #e5e7eb; font-size: 16px; }
+
+    .marquee { position: relative; width: 600px; height: 44px; }
+    .track { position: absolute; left: -30px; top: 0; white-space: nowrap; }
+    .word { display: inline-block; margin-right: 48px; font-size: 20px; line-height: 40px; color: #c9a3c8; }
+
+    .pale-word { font-size: 16px; color: #a4a7ae; }
+    .material-symbols-outlined { display: inline-block; font-family: 'Material Symbols Outlined', sans-serif; font-size: 24px; line-height: 24px; color: #a4a7ae; }
+    .green-button, .closeButton { display: inline-block; height: 24px; padding: 0 8px; background: #76b835; color: #ffffff; font: 18px/24px system-ui, sans-serif; }
+
+    .pagination { font-size: 14px; line-height: 20px; color: #333333; }
+    .total { color: #999999; }
+    .total-readable { color: #595959; }
+    .step-circle { width: 28px; height: 28px; border-radius: 14px; background: #ffaa01; text-align: center; }
+    .step-num { font-size: 14px; line-height: 28px; color: #ffffff; }
+
+    .blue-band { width: 520px; padding: 16px; background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .ink-70 { display: block; font-size: 13px; line-height: 20px; color: rgba(219, 234, 254, 0.7); }
+    .ink-80 { display: block; font-size: 12px; line-height: 20px; color: rgba(219, 234, 254, 0.8); }
+
+    .frosted-wrap { width: 520px; height: 64px; background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAAEUlEQVR42mPQ0DHBihiGlgQARosiAcU/IQAAAAAASUVORK5CYII="); background-size: cover; }
+    .frosted { height: 64px; padding: 20px 16px; background-color: rgba(22, 24, 29, 0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .tagline { margin: 0; font-size: 12px; line-height: 20px; font-style: italic; color: rgba(129, 136, 152, 0.7); }
+    .tagline-readable { margin: 0; font-size: 12px; line-height: 20px; color: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <h1>Surface resolution</h1>
+
+  <div class="edge-row">
+    <h2 class="edge-label" style="top: 20px;">Pale title over a photo, cut by the right edge</h2>
+    <img class="edge-photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23111827'/%3E%3C/svg%3E">
+    <p id="pass-edge-photo-title" class="edge-title edge-over-photo">Explore the new collection today</p>
+    <h2 class="edge-label" style="top: 140px;">Pale title on the page, cut by the right edge</h2>
+    <p id="flag-edge-title" class="edge-title edge-over-page">Explore the archive of past seasons</p>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+
+      <div class="case">
+        <div class="contents-root">
+          <p id="flag-contents-eyebrow" class="eyebrow">Hear from our clients</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <p id="flag-near-white-caption" class="near-white">A caption one shade off the page white</p>
+      </div>
+
+      <div class="case">
+        <tcg-band>
+          <template shadowrootmode="open">
+            <style>.band { background: #f4f4f4; padding: 12px 16px; }</style>
+            <div class="band"><slot></slot></div>
+          </template>
+          <h3 id="flag-shadow-light-band">Pale heading in a light band</h3>
+        </tcg-band>
+      </div>
+
+      <div class="case marquee">
+        <div class="track">
+          <span id="pass-offscreen-copy" class="word">Hair</span>
+          <span id="flag-onscreen-copy" class="word">Body</span>
+          <span class="word">Skincare</span>
+        </div>
+      </div>
+
+      <div class="case">
+        <span id="flag-word-label" class="pale-word">Forward</span>
+      </div>
+
+      <div class="case">
+        <div id="flag-green-next" class="green-button">Next</div>
+      </div>
+
+      <div class="case">
+        <div class="pagination"><strong class="current">1</strong>/<span id="flag-counter-total" class="total">8</span></div>
+      </div>
+
+      <div class="case">
+        <section class="blue-band">
+          <a id="flag-translucent-link" class="ink-70" href="#ask">Not sure yet? Ask us anything</a>
+          <span id="flag-translucent-caption" class="ink-80">Reviewed by a human expert before submission</span>
+          <span id="pass-same-ink-copy" class="ink-80">Reviewed again by a second expert</span>
+        </section>
+      </div>
+
+      <div class="case frosted-wrap">
+        <header class="frosted">
+          <p id="flag-frosted-tagline" class="tagline">Book authoring and reading platform</p>
+        </header>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>Should pass</h2>
+
+      <div class="case">
+        <div class="contents-root">
+          <p id="pass-contents-copy" class="dark-copy">Dark copy on the page white, inside a black contents root</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <figure class="photo-card">
+          <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%230f172a'/%3E%3C/svg%3E">
+          <figcaption><h3 id="pass-photo-heading">Cleared for kickoff</h3></figcaption>
+        </figure>
+      </div>
+
+      <div class="case">
+        <tcg-promo>
+          <template shadowrootmode="open">
+            <style>.promo { background: #0b3a66; padding: 12px 16px; }</style>
+            <div class="promo"><slot></slot></div>
+          </template>
+          <h3 id="pass-shadow-dark-band">Investors</h3>
+        </tcg-promo>
+      </div>
+
+      <div class="case">
+        <tcg-button id="pass-shadow-button-label"><template shadowrootmode="open"><style>button { background: #ffffff; color: #0a5bd3; border: 1px solid #0a5bd3; padding: 8px 16px; font: 16px system-ui; }</style><button><slot></slot></button></template>Read more</tcg-button>
+      </div>
+
+      <div class="case">
+        <span id="pass-icon-ligature" class="material-symbols-outlined">arrow_forward</span>
+      </div>
+
+      <div class="case">
+        <div id="pass-close-letter" class="closeButton">x</div>
+      </div>
+
+      <div class="case">
+        <div class="pagination"><strong class="current">2</strong>/<span id="pass-readable-counter" class="total-readable">6</span></div>
+      </div>
+
+      <div class="case">
+        <div class="step-circle"><span id="pass-step-numeral" class="step-num">1</span></div>
+      </div>
+
+      <div class="case frosted-wrap">
+        <header class="frosted">
+          <p id="pass-frosted-readable" class="tagline-readable">Read books and write them in one place</p>
+        </header>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay hiding: a stuck preloader beside an open modal</title>
+  <style>
+    /* With a newsletter modal of the site's own open, the inline overflow
+       may be the modal's, so it stays; the loader class still goes. The
+       stuck preloader again, with the scroll lock the site clears when
+       its loader goes: an is-loading class and an inline overflow: hidden on
+       body. Hiding the loader undoes both. An epcco.com.sa-shaped preloader: `div#preloader`, fixed, 100% by
+       100%, white, a spinner and no text, which the site never removes. The
+       URL engine waits for it, then hides it, so the page under it is
+       scored. Pinned by crates/browser/tests/overlay_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    #preloader { width: 100%; height: 100%; position: fixed; top: 0; left: 0; z-index: 9999999; background: #fff; }
+    .sk-circle { width: 80px; height: 80px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      border: 6px solid #0b5c63; border-right-color: transparent; border-radius: 50%; }
+    .faint { margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+  </style>
+</head>
+<body class="is-loading" style="overflow: hidden">
+  <div id="preloader"><div class="sk-circle"></div></div>
+  <h1>A page under a stuck preloader</h1>
+  <p class="faint" id="covered-copy">Faint copy the preloader covers.</p>
+  <div role="dialog" aria-modal="true" style="position:fixed;bottom:20px;right:20px;width:300px;height:120px;background:#fff">Get the weekly letter.</div>
+</body>
+</html>

@@ -1,0 +1,250 @@
+{
+ "schemaVersion": 2,
+ "reviews": {
+  "fixture-print-family-poster-wall": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "4ada5a35b53d",
+   "rating": 3
+  },
+  "fixture-print-family-ticket-ledger": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "c3c3875fe12c",
+   "rating": 2
+  },
+  "fixture-print-family-stamp-folio": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "59f9eaae2589",
+   "rating": 2
+  },
+  "fixture-print-family-banner-press": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "5ab5907a4716",
+   "rating": 2
+  },
+  "fixture-print-family-label-archive": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "69bf2eed1761",
+   "rating": 2
+  },
+  "fixture-print-family-broadsheet-rack": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "af509ee0da5e",
+   "rating": 1
+  },
+  "fixture-print-family-sleeve-library": {
+   "status": "rejected",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "9905d2fba427",
+   "note": "fixture rejection"
+  },
+  "fixture-canon-family-placard-row": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "9f75fba53c36",
+   "rating": 3
+  },
+  "fixture-canon-family-card-index": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "f6db60709f07",
+   "rating": 2
+  },
+  "fixture-canon-family-crest-register": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "327636513d63",
+   "rating": 2
+  },
+  "fixture-canon-family-folio-stand": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "eb848a6269be",
+   "rating": 2
+  },
+  "fixture-canon-family-plate-cabinet": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "b9977a863831",
+   "rating": 2
+  },
+  "fixture-canon-family-proof-drawer": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "f4f2f88673ee",
+   "rating": 1
+  },
+  "fixture-canon-family-jacket-shelf": {
+   "status": "rejected",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "454fcc5bfa7c",
+   "note": "fixture rejection"
+  },
+  "fixture-instruments-family-signal-tower": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "54b53debfa1e",
+   "rating": 3
+  },
+  "fixture-instruments-family-gauge-bench": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "3020b46b2f00",
+   "rating": 2
+  },
+  "fixture-instruments-family-relay-desk": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "3a13f05c6287",
+   "rating": 2
+  },
+  "fixture-instruments-family-meter-row": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "e57c126f4478",
+   "rating": 2
+  },
+  "fixture-instruments-family-dial-cabinet": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "18b6490cf319",
+   "rating": 2
+  },
+  "fixture-instruments-family-switch-field": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "40d068fbe69a",
+   "rating": 2
+  },
+  "fixture-instruments-family-lamp-board": {
+   "status": "rejected",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "775ab3a243ae",
+   "note": "fixture rejection"
+  },
+  "fixture-material-family-tide-hall": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "1477f772e514",
+   "rating": 3
+  },
+  "fixture-material-family-cloud-loft": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "fdf632c233f4",
+   "rating": 2
+  },
+  "fixture-material-family-ember-court": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "b4bc3dc041c9",
+   "rating": 2
+  },
+  "fixture-material-family-frost-arcade": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "6824613dbda3",
+   "rating": 2
+  },
+  "fixture-material-family-reed-basin": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "3ad3bbaf8b3b",
+   "rating": 2
+  },
+  "fixture-material-family-dusk-quarry": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "a6b38cca10e3",
+   "rating": 1
+  },
+  "fixture-material-family-moss-theatre": {
+   "status": "rejected",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "def14d5c0695",
+   "note": "fixture rejection"
+  },
+  "fixture-performed-family-salt-terrace": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "52ea4e88f896",
+   "rating": 3
+  },
+  "fixture-performed-family-rain-atrium": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "d4af55f5759e",
+   "rating": 2
+  },
+  "fixture-performed-family-pine-gallery": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "d80c3d2cfd80",
+   "rating": 2
+  },
+  "fixture-performed-family-wind-rotunda": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "732161b5a8cd",
+   "rating": 2
+  },
+  "fixture-performed-family-ash-pavilion": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "6dc495980454",
+   "rating": 2
+  },
+  "fixture-performed-family-dawn-causeway": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "648813effbc3",
+   "rating": 1
+  },
+  "fixture-performed-family-kelp-arcade": {
+   "status": "rejected",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "57604487260a",
+   "note": "fixture rejection"
+  }
+ }
+}

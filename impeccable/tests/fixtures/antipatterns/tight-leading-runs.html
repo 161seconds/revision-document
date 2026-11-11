@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tight leading, rows of short text runs</title>
+  <!--
+    Should flag, in both engines. A container that holds its text as short
+    runs between separator elements is measured run by run in the browser,
+    and a run that sets one line has no leading to crowd. That holds only
+    when the row moves each run whole: flex-wrap: wrap (tight-leading.html's
+    items-row, which passes in the browser). These two rows wrap the runs
+    inside their items instead, and their lines crowd each other at 1.25:
+
+    - A flex row under the default flex-wrap: nowrap. The three items shrink
+      to share one 260px row, so each run wraps inside its own narrow item.
+    - A grid row. Each run is a grid item in a column narrower than the row,
+      so it wraps inside its cell.
+  -->
+  <style>
+    body { margin: 0; padding: 32px; font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.6; color: #1a1a1a; background: #ffffff; }
+    .run-sep { width: 1px; height: 12px; background: #cbd5e1; }
+    .nowrap-runs-row { display: flex; column-gap: 10px; width: 260px; font-size: 12px; line-height: 15px; margin: 0 0 32px; }
+    .grid-runs-row { display: grid; grid-template-columns: 1fr 1px 1fr; column-gap: 10px; width: 260px; font-size: 12px; line-height: 15px; margin: 0 0 32px; }
+  </style>
+</head>
+<body>
+  <p class="nowrap-runs-row">100 free lead searches<span class="run-sep"></span>14-day trial on paid plans<span class="run-sep"></span>Built with you on a call</p>
+  <p class="grid-runs-row">Free shipping over fifty dollars<span class="run-sep"></span>Thirty day returns on everything</p>
+  <p>Body copy on the page, set at a comfortable line height, so the page has ordinary reading text to set the two rows against.</p>
+</body>
+</html>

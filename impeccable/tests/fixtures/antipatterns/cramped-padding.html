@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cramped Padding — Should Flag vs Should Pass</title>
+  <style>
+    /* Comprehensive fixture for the cramped-padding rule.
+       Both columns include a wide variety of cases so we can verify the
+       rule scales sensibly with font-size and treats the two axes
+       independently (vertical can be tighter because line-height already
+       provides built-in breathing room; horizontal has no equivalent). */
+    body { font-family: system-ui, sans-serif; background: #fafafa; padding: 24px; margin: 0; color: #0f172a; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1400px; margin: 0 auto; }
+    .col h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .col h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin: 28px 0 10px; color: #64748b; }
+    .case { margin-bottom: 14px; padding: 14px 16px; background: white; border: 1px solid #e2e8f0; border-radius: 10px; }
+    .case-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 8px; font-style: italic; }
+
+    /* ── FLAG: cramped body in cards ── */
+    .flag-card-4 { padding: 4px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+    .flag-card-2 { padding: 2px; background: #f1f5f9; border-radius: 6px; font-size: 14px; }
+    .flag-card-bg4 { padding: 4px; background: #fef3c7; border-radius: 6px; font-size: 16px; }
+
+    /* ── FLAG: asymmetric cramping ── */
+    .flag-asym-v { padding: 1px 16px; background: #f1f5f9; border-radius: 6px; font-size: 14px; }
+    .flag-asym-h { padding: 12px 4px; background: #f1f5f9; border-radius: 6px; font-size: 14px; }
+
+    /* ── FLAG: cramped large text (currently MISSED by the 8px floor) ── */
+    .flag-heading-tight { padding: 8px; background: #f1f5f9; border-radius: 6px; font-size: 24px; font-weight: 600; line-height: 1.2; }
+    .flag-hero-tight { padding: 6px 16px; background: #f1f5f9; border-radius: 6px; font-size: 32px; font-weight: 700; line-height: 1.2; }
+
+    /* ── FLAG: cramped multi-line code block ── */
+    .flag-pre-tight { padding: 2px; background: #1e293b; color: #e2e8f0; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; }
+
+    /* ── PASS: small inline pills (the .detection-cmd category) ── */
+    .pass-cmd {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 13px;
+      line-height: 1.625;
+      color: #0f172a;
+      background: #f5f5f7;
+      padding: 6px 14px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .pass-cmd::before { content: '➜ '; color: #ec4899; }
+    .pass-badge {
+      display: inline-block;
+      font-size: 11px;
+      line-height: 1.6;
+      padding: 4px 8px;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .pass-chip {
+      display: inline-block;
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 4px 10px;
+      background: #fef3c7;
+      color: #92400e;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .pass-inline-code-chip {
+      display: inline-block;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      line-height: 2;
+      padding: 0.3em 0.5em;
+      background: #eef2f7;
+      color: #0f172a;
+      border-radius: 4px;
+    }
+
+    /* ── PASS: cards at current standards ── */
+    .pass-card-min { padding: 8px; background: #f1f5f9; border-radius: 6px; font-size: 16px; line-height: 1.6; }
+    .pass-card-good { padding: 16px; background: #f1f5f9; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+    .pass-card-large { padding: 12px; background: #f1f5f9; border-radius: 8px; font-size: 18px; line-height: 1.6; }
+
+    /* ── PASS: comfortable code blocks ── */
+    .pass-pre-min { padding: 8px; background: #1e293b; color: #e2e8f0; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; }
+    .pass-pre-good { padding: 12px; background: #1e293b; color: #e2e8f0; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; }
+
+    /* ── PASS: interactive elements ── */
+    .pass-button-std { padding: 8px 16px; background: #3b82f6; color: white; border: 0; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .pass-input-std { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 16px; width: 100%; box-sizing: border-box; }
+
+    /* ── FLAG: fixed-height box whose text really does fill it ── */
+    .flag-tight-band { width: 260px; height: 36px; display: flex; align-items: center; padding: 0; background: #f1f5f9; border-radius: 4px; font-size: 16px; line-height: 18px; }
+
+    /* ── PASS: the label is centred by the layout, not by padding ── */
+    .pass-centred-cta { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 32px; background: #2563eb; color: white; border: 0; border-radius: 6px; font-size: 14px; line-height: 20px; text-decoration: none; }
+    .pass-centred-band { display: flex; align-items: center; justify-content: center; width: 420px; height: 40px; padding: 0; background: #111827; color: #f9fafb; font-size: 14px; line-height: 20px; }
+
+    /* ── PASS: the only side boundary is a transparent focus-ring border ── */
+    .pass-transparent-border-row { width: 420px; padding: 20px 0; border: 1px solid transparent; background: transparent; font-size: 18px; line-height: 26px; }
+
+    /* ── PASS: big text with proportional padding ── */
+    .pass-heading-good { padding: 16px; background: #f1f5f9; border-radius: 8px; font-size: 24px; font-weight: 600; line-height: 1.2; }
+    .pass-hero-good { padding: 20px 32px; background: #f1f5f9; border-radius: 8px; font-size: 32px; font-weight: 700; line-height: 1.2; }
+
+    /* ── FLAG: a small chip whose glyphs really do touch its edges ── */
+    .flag-touching-chip { display: flex; align-items: center; width: 180px; height: 20px; padding: 0 8px; background: #fde68a; border-radius: 4px; }
+    .flag-touching-chip span { font-size: 16px; line-height: 16px; }
+
+    /* ── FLAG: a chip of 28px or more keeps the content-area measure ── */
+    /* A 14px label on a 20px line, 2px from the top: the content area sits
+       about 3px off the top edge, the em box 4.5px off. Under 27.5px the em
+       box is what counts and the chip passes; at 28px or 27.6px it is not a
+       small chip and reports on top, as it did before taste call r3-20. */
+    .flag-price-chip, .flag-price-chip-subpixel, .pass-price-chip { display: flex; align-items: flex-start; width: 120px; box-sizing: border-box; padding: 2px 8px; background: #e0f2fe; color: #0c4a6e; border-radius: 4px; }
+    /* The flag chips sit 1px from the top, so the content area is under 4px
+       off the edge with any face: at 2px a Linux face whose rounded content
+       area is 16px tall lands it exactly 4px off, which is air on a fill. */
+    .flag-price-chip, .flag-price-chip-subpixel { padding-top: 1px; }
+    .flag-price-chip { height: 28px; }
+    .flag-price-chip-subpixel { height: 27.6px; }
+    .pass-price-chip { height: 27px; }
+    .flag-price-chip span, .flag-price-chip-subpixel span, .pass-price-chip span { font-size: 14px; line-height: 20px; }
+
+    /* ── PASS: a small chip whose line box already holds the glyphs off the edge ── */
+    .pass-step-chip { display: inline-flex; align-items: center; height: 24px; box-sizing: border-box; padding: 2px 8px; background: #ffaa01; color: #1a1a1a; border-radius: 4px; }
+    .pass-step-chip span { font-size: 14px; line-height: 20px; font-weight: 500; }
+
+    /* ── PASS: an inline highlight that wraps is two one-line fragments ── */
+    .pass-highlight-copy { width: 240px; font-size: 14px; line-height: 26px; margin: 0; }
+    .pass-highlight { background: #fef08a; padding: 0 5px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <!-- ════════════════════════════════════════════════════════════
+         LEFT COLUMN: should flag
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Cramped body in cards</h3>
+      <div class="case">
+        <span class="case-label">14px body, 4px padding all sides</span>
+        <div class="flag-card-4">This text is crammed against the border with only 4px padding. It feels claustrophobic and hard to read because the eye has nowhere to rest.</div>
+      </div>
+      <div class="case">
+        <span class="case-label">14px body, 2px padding all sides</span>
+        <div class="flag-card-2">Two pixels of padding is essentially nothing — body text needs room to breathe inside its container, especially across multiple lines.</div>
+      </div>
+      <div class="case">
+        <span class="case-label">16px body, 4px padding, background only</span>
+        <div class="flag-card-bg4">A colored background containment with only 4px padding around 16px body text. The colored edge feels like it's pressing in.</div>
+      </div>
+
+      <h3>Asymmetric cramping</h3>
+      <div class="case">
+        <span class="case-label">1px vertical / 16px horizontal, 14px body</span>
+        <div class="flag-asym-v">Generous horizontal padding doesn't save you when the vertical padding is just one pixel. Lines stack on top of each other against the container edge.</div>
+      </div>
+      <div class="case">
+        <span class="case-label">12px vertical / 4px horizontal, 14px body</span>
+        <div class="flag-asym-h">Comfortable vertical padding can't fix horizontal text running right up against the side edges. Words feel like they're falling off the container.</div>
+      </div>
+
+      <h3>Currently missed: cramped large text</h3>
+      <div class="case">
+        <span class="case-label">24px heading, 8px padding (passes the 8px floor but is too tight for the text size)</span>
+        <div class="flag-heading-tight">Tight Heading Container Label</div>
+      </div>
+      <div class="case">
+        <span class="case-label">32px hero, 6px vertical / 16px horizontal padding</span>
+        <div class="flag-hero-tight">Hero Section With Tight Vertical Padding</div>
+      </div>
+
+      <h3>Fixed-height box the text fills</h3>
+      <div class="case">
+        <span class="case-label">260x36px flex row, padding 0, 16px text on an 18px line box: two lines run edge to edge</span>
+        <div class="flag-tight-band">Two full lines of label text inside a 36px band</div>
+      </div>
+
+      <h3>Small chip whose text touches the edge (browser engine only)</h3>
+      <div class="case">
+        <span class="case-label">20px chip, padding 0: the 16px glyphs reach within 2px of the top and bottom</span>
+        <div class="flag-touching-chip"><span>Limited edition</span></div>
+      </div>
+
+      <h3>Chip of 28px or more, measured by its content area (browser engine only)</h3>
+      <div class="case">
+        <span class="case-label">28px price chip, padding 1px 8px 2px, 14px label on a 20px line at the top: a 28px chip is not under 28px, so its text is measured by the content area, about 2px off the top</span>
+        <div class="flag-price-chip"><span>1,250 SAR</span></div>
+      </div>
+      <div class="case">
+        <span class="case-label">the same chip at 27.6px: still not under the 27.5px bound</span>
+        <div class="flag-price-chip-subpixel"><span>1,250 SAR</span></div>
+      </div>
+
+      <h3>Cramped multi-line code block</h3>
+      <div class="case">
+        <span class="case-label">&lt;pre&gt;, 2px padding, 14px monospace</span>
+        <pre class="flag-pre-tight">function example() {
+  const value = "cramped";
+  return value;
+}</pre>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         RIGHT COLUMN: should pass
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Small inline pills</h3>
+      <div class="case">
+        <span class="case-label">.detection-cmd replica: 13px font, 6px / 14px padding (the homepage case)</span>
+        <code class="pass-cmd">npx impeccable detect src/</code>
+      </div>
+      <div class="case">
+        <span class="case-label">small badge: 11px font, 4px / 8px padding</span>
+        <span class="pass-badge">FEATURED ITEM BADGE</span>
+      </div>
+      <div class="case">
+        <span class="case-label">tag chip: 12px font, 4px / 10px padding</span>
+        <span class="pass-chip">design system tag chip</span>
+      </div>
+      <div class="case">
+        <span class="case-label">long inline code chip: compact inline code should not be treated like a padded card</span>
+        <code class="pass-inline-code-chip">npx impeccable check</code>
+      </div>
+
+      <h3>Cards at current standards</h3>
+      <div class="case">
+        <span class="case-label">16px body, 8px padding (the original 8px floor)</span>
+        <div class="pass-card-min">Standard card with 8px padding around 16px body text. Comfortable and within current conventions.</div>
+      </div>
+      <div class="case">
+        <span class="case-label">14px body, 16px padding (generous)</span>
+        <div class="pass-card-good">Generous 16px padding around 14px body text. The eye has plenty of room from the container edge.</div>
+      </div>
+      <div class="case">
+        <span class="case-label">18px body, 12px padding (proportional)</span>
+        <div class="pass-card-large">Larger body text gets proportionally more padding. 12px around 18px text feels balanced.</div>
+      </div>
+
+      <h3>Comfortable code blocks</h3>
+      <div class="case">
+        <span class="case-label">multi-line &lt;pre&gt;, 8px padding, 14px font</span>
+        <pre class="pass-pre-min">function example() {
+  const value = "ok";
+  return value;
+}</pre>
+      </div>
+      <div class="case">
+        <span class="case-label">multi-line &lt;pre&gt;, 12px padding, 14px font</span>
+        <pre class="pass-pre-good">function example() {
+  const value = "comfortable";
+  return value;
+}</pre>
+      </div>
+
+      <h3>Interactive elements</h3>
+      <div class="case">
+        <span class="case-label">button: 14px font, 8px / 16px padding</span>
+        <button class="pass-button-std">Standard sized button</button>
+      </div>
+      <div class="case">
+        <span class="case-label">form input: 16px font, 8px / 12px padding</span>
+        <input type="text" class="pass-input-std" value="Standard input with adequate padding">
+      </div>
+
+      <h3>Labels centred by the layout</h3>
+      <div class="case">
+        <span class="case-label">40px-tall inline-flex CTA, padding 0 32px: the 14px label keeps 12px of air on both sides</span>
+        <a class="pass-centred-cta" href="#">Book a free consultation</a>
+      </div>
+      <div class="case">
+        <span class="case-label">420x40px announcement band, padding 0: the 14px line is centred on both axes</span>
+        <div class="pass-centred-band">We are hiring across every engineering team</div>
+      </div>
+
+      <h3>Transparent focus-ring border</h3>
+      <div class="case">
+        <span class="case-label">420px accordion trigger, padding 20px 0, border 1px solid transparent: no side edge is drawn</span>
+        <div class="pass-transparent-border-row">What does the free plan include?</div>
+      </div>
+
+      <h3>Big text with proportional padding</h3>
+      <div class="case">
+        <span class="case-label">24px heading, 16px padding</span>
+        <div class="pass-heading-good">Heading With Room To Breathe</div>
+      </div>
+      <div class="case">
+        <span class="case-label">32px hero, 20px / 32px padding</span>
+        <div class="pass-hero-good">Hero With Big Padding</div>
+      </div>
+
+      <h3>Small chip inset by its line box (browser engine only)</h3>
+      <div class="case">
+        <span class="case-label">24px step chip, padding 2px 8px, 14px label on a 20px line: the glyphs sit 5px off the top and bottom. The static engine reads only the declared padding and still reports it.</span>
+        <div class="pass-step-chip"><span>Point 1</span></div>
+      </div>
+
+      <div class="case">
+        <span class="case-label">the price chip at 27px, under the 27.5px bound: measured by its glyphs, whose em box sits 4.5px off the top. The static engine reads only the declared padding and still reports it.</span>
+        <div class="pass-price-chip"><span>1,250 SAR</span></div>
+      </div>
+
+      <h3>Inline highlight across two lines</h3>
+      <div class="case">
+        <span class="case-label">an inline highlight with no vertical padding wraps onto two lines: each fragment is one 21px line, not one 43px box</span>
+        <div class="pass-highlight-copy">Every estimate is checked against the <span class="pass-highlight">carrier's own estimating guide before it ships</span> to the customer.</div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow, a section menu beside the article</title>
+<!--
+  observations-42 row 6 (fanniemae.com), scanned at 1280x800. A long article
+  beside a sidebar that is a list of links, set without a nav element or a
+  role. A section menu is short by design, like a navigation rail, and is
+  not the column the article's length is measured against.
+
+  The rule reads the rows that open the page, each at least half the window
+  wide, so one page holds two: the flag row on the left and the pass row on
+  the right. Each is a grid of an article two rows tall and five short
+  columns beside it, every one a quarter of the row wide and starting
+  within a quarter of the window of the article's top.
+
+  The pass row's five columns are menus: a list of links, bare links in a
+  box, links under a one-word title, labels in spans with a nested list,
+  and a menu with a closed submenu of long entries. Were any of them read
+  as a column, the row would report. The flag row's five are short columns
+  that are not menus: two links, linked paragraphs, links under a paragraph
+  of copy, copy beside a closed menu, and buttons. The row reports once,
+  naming the row. first-viewport-column-overflow.html keeps the plain flag
+  case.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; width: 1280px; }
+  .half { float: left; width: 640px; }
+  .half h2 { font-size: 20px; line-height: 24px; height: 40px; padding: 8px 16px; }
+  .row { display: grid; grid-template-columns: 160px 160px 160px 160px; grid-template-rows: 180px 1320px; width: 640px; height: 1500px; font-size: 12px; line-height: 18px; }
+  .row .article { grid-row: 1 / span 2; }
+  .row .article p { height: 1500px; padding: 0 16px; font-size: 16px; line-height: 26px; }
+  .row .side { padding: 0 8px; }
+  .row .side p { margin-bottom: 12px; }
+  .row ul { list-style: none; padding: 0; }
+  .row a { display: block; min-height: 24px; color: #1d4ed8; }
+  .row button { display: block; width: 120px; height: 28px; margin-bottom: 8px; font: inherit; }
+  .row .menu-title { font-weight: 700; height: 18px; }
+  .row .closed { display: none; }
+</style>
+</head>
+<body>
+  <div class="half" data-col="flag">
+    <h2>Should flag</h2>
+    <section class="row flag-near-menus">
+      <div class="article"><p>Who we are: the article runs on well past the fold.</p></div>
+      <div class="side two-links">
+        <a href="#">Leadership</a>
+        <a href="#">Our History</a>
+      </div>
+      <div class="side linked-paragraphs">
+        <a href="#">Our chief economist explains what the new rate forecast means for first-time buyers this spring.</a>
+        <a href="#">A lender in Ohio closed its ten thousandth loan through the affordable housing programme last week.</a>
+        <a href="#">The quarterly report is out, with the full results and the notes the board read before it voted.</a>
+      </div>
+      <div class="side links-under-copy">
+        <p>We buy loans from lenders so that they can lend again, and we have done so since the charter was signed.</p>
+        <a href="#">Careers</a>
+        <a href="#">Newsroom</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="side copy-beside-closed-menu">
+        <p>Guides for lenders, in a menu that opens on request.</p>
+        <ul class="closed">
+          <li><a href="#">Selling guide</a></li>
+          <li><a href="#">Servicing guide</a></li>
+          <li><a href="#">Lender letters</a></li>
+        </ul>
+      </div>
+      <div class="side buttons-not-links">
+        <button type="button">Overview</button>
+        <button type="button">Pricing</button>
+        <button type="button">Eligibility</button>
+      </div>
+    </section>
+  </div>
+  <div class="half" data-col="pass">
+    <h2>Should pass</h2>
+    <section class="row pass-link-menus">
+      <div class="article"><p>What we do: this article also runs on well past the fold.</p></div>
+      <div class="side menu-list">
+        <ul>
+          <li><a href="#">Who We Are</a></li>
+          <li><a href="#">Leadership</a></li>
+          <li><a href="#">Our History</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Newsroom</a></li>
+        </ul>
+      </div>
+      <div class="side menu-bare-links">
+        <a href="#">Mortgages</a>
+        <a href="#">Refinancing</a>
+        <a href="#">Renting</a>
+        <a href="#">Counselling</a>
+      </div>
+      <div class="side menu-under-title">
+        <div class="menu-title">About</div>
+        <a href="#">Our mission</a>
+        <a href="#">Governance</a>
+        <a href="#">Regulators</a>
+        <a href="#">Annual reports</a>
+        <a href="#">Press contacts</a>
+      </div>
+      <div class="side menu-nested">
+        <ul>
+          <li><a href="#"><span>Research</span></a>
+            <ul>
+              <li><a href="#"><span>Forecasts</span></a></li>
+              <li><a href="#"><span>Surveys</span></a></li>
+            </ul>
+          </li>
+          <li><a href="#"><span>Data</span></a></li>
+        </ul>
+      </div>
+      <div class="side menu-closed-submenu">
+        <ul>
+          <li><a href="#">Lenders</a>
+            <ul class="closed">
+              <li><a href="#">Selling guide and the full archive of every announcement since the first edition</a></li>
+              <li><a href="#">Servicing guide and the full archive of every lender letter since the first edition</a></li>
+            </ul>
+          </li>
+          <li><a href="#">Investors</a></li>
+          <li><a href="#">Partners</a></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

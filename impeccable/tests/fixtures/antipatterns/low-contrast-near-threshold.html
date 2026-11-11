@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low Contrast Near The Threshold: Should Flag vs Should Pass</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1f2937; margin: 0; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col h2 { font-size: 24px; margin: 0 0 16px; color: #1f2937; }
+    .panel { width: 320px; padding: 16px; margin: 0 0 16px; }
+    .panel-light { background: #ffffff; }
+    .panel-dark { background: #070707; }
+    .panel-black { background: #000000; }
+    .panel-ink { background: #101010; }
+
+    /* Should flag: each ratio sits just under its bar, and the snippet prints
+       it under the bar, never as the bar itself (the old `4.50:1 (need 4.5:1)`).
+       Each case gets its own colour so the finding names it. All four sit
+       inside the near-bar margin (taste call r3-02), so they report as
+       advisory; low-contrast-near-bar.html holds the failing side. */
+    .flag-body-copy { color: #777777; font-size: 14px; }  /* 4.498:1 on #070707, need 4.5 */
+    .flag-large-copy { color: #595959; font-size: 28px; } /* 2.998:1 on #000000, need 3 */
+    .flag-link { color: #7b7b7b; font-size: 14px; }       /* 4.496:1 on #101010, need 4.5 */
+    .flag-hover-button { background: #000000; color: #ffffff; border: 0; font-size: 14px; padding: 12px 16px; }
+    .flag-hover-button:hover { color: #747474; }          /* 4.493:1 on #000000, need 4.5 */
+
+    /* Should pass: each ratio sits just over its bar. */
+    .pass-body-copy { color: #767676; font-size: 14px; }  /* 4.54:1 on #ffffff */
+    .pass-large-copy { color: #5a5a5a; font-size: 28px; } /* 3.04:1 on #000000 */
+    .pass-dark-copy { color: #787878; font-size: 14px; }  /* 4.56:1 on #070707 */
+    .pass-hover-button { background: #000000; color: #ffffff; border: 0; font-size: 14px; padding: 12px 16px; }
+    .pass-hover-button:hover { color: #767676; }          /* 4.62:1 on #000000 */
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+      <div class="panel panel-dark"><p class="flag-body-copy">Plans start at nine dollars a month</p></div>
+      <div class="panel panel-black"><p class="flag-large-copy">Compare every plan</p></div>
+      <div class="panel panel-ink"><a class="flag-link" href="#pricing">See pricing details</a></div>
+      <div class="panel panel-black"><button class="flag-hover-button" type="button">Start a trial</button></div>
+    </div>
+    <div class="col">
+      <h2>Should pass</h2>
+      <div class="panel panel-light"><p class="pass-body-copy">Billed yearly, cancel any time</p></div>
+      <div class="panel panel-black"><p class="pass-large-copy">Questions about billing</p></div>
+      <div class="panel panel-dark"><p class="pass-dark-copy">Invoices arrive by email</p></div>
+      <div class="panel panel-black"><button class="pass-hover-button" type="button">Talk to sales</button></div>
+    </div>
+  </div>
+</body>
+</html>

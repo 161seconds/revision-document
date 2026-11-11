@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low Contrast On Heavy Faces: Bold By Name vs Bold By Weight</title>
+  <style>
+    /* Taste call r5-p31: a font family whose name says semibold, demi-bold,
+       bold, heavy or black counts as bold for the large-text contrast bar
+       (18.66px bold, 3:1) even when its computed weight is 400. A face with
+       no weight word in its name keeps the normal-text bar, and so does a
+       named bold cut under 18.66px. Only the first family in the list is
+       read. Every case has its own tile colour so each finding names it. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1f2937; margin: 0; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1000px; margin: 0 auto; }
+    .col > h2 { font-size: 20px; margin: 0 0 16px; color: #1f2937; }
+    .tile { width: 340px; padding: 16px; margin: 0 0 16px; }
+    .tile p { margin: 0; font-size: 19px; font-weight: 400; line-height: 1.3; color: #ffffff; }
+    .demi-bold { font-family: ploni-demi-bold, arial, sans-serif; }
+    .semibold { font-family: "EMprint Semibold", Arial, sans-serif; }
+    .camel-bold { font-family: ProximaNovaBold, Arial, sans-serif; }
+    .black { font-family: "Gotham-Black", Arial, sans-serif; }
+    .heavy { font-family: "Avenir Heavy", Arial, sans-serif; }
+    .display-face { font-family: "Lilita One", cursive; }
+    .regular-cut { font-family: ploni-regular, arial, sans-serif; }
+    .fallback-bold { font-family: Georgia, "Arial Black", serif; }
+    .blackletter { font-family: "Blackletter Text", serif; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+      <!-- A single-weight display face with no weight word: 3.2:1, needs 4.5. -->
+      <div class="tile" style="background: #ff572a;"><p class="display-face">Most popular this week</p></div>
+      <!-- The family's regular cut: 3.1:1, needs 4.5. -->
+      <div class="tile" style="background: #ff5757;"><p class="regular-cut">Healthy living every day</p></div>
+      <!-- A bold cut named only as a fallback: 3.7:1, needs 4.5. -->
+      <div class="tile" style="background: #f93258;"><p class="fallback-bold">Travel notes from abroad</p></div>
+      <!-- A weight word inside a longer word: 3.9:1, needs 4.5. -->
+      <div class="tile" style="background: #f41987;"><p class="blackletter">Fashion week in review</p></div>
+      <!-- A named bold cut under 18.66px is not large text: 3.0:1, needs 4.5. -->
+      <div class="tile" style="background: #fa6400;"><p class="demi-bold" style="font-size: 16px;">Local stories near you</p></div>
+      <!-- A named bold cut under the large-text bar too: 2.1:1, needs 3. -->
+      <div class="tile" style="background: #ff9494;"><p class="demi-bold">Seven days of recipes</p></div>
+    </div>
+    <div class="col">
+      <h2>Should pass</h2>
+      <!-- walla.co.il: ploni-demi-bold at 19px, computed weight 400, 3.1:1 to 3.9:1. -->
+      <div class="tile" style="background: #fe5656;"><p class="demi-bold">Health headlines today</p></div>
+      <div class="tile" style="background: #f8315a;"><p class="demi-bold">Trips worth the flight</p></div>
+      <!-- exxonmobil.com: EMprint Semibold, 4.0:1. -->
+      <div class="tile" style="background: #fe000c;"><p class="semibold" style="font-size: 20px;">Energy for the long run</p></div>
+      <!-- Bold, black and heavy cuts named in other spellings. -->
+      <div class="tile" style="background: #f3188a;"><p class="camel-bold">Runway looks decoded</p></div>
+      <div class="tile" style="background: #0f8a59;"><p class="black">Cars tested this month</p></div>
+      <div class="tile" style="background: #e9590c;"><p class="heavy">Neighbourhood round-up</p></div>
+    </div>
+  </div>
+</body>
+</html>

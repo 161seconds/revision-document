@@ -1,0 +1,3812 @@
+//! JS: skill/scripts/build-phase.mjs
+//!
+//! The comp-led build as a state machine on disk. Phases, gates, scaffold, and
+//! the hero readings. Nothing here needs a browser; the JS spawned comp-diff as
+//! a child process, and this port calls [`crate::comp_diff::compare`] in-process
+//! instead. The one external dependency, the organic-clip-path CSS scanner
+//! (JS `require('../../cli/engine/rules/checks.mjs')`), is injected so this
+//! crate stays free of the closed rule core.
+
+use std::path::{Path, PathBuf};
+
+use impeccable_common::Io;
+use impeccable_comp::hero::{
+    chrome_strip_check, invented_ink, plate_clip_check, svg_illustrations, text_region_check, Chosen, Region,
+};
+use impeccable_comp::png_io;
+use impeccable_comp::raster::{self as r, Image};
+use regex::Regex;
+use serde_json::{json, Map, Value};
+
+use crate::comp_diff::{align_build, best_shift, build_report, compare, write_artifacts, write_region_artifacts, CompareResult, Score};
+use crate::comp_spec::{load_spec, prepare_plate_reference, PlateReference, BUILD_DIR, SPEC_PATH};
+use crate::displacement::{Displacement, Rect as DRect};
+use crate::font_match::choice_stamped;
+use crate::entry_capture::{CapturedEntry, EntryRenderer, EntryRequest, EntryStage};
+use crate::util::{self, arg, flag, round, to_fixed};
+
+pub const PHASES: [&str; 8] =
+    ["comps", "spec", "plates", "hero", "sections", "motion", "responsive", "review"];
+const MOCKS_DIR: &str = ".impeccable/mocks";
+const HERO_MIN: f64 = 0.72;
+const RESPONSIVE_MIN: f64 = 0.65;
+const PLATE_MIN: f64 = 0.4;
+const PLATE_STRUCTURE_MIN: f64 = 0.4;
+const HERO_REPRO: &str = ".impeccable/review/hero-repro.png";
+const INVENTED_MIN: f64 = 0.04;
+
+fn state_path() -> String {
+    format!("{BUILD_DIR}/state.json")
+}
+
+/// The organic-clip-path scanner, injected by the CLI. Returns (selector,
+/// snippet) per finding; the default (`no_organic_scan`) returns none, matching
+/// the JS behavior when the rules module could not be required.
+pub type OrganicScan<'a> = &'a dyn Fn(&str) -> Vec<(Option<String>, String)>;
+
+pub fn no_organic_scan(_: &str) -> Vec<(Option<String>, String)> {
+    Vec::new()
+}
+
+fn abs(io: &Io, p: &str) -> PathBuf {
+    let path = Path::new(p);
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        io.cwd.join(path)
+    }
+}
+
+pub(crate) fn self_cmd(io: &Io) -> String {
+    let value = io.env.get("IMPECCABLE_SELF").filter(|v| !v.is_empty()).cloned().unwrap_or_else(|| "impeccable".to_string());
+    // The skill launcher exports a raw filename; the npm shim exports a
+    // command prefix such as `npx impeccable`. Quote only a complete filename,
+    // resolving relative launchers against the same cwd as the printed command.
+    if abs(io, &value).is_file()
+        && !value.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'/' | b'.' | b'_' | b'-' | b':') || (cfg!(windows) && b == b'\\'))
+    {
+        if cfg!(windows) {
+            // cmd.exe treats single quotes as literal filename characters;
+            // a quoted .cmd launcher also needs PowerShell's call operator.
+            return impeccable_common::launcher::with_call_operator(&value, format!("\"{value}\""));
+        }
+        return format!("'{}'", value.replace('\'', "'\\''"));
+    }
+    value
+}
+
+fn now() -> String {
+    util::iso_now()
+}
+
+fn load_raster(io: &Io, p: &str) -> Result<Image, String> {
+    let (d, _) = png_io::load_raster(&abs(io, p))?;
+    Ok(d.image)
+}
+
+// ---- state -----------------------------------------------------------------
+
+fn read_build_path(io: &Io) -> Option<String> {
+    let mut value = None;
+    for name in ["config.json", "config.local.json"] {
+        let p = abs(io, &format!(".impeccable/{name}"));
+        if let Ok(raw) = std::fs::read_to_string(&p) {
+            if let Ok(v) = serde_json::from_str::<Value>(&raw) {
+                match v.get("buildPath").and_then(Value::as_str) {
+                    Some("comp") => value = Some("comp".to_string()),
+                    Some("code") => value = Some("code".to_string()),
+                    _ => {}
+                }
+            }
+        }
+    }
+    value
+}
+
+fn load_state(io: &Io) -> Option<Value> {
+    let raw = std::fs::read_to_string(abs(io, &state_path())).ok()?;
+    serde_json::from_str(&raw).ok()
+}
+
+/// The files under `.impeccable/mocks/` and `.impeccable/review/` a ship no
+/// longer needs: rejected comps, gate diffs, and captures. A re-ship still
+/// reads the approved and decision comps with their sidecars, every recorded
+/// capture input, the human review manifests, and the native capture
+/// evidence, so those stay out. `finish` records the list and `doctor`
+/// reports what is left of it.
+fn spent_runtime_output(io: &Io, state: &Value) -> Vec<String> {
+    let mut kept: Vec<String> = vec![".impeccable/review/hero.json".into(), ".impeccable/review/components.json".into()];
+    for comp in ["comp", "decisionComp"].iter().filter_map(|k| state.get(*k).and_then(Value::as_str)) {
+        kept.push(comp.to_string());
+        kept.push(format!("{comp}.json"));
+    }
+    if let Some(inputs) = state.pointer("/finish/captureInputs").and_then(Value::as_array) {
+        kept.extend(inputs.iter().filter_map(|i| i.get("path").and_then(Value::as_str)).map(String::from));
+    }
+    fn walk(io: &Io, rel: &str, out: &mut Vec<String>) {
+        let Ok(entries) = std::fs::read_dir(abs(io, rel)) else { return };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let child = format!("{rel}/{name}");
+            if entry.file_type().is_ok_and(|t| t.is_dir()) {
+                walk(io, &child, out);
+            } else if name != ".gitignore" {
+                out.push(child);
+            }
+        }
+    }
+    let mut spent = Vec::new();
+    walk(io, MOCKS_DIR, &mut spent);
+    walk(io, ".impeccable/review", &mut spent);
+    // `start --comp` records the path as given (absolute, `./`), so match files, not spellings.
+    spent.retain(|f| !f.starts_with(".impeccable/review/native/") && !kept.iter().any(|k| crate::approved_comp::same_file(io, k, f)));
+    spent.sort();
+    spent
+}
+
+/// The build state records the direction's seed key, the key the roll API
+/// saw, and timestamps, so it is runtime state: its directory keeps a
+/// `.gitignore` naming `state.json` (and only that, the rest of
+/// `.impeccable/build/` being left to the project). The build's comps and
+/// captures are runtime output too: see `ignore_runtime_output`.
+fn save_state(io: &Io, state: &Value) {
+    let p = abs(io, &state_path());
+    if let Some(parent) = p.parent() {
+        let _ = std::fs::create_dir_all(parent);
+        impeccable_common::git::ensure_dir_ignored(&parent.to_string_lossy(), &["state.json"]);
+    }
+    impeccable_common::git::ignore_runtime_output(&io.cwd.to_string_lossy());
+    let _ = std::fs::write(p, util::json_pretty(state));
+}
+
+/// The seed reference the state records for `--direction`: a reference
+/// (`seed:` + 16 lowercase hex) or `none` as given, a raw seed key as the
+/// reference the shared locator gives it (`impeccable_common::seed::
+/// reference_for_key`, the same answer concept-seed printed for that key),
+/// so the build state never holds the key the roll API saw. With no
+/// reference to give (no salt on this machine) a raw key becomes `none`,
+/// never an unsalted hash. The direction is only ever shown, never
+/// resolved, so nothing is lost.
+fn seed_reference(io: &Io, v: &str) -> String {
+    if v == "none" || impeccable_common::seed::parse_reference(v).is_some() {
+        return v.to_string();
+    }
+    let home = io.home().map(|h| h.to_string_lossy().into_owned()).unwrap_or_default();
+    impeccable_common::seed::reference_for_key(&home, &io.cwd.to_string_lossy(), io.env("IMPECCABLE_SEED_SALT"), v).unwrap_or_else(|| "none".to_string())
+}
+
+fn new_state(comp: Option<&str>, breakpoint: Option<&str>, artifact: Option<&str>, direction: Option<&str>) -> Value {
+    let first = if comp.is_some() { "spec" } else { "comps" };
+    let mut phases = Map::new();
+    for p in PHASES {
+        let status = if p == first { "open" } else { "pending" };
+        let opened = if p == first { json!(now()) } else { Value::Null };
+        phases.insert(
+            p.into(),
+            json!({
+                "status": status, "openedAt": opened, "closedAt": Value::Null,
+                "attempts": 0, "notes": [], "gate": Value::Null, "forced": Value::Null
+            }),
+        );
+    }
+    if comp.is_some() {
+        if let Some(c) = phases.get_mut("comps") {
+            c["status"] = json!("skipped");
+            c["notes"] = json!([{ "at": now(), "text": "started with an approved comp; the comp round happened before this state (surface round or manual)" }]);
+        }
+    }
+    json!({
+        "tool": "build-phase",
+        "version": 2,
+        "startedAt": now(),
+        "comp": comp.map(Value::from).unwrap_or(Value::Null),
+        "direction": direction.map(Value::from).unwrap_or(Value::Null),
+        "breakpoint": breakpoint.map(Value::from).unwrap_or(Value::Null),
+        "artifact": artifact.map(Value::from).unwrap_or(Value::Null),
+        "phase": first,
+        "phases": Value::Object(phases),
+        "finish": Value::Null,
+    })
+}
+
+// ---- gate result -----------------------------------------------------------
+
+struct Gate {
+    ok: bool,
+    reasons: Vec<String>,
+    summary: Option<String>,
+    // hero-specific extras:
+    score: Option<f64>,
+    verdict: Option<String>,
+    report: Option<String>,
+    side_by_side: Option<String>,
+    worst: Vec<String>,
+    worst_ids: Vec<String>,
+    worst_crops: Vec<Value>,
+    advisories: Vec<String>,
+    region_verdicts: Map<String, Value>,
+    region_reasons: Map<String, Value>,
+    // comps: approved comp path
+    approved: Option<String>,
+    // plates: per-plate rows
+    plates: Option<Vec<Value>>,
+    error: bool,
+    // a failure no quoted --force may waive (the approved comp cannot be kept)
+    unforceable: bool,
+}
+
+impl Gate {
+    fn ok(summary: String) -> Gate {
+        Gate { ok: true, reasons: vec![], summary: Some(summary), ..Gate::blank() }
+    }
+    fn fail(reasons: Vec<String>) -> Gate {
+        Gate { ok: false, reasons, ..Gate::blank() }
+    }
+    fn blank() -> Gate {
+        Gate {
+            ok: false,
+            reasons: vec![],
+            summary: None,
+            score: None,
+            verdict: None,
+            report: None,
+            side_by_side: None,
+            worst: vec![],
+            worst_ids: vec![],
+            worst_crops: vec![],
+            advisories: vec![],
+            region_verdicts: Map::new(),
+            region_reasons: Map::new(),
+            approved: None,
+            plates: None,
+            error: false,
+            unforceable: false,
+        }
+    }
+    /// The subset stored on the phase (JS: `const { plates, ...gateRecord } = gate`).
+    fn record_json(&self, at: &str) -> Value {
+        let mut m = Map::new();
+        m.insert("ok".into(), json!(self.ok));
+        m.insert("reasons".into(), json!(self.reasons));
+        if !self.region_reasons.is_empty() { m.insert("regionReasons".into(), json!(self.region_reasons)); }
+        if let Some(s) = &self.summary {
+            m.insert("summary".into(), json!(s));
+        }
+        if let Some(s) = self.score {
+            m.insert("score".into(), util::num(s));
+        }
+        if let Some(v) = &self.verdict {
+            m.insert("verdict".into(), json!(v));
+        }
+        if let Some(v) = &self.report {
+            m.insert("report".into(), json!(v));
+        }
+        if let Some(v) = &self.side_by_side {
+            m.insert("sideBySide".into(), json!(v));
+        }
+        if !self.worst.is_empty() {
+            m.insert("worst".into(), json!(self.worst));
+        }
+        if !self.worst_ids.is_empty() {
+            m.insert("worstIds".into(), json!(self.worst_ids));
+        }
+        if !self.worst_crops.is_empty() {
+            m.insert("worstCrops".into(), json!(self.worst_crops));
+        }
+        if !self.advisories.is_empty() {
+            m.insert("advisories".into(), json!(self.advisories));
+        }
+        if !self.region_verdicts.is_empty() {
+            m.insert("regionVerdicts".into(), Value::Object(self.region_verdicts.clone()));
+        }
+        if let Some(a) = &self.approved {
+            m.insert("approved".into(), json!(a));
+        }
+        if self.error {
+            m.insert("error".into(), json!(true));
+        }
+        m.insert("at".into(), json!(at));
+        Value::Object(m)
+    }
+}
+
+// ---- gates -----------------------------------------------------------------
+
+struct CompEntry {
+    file: String,
+    sidecar: Option<Value>,
+    approved: bool,
+}
+
+fn comp_entry(io: &Io, file: String) -> CompEntry {
+    let sidecar = std::fs::read_to_string(abs(io, &format!("{file}.json"))).ok().and_then(|raw| serde_json::from_str::<Value>(&raw).ok());
+    let approved = sidecar.as_ref().map(|s| s.get("approved") == Some(&Value::Bool(true))).unwrap_or(false);
+    CompEntry { file, sidecar, approved }
+}
+
+/// The chosen decision comp `build-phase start --decision-comp` recorded for
+/// this comp round: compositional option one. It stays recorded when its file
+/// goes missing, so the gate refuses rather than forgetting it.
+fn decision_comp(state: &Value) -> Option<String> {
+    state.get("decisionComp").and_then(Value::as_str).map(String::from)
+}
+
+/// The comp round's options: the recorded decision comp first, wherever it
+/// sits, then the comps directly in `.impeccable/mocks/`. Any other decision
+/// comp under `.impeccable/mocks/decision/` never counts.
+fn list_comps(io: &Io, state: &Value) -> Vec<CompEntry> {
+    let dir = abs(io, MOCKS_DIR);
+    let chosen = decision_comp(state);
+    let mut out: Vec<CompEntry> = chosen.iter().filter(|c| abs(io, c).is_file()).map(|c| comp_entry(io, c.clone())).collect();
+    let Ok(entries) = std::fs::read_dir(&dir) else {
+        return out;
+    };
+    let mut names: Vec<String> = entries.filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().to_string())).collect();
+    names.sort();
+    for name in names {
+        let lower = name.to_lowercase();
+        if !(lower.ends_with(".png") || lower.ends_with(".webp") || lower.ends_with(".jpg") || lower.ends_with(".jpeg")) {
+            continue;
+        }
+        let file = format!("{MOCKS_DIR}/{name}");
+        let abs_file = abs(io, &file);
+        if !abs_file.is_file() || chosen.as_deref().is_some_and(|c| crate::approved_comp::same_file(io, c, &file)) {
+            continue;
+        }
+        out.push(comp_entry(io, file));
+    }
+    out
+}
+
+fn basename(p: &str) -> String {
+    Path::new(p).file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| p.to_string())
+}
+
+fn gate_comps(io: &Io, state: &Value) -> Gate {
+    let comps = list_comps(io, state);
+    let mut reasons = Vec::new();
+    let chosen = decision_comp(state);
+    if let Some(c) = chosen.as_ref().filter(|c| !abs(io, c).is_file()) {
+        reasons.push(format!("the chosen decision comp {c} is missing: it is option one of this comp round and is never regenerated or replaced. Restore the file the user chose at that path (with its prompt sidecar), then advance again."));
+    }
+    if comps.len() < 3 {
+        let place = match chosen {
+            Some(c) => format!(" (the chosen decision comp {c} as option one, the others directly under {MOCKS_DIR})"),
+            None => format!(" under {MOCKS_DIR}"),
+        };
+        reasons.push(format!(
+            "{} comp{}{place}; the comp round puts three compositional options of the chosen direction in front of the user (reference/visualize.md). Generate the missing ones (harness image tool or generate-image.mjs), each with a .json sidecar holding its prompt.",
+            comps.len(),
+            if comps.len() == 1 { "" } else { "s" }
+        ));
+    }
+    let no_sidecar: Vec<String> = comps.iter().filter(|c| c.sidecar.is_none()).map(|c| basename(&c.file)).collect();
+    if !no_sidecar.is_empty() {
+        reasons.push(format!(
+            "no prompt sidecar for: {} (write <file>.json with {{ \"prompt\": \"...\" }}; generate-image.mjs does this itself)",
+            no_sidecar.join(", ")
+        ));
+    }
+    let approved: Vec<&CompEntry> = comps.iter().filter(|c| c.approved).collect();
+    if approved.is_empty() {
+        reasons.push("no comp is approved: put the three comps in front of the user (decision page via serve-question.mjs, or the structured question tool), then set \"approved\": true in the chosen comp's sidecar. A delegated pick is recorded the same way and disclosed.".into());
+    }
+    if approved.len() > 1 {
+        reasons.push(format!(
+            "{} comps carry \"approved\": true; exactly one is the approved comp: {}",
+            approved.len(),
+            approved.iter().map(|c| basename(&c.file)).collect::<Vec<_>>().join(", ")
+        ));
+    }
+    let mut g = if reasons.is_empty() {
+        Gate::ok(format!("{} comps, {} approved", comps.len(), approved.len()))
+    } else {
+        Gate::fail(reasons)
+    };
+    g.summary = Some(format!("{} comps, {} approved", comps.len(), approved.len()));
+    if approved.len() == 1 {
+        g.approved = Some(approved[0].file.clone());
+    }
+    g
+}
+
+/// The approved-comp refusal for the measured spec, when there is one. Every
+/// entry point that measures against the comp runs this before measuring.
+fn comp_refusal(io: &Io) -> Option<String> {
+    let spec = load_spec(&abs(io, SPEC_PATH))?;
+    crate::approved_comp::build_issue(io, &spec, &self_cmd(io))
+}
+
+fn spec_regions(spec: &Value) -> Vec<Value> {
+    spec.get("regions").and_then(Value::as_array).cloned().unwrap_or_default()
+}
+
+fn gate_spec(io: &Io, state: &Value) -> Gate {
+    let s = self_cmd(io);
+    let Some(spec) = load_spec(&abs(io, SPEC_PATH)) else {
+        let comp = state.get("comp").and_then(Value::as_str).unwrap_or("");
+        return Gate::fail(vec![format!(
+            "no spec at {SPEC_PATH}: run comp-spec.mjs --comp {comp} --grid, name the regions, then --regions regions.json"
+        )]);
+    };
+    if let Some(why) = crate::approved_comp::build_issue(io, &spec, &s) { return Gate::fail(vec![why]); }
+    if spec["draft"] == true { return Gate::fail(vec!["automatic region draft is not a measured element map; refine it with comp-spec --regions".into()]); }
+    if let Some(issue) = crate::comp_spec::region_source_issue(io,&spec) { return Gate::fail(vec![issue]); }
+    let regions = spec_regions(&spec);
+    if regions.is_empty() {
+        return Gate::fail(vec!["spec has no regions".into()]);
+    }
+    // Re-check what comp-spec now refuses, so an older or hand-edited spec cannot stand in for a measured element map.
+    let malformed: Vec<String> = regions.iter().filter_map(|r| {
+        let id = r["id"].as_str().unwrap_or("?");
+        if !r["kind"].as_str().is_some_and(crate::comp_spec::is_kind) { return Some(format!("region {id} has no known kind")); }
+        // comp-spec has always required notes on element kinds; bands were exempt until they could pass as a map.
+        if r["kind"] == "band" && !r["note"].as_str().is_some_and(|n| n.trim().chars().count() >= 8) { return Some(format!("band {id} has no note naming what the comp shows there")); }
+        if !(r["px"]["w"].as_f64().unwrap_or(0.) >= 1. && r["px"]["h"].as_f64().unwrap_or(0.) >= 1.) { return Some(format!("region {id} measures less than one comp pixel")); }
+        None
+    }).collect();
+    if !malformed.is_empty() {
+        return Gate::fail(malformed.into_iter().map(|m| format!("{m}; fix the regions file and re-run comp-spec --regions")).collect());
+    }
+    if regions.iter().all(|r| r["kind"] == "band") {
+        return Gate::fail(vec!["spec holds only bands, not the visible elements; name each element as a text, control, chrome, or raster region and re-run comp-spec --regions".into()]);
+    }
+    let spec_comp = spec.get("comp").and_then(Value::as_str);
+    let state_comp = state.get("comp").and_then(Value::as_str);
+    if let (Some(sc), Some(stc)) = (spec_comp, state_comp) {
+        if abs(io, sc) != abs(io, stc) {
+            return Gate::fail(vec![format!(
+                "spec measures {sc}, but this build started on {stc}; re-run comp-spec on the approved comp"
+            )]);
+        }
+    }
+    let plates = regions.iter().filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster")).count();
+    let cut: Vec<&Value> = regions
+        .iter()
+        .filter(|r| {
+            r.get("medium").and_then(Value::as_str) == Some("raster")
+                && r.get("clipped").and_then(Value::as_array).map(|a| !a.is_empty()).unwrap_or(false)
+        })
+        .collect();
+    if !cut.is_empty() {
+        return Gate::fail(
+            cut.iter()
+                .map(|r| {
+                    let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+                    let sides = r.get("clipped").and_then(Value::as_array).map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>().join(" and ")).unwrap_or_default();
+                    format!("region {id}: the comp's artwork runs off its box on the {sides}; widen the region's span so the box holds the whole shape with a margin (or set \"bleed\": true if the page really crops it there), then re-run comp-spec.mjs --regions")
+                })
+                .collect(),
+        );
+    }
+    // text regions sorted by measured cap height (proxy px.h*0.4 when unmeasured)
+    let mut text_regions: Vec<Value> = regions.iter().filter(|r| r.get("kind").and_then(Value::as_str) == Some("text")).cloned().collect();
+    let cap_of = |r: &Value| -> f64 {
+        r.pointer("/type/comp/capHeightPx").and_then(Value::as_f64).unwrap_or_else(|| r.pointer("/px/h").and_then(Value::as_f64).unwrap_or(0.0) * 0.4)
+    };
+    text_regions.sort_by(|a, b| cap_of(b).partial_cmp(&cap_of(a)).unwrap());
+    let mut reasons: Vec<String> = Vec::new();
+    if !text_regions.is_empty() {
+        let ids = text_regions.iter().filter_map(|r| r.get("id").and_then(Value::as_str)).collect::<Vec<_>>().join(", ");
+        let any_measured = text_regions.iter().any(|r| r.get("type").filter(|v| !v.is_null()).is_some());
+        if !any_measured {
+            reasons.push(format!(
+                "measure the type before closing the spec: {s} font-match --measure <id> for each text region ({ids}); the region with the largest cap height is the lead and gets --rank."
+            ));
+            return Gate::fail(reasons);
+        }
+        let measurable: Vec<&Value> = text_regions.iter().filter(|r| r.pointer("/type/comp").filter(|v| !v.is_null()).is_some()).collect();
+        let lead = measurable.first().copied().unwrap_or(&text_regions[0]);
+        let lead_id = lead.get("id").and_then(Value::as_str).unwrap_or("");
+        let has_type = lead.get("type").filter(|v| !v.is_null()).is_some();
+        let type_comp = lead.pointer("/type/comp").filter(|v| !v.is_null());
+        let chosen = lead.pointer("/type/chosen").filter(|v| !v.is_null());
+        if !has_type {
+            reasons.push(format!(
+                "the lead text region {lead_id} has no type measurement: run {s} font-match --measure {lead_id} (and --rank {lead_id} --text \"<its first words>\" to choose the face by metrics). Set font-size from the printed cap height; do not pick a face by name."
+            ));
+        } else if type_comp.is_some() && chosen.is_none() {
+            let wc = lead.pointer("/type/widthClass").and_then(Value::as_str).unwrap_or("");
+            let wt = lead.pointer("/type/weightClass").and_then(Value::as_str).unwrap_or("");
+            let cap = lead.pointer("/type/comp/capHeightPx").map(util::fmt_value).unwrap_or_default();
+            reasons.push(format!(
+                "the lead text region {lead_id} is measured ({wc} {wt}, cap {cap}px) but no face is ranked: run {s} font-match --rank {lead_id} --text \"<its first words>\" [--candidates \"Family:weight,...\"] and use the USE line."
+            ));
+        } else if type_comp.is_some() && chosen.is_some() && !choice_stamped(lead_id, chosen.unwrap()) {
+            let fam = chosen.unwrap().get("family").and_then(Value::as_str).unwrap_or("?");
+            reasons.push(format!(
+                "the lead text region {lead_id} carries a \"chosen\" face that font-match did not write ({fam}). A face typed into spec.json is the guess this gate exists to refuse; run {s} font-match --rank {lead_id} --text \"<its first words>\" and let it record the choice (with no browser it records the catalog's nearest face)."
+            ));
+        }
+        let unmeasured: Vec<String> = text_regions
+            .iter()
+            .skip(1)
+            .filter(|r| r.get("type").filter(|v| !v.is_null()).is_none())
+            .filter_map(|r| r.get("id").and_then(Value::as_str).map(String::from))
+            .collect();
+        if !unmeasured.is_empty() && reasons.is_empty() {
+            reasons.push(format!(
+                "measure the other text regions too, each sets its own font-size and weight class: {s} font-match --measure <id> for {}",
+                unmeasured.join(", ")
+            ));
+        }
+    }
+    if !reasons.is_empty() {
+        return Gate::fail(reasons);
+    }
+    Gate::ok(format!("{} regions, {plates} plates, {} text regions measured", regions.len(), text_regions.len()))
+}
+
+
+/// JS: plateVerdict(region, score).
+fn plate_verdict(region: &Value, score: &Score) -> (bool, Vec<String>) {
+    let id = region.get("id").and_then(Value::as_str).unwrap_or("");
+    let is_texture = region.get("kind").and_then(Value::as_str) == Some("texture");
+    let mut reasons = Vec::new();
+    if is_texture {
+        let effective = 0.5 * score.color + 0.5 * 1f64.min(score.detail / 0.6);
+        if effective < PLATE_MIN {
+            reasons.push(format!(
+                "scores {}% as the material of region {id} (color {}%, detail {}%); crop a clean patch of the comp region (comp-spec.mjs --crop {id} --raw) and mirror-tile it, generate only when no clean patch exists",
+                to_fixed(effective * 100.0, 0),
+                to_fixed(score.color * 100.0, 0),
+                to_fixed(score.detail * 100.0, 0)
+            ));
+        }
+        return (reasons.is_empty(), reasons);
+    }
+    let comp_calm = region.pointer("/detail/energy").and_then(Value::as_f64).map(|e| e < 12.0).unwrap_or(true);
+    if comp_calm && score.detail_added > 0.45 {
+        reasons.push(format!(
+            "carries detail the comp region {id} does not have (added-detail {}% of cells): noise, grain, or a busier subject where the comp is calm; regenerate from the crop reference without adding texture",
+            to_fixed(score.detail_added * 100.0, 0)
+        ));
+    }
+    if score.structure < PLATE_STRUCTURE_MIN {
+        reasons.push(format!(
+            "structure {}% against the comp region {id}: the composition of the plate is not the region's (different subject, orientation, or crop); regenerate with comp-spec.mjs --crop {id} as the reference image",
+            to_fixed(score.structure * 100.0, 0)
+        ));
+    }
+    if score.overall < PLATE_MIN {
+        reasons.push(format!(
+            "scores {}% against the comp region {id} (structure {}%, color {}%, detail {}%); regenerate with the crop as --ref and the comp-spec plate prompt",
+            to_fixed(score.overall * 100.0, 0),
+            to_fixed(score.structure * 100.0, 0),
+            to_fixed(score.color * 100.0, 0),
+            to_fixed(score.detail * 100.0, 0)
+        ));
+    }
+    (reasons.is_empty(), reasons)
+}
+
+fn score_plate_reference(reference: &PlateReference, build: &Image, kind: Option<&str>) -> Score {
+    let mut aligned = align_build(&reference.image, build, "cover");
+    // These pixels belong to foreground UI, not the underlying artwork. Use
+    // the same exclusion on both sides, in reference coordinates AFTER cover
+    // alignment. Provenance checks below still inspect the unmasked asset.
+    for exclusion in &reference.excluded_regions {
+        let p = &exclusion["cropPx"];
+        let rect = r::clamp_rect(&aligned, p["x"].as_f64().unwrap_or(0.), p["y"].as_f64().unwrap_or(0.),
+            p["w"].as_f64().unwrap_or(0.), p["h"].as_f64().unwrap_or(0.));
+        for y in rect.y..rect.y + rect.h {
+            let start = (y * aligned.width + rect.x) * 4;
+            let end = start + rect.w * 4;
+            aligned.data[start..end].copy_from_slice(&reference.image.data[start..end]);
+        }
+    }
+    crate::comp_diff::score_pair(&reference.image, &aligned, kind)
+}
+
+fn gate_plates(io: &Io) -> Gate {
+    let Some(spec) = load_spec(&abs(io, SPEC_PATH)) else {
+        return Gate::fail(vec!["no spec".into()]);
+    };
+    gate_plates_for(io, &spec, None)
+}
+
+fn gate_plates_for(io: &Io, spec: &Value, only_id: Option<&str>) -> Gate {
+    let s = self_cmd(io);
+    if let Some(why) = crate::approved_comp::build_issue(io, spec, &s) {
+        let mut gate = Gate::fail(vec![why]);
+        gate.plates = Some(vec![]);
+        return gate;
+    }
+    if let Some(issue) = crate::comp_spec::region_source_issue(io,spec) { return Gate::fail(vec![issue]); }
+    let regions = spec_regions(&spec);
+    let raster_regions: Vec<Value> = regions.iter().filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster")
+        && only_id.is_none_or(|id| r["id"] == id)).cloned().collect();
+    if raster_regions.is_empty() {
+        let mut g = Gate::ok("no plates owed".into());
+        g.plates = Some(vec![]);
+        return g;
+    }
+    let Some(comp) = spec.get("comp").and_then(Value::as_str).and_then(|c| load_raster(io, c).ok()) else {
+        let mut gate = Gate::fail(vec!["cannot validate plates: the spec's comp is missing or unreadable".into()]);
+        gate.plates = Some(vec![]);
+        return gate;
+    };
+    let mut reasons: Vec<String> = Vec::new();
+    let mut plates: Vec<Value> = Vec::new();
+    for rr in &raster_regions {
+        let reasons_before = reasons.len();
+        let id = rr.get("id").and_then(Value::as_str).unwrap_or("").to_string();
+        let file = rr.get("plate").and_then(Value::as_str).map(String::from);
+        let Some(file) = file.clone().filter(|f| abs(io, f).exists()) else {
+            reasons.push(format!(
+                "plate missing for {id}: expected {}; produce it from {s} comp-spec --crop {id} with {s} generate-image --ref <crop.png> --prompt-file <prompt.txt> --out <plate.png>",
+                file.clone().unwrap_or_else(|| "(no path)".into())
+            ));
+            plates.push(json!({ "id": id, "file": file, "status": "missing" }));
+            continue;
+        };
+        let img = match std::fs::read(abs(io, &file)).map_err(|e| e.to_string()).and_then(|b| png_io::decode_png(&b)) {
+            Ok(d) => d,
+            Err(e) => {
+                reasons.push(format!("plate {file} is not a decodable PNG: {e}"));
+                plates.push(json!({ "id": id, "file": file, "status": "unreadable" }));
+                continue;
+            }
+        };
+        let is_texture = rr.get("kind").and_then(Value::as_str) == Some("texture");
+        // comp-spec marks reference crops. Image transforms can lower visual
+        // similarity while preserving this direct provenance evidence; a new
+        // prompt tag does not turn those reference pixels into generated art.
+        if !is_texture {
+            if let Some(origin) = img.text.get("impeccable:crop-of") {
+                reasons.push(format!(
+                    "plate {file} records a comp crop ({origin}); generate a production plate from the crop as reference"
+                ));
+            }
+        }
+        let px_w = rr.pointer("/px/w").and_then(Value::as_f64).unwrap_or(0.0);
+        let min_w = 1536f64.min(px_w * 1.5);
+        if !is_texture && (img.image.width as f64) < min_w {
+            reasons.push(format!(
+                "plate {file} is {}px wide; the comp region is {}px and a shipping plate needs at least {}px. Regenerate at asset size, do not crop the comp.",
+                img.image.width, px_w as i64, round(min_w) as i64
+            ));
+        }
+        let mut score_val = None;
+        let reference = prepare_plate_reference(&comp, &spec, rr);
+        let reference_audit = reference.audit();
+        {
+            let comp = &comp;
+            let refimg = &reference.image;
+            // composite transparent plates over the region's sampled ground
+            let mut build = img.image.clone();
+            if img.image.data.chunks_exact(4).any(|pixel| pixel[3] < 255) {
+                let ground = rr
+                    .pointer("/palette/0/hex")
+                    .and_then(Value::as_str)
+                    .and_then(hex_rgba)
+                    .unwrap_or([255, 255, 255, 255]);
+                let mut over = r::create_image(img.image.width, img.image.height, ground);
+                r::blit(&mut over, &img.image, 0.0, 0.0);
+                build = over;
+            }
+            let kind = rr.get("kind").and_then(Value::as_str);
+            if let Some(issue) = reference.issue(&id) {
+                reasons.push(format!("plate {file}: {issue}"));
+            } else {
+                let score = score_plate_reference(&reference, &build, kind);
+                score_val = Some(score.overall);
+                let (_, vreasons) = plate_verdict(rr, &score);
+                for reason in vreasons {
+                    reasons.push(format!("plate {file}: {reason}"));
+                }
+            }
+            if !is_texture {
+                let raw = r::crop(
+                    comp,
+                    rr.pointer("/px/x").and_then(Value::as_f64).unwrap_or(0.0),
+                    rr.pointer("/px/y").and_then(Value::as_f64).unwrap_or(0.0),
+                    px_w,
+                    rr.pointer("/px/h").and_then(Value::as_f64).unwrap_or(0.0),
+                );
+                let same = impeccable_comp::metrics::structure_score(&raw, &r::resize(&img.image, raw.width as f64, raw.height as f64), 256);
+                let copied_pixels = impeccable_comp::source_pixels::is_transformed_copy(&raw, &img.image)
+                    || impeccable_comp::source_pixels::is_transformed_copy(refimg, &img.image);
+                if copied_pixels {
+                    reasons.push(format!(
+                        "plate {file} is the comp crop of region {id} (registered RGB pixels match after resampling and a small translation): a crop of the comp is never a plate; regenerate the plate using the crop only as a reference"
+                    ));
+                } else if same >= 0.95 {
+                    reasons.push(format!(
+                        "plate {file} is the comp crop of region {id} (structure {}% against the raw region, a resample of the same pixels): a crop of the comp is never a plate; generate the plate from the crop as reference ({s} generate-image --ref <crop.png> --prompt-file <prompt.txt> --out <plate.png> for {id})",
+                        to_fixed(same * 100.0, 0)
+                    ));
+                }
+            }
+        }
+        plates.push(json!({
+            "id": id, "file": file, "status": if reasons.len() == reasons_before { "ok" } else { "invalid" },
+            "assetHash": sha256_file(io, &file),
+            "regionHash": sha256_bytes(util::json_pretty(rr).as_bytes()),
+            "referenceHash": plate_reference_hash(&spec),
+            "reference": reference_audit,
+            "compHash": spec.get("comp").and_then(Value::as_str).and_then(|p| sha256_file(io, p)),
+            "size": format!("{}x{}", img.image.width, img.image.height),
+            "score": score_val.map(util::num).unwrap_or(Value::Null)
+        }));
+    }
+    let ok_count = plates.iter().filter(|p| p.get("status").and_then(Value::as_str) == Some("ok")).count();
+    let mut g = if reasons.is_empty() { Gate::ok(format!("{ok_count}/{} plates", raster_regions.len())) } else { Gate::fail(reasons) };
+    g.summary = Some(format!("{ok_count}/{} plates", raster_regions.len()));
+    g.plates = Some(plates);
+    g
+}
+
+fn sha256_bytes(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    format!("{:x}", Sha256::digest(bytes))
+}
+
+fn sha256_file(io: &Io, file: &str) -> Option<String> {
+    std::fs::read(abs(io, file)).ok().map(|bytes| sha256_bytes(&bytes))
+}
+
+fn plate_reference_hash(spec: &Value) -> String {
+    // Neighbouring regions change exclusions even when this plate is unchanged.
+    // Version the preparation policy so legacy approvals get revalidated once.
+    sha256_bytes(util::json_pretty(&json!({"policy":"plate-reference-v2","regions":spec.get("regions")})).as_bytes())
+}
+
+fn save_plate_receipts(state: &mut Value, gate: &Gate) {
+    if let Some(plates) = &gate.plates {
+        let receipts: Map<String, Value> = plates.iter().filter_map(|p| {
+            Some((p.get("id")?.as_str()?.to_string(), p.clone()))
+        }).collect();
+        state["plates"] = Value::Object(receipts);
+    }
+}
+
+fn plate_receipt_current(io: &Io, state: &Value, spec: &Value, region: &Value) -> bool {
+    let Some(id) = region.get("id").and_then(Value::as_str) else { return false; };
+    let Some(receipt) = state.get("plates").and_then(|p| p.get(id)) else { return false; };
+    let Some(file) = region.get("plate").and_then(Value::as_str) else { return false; };
+    let Some(comp) = spec.get("comp").and_then(Value::as_str) else { return false; };
+    // A quoted --force binds to the exact asset state it waived (a missing plate included).
+    let forced = receipt["forced"].is_object();
+    (forced || receipt.get("status").and_then(Value::as_str) == Some("ok")
+        && receipt.get("score").and_then(Value::as_f64).map(|s| s.is_finite()).unwrap_or(false))
+        && receipt.get("file").and_then(Value::as_str) == Some(file)
+        && receipt.get("referenceHash").and_then(Value::as_str) == Some(plate_reference_hash(spec).as_str())
+        && match sha256_file(io, file) { Some(h) => receipt["assetHash"].as_str() == Some(h.as_str()), None => forced && receipt["assetHash"].is_null() }
+        && sha256_file(io, comp).as_deref().is_some_and(|h| receipt.get("compHash").and_then(Value::as_str) == Some(h))
+        && receipt.get("regionHash").and_then(Value::as_str) == Some(sha256_bytes(util::json_pretty(region).as_bytes()).as_str())
+}
+
+fn revalidate_plates(io: &Io, state: &mut Value, spec: Option<&Value>) -> Option<Gate> {
+    let spec = spec?;
+    let stale: Vec<String> = spec_regions(spec).iter()
+        .filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster") && !plate_receipt_current(io, state, spec, r))
+        .map(|r| r["id"].as_str().unwrap_or("").to_string()).collect();
+    if stale.is_empty() { return None; }
+    // Regate only stale plates so a still-current forced receipt is not overturned by a neighbour's change.
+    let (mut reasons, mut plates) = (Vec::<String>::new(), Vec::new());
+    for id in &stale {
+        let gate = gate_plates_for(io, spec, Some(id));
+        for reason in gate.reasons { if !reasons.contains(&reason) { reasons.push(reason); } }
+        plates.extend(gate.plates.unwrap_or_default());
+    }
+    if !state["plates"].is_object() { state["plates"] = json!({}); }
+    for id in &stale { state["plates"].as_object_mut().unwrap().remove(id); }
+    for p in &plates { if let Some(id) = p["id"].as_str() { state["plates"][id] = p.clone(); } }
+    if reasons.is_empty() { return None; }
+    let mut gate = Gate::fail(reasons);
+    gate.plates = Some(plates);
+    Some(gate)
+}
+
+/// Record a quoted plates --force on each waived receipt, bound to the current asset, region, reference and comp.
+fn stamp_forced_plates(io: &Io, state: &mut Value, reason: Option<&str>) {
+    let Some(spec) = load_spec(&abs(io, SPEC_PATH)) else { return; };
+    let comp_hash = spec["comp"].as_str().and_then(|c| sha256_file(io, c));
+    let reference_hash = plate_reference_hash(&spec);
+    for r in spec_regions(&spec).iter().filter(|r| r["medium"] == "raster") {
+        let Some(receipt) = r["id"].as_str().and_then(|id| state["plates"].get_mut(id)) else { continue; };
+        if receipt["status"] == "ok" { continue; }
+        let file = r["plate"].as_str();
+        receipt["file"] = json!(file);
+        receipt["assetHash"] = json!(file.and_then(|f| sha256_file(io, f)));
+        receipt["compHash"] = json!(comp_hash);
+        receipt["regionHash"] = json!(sha256_bytes(util::json_pretty(r).as_bytes()));
+        receipt["referenceHash"] = json!(reference_hash);
+        receipt["forced"] = json!({"at": now(), "reason": reason});
+    }
+}
+
+fn hex_rgba(hex: &str) -> Option<[u8; 4]> {
+    let re = regex_hex();
+    let caps = re.captures(hex)?;
+    Some([
+        u8::from_str_radix(&caps[1], 16).ok()?,
+        u8::from_str_radix(&caps[2], 16).ok()?,
+        u8::from_str_radix(&caps[3], 16).ok()?,
+        255,
+    ])
+}
+
+fn regex_hex() -> &'static regex::Regex {
+    use once_cell::sync::Lazy;
+    static RE: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"(?i)^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$").unwrap());
+    &RE
+}
+
+// ---- source-file walk / referenced plates ---------------------------------
+
+fn source_files(io: &Io, limit: usize) -> Vec<String> {
+    let skip: std::collections::HashSet<&str> = ["node_modules", ".git", "dist", "build", "out", ".next", ".svelte-kit", ".impeccable", "coverage"].into_iter().collect();
+    use once_cell::sync::Lazy;
+    static EXTS: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"(?i)\.(html?|css|scss|jsx?|tsx?|svelte|vue|astro|mdx?|php|erb|hbs)$").unwrap());
+    let mut out: Vec<String> = Vec::new();
+    fn walk(io: &Io, dir: &Path, rel: &str, depth: usize, out: &mut Vec<String>, limit: usize, skip: &std::collections::HashSet<&str>, exts: &regex::Regex) {
+        if out.len() >= limit || depth > 6 {
+            return;
+        }
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        let mut entries: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+        entries.sort_by_key(|e| e.file_name());
+        for e in entries {
+            if out.len() >= limit {
+                return;
+            }
+            let name = e.file_name().to_string_lossy().to_string();
+            let child_rel = if rel.is_empty() { name.clone() } else { format!("{rel}/{name}") };
+            let ty = e.file_type();
+            let is_dir = ty.map(|t| t.is_dir()).unwrap_or(false);
+            if is_dir {
+                if !skip.contains(name.as_str()) && !name.starts_with('.') {
+                    walk(io, &e.path(), &child_rel, depth + 1, out, limit, skip, exts);
+                }
+            } else if exts.is_match(&name) {
+                out.push(child_rel);
+            }
+        }
+    }
+    walk(io, &io.cwd, "", 0, &mut out, limit, &skip, &EXTS);
+    out
+}
+
+/// JS: unreferencedPlates(spec, artifact). Returns the unreferenced regions.
+fn unreferenced_plates(io: &Io, spec: Option<&Value>, artifact: Option<&str>) -> Vec<Value> {
+    let Some(spec) = spec else { return vec![] };
+    let plates: Vec<Value> = spec_regions(spec)
+        .into_iter()
+        .filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster") && r.get("plate").and_then(Value::as_str).is_some())
+        .collect();
+    if plates.is_empty() {
+        return vec![];
+    }
+    let mut linked: Vec<PathBuf> = Vec::new();
+    if let Some(art) = artifact {
+        if abs(io, art).exists() {
+            linked.push(abs(io, art));
+            if let Ok(html) = std::fs::read_to_string(abs(io, art)) {
+                use once_cell::sync::Lazy;
+                static LINK: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r#"(?i)<link\b[^>]*href=["']([^"']+)["'][^>]*>"#).unwrap());
+                static REL: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r#"(?i)rel=["']?stylesheet"#).unwrap());
+                static CSS: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r#"(?i)\.css(\?|$)"#).unwrap());
+                static PROTO: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"(?i)^(https?:|data:|//)").unwrap());
+                for m in LINK.captures_iter(&html) {
+                    let href = &m[1];
+                    let whole = &m[0];
+                    if PROTO.is_match(href) {
+                        continue;
+                    }
+                    if !REL.is_match(whole) && !CSS.is_match(href) {
+                        continue;
+                    }
+                    let clean = href.split('?').next().unwrap_or(href);
+                    if clean.starts_with('/') {
+                        linked.push(io.cwd.join(clean.trim_start_matches('/')));
+                        let art_dir = abs(io, art).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+                        linked.push(art_dir.join(clean.trim_start_matches('/')));
+                    } else {
+                        let art_dir = abs(io, art).parent().map(|p| p.to_path_buf()).unwrap_or_default();
+                        linked.push(art_dir.join(clean));
+                    }
+                }
+            }
+        }
+    }
+    let mut files: Vec<PathBuf> = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for l in linked {
+        if seen.insert(l.clone()) {
+            files.push(l);
+        }
+    }
+    for rel in source_files(io, 400) {
+        let p = abs(io, &rel);
+        if seen.insert(p.clone()) {
+            files.push(p);
+        }
+    }
+    let mut corpus = String::new();
+    for f in &files {
+        if let Ok(t) = std::fs::read_to_string(f) {
+            corpus.push_str(&t);
+            corpus.push('\n');
+        }
+    }
+    let mut missing = Vec::new();
+    for rr in &plates {
+        let plate = rr.get("plate").and_then(Value::as_str).unwrap_or("");
+        let base = basename(plate);
+        let stem = {
+            use once_cell::sync::Lazy;
+            static EXT: Lazy<regex::Regex> = Lazy::new(|| regex::Regex::new(r"(?i)\.[a-z0-9]+$").unwrap());
+            EXT.replace(&base, "").to_string()
+        };
+        let id = rr.get("id").and_then(Value::as_str).unwrap_or("");
+        if corpus.contains(&base) || (corpus.contains("data:image/") && (corpus.contains(&stem) || corpus.contains(id))) {
+            continue;
+        }
+        missing.push(rr.clone());
+    }
+    missing
+}
+
+/// JS: organicClipRegions(artifactFile, spec) via the injected scanner.
+fn organic_clip_regions(io: &Io, artifact_file: &str, spec: &Value, scan: OrganicScan) -> Vec<Value> {
+    let Ok(html) = std::fs::read_to_string(abs(io, artifact_file)) else {
+        return vec![];
+    };
+    let findings = scan(&html);
+    if findings.is_empty() {
+        return vec![];
+    }
+    let raster_regions: Vec<Value> = spec_regions(spec).into_iter().filter(|r| r.get("medium").and_then(Value::as_str) == Some("raster")).collect();
+    let mut out = Vec::new();
+    for (selector, snippet) in &findings {
+        let sel = selector.clone().unwrap_or_default().to_lowercase();
+        for rr in &raster_regions {
+            let id = rr.get("id").and_then(Value::as_str).unwrap_or("");
+            let stem = {
+                let plate = rr.get("plate").and_then(Value::as_str).unwrap_or("");
+                Path::new(plate).file_stem().map(|s| s.to_string_lossy().to_lowercase()).unwrap_or_default()
+            };
+            if (!sel.is_empty() && (sel.contains(&id.to_lowercase()) || (!stem.is_empty() && sel.contains(&stem)))) || raster_regions.len() == 1 {
+                out.push(json!({ "id": id, "snippet": snippet }));
+                break;
+            }
+        }
+    }
+    out
+}
+
+// ---- scaffold --------------------------------------------------------------
+
+fn escape_lt(s: &str) -> String {
+    s.replace('<', "&lt;")
+}
+
+fn relpath(from_dir: &str, to: &str) -> String {
+    // JS path.relative(dir, target); both relative to cwd.
+    let from = Path::new(from_dir);
+    let to = Path::new(to);
+    pathdiff(to, from)
+}
+
+fn pathdiff(to: &Path, from: &Path) -> String {
+    let to_c: Vec<_> = to.components().collect();
+    let from_c: Vec<_> = from.components().collect();
+    let mut i = 0;
+    while i < to_c.len() && i < from_c.len() && to_c[i] == from_c[i] {
+        i += 1;
+    }
+    let mut parts: Vec<String> = Vec::new();
+    for _ in i..from_c.len() {
+        parts.push("..".into());
+    }
+    for c in &to_c[i..] {
+        parts.push(c.as_os_str().to_string_lossy().to_string());
+    }
+    if parts.is_empty() {
+        ".".into()
+    } else {
+        parts.join("/")
+    }
+}
+
+struct Scaffold {
+    dir: String,
+    css: String,
+    html: String,
+}
+
+fn write_scaffold(io: &Io, spec: &Value) -> Scaffold {
+    let dir = format!("{BUILD_DIR}/scaffold");
+    let _ = std::fs::create_dir_all(abs(io, &dir));
+    let w = spec.pointer("/compSize/width").and_then(Value::as_i64).unwrap_or(0);
+    let h = spec.pointer("/compSize/height").and_then(Value::as_i64).unwrap_or(0);
+    let pct = |v: f64| format!("{}%", to_fixed(v * 100.0, 3));
+    let mut vars: Vec<String> = vec![":root {".into()];
+    let mut rules: Vec<String> = Vec::new();
+    let mut body_parts: Vec<String> = Vec::new();
+    let mut font_links: Vec<String> = Vec::new();
+    let mut seen_links = std::collections::HashSet::new();
+    for rr in spec_regions(spec) {
+        if rr.get("kind").and_then(Value::as_str) == Some("band") {
+            continue;
+        }
+        let id = rr.get("id").and_then(Value::as_str).unwrap_or("").to_string();
+        let bx = rr.pointer("/box/x").and_then(Value::as_f64).unwrap_or(0.0);
+        let by = rr.pointer("/box/y").and_then(Value::as_f64).unwrap_or(0.0);
+        let bw = rr.pointer("/box/w").and_then(Value::as_f64).unwrap_or(0.0);
+        let bh = rr.pointer("/box/h").and_then(Value::as_f64).unwrap_or(0.0);
+        vars.push(format!("  --r-{id}-x: {}; --r-{id}-y: {}; --r-{id}-w: {}; --r-{id}-h: {};", pct(bx), pct(by), pct(bw), pct(bh)));
+        let cap = rr.pointer("/type/comp/capHeightPx").and_then(Value::as_f64);
+        let chosen = rr.pointer("/type/chosen").filter(|v| !v.is_null());
+        let chosen_font = chosen.and_then(|c| c.get("fontSizePx")).and_then(Value::as_f64);
+        let font_px: Option<i64> = if let Some(f) = chosen_font {
+            Some(f as i64)
+        } else {
+            cap.map(|c| round(c / 0.7) as i64)
+        };
+        if let Some(cap) = cap {
+            let font_seg = font_px.map(|f| format!(" --r-{id}-font: {f}px;")).unwrap_or_default();
+            let fam_seg = chosen
+                .map(|c| {
+                    let fam = c.get("family").and_then(Value::as_str).unwrap_or("");
+                    let wt = util::fmt_value(c.get("weight").unwrap_or(&Value::Null));
+                    format!(" --r-{id}-family: '{fam}'; --r-{id}-weight: {wt};")
+                })
+                .unwrap_or_default();
+            vars.push(format!("  --r-{id}-cap: {}px;{font_seg}{fam_seg}", cap as i64));
+        }
+        if let Some(c) = chosen {
+            if let Some(fam) = c.get("family").and_then(Value::as_str) {
+                let key = format!("{fam}:{}", util::fmt_value(c.get("weight").unwrap_or(&Value::Null)));
+                if seen_links.insert(key.clone()) {
+                    font_links.push(key);
+                }
+            }
+        }
+        rules.push(format!(".r-{id} {{ position: absolute; left: var(--r-{id}-x); top: var(--r-{id}-y); width: var(--r-{id}-w); height: var(--r-{id}-h); }}"));
+        let note = rr.get("note").and_then(Value::as_str).unwrap_or(&id);
+        let label = escape_lt(note);
+        let kind = rr.get("kind").and_then(Value::as_str).unwrap_or("");
+        let medium = rr.get("medium").and_then(Value::as_str).unwrap_or("");
+        let plate = rr.get("plate").and_then(Value::as_str).unwrap_or("");
+        if medium == "raster" && kind != "texture" {
+            let src = if !plate.is_empty() { relpath(&dir, plate) } else { String::new() };
+            let object_pos = if kind == "image" { "center" } else { "top left" };
+            body_parts.push(format!("  <figure class=\"r-{id} region plate\" data-region=\"{id}\"><img src=\"{src}\" alt=\"\" style=\"width:100%;height:100%;object-fit:contain;object-position:{object_pos}\"></figure>"));
+        } else if kind == "texture" {
+            let src = if !plate.is_empty() { relpath(&dir, plate) } else { String::new() };
+            body_parts.push(format!("  <div class=\"r-{id} region texture\" data-region=\"{id}\" style=\"background-image:url('{src}');background-repeat:repeat\"></div>"));
+        } else if kind == "text" {
+            let style = [
+                if font_px.is_some() { format!("font-size:var(--r-{id}-font)") } else { String::new() },
+                if chosen.is_some() { format!("font-family:var(--r-{id}-family),sans-serif;font-weight:var(--r-{id}-weight)") } else { String::new() },
+                "line-height:1.05".into(),
+                "margin:0".into(),
+            ]
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(";");
+            let text = rr.get("text").and_then(Value::as_str).map(escape_lt).filter(|t| !t.is_empty()).unwrap_or_else(|| id.clone());
+            body_parts.push(format!("  <div class=\"r-{id} region text\" data-region=\"{id}\"><!-- {label} --><p style=\"{style}\">{text}</p></div>"));
+        } else if kind == "control" {
+            body_parts.push(format!("  <div class=\"r-{id} region control\" data-region=\"{id}\"><!-- {label}: match the control's lettering and visible shape to the crop (comp-spec.mjs --crop {id}); a control need not have button chrome --></div>"));
+        } else {
+            body_parts.push(format!("  <div class=\"r-{id} region chrome\" data-region=\"{id}\"><!-- {label} --></div>"));
+        }
+    }
+    vars.push("}".into());
+    let mut css_lines: Vec<String> = Vec::new();
+    css_lines.push("/* Impeccable scaffold: the measured layout of the approved comp as custom properties. Generated by build-phase.mjs scaffold; regenerate after comp-spec.mjs --regions changes. Bind these to your own markup; positions are % of the comp frame so they scale with it. */".into());
+    css_lines.extend(vars);
+    css_lines.push(String::new());
+    css_lines.push(format!(".comp-frame {{ position: relative; width: 100%; aspect-ratio: {w} / {h}; overflow: hidden; }}"));
+    css_lines.extend(rules);
+    css_lines.push(String::new());
+    let css = css_lines.join("\n");
+    let css_path = format!("{dir}/layout.css");
+    let _ = std::fs::write(abs(io, &css_path), &css);
+    let link = if !font_links.is_empty() {
+        let fams = font_links
+            .iter()
+            .map(|f| {
+                let parts: Vec<&str> = f.splitn(2, ':').collect();
+                let fam = parts[0];
+                let wt = parts.get(1).copied().unwrap_or("");
+                format!("family={}:wght@{wt}", encode_family(fam))
+            })
+            .collect::<Vec<_>>()
+            .join("&");
+        format!("  <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?{fams}&display=swap\">\n")
+    } else {
+        String::new()
+    };
+    let body_bg = spec.pointer("/palette/0/hex").and_then(Value::as_str).unwrap_or("#fff");
+    let comp_name = basename(spec.get("comp").and_then(Value::as_str).unwrap_or(""));
+    let html = format!(
+        "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <title>Scaffold reference: {comp_name}</title>\n{link}  <link rel=\"stylesheet\" href=\"layout.css\">\n  <style>html,body{{margin:0}}body{{background:{body_bg}}}.region{{box-sizing:border-box}}.region.text p{{white-space:pre-wrap}}</style>\n</head>\n<body>\n<!-- Reference only. Every region sits at its measured box inside a comp-aspect frame. Take the boxes (layout.css), keep your own semantic structure. -->\n<main class=\"comp-frame\" style=\"max-width:{w}px\">\n{}\n</main>\n</body>\n</html>\n",
+        body_parts.join("\n")
+    );
+    let html_path = format!("{dir}/hero-reference.html");
+    let _ = std::fs::write(abs(io, &html_path), &html);
+    Scaffold { dir, css: css_path, html: html_path }
+}
+
+fn encode_family(fam: &str) -> String {
+    // encodeURIComponent(fam).replace(/%20/g, '+')
+    let mut out = String::new();
+    for ch in fam.chars() {
+        if ch == ' ' {
+            out.push('+');
+        } else if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.' | '!' | '~' | '*' | '\'' | '(' | ')') {
+            out.push(ch);
+        } else {
+            let mut buf = [0u8; 4];
+            for b in ch.encode_utf8(&mut buf).bytes() {
+                out.push_str(&format!("%{b:02X}"));
+            }
+        }
+    }
+    out
+}
+
+// ---- hero readings ---------------------------------------------------------
+
+fn region_struct(rr: &Value) -> Region {
+    let chosen = rr.pointer("/type/chosen").filter(|v| !v.is_null()).map(|c| Chosen {
+        family: c.get("family").and_then(Value::as_str).unwrap_or("").to_string(),
+        weight: util::fmt_value(c.get("weight").unwrap_or(&Value::Null)),
+        font_size_px: util::fmt_value(c.get("fontSizePx").unwrap_or(&Value::Null)),
+    });
+    Region {
+        id: rr.get("id").and_then(Value::as_str).unwrap_or("").to_string(),
+        kind: rr.get("kind").and_then(Value::as_str).unwrap_or("").to_string(),
+        chosen,
+    }
+}
+
+struct HeroReadings {
+    text: Vec<String>,
+    chrome: Vec<String>,
+    plates: Vec<String>,
+    invented: Value,
+    region_ids: std::collections::HashMap<String, Vec<String>>,
+}
+
+fn hero_readings(io: &Io, state: &Value, spec: Option<&Value>, build_path: &str) -> Option<HeroReadings> {
+    let spec = spec?;
+    let comp_path = state.get("comp").and_then(Value::as_str)?;
+    let comp = load_raster(io, comp_path).ok()?;
+    let build = load_raster(io, build_path).ok()?;
+    let mut aligned = align_build(&comp, &build, "top");
+    let shift = best_shift(&comp, &aligned, 256);
+    if shift.dx != 0 || shift.dy != 0 {
+        let mut shifted = r::create_image(aligned.width, aligned.height, [255, 255, 255, 255]);
+        r::blit(&mut shifted, &aligned, -shift.dx as f64, -shift.dy as f64);
+        aligned = shifted;
+    }
+    let mut text: Vec<String> = Vec::new();
+    let mut chrome: Vec<String> = Vec::new();
+    let mut plates: Vec<String> = Vec::new();
+    let mut region_ids = std::collections::HashMap::<String, Vec<String>>::new();
+    for rr in spec_regions(spec) {
+        let starts = (text.len(), chrome.len(), plates.len());
+        let px = rr.get("px");
+        if px.is_none() {
+            continue;
+        }
+        let pxf = |k: &str| rr.pointer(&format!("/px/{k}")).and_then(Value::as_f64).unwrap_or(0.0);
+        let a = r::crop(&comp, pxf("x"), pxf("y"), pxf("w"), pxf("h"));
+        let b = r::crop(&aligned, pxf("x"), pxf("y"), pxf("w"), pxf("h"));
+        let kind = rr.get("kind").and_then(Value::as_str).unwrap_or("");
+        let region = region_struct(&rr);
+        // A control's functional role does not make its lettering chrome.
+        // Measure recognizable text as well as the control's geometry; keep
+        // its kind and structural verdict unchanged. Icon-only controls must
+        // not receive the text check's colour-only fallback advice.
+        if kind == "text" || kind == "control" {
+            let t = text_region_check(&region, &a, &b);
+            if kind == "text" || t.get("metrics").is_some_and(Value::is_object) {
+                for f in t.get("findings").and_then(Value::as_array).cloned().unwrap_or_default() {
+                    if let Some(s) = f.as_str() {
+                        text.push(s.to_string());
+                    }
+                }
+            }
+        }
+        if kind == "chrome" || kind == "control" {
+            let cc = chrome_strip_check(&region, &a, &b);
+            for f in cc.get("findings").and_then(Value::as_array).cloned().unwrap_or_default() {
+                if let Some(s) = f.as_str() {
+                    chrome.push(s.to_string());
+                }
+            }
+        } else if kind == "plate" || kind == "image" {
+            let cc = plate_clip_check(&region, &a, &b);
+            let sides = cc.get("sides").and_then(Value::as_array).cloned().unwrap_or_default();
+            if !sides.is_empty() {
+                let id = rr.get("id").and_then(Value::as_str).unwrap_or("");
+                let sides_str = sides.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>().join(" and ");
+                let cx = cc.pointer("/comp/x").map(util::fmt_value).unwrap_or_default();
+                let cy = cc.pointer("/comp/y").map(util::fmt_value).unwrap_or_default();
+                let cw = cc.pointer("/comp/w").map(util::fmt_value).unwrap_or_default();
+                let ch = cc.pointer("/comp/h").map(util::fmt_value).unwrap_or_default();
+                let bx = cc.pointer("/build/x").map(util::fmt_value).unwrap_or_default();
+                let byv = cc.pointer("/build/y").map(util::fmt_value).unwrap_or_default();
+                let bw = cc.pointer("/build/w").map(util::fmt_value).unwrap_or_default();
+                let bh = cc.pointer("/build/h").map(util::fmt_value).unwrap_or_default();
+                plates.push(format!(
+                    "plate {id} is clipped at the {sides_str}: the comp's artwork keeps a margin there (ink box {cw}x{ch} at {cx},{cy} in the region) and the build's runs to the edge ({bw}x{bh} at {bx},{byv}); size the box to the artwork's aspect and use object-fit: contain, or place the <img> at the artwork's own size, never cover on a narrower box"
+                ));
+            }
+        }
+        for message in text[starts.0..].iter().chain(chrome[starts.1..].iter()).chain(plates[starts.2..].iter()) {
+            region_ids.entry(message.clone()).or_default().push(region.id.clone());
+        }
+    }
+    let invented = invented_ink(&comp, &aligned);
+    Some(HeroReadings { text, chrome, plates, invented, region_ids })
+}
+
+// ---- hero gate -------------------------------------------------------------
+
+fn pct0(v: f64) -> String {
+    to_fixed(v * 100.0, 0)
+}
+fn pct1(v: f64) -> String {
+    to_fixed(v * 100.0, 1)
+}
+
+fn rscore(r: &Value, k: &str) -> f64 {
+    r.pointer(&format!("/score/{k}")).and_then(Value::as_f64).unwrap_or(0.0)
+}
+fn rscore_opt(r: &Value, k: &str) -> Option<f64> {
+    r.pointer(&format!("/score/{k}")).and_then(Value::as_f64)
+}
+
+/// Run comp-diff in-process (JS spawned comp-diff.mjs --json), returning its report.
+fn hero_diff(io: &Io, comp_path: &str, build_path: &str, spec: Option<&Value>, out_dir: &str) -> Result<(Value, CompareResult), String> {
+    let comp = load_raster(io, comp_path)?;
+    let build = load_raster(io, build_path)?;
+    let res = compare(&comp, &build, spec, "top", "hero", None);
+    let files = write_artifacts(&res, &comp, &abs(io, out_dir)).map_err(|e| format!("cannot persist comparison artifacts: {e}"))?;
+    let meta = json!({
+        "label": "hero",
+        "comp": comp_path,
+        "build": build_path,
+        "spec": if spec.is_some() { Value::String(SPEC_PATH.into()) } else { Value::Null },
+        "compSize": format!("{}x{}", comp.width, comp.height),
+        "buildSize": format!("{}x{}", build.width, build.height),
+    });
+    let report = build_report(&res, Some(&files), &meta);
+
+    Ok((report, res))
+}
+
+#[allow(clippy::too_many_arguments)]
+struct NativeCapture {
+    capture: Box<dyn CapturedEntry>,
+    directory: String,
+}
+impl NativeCapture {
+    fn path(&self, frame: &str) -> String {
+        format!("{}/{}.png", self.directory, frame)
+    }
+}
+/// The engine renders the page itself (native capture) instead of reading saved screenshots.
+fn native_capture(io: &Io, state: &Value) -> bool {
+    state["capturePolicy"] == "native-html-v1" || io.env("IMPECCABLE_NATIVE_CAPTURE") == Some("1")
+}
+
+fn prepare_native_capture(
+    io: &Io,
+    state: &mut Value,
+    artifact: Option<&str>,
+    renderer: Option<&dyn EntryRenderer>,
+    stage: EntryStage,
+) -> Result<Option<NativeCapture>, Gate> {
+    if !native_capture(io, state) {
+        return Ok(None);
+    }
+    let renderer = renderer.ok_or_else(|| {
+        Gate::fail(vec![
+            "native entry renderer unavailable; saved capture receipts cannot substitute".into(),
+        ])
+    })?;
+    let check = gate_spec(io, state);
+    if !check.ok {
+        return Err(check);
+    }
+    let spec = load_spec(&abs(io, SPEC_PATH));
+    if let Some(failure) = revalidate_plates(io, state, spec.as_ref()) {
+        return Err(failure);
+    }
+    let entry = artifact
+        .or_else(|| state["artifact"].as_str())
+        .unwrap_or("index.html")
+        .to_string();
+    let reference = state["comp"].as_str().unwrap_or("").to_string();
+    let capture = renderer
+        .capture_entry(&EntryRequest {
+            root: io.cwd.clone(),
+            artifact: entry,
+            spec: SPEC_PATH.into(),
+            reference,
+            stage,
+        })
+        .map_err(|e| Gate::fail(vec![format!("native entry capture unavailable: {e}")]))?;
+    let directory = format!(
+        ".impeccable/review/native/{}",
+        match stage {
+            EntryStage::Hero => "hero",
+            EntryStage::Responsive => "responsive",
+        }
+    );
+    let save = (|| -> Result<(), String> {
+        std::fs::create_dir_all(abs(io, &directory)).map_err(|e| e.to_string())?;
+        if let Some(approved)=capture.approved_reference(){std::fs::write(abs(io,&format!("{directory}/human-approved.png")),&approved.png).map_err(|e|e.to_string())?;}
+        for frame in &capture.evidence().frames {
+            if !matches!(frame.name.as_str(), "hero" | "desktop" | "mobile") {
+                return Err("unknown native capture frame".into());
+            }
+            std::fs::write(
+                abs(io, &format!("{directory}/{}.png", frame.name)),
+                &frame.png,
+            )
+            .map_err(|e| e.to_string())?;
+            let receipts: Vec<_> = frame.regions.iter().map(|r| r.receipt.clone()).collect();
+            atomic_report(
+                &abs(io, &format!("{directory}/{}-observations.json", frame.name)),
+                &json!(receipts),
+            )?;
+        }
+        atomic_report(
+            &abs(io, &format!("{directory}/inputs.json")),
+            &capture.evidence().report,
+        )?;
+        capture.verify_current()
+    })();
+    save.map_err(|e| {
+        Gate::fail(vec![format!(
+            "cannot retain fresh native entry evidence: {e}"
+        )])
+    })?;
+    state["capturePolicy"] = json!("native-html-v1");
+    Ok(Some(NativeCapture { capture, directory }))
+}
+/// Conservative frame-placement floor for the opt-in native protocol, not a
+/// fidelity score: contributing instances must cover the central half of the
+/// reference frame. One CSS pixel accommodates spec coordinate quantization.
+fn native_frame_supported(receipt: &Value) -> bool {
+    let rect = |v: &Value| -> Option<[f64; 4]> {
+        let a = [
+            v["x"].as_f64()?,
+            v["y"].as_f64()?,
+            v["w"].as_f64()?,
+            v["h"].as_f64()?,
+        ];
+        (a.iter().all(|v| v.is_finite()) && a[2] > 0. && a[3] > 0.).then_some(a)
+    };
+    let Some(expected) = rect(&receipt["expectedBox"]) else {
+        return false;
+    };
+    let core = [
+        expected[0] + expected[2] * 0.25,
+        expected[1] + expected[3] * 0.25,
+        expected[2] * 0.5,
+        expected[3] * 0.5,
+    ];
+    let measured: Vec<_> = receipt["instances"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|i| i["status"] == "measured")
+        .collect();
+    let mut boxes: Vec<_> = measured
+        .iter()
+        .filter(|i| i["changedPixelsInRegion"].as_u64().unwrap_or(0) > 0)
+        .filter_map(|i| rect(&i["element"]["box"]))
+        .collect();
+    // Identical stacked copies can have zero individual marginal contribution.
+    // Only their verified positive union with the same frame supplies placement;
+    // a hidden large image cannot lend its frame to a tiny visible copy.
+    if boxes.is_empty()
+        && receipt["combinedContribution"]["changedPixelsInRegion"]
+            .as_u64()
+            .unwrap_or(0)
+            > 0
+    {
+        let all: Vec<_> = measured
+            .iter()
+            .filter_map(|i| rect(&i["element"]["box"]))
+            .collect();
+        if !all.is_empty() && all.len() == measured.len() && all.iter().all(|b| *b == all[0]) {
+            boxes.push(all[0]);
+        }
+    }
+    let clips: Vec<_> = boxes
+        .iter()
+        .filter_map(|b| {
+            let x = (b[0] - 1.).max(core[0]);
+            let y = (b[1] - 1.).max(core[1]);
+            let right = (b[0] + b[2] + 1.).min(core[0] + core[2]);
+            let bottom = (b[1] + b[3] + 1.).min(core[1] + core[3]);
+            (right > x && bottom > y).then_some([x, y, right, bottom])
+        })
+        .collect();
+    let mut xs = vec![core[0], core[0] + core[2]];
+    for b in &clips {
+        xs.extend([b[0], b[2]]);
+    }
+    xs.sort_by(f64::total_cmp);
+    xs.dedup();
+    let mut area = 0.;
+    for pair in xs.windows(2) {
+        let middle = (pair[0] + pair[1]) * 0.5;
+        let mut spans: Vec<_> = clips
+            .iter()
+            .filter(|b| b[0] <= middle && b[2] >= middle)
+            .map(|b| [b[1], b[3]])
+            .collect();
+        spans.sort_by(|a, b| a[0].total_cmp(&b[0]));
+        let mut covered = 0.;
+        let mut end = core[1];
+        for span in spans {
+            covered += (span[1] - span[0].max(end)).max(0.);
+            end = end.max(span[1]);
+        }
+        area += (pair[1] - pair[0]) * covered;
+    }
+    area >= core[2] * core[3] * (1. - 1e-9)
+}
+
+fn finish_native_capture(io: &Io, out_dir: &str, gate: &mut Gate, native: &NativeCapture) {
+    let mut additions = Vec::new();
+    if let Err(e) = native.capture.verify_current() {
+        additions.push(format!(
+            "native capture inputs changed before the gate completed: {e}"
+        ));
+    }
+    for frame in &native.capture.evidence().frames {
+        // Mobile has no approved mobile comp. Capture its actual pixels, but do
+        // not pretend the desktop's positions constrain its reflow.
+        if frame.name == "mobile" {
+            continue;
+        }
+        for region in &frame.regions {
+            let id = region.receipt["regionId"].as_str().unwrap_or("unknown");
+            let contribution = &region.receipt["combinedContribution"];
+            let reason = if region.receipt["stableCapture"] != true
+                || region.receipt["batchStabilityVerified"] != true
+            {
+                Some(format!(
+                    "region {id}: native raster observation is unstable or unavailable"
+                ))
+            } else if contribution["status"] != "measured" {
+                Some(format!(
+                    "region {id}: no supported instance of the required asset was measured in its reference region; saved asset files and footer copies are not rendered evidence"
+                ))
+            } else if contribution["changedPixelsInRegion"].as_u64().unwrap_or(0) == 0 {
+                Some(format!(
+                    "region {id}: the required asset contributes no rendered pixels in its reference region (hidden, clipped, covered or transparent)"
+                ))
+            } else if !native_frame_supported(&region.receipt) {
+                Some(format!(
+                    "region {id}: contributing image frames do not cover the middle of the reference box; restore the measured placement and scale"
+                ))
+            } else {
+                None
+            };
+            if let Some(reason) = reason {
+                record_region_reason(&mut gate.region_reasons, id, &reason);
+                additions.push(reason);
+            }
+        }
+    }
+    if !additions.is_empty() {
+        gate.ok = false;
+        gate.reasons.extend(additions);
+        gate.summary = Some(format!(
+            "{}; native artwork integrity failed",
+            gate.summary.as_deref().unwrap_or("comparison")
+        ));
+    }
+    // Positive contribution is only a necessary presence check. It never
+    // replaces the existing plate, geometry or composed-image fidelity gates.
+    if let Some(report_path) = &gate.report {
+        let mut report: Value = match std::fs::read(abs(io, report_path))
+            .ok()
+            .and_then(|bytes| serde_json::from_slice(&bytes).ok())
+        {
+            Some(report) => report,
+            None => {
+                gate.ok = false;
+                gate.reasons
+                    .push("cannot read fresh comparison report for native capture evidence".into());
+                gate.report = None;
+                return;
+            }
+        };
+        let inputs = &native.capture.evidence().report;
+        report["nativeCapture"] = if inputs["captureMethod"] == "assembled-page-viewport" {
+            // No raster region, so no presence or placement check ran; say so.
+            json!({"directory":native.directory,"inputs":inputs,"integrityScope":"assembled-page viewport from frozen inputs; the comp and approved screenshots are never served to the page; no raster presence or placement check (no raster region); existing visual scores unchanged","adequateVisibility":"not-established-by-integrity-checks-alone"})
+        } else {
+            json!({"directory":native.directory,"inputs":inputs,"integrityScope":"rendered presence and minimum frame placement; the comp and approved screenshots are never served to the page; existing visual scores unchanged","framePolicy":"central-half-with-1px-quantization-tolerance","adequateVisibility":"not-established-by-integrity-checks-alone"})
+        };
+        report["gate"]["ok"] = json!(gate.ok);
+        report["gate"]["reasons"] = json!(gate.reasons);
+        report["gate"]["unscopedReasons"] = json!(
+            gate.reasons
+                .iter()
+                .filter(|reason| !gate.region_reasons.values().any(|v| v
+                    .as_array()
+                    .is_some_and(|rows| rows.iter().any(|r| r.as_str() == Some(reason.as_str())))))
+                .collect::<Vec<_>>()
+        );
+        if let Some(regions) = report["regions"].as_array_mut() {
+            for region in regions {
+                let id = region["id"].as_str().unwrap_or("");
+                if let Some(blockers) = gate.region_reasons.get(id) {
+                    region["blockingReasons"] = blockers.clone();
+                    if blockers.as_array().is_some_and(|a| !a.is_empty()) {
+                        region["blocking"] = json!(true);
+                    }
+                }
+            }
+        }
+        if let Err(e) = atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report) {
+            gate.ok = false;
+            gate.reasons
+                .push(format!("cannot persist native capture gate evidence: {e}"));
+        }
+    }
+}
+
+fn gate_hero(
+    io: &Io,
+    state: &mut Value,
+    build_path: &str,
+    min: f64,
+    out_dir: &str,
+    artifact: Option<&str>,
+    organic_scan: OrganicScan,
+    renderer: Option<&dyn EntryRenderer>,
+) -> Gate {
+    let pending = Gate::fail(vec!["hero comparison has not completed".into()]);
+    if let Err(e) = unavailable_report(io, out_dir, &pending, "hero") {
+        return Gate::fail(vec![format!("cannot persist hero gate evidence: {e}")]);
+    }
+    if let Some(why) = comp_refusal(io) {
+        let gate = Gate::fail(vec![why]);
+        let _ = unavailable_report(io, out_dir, &gate, "hero");
+        return gate;
+    }
+    let native = match prepare_native_capture(io, state, artifact, renderer, EntryStage::Hero) {
+        Ok(value) => value,
+        Err(gate) => {
+            let _ = unavailable_report(io, out_dir, &gate, "hero");
+            return gate;
+        }
+    };
+    let native_path = native.as_ref().map(|n| n.path("hero"));
+    // The renderer hands over an approval only while its reviewed sources are
+    // unchanged; the pixels must also still be the ones the user saw, region by region.
+    let human = native.as_ref().and_then(|n| n.capture.approved_reference().map(|a| (n, a))).and_then(|(n, a)| {
+        let spec = load_spec(&abs(io, SPEC_PATH));
+        hero_diff_labeled(io, &n.path("human-approved"), &n.path("hero"), spec.as_ref(), &format!("{out_dir}/human-reviewed"), "human-reviewed").ok()
+            .map(|(comparison, _)| json!({"proof": a.proof, "comparison": comparison}))
+    });
+    let mut gate = gate_hero_inner(
+        io,
+        state,
+        native_path.as_deref().unwrap_or(build_path),
+        min,
+        out_dir,
+        artifact,
+        organic_scan,
+        human.as_ref(),
+    );
+    if let Some(native) = &native {
+        finish_native_capture(io, out_dir, &mut gate, native);
+    }
+    if gate.report.is_none() {
+        if let Err(e) = unavailable_report(io, out_dir, &gate, "hero") {
+            gate.ok = false;
+            gate.reasons
+                .push(format!("cannot persist hero gate evidence: {e}"));
+        }
+    }
+    gate
+}
+
+fn atomic_report(path: &Path, report: &Value) -> Result<(), String> {
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let temp = path.with_extension(format!("tmp-{}-{}", std::process::id(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
+    let result = (|| {
+        if let Some(parent) = path.parent() { std::fs::create_dir_all(parent)?; }
+        std::fs::write(&temp, util::json_pretty(report))?;
+        std::fs::rename(&temp, path)
+    })();
+    if result.is_err() { let _ = std::fs::remove_file(temp); }
+    result.map_err(|e: std::io::Error| e.to_string())
+}
+
+fn unavailable_report(io: &Io, out_dir: &str, gate: &Gate, phase: &str) -> Result<(), String> {
+    let mut report = json!({ "interpretation": format!("{phase}-gate"), "measurementsAvailable": false,
+        "regions": [], "gate": { "ok": false, "reasons": gate.reasons,
+            "advisories": gate.advisories, "unscopedReasons": gate.reasons } });
+    // Invalidate the report before touching images; also clean partial writes on failure.
+    // Attempt cleanup even when the report itself cannot be replaced.
+    let report_write = atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report);
+    let cleanup = clear_comparison_artifacts(&abs(io, out_dir));
+    if let Err(error) = &cleanup {
+        // A read-only regions directory may prevent unlinking its children even
+        // when its parent permits moving the directory. Preserve those bytes as
+        // explicitly invalid evidence instead of leaving them at current paths.
+        report["artifactCleanup"] = json!({"status":"failed", "error":error,
+            "invalidArtifacts":["raw-report.json", "side-by-side.png", "heatmap.png", "regions/"]});
+        match quarantine_comparison_artifacts(&abs(io, out_dir)) {
+            Ok(record) => report["artifactCleanup"]["quarantine"] = record,
+            Err(e) => report["artifactCleanup"]["quarantineError"] = json!(e),
+        }
+        // If the filesystem also refuses quarantine, the report explicitly marks
+        // every potentially remaining artifact invalid. The gate still fails.
+        atomic_report(&abs(io, &format!("{out_dir}/report.json")), &report)?;
+    }
+    report_write.and(cleanup)
+}
+
+fn quarantine_comparison_artifacts(out_dir: &Path) -> Result<Value, String> {
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    let quarantine = loop {
+        let candidate = out_dir.join(format!("invalid-comparison-{}-{}", std::process::id(), NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)));
+        match std::fs::create_dir(&candidate) {
+            Ok(()) => break candidate,
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(e) => return Err(e.to_string()),
+        }
+    };
+    let mut errors = Vec::new();
+    let mut artifacts = Map::new();
+    let prefix = quarantine.file_name().unwrap().to_string_lossy();
+    for name in ["raw-report.json", "side-by-side.png", "heatmap.png", "regions"] {
+        let path = out_dir.join(name);
+        // Keep the same parent: moving a read-only directory into another parent
+        // can require write permission on that directory (to change its `..`).
+        let target = out_dir.join(format!("{prefix}-{name}"));
+        let move_artifact = (|| -> std::io::Result<()> {
+            match std::fs::symlink_metadata(&target) {
+                Ok(_) => return Err(std::io::Error::new(std::io::ErrorKind::AlreadyExists, "quarantine target exists")),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
+                Err(e) => return Err(e),
+            }
+            std::fs::rename(&path, &target)
+        })();
+        match move_artifact {
+            Ok(()) => { artifacts.insert(name.into(), json!(target.to_string_lossy().replace('\\', "/"))); },
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => (),
+            Err(e) => errors.push(format!("{name}: {e}")),
+        }
+    }
+    let record = json!({"invalid":true, "artifacts":artifacts, "errors":errors});
+    atomic_report(&quarantine.join("manifest.json"), &record)?;
+    Ok(record)
+}
+
+fn clear_comparison_artifacts(out_dir: &Path) -> Result<(), String> {
+    // Only remove generated files. Never recursively delete a caller's output directory
+    // or follow a regions symlink into another directory. Unexpected directories at
+    // file paths remain obstructions: the subsequent writer must still fail closed.
+    fn remove_file(path: &Path) -> std::io::Result<()> {
+        match std::fs::symlink_metadata(path) {
+            Ok(meta) if !meta.is_dir() => std::fs::remove_file(path),
+            Ok(_) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+    let mut errors = Vec::new();
+    for name in ["raw-report.json", "side-by-side.png", "heatmap.png"] {
+        if let Err(e) = remove_file(&out_dir.join(name)) { errors.push(format!("{name}: {e}")); }
+    }
+    fn clear_regions(path: &Path, errors: &mut Vec<String>) -> std::io::Result<()> {
+        let meta = match std::fs::symlink_metadata(path) {
+            Ok(meta) => meta,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(e) => return Err(e),
+        };
+        if meta.file_type().is_symlink() { return std::fs::remove_file(path); }
+        if meta.is_dir() {
+            for entry in std::fs::read_dir(path)? {
+                let child = entry?.path();
+                if let Err(e) = clear_regions(&child, errors) { errors.push(format!("{}: {e}", child.display())); }
+            }
+        } else if path.extension().and_then(|ext| ext.to_str()) == Some("png") {
+            std::fs::remove_file(path)?;
+        }
+        Ok(())
+    }
+    if let Err(e) = clear_regions(&out_dir.join("regions"), &mut errors) { errors.push(format!("regions: {e}")); }
+    if errors.is_empty() { Ok(()) } else { Err(format!("cannot clear comparison artifacts: {}", errors.join("; "))) }
+}
+
+/// Whether the current capture is the first viewport the user accepted: the
+/// approved screenshot compared with it scores at least 95% with no region
+/// missing or contradicted. A stale approval (a different capture) fails this.
+fn human_accepted_viewport(human: Option<&Value>) -> bool {
+    let Some(c) = human.map(|h| &h["comparison"]) else { return false; };
+    c["overall"].as_f64().is_some_and(|o| o >= 0.95)
+        && c["regions"].as_array().is_some_and(|rs| rs.iter().all(|r| !matches!(r["verdict"].as_str(), Some("missing" | "contradicted"))))
+}
+
+/// When the user accepted a first viewport that the current capture no longer
+/// matches: the reason that replaces the raw score. It names the regions that
+/// changed since the acceptance (those that no longer render as accepted), or,
+/// when the drift is spread thin, the three furthest from it.
+fn lapsed_viewport(human: Option<&Value>, frame: &str) -> Option<String> {
+    let c = &human?["comparison"];
+    if human_accepted_viewport(human) { return None; }
+    let rows: Vec<&Value> = c["regions"].as_array().into_iter().flatten().collect();
+    let mut changed: Vec<&str> = rows.iter().filter(|r| !region_still_accepted(r)).filter_map(|r| r["id"].as_str()).collect();
+    let spread = changed.is_empty();
+    if spread {
+        let mut sorted = rows.clone();
+        sorted.sort_by(|a, b| rscore(a, "overall").total_cmp(&rscore(b, "overall")));
+        changed = sorted.iter().take(3).filter_map(|r| r["id"].as_str()).collect();
+    }
+    Some(format!("the {frame} no longer matches the first viewport the user accepted ({}% against the approved screenshot{}), so that acceptance no longer covers the scores. Restore what the user accepted; until then the readings apply.",
+        pct0(c["overall"].as_f64().unwrap_or(0.)), if changed.is_empty() { String::new() } else if spread { format!("; furthest from it: {}", changed.join(", ")) } else { format!("; changed since the acceptance: {}{}", changed.iter().take(6).copied().collect::<Vec<_>>().join(", "), if changed.len() > 6 { format!(" and {} more", changed.len() - 6) } else { String::new() }) }))
+}
+
+/// A region of the approved-vs-current comparison that still renders as accepted.
+fn region_still_accepted(v: &Value) -> bool {
+    matches!(v["verdict"].as_str(), Some("match" | "drift")) && rscore(v, "structure") >= 0.75
+}
+
+/// Code regions (text, control, chrome) an accepted first-viewport review
+/// covers: the current capture still renders them as the approved one did.
+fn human_accepted_regions(human: Option<&Value>, regions: &[Value]) -> std::collections::HashSet<String> {
+    let rendered = human_rendered_as_accepted(human);
+    regions.iter().filter(|r| matches!(r["kind"].as_str(), Some("text" | "control" | "chrome")))
+        .filter_map(|r| r["id"].as_str().filter(|id| rendered.contains(*id)).map(String::from)).collect()
+}
+
+/// Regions of any kind the current capture still renders as the approved screenshot did.
+fn human_rendered_as_accepted(human: Option<&Value>) -> std::collections::HashSet<String> {
+    human.and_then(|h| h["comparison"]["regions"].as_array()).into_iter().flatten()
+        .filter(|v| region_still_accepted(v)).filter_map(|v| v["id"].as_str().map(String::from)).collect()
+}
+
+#[allow(clippy::too_many_arguments)]
+fn gate_hero_inner(io: &Io, state: &mut Value, build_path: &str, min: f64, out_dir: &str, artifact: Option<&str>, organic_scan: OrganicScan, human: Option<&Value>) -> Gate {
+    let s = self_cmd(io);
+    if !abs(io, build_path).exists() {
+        let bp = state.get("breakpoint").and_then(Value::as_str).map(String::from).unwrap_or_else(|| "comp size".into());
+        return Gate::fail(vec![format!("no hero capture at {build_path}: screenshot the first viewport at the comp's own dimensions ({bp}) into that path")]);
+    }
+    let spec_gate = gate_spec(io, state);
+    if !spec_gate.ok { return spec_gate; }
+    let spec_for_refs = load_spec(&abs(io, SPEC_PATH));
+    if let Some(failure) = revalidate_plates(io, state, spec_for_refs.as_ref()) { return failure; }
+    // resolve the page
+    let mut page_file: Option<String> = artifact.map(String::from).or_else(|| state.get("artifact").and_then(Value::as_str).map(String::from));
+    if page_file.as_ref().map(|p| !abs(io, p).exists()).unwrap_or(true) {
+        if abs(io, "index.html").exists() {
+            page_file = Some("index.html".into());
+        } else if let Ok(entries) = std::fs::read_dir(&io.cwd) {
+            let htmls: Vec<String> = entries
+                .filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().to_string()))
+                .filter(|n| {
+                    let l = n.to_lowercase();
+                    l.ends_with(".html") || l.ends_with(".htm")
+                })
+                .collect();
+            if htmls.len() == 1 {
+                page_file = Some(htmls[0].clone());
+            } else {
+                page_file = None;
+            }
+        }
+    }
+    let page_exists = page_file.as_ref().map(|p| abs(io, p).exists()).unwrap_or(false);
+    let unreferenced = unreferenced_plates(io, spec_for_refs.as_ref(), if page_exists { page_file.as_deref() } else { None });
+    if !unreferenced.is_empty() {
+        return Gate::fail(
+            unreferenced
+                .iter()
+                .map(|r| {
+                    let plate = r.get("plate").and_then(Value::as_str).unwrap_or("");
+                    let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+                    format!("plate {plate} (region {id}) is not referenced by any source file this scan can see: the page draws that region in code while the produced plate sits unused. Place the plate (an <img>, a background-image, or an inlined data URI named for it) and recapture. If the plate IS referenced from a file the scan missed (your page is not index.html, or the reference lives in a stylesheet outside the project walk), re-run with --artifact <your page>: its linked stylesheets are followed exactly.")
+                })
+                .collect(),
+        );
+    }
+    let comp_path = state.get("comp").and_then(Value::as_str).unwrap_or("").to_string();
+    let (mut report, mut measured) = match hero_diff(io, &comp_path, build_path, spec_for_refs.as_ref(), out_dir) {
+        Ok(r) => r,
+        Err(e) => return Gate::fail(vec![format!("comp-diff failed: {e}")]),
+    };
+    let mut regions: Vec<Value> = report.get("regions").and_then(Value::as_array).cloned().unwrap_or_default();
+    let mut reasons: Vec<String> = Vec::new();
+    let mut advisories: Vec<String> = Vec::new();
+    let mut region_reasons = Map::new();
+    // Material vetoes (missing or unreferenced plates, SVG illustrations, organic
+    // clips, plate readings, invented ink, the overall bar) never pass through here.
+    let accepted = human_accepted_regions(human, &regions);
+    let mut waived: Vec<String> = Vec::new();
+    // Material vetoes, recorded as they are raised: an accepted first viewport never waives these.
+    let mut material: Vec<String> = Vec::new();
+    let mut waive = |id: &str, message: &str, advisories: &mut Vec<String>| -> bool {
+        if !accepted.contains(id) { return false; }
+        advisories.push(format!("(advisory, accepted in the first-viewport review) {message}"));
+        if !waived.iter().any(|w| w == id) { waived.push(id.to_string()); }
+        true
+    };
+    let overall = report.get("overall").and_then(Value::as_f64).unwrap_or(0.0);
+    let sc = |k: &str| report.pointer(&format!("/scores/{k}")).and_then(Value::as_f64).unwrap_or(0.0);
+    // capture-frame check
+    let parse_dim = |s: &str| -> (Option<f64>, Option<f64>) {
+        let mut it = s.split('x');
+        (it.next().and_then(|v| v.parse().ok()), it.next().and_then(|v| v.parse().ok()))
+    };
+    let (cw, ch) = parse_dim(report.get("compSize").and_then(Value::as_str).unwrap_or(""));
+    let (bw, bh) = parse_dim(report.get("buildSize").and_then(Value::as_str).unwrap_or(""));
+    if let (Some(cw), Some(ch), Some(bw), Some(bh)) = (cw, ch, bw, bh) {
+        let comp_aspect = cw / ch;
+        let build_aspect = bw / bh;
+        if bw < cw * 0.9 || (build_aspect - comp_aspect).abs() / comp_aspect > 0.08 {
+            reasons.push(format!(
+                "hero capture is {}x{}; the comp is {}x{}. Capture the first viewport at the comp's own dimensions (viewport {}x{}, not full page) into {build_path}.",
+                bw as i64, bh as i64, cw as i64, ch as i64, cw as i64, ch as i64
+            ));
+            material.push(reasons.last().unwrap().clone());
+        }
+    }
+    let above_bar = overall >= min;
+    if !above_bar {
+        reasons.push(format!(
+            "hero overall {}% < {}% (structure {}%, color {}%, detail {}%)",
+            pct1(overall), pct0(min), pct0(sc("structure")), pct0(sc("color")), pct0(sc("detail"))
+        ));
+    }
+    if sc("colorIntersection") < 0.2 {
+        let comp_pal = report.pointer("/palette/comp").and_then(Value::as_array).cloned().unwrap_or_default();
+        let build_pal = report.pointer("/palette/build").and_then(Value::as_array).cloned().unwrap_or_default();
+        let hexes = |a: &[Value]| a.iter().take(3).filter_map(|c| c.get("hex").and_then(Value::as_str)).collect::<Vec<_>>().join(" ");
+        reasons.push(format!(
+            "the palette is not the comp's (color intersection {}%): comp {} vs build {}. Use the spec's sampled palette values, not a rendition of them.",
+            pct0(sc("colorIntersection")), hexes(&comp_pal), hexes(&build_pal)
+        ));
+    }
+    let spec_regions_v: Vec<Value> = spec_for_refs.as_ref().map(spec_regions).unwrap_or_default();
+    let overlaps = |a: &Value, b: &Value| -> bool {
+        let ab = |v: &Value, k: &str| v.pointer(&format!("/box/{k}")).and_then(Value::as_f64).unwrap_or(0.0);
+        ab(a, "x") < ab(b, "x") + ab(b, "w") && ab(b, "x") < ab(a, "x") + ab(a, "w") && ab(a, "y") < ab(b, "y") + ab(b, "h") && ab(b, "y") < ab(a, "y") + ab(a, "h")
+    };
+    let verdict_of: std::collections::HashMap<String, String> = regions
+        .iter()
+        .filter_map(|r| Some((r.get("id")?.as_str()?.to_string(), r.get("verdict")?.as_str()?.to_string())))
+        .collect();
+    // missing (with texture-ink-present demotion), mutating verdicts
+    let mut missing_ids: Vec<String> = Vec::new();
+    for r in regions.iter_mut() {
+        if r.get("verdict").and_then(Value::as_str) != Some("missing") {
+            continue;
+        }
+        let id = r.get("id").and_then(Value::as_str).unwrap_or("").to_string();
+        let kind = r.get("kind").and_then(Value::as_str).unwrap_or("").to_string();
+        if kind != "texture" {
+            missing_ids.push(id);
+            continue;
+        }
+        let me = spec_regions_v.iter().find(|x| x.get("id").and_then(Value::as_str) == Some(&id));
+        let Some(me) = me else {
+            missing_ids.push(id);
+            continue;
+        };
+        let ink_over: Vec<&Value> = spec_regions_v
+            .iter()
+            .filter(|x| {
+                let xid = x.get("id").and_then(Value::as_str);
+                let xk = x.get("kind").and_then(Value::as_str).unwrap_or("");
+                xid != Some(&id) && (xk == "text" || xk == "control" || xk == "chrome") && overlaps(me, x)
+            })
+            .collect();
+        let ink_present = !ink_over.is_empty()
+            && ink_over.iter().all(|x| {
+                let xid = x.get("id").and_then(Value::as_str).unwrap_or("");
+                verdict_of.get(xid).map(|v| v != "missing").unwrap_or(false)
+            });
+        if ink_present {
+            r["verdict"] = json!("drift");
+            r["verdictReason"] = json!("texture with overlapping code-drawn ink present");
+        } else {
+            missing_ids.push(id);
+        }
+    }
+    // passed-plate placement notes
+    let passed_plate = |id: &str| -> bool {
+        spec_regions_v.iter().find(|r| r.get("id").and_then(Value::as_str) == Some(id))
+            .map(|r| spec_for_refs.as_ref().is_some_and(|spec| plate_receipt_current(io, state, spec, r))
+                && state.get("plates").and_then(|p| p.get(id)).and_then(|p| p.get("score")).and_then(Value::as_f64).is_some_and(|s| s >= PLATE_MIN))
+            .unwrap_or(false)
+    };
+    let mut placement_notes: Vec<(String, String)> = Vec::new();
+    for r in regions.iter_mut() {
+        let kind = r.get("kind").and_then(Value::as_str).unwrap_or("").to_string();
+        let id = r.get("id").and_then(Value::as_str).unwrap_or("").to_string();
+        if !(kind == "plate" || kind == "image" || kind == "texture") || !passed_plate(&id) {
+            continue;
+        }
+        let verdict = r.get("verdict").and_then(Value::as_str).unwrap_or("");
+        if verdict != "missing" && verdict != "contradicted" {
+            continue;
+        }
+        let present = if kind == "texture" {
+            rscore(r, "structure") >= 0.85 && rscore(r, "color") >= 0.6
+        } else {
+            rscore_opt(r, "detailRaw").map(|v| v >= 0.3).unwrap_or(rscore(r, "detail") >= 0.3)
+        };
+        if !present {
+            continue;
+        }
+        r["verdict"] = json!("drift");
+        r["placed"] = json!(true);
+        r["verdictReason"] = json!("current plate passed asset validation and rendered presence check; placement remains reviewable");
+        let ic = r.pointer("/inkBox/comp").cloned().unwrap_or(Value::Null);
+        let ib = r.pointer("/inkBox/build").cloned().unwrap_or(Value::Null);
+        if !ic.is_null() && !ib.is_null() {
+            let cf = |v: &Value, k: &str| v.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+            let (cw_, ch_, cx, cy) = (cf(&ic, "w"), cf(&ic, "h"), cf(&ic, "x"), cf(&ic, "y"));
+            let (bw_, bh_, bx, by) = (cf(&ib, "w"), cf(&ib, "h"), cf(&ib, "x"), cf(&ib, "y"));
+            let off = (bw_ - cw_).abs() > cw_ * 0.2 || (bh_ - ch_).abs() > ch_ * 0.2 || (bx - cx).abs() > cw_ * 0.15 || (by - cy).abs() > ch_ * 0.15;
+            if off {
+                placement_notes.push((id.to_string(), format!(
+                    "plate {id} is placed but not at the comp's box: its ink spans {}x{}px at ({},{}) in the comp region and {}x{}px at ({},{}) in the build; size and position the <img> to the spec box (object-fit: cover), not to the surrounding layout",
+                    cw_ as i64, ch_ as i64, cx as i64, cy as i64, bw_ as i64, bh_ as i64, bx as i64, by as i64
+                )));
+            }
+        }
+    }
+    // A region the user's accepted first viewport lacks too (the approved screenshot
+    // renders it as the current capture does) was seen and accepted without it.
+    let viewport_accepted = human_accepted_viewport(human);
+    let as_accepted = human_rendered_as_accepted(human);
+    // Missing plates the accepted screenshot lacks too: worded as a question once the reasons are final.
+    let mut plate_questions: Vec<(String, String)> = Vec::new();
+    for id in &missing_ids {
+        if let Some(r) = regions.iter().find(|r| r.get("id").and_then(Value::as_str) == Some(id.as_str())) {
+            if r.get("verdict").and_then(Value::as_str) == Some("missing") {
+                let message = format!(
+                    "region {id} is missing (detail {}%, structure {}%): the comp shows material the build does not",
+                    pct0(rscore(r, "detail")), pct0(rscore(r, "structure"))
+                );
+                // Code regions (text, control, chrome) carry: the user judged that drawing by eye.
+                if waive(id, &format!("{message}; the first viewport the user accepted lacks it too, so the acceptance covers it"), &mut advisories) { continue; }
+                // A produced plate must ship, so its absence stays material; when the accepted
+                // screenshot already lacks it, restoring cannot clear it, so the user decides.
+                let raster = matches!(r.get("kind").and_then(Value::as_str), Some("plate" | "image" | "texture"));
+                if raster && viewport_accepted && as_accepted.contains(id) { plate_questions.push((id.clone(), message.clone())); }
+                push_region_blocker(&mut reasons, &mut region_reasons, id, message);
+                material.push(reasons.last().unwrap().clone());
+            }
+        }
+    }
+    for (id, n) in placement_notes {
+        if above_bar {
+            advisories.push(format!("(advisory, above the {}% bar) {n}", pct0(min)));
+        } else {
+            push_region_blocker(&mut reasons, &mut region_reasons, &id, n);
+        }
+    }
+    // contradicted
+    let contradicted: Vec<Value> = regions.iter().filter(|r| r.get("verdict").and_then(Value::as_str) == Some("contradicted")).cloned().collect();
+    let direction_contradicted: Vec<Value> = contradicted
+        .iter()
+        .filter(|r| matches!(r.get("kind").and_then(Value::as_str), Some("plate") | Some("image") | Some("text") | Some("control")))
+        .cloned()
+        .collect();
+    for r in &direction_contradicted {
+        let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+        let kind = r.get("kind").and_then(Value::as_str).unwrap_or("");
+        let tail = if kind == "text" {
+            "the composition of this text region differs from the comp; re-derive it from the spec box".to_string()
+        } else if kind == "control" {
+            "this control differs from the comp: inspect its lettering and visible shape separately against the crop and the measured readings; preserve the region's control classification".to_string()
+        } else {
+            format!("the plate here does not read as the comp region; regenerate it with the crop as reference ({s} generate-image --ref <crop.png> --prompt-file <prompt.txt> --out <plate.png> for {id}) and place it at its box")
+        };
+        let message = format!(
+            "region {id} ({kind}) is contradicted (structure {}%, detail added {}%): {tail}",
+            pct0(rscore(r, "structure")), pct0(rscore(r, "detailAdded"))
+        );
+        if !waive(id, &message, &mut advisories) { push_region_blocker(&mut reasons, &mut region_reasons, id, message); }
+    }
+    for r in &regions {
+        if r.get("kind").and_then(Value::as_str) != Some("control") || r.get("verdict").and_then(Value::as_str) != Some("drift") || rscore(r, "overall") >= 0.65 {
+            continue;
+        }
+        let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+        let message = format!(
+            "control {id} drifts to {}% (structure {}%, color {}%): open {} and compare its lettering and visible shape separately; use the measured readings and preserve the region's control classification",
+            pct0(rscore(r, "overall")), pct0(rscore(r, "structure")), pct0(rscore(r, "color")),
+            format!("{out_dir}/regions/{id}.png")
+        );
+        if !waive(id, &message, &mut advisories) { push_region_blocker(&mut reasons, &mut region_reasons, id, message); }
+    }
+    // control ink boxes
+    for r in &regions {
+        if r.get("kind").and_then(Value::as_str) != Some("control") {
+            continue;
+        }
+        let ic = r.pointer("/inkBox/comp").cloned().unwrap_or(Value::Null);
+        let ib = r.pointer("/inkBox/build").cloned().unwrap_or(Value::Null);
+        if ic.is_null() || ib.is_null() {
+            continue;
+        }
+        let rw_n = r.get("w").and_then(Value::as_f64).or_else(|| r.pointer("/box/w").and_then(Value::as_f64)).unwrap_or(1.0);
+        let rh_n = r.get("h").and_then(Value::as_f64).or_else(|| r.pointer("/box/h").and_then(Value::as_f64)).unwrap_or(1.0);
+        let cs_w = report.get("compSize").and_then(Value::as_str).and_then(|s| s.split('x').next()).and_then(|v| v.parse::<f64>().ok()).unwrap_or(1536.0);
+        let cs_h = report.get("compSize").and_then(Value::as_str).and_then(|s| s.split('x').nth(1)).and_then(|v| v.parse::<f64>().ok()).unwrap_or(1024.0);
+        let rw = rw_n * cs_w;
+        let rh = rh_n * cs_h;
+        let cf = |v: &Value, k: &str| v.get(k).and_then(Value::as_f64).unwrap_or(0.0);
+        if cf(&ic, "w") >= rw * 0.85 || cf(&ic, "h") >= rh * 0.85 {
+            continue;
+        }
+        let dh = cf(&ib, "h") - cf(&ic, "h");
+        let dw = cf(&ib, "w") - cf(&ic, "w");
+        if cf(&ib, "w") >= rw * 0.98 || cf(&ib, "h") >= rh * 0.98 {
+            continue;
+        }
+        if dh.abs() > 6f64.max(cf(&ic, "h") * 0.15) || dw.abs() > 12f64.max(cf(&ic, "w") * 0.15) {
+            let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+            let msg = format!(
+                "region {id}: its ink sits in a {}x{}px box in the comp and {}x{}px in the build (padding, row height, or size); match the box, not only the position",
+                cf(&ic, "w") as i64, cf(&ic, "h") as i64, cf(&ib, "w") as i64, cf(&ib, "h") as i64
+            );
+            if above_bar {
+                advisories.push(format!("(advisory, above the {}% bar) {msg}", pct0(min)));
+            } else if !waive(r["id"].as_str().unwrap_or(""), &msg, &mut advisories) {
+                push_region_blocker(&mut reasons, &mut region_reasons, r.get("id").and_then(Value::as_str).unwrap_or(""), msg);
+            }
+        }
+    }
+    let other_contradicted: Vec<&Value> = contradicted.iter().filter(|r| !direction_contradicted.iter().any(|d| d.get("id") == r.get("id")))
+        .filter(|r| { let id = r["id"].as_str().unwrap_or(""); !waive(id, &format!("region {id} ({}) is contradicted (structure {}%)", r["kind"].as_str().unwrap_or(""), pct0(rscore(r, "structure"))), &mut advisories) })
+        .collect();
+    let allow = 1usize.max(regions.len() / 3);
+    if other_contradicted.len() > allow {
+        let message = format!(
+            "{} of {} regions contradicted: {}",
+            other_contradicted.len(),
+            regions.len(),
+            other_contradicted.iter().filter_map(|r| r.get("id").and_then(Value::as_str)).collect::<Vec<_>>().join(", ")
+        );
+        for r in &other_contradicted {
+            if let Some(id) = r.get("id").and_then(Value::as_str) { record_region_reason(&mut region_reasons, id, &message); }
+        }
+        reasons.push(message);
+    }
+    // organic clip + svg illustrations
+    let artifact_file = page_file.clone();
+    if let (Some(af), Some(spec)) = (&artifact_file, &spec_for_refs) {
+        if abs(io, af).exists() {
+            for o in organic_clip_regions(io, af, spec, organic_scan) {
+                let id = o.get("id").and_then(Value::as_str).unwrap_or("");
+                let snip = o.get("snippet").and_then(Value::as_str).unwrap_or("");
+                push_region_blocker(&mut reasons, &mut region_reasons, id, format!("artifact draws an organic clip-path ({snip}) inside raster region {id}'s box; that region ships as its plate, never as a polygon"));
+                material.push(reasons.last().unwrap().clone());
+            }
+            let svgs = std::fs::read_to_string(abs(io, af)).map(|h| svg_illustrations(&h)).unwrap_or_default();
+            for v in svgs.iter().take(6) {
+                let label = v.get("label").and_then(Value::as_str).filter(|s| !s.is_empty()).map(|l| format!(" ({l})")).unwrap_or_default();
+                let snip = v.get("snippet").and_then(Value::as_str).unwrap_or("");
+                reasons.push(format!("artifact draws an illustration in inline SVG{label}: {snip}. Drawings, diagrams, notation, and leader lines are plates or belong to the plate they annotate; only icon-sized SVG (under 64px, a few paths) is code"));
+                material.push(reasons.last().unwrap().clone());
+            }
+            if svgs.len() > 6 {
+                reasons.push(format!("...and {} more inline SVG illustrations", svgs.len() - 6));
+                material.push(reasons.last().unwrap().clone());
+            }
+        }
+    }
+    // readings
+    let readings = hero_readings(io, state, spec_for_refs.as_ref(), build_path);
+    if readings.is_none() {
+        // JS wraps in try/catch; a None here means comp/build unreadable — the
+        // JS would have thrown and pushed the errored message. Reading succeeds
+        // in practice when the diff above succeeded, so treat None as "no readings".
+    }
+    if let Some(readings) = readings {
+        use once_cell::sync::Lazy;
+        static FOLD: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"(?i)^text ([a-z0-9]+(?:-[a-z0-9]+)*?)(?:-(?:\d+|[a-z]))?: (cap height|\d+ lines? in the build|the face renders|ink is|its first line|it starts|line pitch)").unwrap());
+        static CAP: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"cap height").unwrap());
+        static LINES: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"lines? in the build").unwrap());
+        static HEAV: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"heavier|lighter").unwrap());
+        static INKIS: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"ink is").unwrap());
+        static NUM: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"\d+").unwrap());
+        let order = |f: &str| -> u8 {
+            if CAP.is_match(f) { 0 } else if LINES.is_match(f) { 1 } else if HEAV.is_match(f) { 2 } else if INKIS.is_match(f) { 3 } else { 4 }
+        };
+        // Keep region provenance when sibling text findings are folded.
+        let mut reading_ids = readings.region_ids.clone();
+        let mut folded: Vec<(String, String, Vec<String>)> = Vec::new(); // (key, first, ids)
+        for f in &readings.text {
+            let key = if let Some(m) = FOLD.captures(f) {
+                format!("{}|{}", &m[1], NUM.replace_all(&m[2], "N"))
+            } else {
+                f.clone()
+            };
+            let ids = readings.region_ids.get(f).cloned().unwrap_or_default();
+            if let Some(entry) = folded.iter_mut().find(|(k, _, _)| *k == key) {
+                entry.2.extend(ids);
+            } else {
+                folded.push((key, f.clone(), ids));
+            }
+        }
+        let mut text: Vec<String> = folded
+            .into_iter()
+            .map(|(_, first, ids)| {
+                let message = if ids.len() > 1 {
+                    format!("{first} (also {})", ids[1..].join(", "))
+                } else { first };
+                reading_ids.insert(message.clone(), ids);
+                message
+            })
+            .collect();
+        text.sort_by_key(|a| order(a));
+        // staleness
+        let seen = state
+            .pointer_mut("/phases/hero")
+            .and_then(|h| h.as_object_mut())
+            .map(|h| h.entry("readingsSeen").or_insert_with(|| json!({})))
+            .unwrap();
+        let seen_map = seen.as_object_mut().unwrap();
+        let mut stale = |f: &str| -> bool {
+            let k = {
+                use once_cell::sync::Lazy;
+                static WS: Lazy<regex::Regex> = Lazy::new(|| Regex::new(r"\s+").unwrap());
+                WS.replace_all(f, " ").trim().to_string()
+            };
+            let n = seen_map.get(&k).and_then(Value::as_i64).unwrap_or(0) + 1;
+            seen_map.insert(k, json!(n));
+            n > 3
+        };
+        let all: Vec<String> = text.iter().cloned().chain(readings.chrome.iter().cloned()).collect();
+        let mut fresh: Vec<String> = Vec::new();
+        let mut advisory_stale: Vec<String> = Vec::new();
+        for f in &all {
+            if stale(f) {
+                advisory_stale.push(f.clone());
+            } else {
+                fresh.push(f.clone());
+            }
+        }
+        let kept: Vec<String> = fresh.iter().take(8).cloned().collect();
+        if above_bar {
+            if !kept.is_empty() {
+                advisories.push(format!("(advisory, above the {}% bar; fix in the polish pass before responsive) {} reading{}:", pct0(min), kept.len(), if kept.len() == 1 { "" } else { "s" }));
+            }
+            for f in &kept {
+                advisories.push(format!("  {f}"));
+            }
+        } else {
+            for f in &kept {
+                let ids = reading_ids.get(f).cloned().unwrap_or_default();
+                if !ids.is_empty() && ids.iter().all(|id| accepted.contains(id)) {
+                    for id in &ids { waive(id, f, &mut advisories); }
+                    advisories.dedup();
+                    continue;
+                }
+                push_reading_blocker(&mut reasons, &mut region_reasons, &reading_ids, f);
+            }
+        }
+        for f in &advisory_stale {
+            advisories.push(format!("(advisory, unchanged for 3+ attempts) {f}"));
+        }
+        for f in &readings.plates {
+            push_reading_blocker(&mut reasons, &mut region_reasons, &reading_ids, f);
+            material.push(f.clone());
+        }
+        let cells = readings.invented.get("cells").and_then(Value::as_array).cloned().unwrap_or_default();
+        let fraction = readings.invented.get("fraction").and_then(Value::as_f64).unwrap_or(0.0);
+        let strong_cells = cells.iter().filter(|c| c.get("build").and_then(Value::as_f64).unwrap_or(0.0) >= 22.0).count();
+        if fraction >= INVENTED_MIN || strong_cells >= 2 {
+            let labels: Vec<String> = cells.iter().filter_map(|c| c.get("label").and_then(Value::as_str).map(String::from)).collect();
+            let shown = labels.iter().take(12).cloned().collect::<Vec<_>>().join(", ");
+            let more = if labels.len() > 12 { ", ..." } else { "" };
+            reasons.push(format!(
+                "the build carries ink in {} grid cells where the comp is calm ({shown}{more}); nothing exists on the page that the comp does not show (a kicker, an extra nav item, a divider, a second row of controls); remove it or name it in a stated decision after the hero passes",
+                labels.len()
+            ));
+            material.push(reasons.last().unwrap().clone());
+        }
+    }
+    // worst regions
+    let worst_sorted = repair_regions(&regions, &region_reasons);
+    let worst_top: Vec<&Value> = worst_sorted.iter().take(3).collect();
+    let region_dir = format!("{out_dir}/regions");
+    // The user accepted this first viewport (the approved screenshot is the current
+    // capture): the numeric fight is over. Every non-material reason becomes an advisory.
+    if viewport_accepted {
+        let (kept, numeric): (Vec<String>, Vec<String>) = reasons.into_iter().partition(|r| material.contains(r));
+        reasons = kept;
+        for rows in region_reasons.values_mut() {
+            if let Some(a) = rows.as_array_mut() { a.retain(|m| m.as_str().is_some_and(|m| material.iter().any(|x| x == m))); }
+        }
+        region_reasons.retain(|_, v| v.as_array().is_some_and(|a| !a.is_empty()));
+        if !numeric.is_empty() {
+            advisories.insert(0, format!("The user accepted this first viewport in the review; {} numeric reading{} below {} advisories, not blockers.", numeric.len(), if numeric.len() == 1 { "" } else { "s" }, if numeric.len() == 1 { "is" } else { "are" }));
+        }
+        advisories.extend(numeric.into_iter().map(|m| format!("(advisory, first viewport accepted) {m}")));
+    } else if let Some(lapse) = lapsed_viewport(human, "hero capture") {
+        // Say why the acceptance does not hold instead of arguing the raw score.
+        match reasons.iter().position(|r| r.starts_with("hero overall")) {
+            Some(i) => { advisories.push(format!("(measured) {}", reasons[i])); reasons[i] = lapse; }
+            None if !reasons.is_empty() => reasons.insert(0, lapse),
+            None => advisories.insert(0, format!("(advisory) {lapse}")),
+        }
+    }
+    // Restoring cannot clear a plate the accepted screenshot lacks too, so the user decides.
+    // Force closes the whole gate, so it is offered only when nothing else blocks.
+    if !plate_questions.is_empty() {
+        let others = reasons.iter().filter(|r| !plate_questions.iter().any(|(_, m)| m == *r)).count();
+        for (id, plain) in &plate_questions {
+            let asked = if others == 0 {
+                format!("{plain}. The first viewport the user accepted already lacks it, so restoring what they accepted cannot clear this. Stop iterating and ask the user: place the plate at its box (the page then no longer matches the accepted screenshot, and the readings apply again until it passes), or keep the first viewport without it. Keeping it downgrades the comp, so it takes their words saying so, quoted in {s} build-phase advance --force --reason (for example: the user said: \"the plate does not need to match\"); force refuses any other reason.")
+            } else {
+                format!("{plain}. The first viewport the user accepted already lacks it, so restoring what they accepted cannot clear this. Clear the other blocking reasons first: once this plate is all that blocks, ask the user whether to place it at its box or keep the first viewport without it; force closes the whole gate, so it is never the answer while anything else blocks.")
+            };
+            for r in reasons.iter_mut().filter(|r| *r == plain) { *r = asked.clone(); }
+            for m in material.iter_mut().filter(|m| *m == plain) { *m = asked.clone(); }
+            if let Some(rows) = region_reasons.get_mut(id).and_then(Value::as_array_mut) {
+                for m in rows.iter_mut().filter(|m| m.as_str() == Some(plain.as_str())) { *m = json!(asked.clone()); }
+            }
+        }
+    }
+    if let Some(h) = human {
+        report["humanHeroReview"] = json!({"proof": h["proof"], "comparison": h["comparison"], "acceptedRegions": waived, "viewportAccepted": viewport_accepted,
+            "scope": if viewport_accepted { "first viewport accepted: overall bar, palette and every numeric reading are advisories; text, control and chrome regions it renders as accepted carry, missing ones included; material vetoes retained" } else { "contradicted, missing and numeric readings on text, control and chrome regions that render as accepted; material vetoes retained" }});
+    }
+    let mut g = Gate::blank();
+    g.ok = reasons.is_empty();
+    g.reasons = reasons;
+    g.region_reasons = region_reasons;
+    g.summary = Some(format!("hero {}% ({})", pct0(overall), report.get("verdict").and_then(Value::as_str).unwrap_or("")));
+    g.score = Some(overall);
+    g.verdict = report.get("verdict").and_then(Value::as_str).map(String::from);
+    g.report = Some(format!("{out_dir}/report.json"));
+    g.side_by_side = report.pointer("/files/sideBySide").and_then(Value::as_str).map(String::from);
+    g.worst = worst_top
+        .iter()
+        .map(|r| format!("{} {} {}%", r.get("id").and_then(Value::as_str).unwrap_or(""), r.get("verdict").and_then(Value::as_str).unwrap_or(""), pct0(rscore(r, "overall"))))
+        .collect();
+    g.worst_ids = worst_top.iter().filter_map(|r| r.get("id").and_then(Value::as_str).map(String::from)).collect();
+    g.worst_crops = worst_top
+        .iter()
+        .map(|r| {
+            let id = r.get("id").and_then(Value::as_str).unwrap_or("");
+            json!({ "id": id, "verdict": r.get("verdict").and_then(Value::as_str).unwrap_or(""), "score": r.get("score").cloned().unwrap_or(Value::Null), "file": format!("{region_dir}/{id}.png") })
+        })
+        .collect();
+    g.advisories = advisories;
+    g.region_verdicts = regions
+        .iter()
+        .filter_map(|r| Some((r.get("id")?.as_str()?.to_string(), json!(r.get("verdict")?.as_str()?))))
+        .collect();
+    publish_gate_evidence(io, out_dir, &mut report, &mut measured, &regions, &mut g, "hero");
+
+    g
+}
+
+#[allow(clippy::too_many_arguments)]
+fn publish_gate_evidence(io: &Io, out_dir: &str, report: &mut Value, measured: &mut CompareResult, regions: &[Value], g: &mut Gate, phase: &str) {
+    let raw_path = format!("{out_dir}/raw-report.json");
+    let raw = report.clone();
+    g.report = Some(format!("{out_dir}/report.json"));
+    apply_gate_evidence(report, measured, regions, g);
+    report["interpretation"] = json!(format!("{phase}-gate"));
+    report["rawReport"] = json!(raw_path);
+    let evidence_write = (|| {
+        atomic_report(&abs(io, &raw_path), &raw)?;
+        write_region_artifacts(measured, &abs(io, out_dir), report.get("regions").and_then(Value::as_array).map(Vec::as_slice))?;
+        atomic_report(&abs(io, &format!("{out_dir}/report.json")), report)
+    })();
+    if let Err(e) = evidence_write {
+        g.ok = false;
+        g.reasons.push(format!("cannot persist {phase} gate evidence: {e}"));
+        g.report = None;
+        g.side_by_side = None;
+        g.worst_crops.clear();
+    }
+}
+
+fn push_region_blocker(reasons: &mut Vec<String>, regions: &mut Map<String, Value>, id: &str, message: String) {
+    record_region_reason(regions, id, &message);
+    reasons.push(message);
+}
+
+fn record_region_reason(regions: &mut Map<String, Value>, id: &str, message: &str) {
+    regions.entry(id.to_string()).or_insert_with(|| json!([])).as_array_mut().unwrap().push(json!(message));
+}
+
+fn push_reading_blocker(reasons: &mut Vec<String>, regions: &mut Map<String, Value>, ids: &std::collections::HashMap<String, Vec<String>>, message: &str) {
+    for id in ids.get(message).into_iter().flatten() { record_region_reason(regions, id, message); }
+    reasons.push(message.to_string());
+}
+
+fn repair_regions(regions: &[Value], blockers: &Map<String, Value>) -> Vec<Value> {
+    let mut ordered: Vec<Value> = regions.iter().filter(|region| {
+        region.get("id").and_then(Value::as_str).is_some_and(|id|
+            blockers.get(id).and_then(Value::as_array).is_some_and(|reasons| !reasons.is_empty()))
+    }).cloned().collect();
+    ordered.sort_by(|a, b| rscore(a, "overall").total_cmp(&rscore(b, "overall")));
+    ordered
+}
+
+/// Raw scores never change during interpretation. Only gate verdicts and their
+/// basis are published alongside them; the original report is retained separately.
+fn apply_gate_evidence(report: &mut Value, measured: &mut CompareResult, regions: &[Value], gate: &Gate) {
+    let unscoped: Vec<&String> = gate.reasons.iter().filter(|reason| {
+        !gate.region_reasons.values().any(|v| v.as_array().is_some_and(|a| a.iter().any(|m| m.as_str() == Some(reason.as_str()))))
+    }).collect();
+    let mut effective = regions.to_vec();
+    for region in &mut effective {
+        let id = region.get("id").and_then(Value::as_str).unwrap_or("").to_string();
+        let blockers = gate.region_reasons.get(&id).cloned().unwrap_or_else(|| json!([]));
+        region["blocking"] = if !blockers.as_array().unwrap().is_empty() { json!(true) } else if unscoped.is_empty() { json!(false) } else { Value::Null };
+        region["blockingReasons"] = blockers;
+        if let Some(raw) = measured.regions.iter_mut().find(|r| r.id == id) {
+            region["rawVerdict"] = json!(raw.verdict);
+            if let Some(verdict) = region.get("verdict").and_then(Value::as_str) {
+                raw.verdict = verdict.into();
+            }
+        }
+    }
+    report["regions"] = json!(effective);
+    report["interpretation"] = json!("hero-gate");
+    report["measurementsAvailable"] = json!(true);
+    report["gate"] = json!({ "ok": gate.ok, "reasons": gate.reasons, "advisories": gate.advisories, "unscopedReasons": unscoped });
+}
+
+/// JS: heroLoopVerdict(state, gate, artifactPath).
+fn hero_loop_verdict(state: &mut Value, gate: &Gate, artifact_path: &str, io: &Io, viewport_accepted: bool) -> Option<String> {
+    let hero = state.pointer_mut("/phases/hero")?.as_object_mut()?;
+    let mut history: Vec<Value> = hero.get("history").and_then(Value::as_array).cloned().unwrap_or_default();
+    let entry = json!({
+        "at": now(),
+        "score": gate.score.map(util::num).unwrap_or(Value::Null),
+        "worstIds": gate.worst_ids,
+        "blockingReasons": gate.reasons,
+        "regionVerdicts": Value::Object(gate.region_verdicts.clone()),
+        "artifactHash": hash_file(io, artifact_path).map(Value::from).unwrap_or(Value::Null),
+    });
+    history.push(entry);
+    let start = history.len().saturating_sub(6);
+    let trimmed: Vec<Value> = history[start..].to_vec();
+    hero.insert("history".into(), json!(trimmed.clone()));
+    if history.len() < 3 {
+        return None;
+    }
+    let last3 = &history[history.len() - 3..];
+    let current = json!(gate.reasons);
+    let failed = !gate.ok && !gate.reasons.is_empty()
+        && last3.iter().all(|h| h["blockingReasons"].as_array().is_some_and(|a| !a.is_empty()));
+    if failed {
+        let lead = if last3.iter().all(|h| h.get("blockingReasons") == Some(&current)) {
+            "The same hero gate checks remain unresolved after three attempts."
+        } else { "The hero gate has failed three attempts in a row." };
+        if viewport_accepted {
+            // The review is closed once accepted: asking for another would loop.
+            return Some(format!("{lead} The user already accepted a first viewport, and that review is closed. Restore what they accepted: while the capture matches the approved screenshot, the overall bar, the palette check, every numeric reading and any text, control or chrome region the accepted screenshot also lacks are advisories. Until then the readings below apply; a missing or unreferenced plate, an SVG illustration, an organic clip, a clipped plate, invented ink and failed rendered presence block either way, and a plate the accepted screenshot itself lacks is a question for the user, which its reason spells out."));
+        }
+        return Some(format!("{lead} Stop iterating and present the first-viewport review (the assembled hero, stage hero, in component-review.md) so the user judges the page in context. An accepted review of this capture turns the overall bar, the palette check and every numeric reading into advisories; a missing or unreferenced plate, an SVG illustration, a clipped plate and invented ink still block. The blocking reasons below still apply."));
+    }
+    None
+}
+
+/// Failed responsive attempts in a row before the gate stops asking for edits.
+/// Three, as at the hero: past that, the readings have had their chance.
+const RESPONSIVE_ATTEMPTS: usize = 3;
+
+/// The responsive gate's loop record, and the escalation once it has failed
+/// RESPONSIVE_ATTEMPTS times in a row: the same route the hero takes, so a
+/// stalled desktop width reaches the user instead of a recorded `fix`.
+fn responsive_loop_verdict(state: &mut Value, gate: &Gate, viewport_accepted: bool, s: &str) -> Option<String> {
+    let phase = state.pointer_mut("/phases/responsive")?.as_object_mut()?;
+    let mut history: Vec<Value> = phase.get("history").and_then(Value::as_array).cloned().unwrap_or_default();
+    history.push(json!({ "at": now(), "score": gate.score.map(util::num).unwrap_or(Value::Null), "worstIds": gate.worst_ids, "blockingReasons": gate.reasons }));
+    let start = history.len().saturating_sub(6);
+    phase.insert("history".into(), json!(history[start..].to_vec()));
+    if gate.ok || history.len() < RESPONSIVE_ATTEMPTS {
+        return None;
+    }
+    let recent = &history[history.len() - RESPONSIVE_ATTEMPTS..];
+    if !recent.iter().all(|h| h["blockingReasons"].as_array().is_some_and(|a| !a.is_empty())) {
+        return None;
+    }
+    let lead = format!("The responsive gate has failed {RESPONSIVE_ATTEMPTS} attempts in a row.");
+    let side = gate.side_by_side.as_deref().unwrap_or(".impeccable/review/diff/desktop/side-by-side.png");
+    if viewport_accepted {
+        return Some(format!("{lead} The user already accepted a first viewport, so that review is closed. Stop iterating: show the user {side} with the regions below, and ask them to choose between restoring those regions at desktop width and keeping the desktop first viewport as it renders. Keeping it downgrades the comp at desktop width, so it takes their words saying so, quoted in {s} build-phase advance --force --reason (for example: the user said: \"the comp does not need to match at desktop width\"); force refuses any other reason. Until they answer, this phase stays open; a finish recorded over it is an unfinished build, not a fix round."));
+    }
+    Some(format!("{lead} Stop iterating and present the first-viewport review (the assembled hero, stage hero, in component-review.md) with the current page, so the user judges the first viewport in context. An accepted review carries to desktop width while the desktop capture still matches the approved screenshot; displaced and missing regions still block. Until then this phase stays open; a finish recorded over it is an unfinished build, not a fix round."))
+}
+
+/// The `{path, sha256}` rows of the manifest the last native responsive capture
+/// bound (`.impeccable/review/native/responsive/inputs.json`).
+fn native_capture_inputs(io: &Io) -> Option<Vec<Value>> {
+    let bytes = std::fs::read(abs(io, ".impeccable/review/native/responsive/inputs.json")).ok()?;
+    let report: Value = serde_json::from_slice(&bytes).ok()?;
+    let files = report.pointer("/manifest/files")?.as_array()?;
+    files.iter().map(|f| Some(json!({"path": f.get("path")?.as_str()?, "sha256": f.get("sha256")?.as_str()?}))).collect()
+}
+
+fn hash_file(io: &Io, file: &str) -> Option<String> {
+    use sha1::{Digest, Sha1};
+    let data = std::fs::read(abs(io, file)).ok()?;
+    let mut h = Sha1::new();
+    h.update(&data);
+    let d = h.finalize();
+    Some(d.iter().map(|b| format!("{b:02x}")).collect::<String>()[..12].to_string())
+}
+
+fn gate_responsive(io: &Io, state: &mut Value, min: f64, out_dir: &str, artifact: Option<&str>, renderer: Option<&dyn EntryRenderer>) -> Gate {
+    let pending = Gate::fail(vec!["responsive comparison has not completed".into()]);
+    if let Err(e) = unavailable_report(io, out_dir, &pending, "responsive") {
+        return Gate::fail(vec![format!("cannot persist responsive gate evidence: {e}")]);
+    }
+    if let Some(why) = comp_refusal(io) {
+        let gate = Gate::fail(vec![why]);
+        let _ = unavailable_report(io, out_dir, &gate, "responsive");
+        return gate;
+    }
+    let native=match prepare_native_capture(io,state,artifact,renderer,EntryStage::Responsive) {Ok(value)=>value,Err(gate)=>{let _=unavailable_report(io,out_dir,&gate,"responsive");return gate;}};
+    let mut gate = gate_responsive_inner(io, state, min, out_dir, native.as_ref());
+    if let Some(native)=&native {finish_native_capture(io,out_dir,&mut gate,native);}
+    if gate.report.is_none() {
+        if let Err(e) = unavailable_report(io, out_dir, &gate, "responsive") {
+            gate.ok = false;
+            gate.reasons.push(format!("cannot persist responsive gate evidence: {e}"));
+        }
+    }
+    gate
+}
+
+fn gate_responsive_inner(io: &Io, state: &mut Value, min: f64, out_dir: &str, native: Option<&NativeCapture>) -> Gate {
+    let native_desktop=native.map(|n|n.path("desktop"));
+    let native_mobile=native.map(|n|n.path("mobile"));
+    let desktop = native_desktop.as_deref().unwrap_or(".impeccable/review/desktop.png");
+    let mobile = native_mobile.as_deref().unwrap_or(".impeccable/review/mobile.png");
+    let mut reasons = Vec::new();
+    if !abs(io, desktop).exists() {
+        reasons.push(format!("no {desktop}: capture the page at a common desktop width (1440 wide, full page) into that path"));
+    }
+    if !abs(io, mobile).exists() {
+        reasons.push(format!("no {mobile}: capture the page at 390 wide, full page, into that path"));
+    }
+    if !reasons.is_empty() {
+        return Gate::fail(reasons);
+    }
+    let spec_gate = gate_spec(io, state);
+    if !spec_gate.ok { return spec_gate; }
+    let spec = load_spec(&abs(io, SPEC_PATH));
+    if let Some(failure) = revalidate_plates(io, state, spec.as_ref()) { return failure; }
+    let comp_path = state.get("comp").and_then(Value::as_str).unwrap_or("");
+    let (mut report, mut measured) = match hero_diff_labeled(io, comp_path, desktop, spec.as_ref(), out_dir, "desktop") {
+        Ok(r) => r,
+        Err(e) => return Gate::fail(vec![format!("comp-diff failed on {desktop}: {e}")]),
+    };
+    let mut regions: Vec<Value> = report.get("regions").and_then(Value::as_array).cloned().unwrap_or_default();
+    // Where a region went when it is not at its box: the comp, and the capture at
+    // the comp's width with its full height (a full-page capture keeps what lies
+    // below the first viewport; a native frame is the first viewport alone).
+    let images = load_raster(io, comp_path).ok().zip(load_raster(io, desktop).ok());
+    let frame = images.as_ref().map(|(comp, capture)| {
+        let k = capture.width as f64 / comp.width as f64;
+        let tall = r::resize(capture, comp.width as f64, round(capture.height as f64 / k));
+        (k, tall)
+    });
+    // A match that lands on another region of the same kind and size, where that
+    // region still renders as itself, is its own pixels (two identical icons), not
+    // this one moved. A neighbour that is itself gone or moved leaves its box free.
+    let same_shape: Vec<(String, String, [f64; 4])> = regions.iter().filter(|r| matches!(r["verdict"].as_str(), Some("match" | "drift")))
+        .filter_map(|r| Some((r["id"].as_str()?.to_string(), r["kind"].as_str()?.to_string(),
+        [r["x"].as_f64()?, r["y"].as_f64()?, r["w"].as_f64()?, r["h"].as_f64()?]))).collect();
+    let locate = |r: &Value| -> Option<Displacement> {
+        let ((comp, _), (_, tall)) = (images.as_ref()?, frame.as_ref()?);
+        let f = |k: &str| r[k].as_f64().unwrap_or(0.);
+        let (cw, ch) = (comp.width as f64, comp.height as f64);
+        let d = crate::displacement::find(comp, tall, ch, DRect { x: f("x") * cw, y: f("y") * ch, w: f("w") * cw, h: f("h") * ch }, r["kind"].as_str())?;
+        let moved = [f("x") + d.dx / cw, f("y") + d.dy / ch, f("w"), f("h")];
+        let lookalike = same_shape.iter().any(|(id, kind, b)| {
+            if Some(id.as_str()) == r["id"].as_str() || Some(kind.as_str()) != r["kind"].as_str() { return false; }
+            let ratio = (b[2] * b[3]) / (moved[2] * moved[3]).max(1e-9);
+            let ix = ((moved[0] + moved[2]).min(b[0] + b[2]) - moved[0].max(b[0])).max(0.);
+            let iy = ((moved[1] + moved[3]).min(b[1] + b[3]) - moved[1].max(b[1])).max(0.);
+            (0.5..=2.0).contains(&ratio) && ix * iy >= 0.5 * moved[2] * moved[3]
+        });
+        (!lookalike).then_some(d)
+    };
+    // Offsets in the capture's own pixels, the ones the agent edits.
+    let k = frame.as_ref().map(|(k, _)| *k).unwrap_or(1.);
+    let frame_size = images.as_ref().map(|(comp, capture)| format!("{}x{}", capture.width, round(comp.height as f64 * k) as i64)).unwrap_or_default();
+    let passed = |id: &str| spec.as_ref().is_some_and(|spec| spec_regions(spec).iter().any(|region|
+        region.get("id").and_then(Value::as_str) == Some(id) && plate_receipt_current(io, state, spec, region)));
+    let mut region_reasons = Map::new();
+    let mut advisories: Vec<String> = Vec::new();
+    let mut missing_reasons: Vec<(String, String)> = Vec::new();
+    for region in regions.iter_mut() {
+        let id = region["id"].as_str().unwrap_or("").to_string();
+        let kind = region["kind"].as_str().unwrap_or("").to_string();
+        let verdict = region["verdict"].as_str().unwrap_or("").to_string();
+        let plate = kind == "plate" || kind == "image";
+        if kind == "texture" || !(verdict == "missing" || (verdict == "contradicted" && matches!(kind.as_str(), "text" | "control" | "chrome"))) {
+            continue;
+        }
+        // A plate that passed its asset gate and renders at desktop width is present;
+        // where it sits is placement, which the overall bar and the native frame check guard.
+        let present_plate = plate && verdict == "missing" && passed(&id)
+            && rscore_opt(region, "detailRaw").map(|v| v >= 0.3).unwrap_or(rscore(region, "detail") >= 0.3);
+        if present_plate && rscore(region, "structure") >= 0.5 {
+            region["verdict"] = json!("drift");
+            region["verdictReason"] = json!("current plate passed asset validation and responsive rendered presence check");
+            continue;
+        }
+        match locate(region) {
+            Some(d) if d.beyond_frame() => {
+                let message = displaced_message(&id, &d, k, &frame_size);
+                region["verdict"] = json!("displaced");
+                region["verdictReason"] = json!("present, but displaced past the first viewport");
+                region["displacement"] = displacement_json(&d, k);
+                missing_reasons.push((id, message));
+            }
+            Some(d) => {
+                region["verdict"] = json!("drift");
+                region["verdictReason"] = json!("present, displaced inside the first viewport");
+                region["displacement"] = displacement_json(&d, k);
+                advisories.push(format!("(advisory, still inside the first viewport) at desktop width, region {id} sits {} than in the comp", offset_words(d.dx * k, d.dy * k)));
+            }
+            None if present_plate => {
+                region["verdict"] = json!("drift");
+                region["verdictReason"] = json!("current plate passed asset validation and renders at desktop width away from its comp box");
+                advisories.push(format!("(advisory) at desktop width, plate {id} renders but not at its comp box (structure {}%): size and position it to the spec box", pct0(rscore(region, "structure"))));
+            }
+            None if verdict == "missing" => missing_reasons.push((id.clone(), format!("at desktop width, region {id} is missing"))),
+            None => {}
+        }
+    }
+    let overall = report.get("overall").and_then(Value::as_f64).unwrap_or(0.0);
+    let mut reasons = Vec::new();
+    // The approved first viewport at the desktop frame's own size. Its regions that
+    // still render as accepted (text, control, chrome) carry their acceptance here.
+    let accepted_view = native.and_then(|n| n.capture.approved_reference().map(|a| (n, a)))
+        .and_then(|(n, a)| approved_at_frame(io, &n.path("human-approved"), desktop, spec.as_ref(), &format!("{out_dir}/human-reviewed")).ok().map(|(r, _)| (r, a.proof.clone())));
+    let review = accepted_view.as_ref().map(|(comparison, _)| json!({"comparison": comparison}));
+    let viewport_accepted = human_accepted_viewport(review.as_ref());
+    let carried = human_accepted_regions(review.as_ref(), &regions);
+    let mut lapse = lapsed_viewport(review.as_ref(), "desktop capture");
+    if let Some((comparison, proof)) = &accepted_view {
+        report["humanTextReview"] = json!({"proof": proof, "comparison": comparison, "viewportAccepted": viewport_accepted,
+            "referenceScale": "the approved screenshot resampled once to the desktop frame; the capture is compared at its own size"});
+    }
+    if overall < min && viewport_accepted {
+        advisories.push(format!("(advisory, first viewport accepted) the desktop capture scores {}% against the comp, under {}%", pct0(overall), pct0(min)));
+    } else if overall < min && lapse.is_some() {
+        advisories.push(format!("(measured) the desktop capture scores {}% against the comp, under {}%", pct0(overall), pct0(min)));
+        reasons.push(lapse.take().unwrap());
+    } else if overall < min {
+        let bp = state.get("breakpoint").and_then(Value::as_str).map(String::from).unwrap_or_else(|| "the comp size".into());
+        reasons.push(format!(
+            "the desktop capture ({}; its first viewport, the top {} rows at the comp's width, is compared) scores {}% against the comp, under {}%: the first viewport does not survive a common desktop width. The hero passed at {bp}; the layout must hold from ~1280 up, not only at the comp's exact width (grid columns in fr / minmax, not fixed px that overflow and wrap).",
+            report.get("buildSize").and_then(Value::as_str).unwrap_or(""),
+            report.get("compSize").and_then(Value::as_str).unwrap_or(""),
+            pct0(overall), pct0(min)
+        ));
+    }
+    let mut accepted_ids: Vec<Value> = Vec::new();
+    for (id, message) in missing_reasons {
+        // A text, control or chrome region the accepted first viewport lacks too, and
+        // that the desktop frame renders as that screenshot does, was accepted without it.
+        if carried.contains(&id) {
+            advisories.push(format!("(advisory, accepted in the first-viewport review) {message}; the first viewport the user accepted lacks it too, so the acceptance covers it"));
+            accepted_ids.push(json!(id));
+            continue;
+        }
+        push_region_blocker(&mut reasons, &mut region_reasons, &id, message);
+    }
+    let contradicted_direction: Vec<Value> = regions.iter().filter(|r| r.get("verdict").and_then(Value::as_str) == Some("contradicted") && matches!(r.get("kind").and_then(Value::as_str), Some("text" | "control"))).cloned().collect();
+    for r in &contradicted_direction {
+        let id = r["id"].as_str().unwrap_or("");
+        let message = format!("at desktop width, region {id} ({}) is contradicted (structure {}%)", r["kind"].as_str().unwrap_or(""), pct0(rscore(r, "structure")));
+        if carried.contains(id) {
+            accepted_ids.push(json!(id));
+            advisories.push(format!("(advisory, accepted in the first-viewport review) {message}"));
+            continue;
+        }
+        if viewport_accepted {
+            advisories.push(format!("(advisory, first viewport accepted) {message}"));
+            continue;
+        }
+        push_region_blocker(&mut reasons, &mut region_reasons, id, message);
+    }
+    if accepted_view.is_some() { report["humanTextReview"]["acceptedRegions"] = json!(accepted_ids); }
+    // An acceptance that no longer holds is always said, not only under the bar:
+    // it is why the readings below are not advisories.
+    if let Some(lapse) = lapse {
+        if reasons.is_empty() { advisories.insert(0, format!("(advisory) {lapse}")); } else { reasons.insert(0, lapse); }
+    }
+    let mut g = if reasons.is_empty() { Gate::ok(format!("desktop {}% ({})", pct0(overall), report.get("verdict").and_then(Value::as_str).unwrap_or(""))) } else { Gate::fail(reasons) };
+    g.summary = Some(format!("desktop {}% ({})", pct0(overall), report.get("verdict").and_then(Value::as_str).unwrap_or("")));
+    g.score = Some(overall);
+    g.verdict = report.get("verdict").and_then(Value::as_str).map(String::from);
+    g.side_by_side = report.pointer("/files/sideBySide").and_then(Value::as_str).map(String::from);
+    // The regions to open first, worst first, as the hero gate lists them.
+    let worst: Vec<Value> = repair_regions(&regions, &region_reasons).into_iter().take(3).collect();
+    g.worst = worst.iter().map(|r| format!("{} {} {}%", r["id"].as_str().unwrap_or(""), r["verdict"].as_str().unwrap_or(""), pct0(rscore(r, "overall")))).collect();
+    g.worst_ids = worst.iter().filter_map(|r| r["id"].as_str().map(String::from)).collect();
+    g.worst_crops = worst.iter().map(|r| {
+        let id = r["id"].as_str().unwrap_or("");
+        json!({ "id": id, "verdict": r["verdict"], "score": r.get("score").cloned().unwrap_or(Value::Null), "file": format!("{out_dir}/regions/{id}.png") })
+    }).collect();
+    g.region_verdicts = regions.iter().filter_map(|r| Some((r.get("id")?.as_str()?.to_string(), json!(r.get("verdict")?.as_str()?)))).collect();
+    g.region_reasons = region_reasons;
+    g.advisories = advisories;
+    publish_gate_evidence(io, out_dir, &mut report, &mut measured, &regions, &mut g, "responsive");
+    g
+}
+
+/// "about 64px lower", "about 12px higher and 20px to the right".
+fn offset_words(dx: f64, dy: f64) -> String {
+    let mut parts = Vec::new();
+    if dy.abs() >= 1.5 { parts.push(format!("{}px {}", dy.abs().round() as i64, if dy > 0. { "lower" } else { "higher" })); }
+    if dx.abs() >= 1.5 { parts.push(format!("{}px {}", dx.abs().round() as i64, if dx > 0. { "to the right" } else { "to the left" })); }
+    if parts.is_empty() { "in place".into() } else { format!("about {}", parts.join(" and ")) }
+}
+
+fn displacement_json(d: &Displacement, k: f64) -> Value {
+    json!({"dx": (d.dx * k).round(), "dy": (d.dy * k).round(), "visible": util::num((d.visible * 1000.).round() / 1000.), "inferred": d.inferred, "unit": "capture px"})
+}
+
+fn displaced_message(id: &str, d: &Displacement, k: f64, frame: &str) -> String {
+    let fix = "Restore it into the first viewport: size what sits above it in proportion to the viewport (the comp's own ratios), not with fixed px or a px floor that grows it at this width";
+    if d.inferred {
+        return format!("at desktop width, region {id} is displaced, not missing: the content above it in its column sits {} than in the comp, which pushes {id} out of the {frame} first viewport. {fix}.", offset_words(d.dx * k, d.dy * k));
+    }
+    let shown = (d.visible * 100.).round() as i64;
+    format!("at desktop width, region {id} is displaced, not missing: it renders {} than in the comp, and {} of it stays inside the {frame} first viewport. {fix}.",
+        offset_words(d.dx * k, d.dy * k), if shown == 0 { "none".to_string() } else { format!("{shown}%") })
+}
+
+/// The approved first viewport resampled once to the desktop frame's own size,
+/// compared with the desktop capture there. The capture under test is never
+/// resampled, so a page that scales proportionally reads as the page the user
+/// accepted (a proportional render of a real accepted page scored 98% this way;
+/// see CLI-CONTRACT.md for the measurements behind the 95% bar).
+fn approved_at_frame(io: &Io, approved_path: &str, frame_path: &str, spec: Option<&Value>, out_dir: &str) -> Result<(Value, CompareResult), String> {
+    let approved = load_raster(io, approved_path)?;
+    let frame = load_raster(io, frame_path)?;
+    let scaled = if approved.width == frame.width { approved.clone() } else {
+        r::resize(&approved, frame.width as f64, round(approved.height as f64 * frame.width as f64 / approved.width as f64))
+    };
+    let res = compare(&scaled, &frame, spec, "top", "human-reviewed", None);
+    let files = write_artifacts(&res, &scaled, &abs(io, out_dir)).map_err(|e| format!("cannot persist comparison artifacts: {e}"))?;
+    let meta = json!({
+        "label": "human-reviewed", "comp": approved_path, "build": frame_path,
+        "spec": if spec.is_some() { Value::String(SPEC_PATH.into()) } else { Value::Null },
+        "compSize": format!("{}x{}", scaled.width, scaled.height),
+        "buildSize": format!("{}x{}", frame.width, frame.height),
+        "referenceSize": format!("{}x{}", approved.width, approved.height),
+    });
+    Ok((build_report(&res, Some(&files), &meta), res))
+}
+
+fn hero_diff_labeled(io: &Io, comp_path: &str, build_path: &str, spec: Option<&Value>, out_dir: &str, label: &str) -> Result<(Value, CompareResult), String> {
+    let comp = load_raster(io, comp_path)?;
+    let build = load_raster(io, build_path)?;
+    let res = compare(&comp, &build, spec, "top", label, None);
+    let files = write_artifacts(&res, &comp, &abs(io, out_dir)).map_err(|e| format!("cannot persist comparison artifacts: {e}"))?;
+    let meta = json!({
+        "label": label, "comp": comp_path, "build": build_path,
+        "spec": if spec.is_some() { Value::String(SPEC_PATH.into()) } else { Value::Null },
+        "compSize": format!("{}x{}", comp.width, comp.height),
+        "buildSize": format!("{}x{}", build.width, build.height),
+    });
+    let report = build_report(&res, Some(&files), &meta);
+    Ok((report, res))
+}
+
+// ---- transitions -----------------------------------------------------------
+
+struct GateOpts {
+    build_path: Option<String>,
+    min: Option<f64>,
+    artifact: Option<String>,
+}
+
+fn run_gate(io: &Io, state: &mut Value, phase: &str, opts: &GateOpts, organic_scan: OrganicScan, renderer: Option<&dyn EntryRenderer>) -> Gate {
+    match phase {
+        "comps" => {
+            let mut gate = gate_comps(io, state);
+            // The approval fixes the reference: keep the engine's own copy now
+            // (a quoted --force closes on the approved comp too), and refuse to
+            // close on an approval that cannot be kept.
+            if let Some(approved) = gate.approved.clone() {
+                let failure = match crate::approved_comp::keep(io, &approved) {
+                    Ok(Some(_)) => None,
+                    Ok(None) => Some(format!("the approved comp {approved} is not a decodable PNG, WebP or JPEG image, so it cannot be kept as the fixed reference; approve a readable comp")),
+                    Err(e) => Some(format!("{e}; make {BUILD_DIR} writable and advance again")),
+                };
+                if let Some(why) = failure { gate.ok = false; gate.unforceable = true; gate.reasons.push(why); }
+            }
+            gate
+        }
+        "spec" => gate_spec(io, state),
+        "plates" => gate_plates(io),
+        "hero" => {
+            let build_path = opts.build_path.clone().unwrap_or_else(|| HERO_REPRO.to_string());
+            let min = opts.min.unwrap_or(HERO_MIN);
+            gate_hero(io, state, &build_path, min, ".impeccable/review/diff/hero", opts.artifact.as_deref(), organic_scan, renderer)
+        }
+        "responsive" => gate_responsive(io, state, opts.min.unwrap_or(RESPONSIVE_MIN), ".impeccable/review/diff/desktop", opts.artifact.as_deref(), renderer),
+        // No measurement here, but the build still stands on the approved comp.
+        _ => match comp_refusal(io) { Some(why) => Gate::fail(vec![why]), None => Gate::ok("no mechanical gate".into()) },
+    }
+}
+
+/// Page work waits for the human plan and asset review (docs/PLAN-REVIEW.md) of the
+/// current spec. A hosted review lives in the host's store: the host names its trusted
+/// session directories, and the gate fails closed without them.
+fn plan_review_refusal(io: &Io) -> Option<String> {
+    // A spec with no plate and no code region to decide on has nothing to review;
+    // `component-review plan` says so and writes no packet, so demanding an
+    // acceptance here would deadlock the build on a review that cannot exist.
+    if !impeccable_context::component_review::plan::spec_needs_review(&io.cwd) {
+        return None;
+    }
+    let s = self_cmd(io);
+    if let Some(tool) = io.env("IMPECCABLE_COMPONENT_REVIEW_TOOL") {
+        let Some(named) = io.env("IMPECCABLE_COMPONENT_REVIEW_SESSIONS") else {
+            // A harness defect, not something the agent can repair: say so rather than invite it to set the variable.
+            return Some(format!("The plan and asset review runs in the host ({tool}), but this host does not name its review sessions, so no acceptance can be verified. This is a harness configuration problem: stop and report it; do not set environment variables to work around it."));
+        };
+        let sessions: Vec<PathBuf> = std::env::split_paths(named).filter(|p| !p.as_os_str().is_empty()).collect();
+        if sessions.is_empty() {
+            return Some(format!("The plan and asset review is not accepted for this build. Call {tool} with manifest_path .impeccable/review/components.json (after `{s} component-review plan`) and wait for the user's decisions; page work waits until then."));
+        }
+        return impeccable_context::component_review::plan::gate_hosted(&sessions, &io.cwd, &s, tool).err();
+    }
+    let Some(home) = io.home() else { return Some("the plan and asset review store needs a home directory".into()) };
+    impeccable_context::component_review::plan::gate(&home.join(".impeccable/component-reviews"), &io.cwd, &s).err()
+}
+
+/// The plan review as the hero phase sees it. A plates advance forced with a quoted
+/// user downgrade waived the review along with the plate readings, so it stays waived.
+fn hero_plan_review_refusal(io: &Io, state: &Value) -> Option<String> {
+    if state.pointer("/phases/plates/forced").is_some_and(|f| !f.is_null()) { return None; }
+    plan_review_refusal(io)
+}
+
+/// Whether the user accepted an assembled first viewport for this build, in the local
+/// review store or in the sessions a host names.
+fn first_viewport_accepted(io: &Io) -> bool {
+    let sessions: Vec<PathBuf> = io.env("IMPECCABLE_COMPONENT_REVIEW_SESSIONS")
+        .map(|named| std::env::split_paths(named).filter(|p| !p.as_os_str().is_empty()).collect()).unwrap_or_default();
+    let store = io.home().map(|h| h.join(".impeccable/component-reviews"));
+    impeccable_context::component_review::plan::first_viewport_accepted(store.as_deref(), &sessions, &io.cwd)
+}
+
+/// JS: forceAllowed(reason).
+fn force_allowed(reason: Option<&str>) -> bool {
+    use once_cell::sync::Lazy;
+    let Some(reason) = reason else { return false };
+    if reason.trim().chars().count() < 20 {
+        return false;
+    }
+    // Match a direct attribution together with its quotation. A user mention
+    // elsewhere in the reason cannot authorize a different speaker's words.
+    static QUOTE: Lazy<Regex> = Lazy::new(|| Regex::new(r#"(?i)(?:^|[.!?]\s+)(?:the\s+)?(?:user|paul)(?:\s+(?:said|says|wrote|replied|answered|confirmed|asked)\s*[:,]?|\s*:)\s*(?:"([^"]+)"|“([^”]+)”|'([^']+)'|‘([^’]+)’)"#).unwrap());
+    static DOWNGRADE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?i)^\s*(please\s+)?(ignore|waive|relax|skip|drop|disregard) (the )?(approved )?(comp|mockup|fidelity|plate|region)\b|^\s*(the )?(comp|mockup|fidelity|plate|region)\b[^.!?;\n]{0,40}\b(is optional|is not required|does not need to match|doesn't need to match|need not match|can differ|can be skipped)\b").unwrap());
+    QUOTE.captures_iter(reason.trim()).any(|capture| {
+        (1..=4).filter_map(|i| capture.get(i)).any(|q| DOWNGRADE.is_match(q.as_str()))
+    })
+
+}
+
+struct AdvanceResult {
+    ok: bool,
+    phase: String,
+    next: Option<String>,
+    reasons: Vec<String>,
+    worst_crops: Vec<Value>,
+    advisories: Vec<String>,
+    side_by_side: Option<String>,
+    forced: bool,
+    gate_summary: Option<String>,
+}
+
+fn phase_index(phase: &str) -> Option<usize> {
+    PHASES.iter().position(|&p| p == phase)
+}
+
+fn advance(io: &Io, state: &mut Value, force: bool, reason: Option<&str>, opts: &GateOpts, organic_scan: OrganicScan, renderer: Option<&dyn EntryRenderer>) -> AdvanceResult {
+    let phase = state.get("phase").and_then(Value::as_str).unwrap_or("").to_string();
+    let idx = phase_index(&phase);
+    if idx.is_none() || phase == "review" {
+        return AdvanceResult {
+            ok: false,
+            phase: phase.clone(),
+            next: None,
+            reasons: vec![format!("phase {phase} cannot advance; use finish")],
+            worst_crops: vec![],
+            advisories: vec![],
+            side_by_side: None,
+            forced: false,
+            gate_summary: None,
+        };
+    }
+    let idx = idx.unwrap();
+    if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+        let a = p.get("attempts").and_then(Value::as_i64).unwrap_or(0) + 1;
+        p.insert("attempts".into(), json!(a));
+    }
+    let mut gate = run_gate(io, state, &phase, opts, organic_scan, renderer);
+    if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+        p.insert("gate".into(), gate.record_json(&now()));
+    }
+    if phase == "plates" {
+        save_plate_receipts(state, &gate);
+        if let Some(why) = plan_review_refusal(io) { gate.ok = false; gate.reasons.push(why); }
+    } else if phase == "hero" {
+        // The same spec-change gate `record hero` applies: a reclassified region after
+        // the plates closed reopens the plan review before the hero can close.
+        if let Some(why) = hero_plan_review_refusal(io, state) { gate.ok = false; gate.reasons.push(why); }
+    }
+    if !gate.ok && force && gate.unforceable {
+        if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+            p.insert("status".into(), json!("open"));
+        }
+        let mut reasons = gate.reasons.clone();
+        reasons.push("--force refused: a quoted downgrade can relax the comp round, but never close it on an approved comp the engine cannot keep as the fixed reference; fix the reason above and advance again".into());
+        return AdvanceResult { ok: false, phase, next: None, reasons, worst_crops: gate.worst_crops, advisories: gate.advisories, side_by_side: gate.side_by_side, forced: false, gate_summary: gate.summary };
+    }
+    if !gate.ok && force && !force_allowed(reason) {
+        if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+            p.insert("status".into(), json!("open"));
+        }
+        let mut reasons = gate.reasons.clone();
+        reasons.push(format!(
+            "--force refused: \"{}\" does not quote the user downgrading the comp. A single-file deliverable, a missing tool, or difficulty is not a reason, and a refused force is not the end of the phase: the readings above are the edits, each one a CSS value; make them, recapture, advance. Ask the user only when a reading contradicts something they said about this comp.",
+            reason.unwrap_or("")
+        ));
+        return AdvanceResult { ok: false, phase, next: None, reasons, worst_crops: gate.worst_crops, advisories: gate.advisories, side_by_side: gate.side_by_side, forced: false, gate_summary: gate.summary };
+    }
+    if phase == "hero" && gate.score.is_some() {
+        let artifact = opts.artifact.clone().or_else(|| state.get("artifact").and_then(Value::as_str).map(String::from)).unwrap_or_else(|| "index.html".into());
+        if let Some(stuck) = hero_loop_verdict(state, &gate, &artifact, io, first_viewport_accepted(io)) {
+            if !gate.ok {
+                let mut r = vec![stuck];
+                r.extend(gate.reasons.clone());
+                gate.reasons = r;
+            }
+        }
+    }
+    if phase == "responsive" && gate.score.is_some() {
+        let s = self_cmd(io);
+        if let Some(stuck) = responsive_loop_verdict(state, &gate, first_viewport_accepted(io), &s) {
+            gate.reasons.insert(0, stuck);
+        }
+    }
+    if !gate.ok && !force {
+        if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+            p.insert("status".into(), json!("open"));
+        }
+        return AdvanceResult { ok: false, phase, next: None, reasons: gate.reasons.clone(), worst_crops: gate.worst_crops, advisories: gate.advisories, side_by_side: gate.side_by_side, forced: false, gate_summary: gate.summary };
+    }
+    // Ship compares the frontend inputs against the ones responsive closed on, passed or forced.
+    if phase == "responsive" && !native_capture(io, state) {
+        let Some(inputs) = crate::completion::input_hash(&io.cwd) else {
+            if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+                p.insert("status".into(), json!("open"));
+            }
+            let mut reasons = gate.reasons.clone();
+            reasons.push("Frontend inputs could not be fingerprinted during responsive verification, so responsive cannot close, not even with --force".into());
+            return AdvanceResult { ok: false, phase, next: None, reasons, worst_crops: gate.worst_crops, advisories: gate.advisories, side_by_side: gate.side_by_side, forced: false, gate_summary: gate.summary };
+        };
+        state["responsiveInputSha256"] = json!(inputs);
+    }
+    let mut forced = false;
+    if !gate.ok && force {
+        forced = true;
+        if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+            p.insert("forced".into(), json!({ "at": now(), "reason": reason, "reasons": gate.reasons }));
+        }
+        if phase == "plates" { stamp_forced_plates(io, state, reason); }
+    }
+    if let Some(p) = state.pointer_mut(&format!("/phases/{phase}")).and_then(|p| p.as_object_mut()) {
+        p.insert("status".into(), json!("closed"));
+        p.insert("closedAt".into(), json!(now()));
+    }
+    if phase == "comps" {
+        if let Some(approved) = &gate.approved {
+            state.as_object_mut().unwrap().insert("comp".into(), json!(approved));
+            if state.get("breakpoint").map(|v| v.is_null()).unwrap_or(true) {
+                if let Ok(img) = load_raster(io, approved) {
+                    state.as_object_mut().unwrap().insert("breakpoint".into(), json!(format!("{}x{}", img.width, img.height)));
+                }
+            }
+        }
+    }
+    let next = PHASES[idx + 1].to_string();
+    state.as_object_mut().unwrap().insert("phase".into(), json!(next));
+    if let Some(np) = state.pointer_mut(&format!("/phases/{next}")).and_then(|p| p.as_object_mut()) {
+        np.insert("status".into(), json!("open"));
+        np.insert("openedAt".into(), json!(now()));
+    }
+    AdvanceResult { ok: true, phase, next: Some(next), reasons: vec![], worst_crops: vec![], advisories: gate.advisories, side_by_side: gate.side_by_side, forced, gate_summary: gate.summary }
+}
+
+// ---- guidance strings ------------------------------------------------------
+
+/// What `finish --disposition ship` does with the current files, per capture policy.
+fn ship_recheck(io: &Io, state: &Value) -> &'static str {
+    if native_capture(io, state) {
+        "ship re-captures the current files natively and must pass the responsive gate again"
+    } else {
+        "ship refuses while the frontend files differ from the responsive screenshots, so recapture desktop and mobile and advance responsive first"
+    }
+}
+
+fn next_instruction(io: &Io, state: &Value) -> String {
+    let s = self_cmd(io);
+    let phase = state.get("phase").and_then(Value::as_str).unwrap_or("");
+    if phase == "review" && state.get("artifact").and_then(Value::as_str).is_some()
+        && state.pointer("/finish/disposition").and_then(Value::as_str) == Some("ship")
+    {
+        let completion = crate::completion::report(&io.cwd, Some(state), None);
+        match completion.get("status").and_then(Value::as_str) {
+            Some("complete") => return format!("Finish is recorded for the current entry. Any later edit to a file the final check bound (the page, what it loads, the spec, the comp), a fix for a hook finding included, voids it: run {s} build-phase finish --disposition ship again before you stop; {}.", ship_recheck(io, state)),
+            Some("changed-after-finish") => {
+                let changed = completion["changedSinceFinish"].as_array().into_iter().flatten().filter_map(Value::as_str).take(6).collect::<Vec<_>>().join(", ");
+                let changed = if changed.is_empty() { String::new() } else { format!(" ({changed})") };
+                return format!("A file the final check bound changed after finish{changed}, so the recorded ship no longer covers the build. Repeat final review if the change goes beyond a fix it asked for, then run {s} build-phase finish --disposition ship again; {}.", ship_recheck(io, state));
+            }
+            Some("unverified") => return format!("The recorded finish cannot be verified against the entry. Check the artifact path and repeat final review before {s} build-phase finish --disposition <word>."),
+            _ => {}
+        }
+    }
+    let comp = state.get("comp").and_then(Value::as_str).unwrap_or("");
+    let direction = state.get("direction").and_then(Value::as_str);
+    let bp = state.get("breakpoint").and_then(Value::as_str);
+    match phase {
+        "comps" => {
+            let dir = direction.map(|d| format!(" (seed {d})")).unwrap_or_default();
+            if let Some(chosen) = decision_comp(state) {
+                return format!("Comp round for the chosen direction{dir}: read reference/visualize.md. The chosen decision comp {chosen} is compositional option one; it stays where it is and is never regenerated. Generate two more compositional comps of the requested surface at its viewport into {MOCKS_DIR}/ (each with a prompt sidecar), put all three in front of the user, and set \"approved\": true in the chosen comp's sidecar ({chosen}.json when they keep option one). Then {s} build-phase advance. No page code before this closes.");
+            }
+            format!("Comp round for the chosen direction{dir}: read reference/visualize.md, generate three compositional comps of the requested surface at its own viewport into {MOCKS_DIR}/ (each with a prompt sidecar), put them in front of the user, and set \"approved\": true in the chosen comp's sidecar. Then {s} build-phase advance. No page code before this closes.")
+        }
+        "spec" => format!(
+            "Measure the comp: {s} comp-spec --comp {comp} --grid, open {}, write regions.json (every illustration, photo, texture as its own plate region; every text block its own text region), run {s} comp-spec --comp {comp} --regions regions.json. Then measure the type: {s} font-match --measure <id> for each text region (cap height, width class, weight class) and {s} font-match --rank <lead text region> --text \"<its first words>\" to choose the headline face by metrics (the USE line is the CSS; with no browser it records the catalog's nearest face, which is the choice; do not install one, and do not write a chosen face into the spec by hand). Then {s} build-phase advance.",
+            format!("{BUILD_DIR}/comp-grid.png")
+        ),
+        "plates" => format!("Produce every plate in the spec ({s} comp-spec --print lists them). For each illustration, photo, or figure, run {s} comp-spec --crop <id> --out <crop.png> and save {s} comp-spec --plate-prompt <id> to a prompt file. For an isolated figure or object on the page ground, add --background transparent to that plate-prompt command. Prefer the harness image tool with the crop as reference and that prompt; request native transparent PNG for cutouts. With the API fallback, run {s} generate-image --ref <crop.png> --prompt-file <prompt.txt> --out <plate.png> --size <WxH> --quality high; add --background transparent for cutouts. Create the output directory first and choose a supported size matching the region's aspect at least 1.5x its pixel size. generate-image embeds the prompt; after a harness generation run {s} embed-prompt <plate.png> --prompt-file <prompt.txt>. Preserve white paint, fine edges, and interior holes; verify alpha and inspect the cutout on light and dark grounds. Do not chroma-key native transparent output. Keep photos and textures opaque. Place cutouts with a plain <img> over the page's own ground; inspect glass and other translucent material carefully. Textures (paper, cloth, grain): crop a clean patch from {s} comp-spec --crop <id> --raw and mirror-tile it to the plate size; generate only when no clean patch exists. The gate scores a texture against its whole region box, so draw its region around clean ground. Keep candidate crops in separate files. Test each with {s} build-phase check-plate <id> --candidate <png> --json; this does not replace the selected asset or advance state. Inspect the candidate before explicitly selecting it at the spec plate path. Then {s} build-phase advance scores all selected plates against their comp regions. A pass does not replace visual inspection of placement, scale, and alpha. Score the plates before the review opens: once advance reports nothing but the pending review, run {s} component-review plan, then {s} component-review capture --manifest .impeccable/review/components.json and {s} component-review serve --session <session>, and wait for the user: advance also waits until they accept this plan and asset review for the current spec. A plate replaced after they accept needs a new round. Write no page code before this passes."),
+        "hero" => format!(
+            "Run {s} build-phase scaffold first: it writes the measured layout as CSS custom properties (.impeccable/build/scaffold/layout.css, --r-<id>-x/y/w/h in % of the comp, plus cap height, font-size, family, and weight where measured) and a reference page with every region at its box. Bind those numbers to your own markup (an element per region, its box from the properties); the reference is a check, not the page, and overlapping boxes are overlapping boxes. Build only the first viewport at {}. Copy the comp's words verbatim in this phase (headline, labels, table cells, footer): the user approved that comp with those words, and rewriting is a later, stated decision, never a silent one here. Set every text region's font-size from its measured cap height and its face from the ranking. Plates first: place every plate at its spec box ({s} comp-spec --print lists boxes as percentages of the viewport) with object-fit: cover before writing a line of text or a control, capture into {HERO_REPRO}, and run {s} build-phase record hero (not advance) once so you see the plate regions read as match before text exists; then lay the semantic layer (text, controls, rules) over the plates from the spec's palette and boxes, capture, advance. When it fails, open the region crops it lists first, in order, then fix; do not build past the hero until it passes.",
+            bp.unwrap_or("the comp size")
+        ),
+        "sections" => format!("Build the remaining sections inside the spec system (same corner language, rules, and palette; nothing the comp does not show). The hero passed with the comp's words verbatim; from here, content beyond the comp is yours to author at full fidelity, and any change to words the comp showed is a stated decision in your report, never silent. Then {s} build-phase advance."),
+        "motion" => format!("Add the signature interaction, reveals, and motion. Then {s} build-phase advance."),
+        "responsive" => {
+            // The desktop frame keeps the comp's aspect at 1440 wide.
+            let frame = bp.and_then(|b| b.split_once('x')).and_then(|(w, h)| Some((w.parse::<f64>().ok()?, h.parse::<f64>().ok()?)))
+                .filter(|(w, h)| *w > 0. && *h > 0.).map(|(w, h)| format!("1440x{}", (h * 1440. / w).ceil() as i64)).unwrap_or_else(|| "1440 wide at the comp's aspect".into());
+            let compared = if native_capture(io, state) {
+                format!("The gate renders the page itself, a {frame} desktop first viewport and a 390-wide mobile frame, and diffs that desktop first viewport against the comp (scaled to the comp's width); captures you save are for your own inspection.")
+            } else {
+                format!("Capture desktop.png (1440 wide, full page) and mobile.png (390 wide, full page) into .impeccable/review/; the gate diffs the first viewport of desktop.png (its top {frame}, scaled to the comp's width) against the comp.")
+            };
+            format!("Build the other viewports (mobile first if the surface is mobile). The first viewport must hold at common desktop widths (1280 to 1600), not only at the comp's exact size: fluid columns, no fixed-px grid that wraps 96px narrower, and sizes that scale with the viewport so nothing the comp shows in the first viewport is pushed below it. Settle or disable entrance motion before capturing (an element mid-animation reads as missing). {compared} Then {s} build-phase advance. When it fails, open the region crops it lists first; after three failed attempts it names the route to the user instead of more edits.")
+        }
+        "review" => format!("Spawn the finish reviewer with the state file, the hero diff report, and the captures; record its disposition with {s} build-phase finish --disposition <word>. Make every fix before ship: {}, and any edit after it, a fix for a hook finding included, needs ship recorded again.", ship_recheck(io, state)),
+        _ => String::new(),
+    }
+}
+
+#[cfg(test)]
+mod transparency_guidance_tests {
+    use super::*;
+
+    #[test]
+    fn saving_the_state_keeps_it_out_of_git() {
+        let dir = std::env::temp_dir().join(format!("build-state-ignored-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let (io, _) = Io::captured("", dir.clone(), Default::default());
+        let (pinned, _) = Io::captured("", dir.clone(), [("IMPECCABLE_SEED_SALT".to_string(), "test-salt".to_string())].into_iter().collect());
+        assert_eq!(seed_reference(&pinned, "seed:0123456789abcdef"), "seed:0123456789abcdef");
+        let r = seed_reference(&pinned, "3f9a1c2e");
+        assert_eq!(r, impeccable_common::seed::reference("test-salt", "3f9a1c2e"), "the reference concept-seed prints");
+        assert_eq!(seed_reference(&pinned, "none"), "none");
+        // No salt on this machine: a raw key is recorded as no seed, never as an unsalted hash.
+        let bad_home = dir.join("bad-home");
+        std::fs::create_dir_all(bad_home.join(".impeccable")).unwrap();
+        std::fs::write(bad_home.join(".impeccable/seed-salt"), "corrupt").unwrap();
+        let (nosalt, _) = Io::captured("", dir.clone(), [("HOME".to_string(), bad_home.to_string_lossy().into_owned()), ("USERPROFILE".to_string(), bad_home.to_string_lossy().into_owned())].into_iter().collect());
+        assert_eq!(seed_reference(&nosalt, "3f9a1c2e"), "none");
+        assert!(r.starts_with("seed:") && r.len() == 21 && !r.contains("3f9a1c2e"), "{r}");
+        save_state(&io, &new_state(None, None, None, Some("seed-1")));
+        let ignore = dir.join(".impeccable/build/.gitignore");
+        let expected = format!("{}\nstate.json\n", impeccable_common::git::RUNTIME_IGNORE_HEADER);
+        assert_eq!(std::fs::read_to_string(&ignore).unwrap(), expected);
+        save_state(&io, &new_state(None, None, None, Some("seed-1")));
+        assert_eq!(std::fs::read_to_string(&ignore).unwrap(), expected);
+        assert!(dir.join(".impeccable/mocks/.gitignore").is_file() && dir.join(".impeccable/review/.gitignore").is_file());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn spent_runtime_output_skips_what_a_reship_reads() {
+        let dir = std::env::temp_dir().join(format!("build-spent-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        for rel in [
+            ".impeccable/mocks/.gitignore", ".impeccable/mocks/comp-1.png", ".impeccable/mocks/comp-1.png.json",
+            ".impeccable/mocks/decision/a.png", ".impeccable/review/hero.json", ".impeccable/review/native/hero/hero.png",
+            ".impeccable/review/shot.png", ".impeccable/mocks/comp-2.png", ".impeccable/review/diff/hero/side-by-side.png",
+        ] {
+            let p = dir.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, "x").unwrap();
+        }
+        let (io, _) = Io::captured("", dir.clone(), Default::default());
+        let state = json!({"comp": "./.impeccable/mocks/comp-1.png", "decisionComp": ".impeccable/mocks/decision/a.png",
+            "finish": {"captureInputs": [{"path": ".impeccable/review/shot.png"}]}});
+        assert_eq!(spent_runtime_output(&io, &state), [".impeccable/mocks/comp-2.png", ".impeccable/review/diff/hero/side-by-side.png"]);
+        // An absolute `--comp` names the same approved file.
+        let absolute = json!({"comp": dir.join(".impeccable/mocks/comp-1.png").to_string_lossy(), "decisionComp": ".impeccable/mocks/decision/a.png",
+            "finish": {"captureInputs": [{"path": ".impeccable/review/shot.png"}]}});
+        assert_eq!(spent_runtime_output(&io, &absolute), [".impeccable/mocks/comp-2.png", ".impeccable/review/diff/hero/side-by-side.png"]);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn candidate_check_never_replaces_selection_or_persists_gate_receipts() {
+        let dir = std::env::temp_dir().join(format!("plate-candidate-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(BUILD_DIR)).unwrap();
+        let image = r::create_image(64,64,[20,70,110,255]);
+        let bytes = png_io::encode_png(&image, &[]).unwrap();
+        let spec = json!({"comp":"comp.png","regions":[{"id":"ground","kind":"texture","medium":"raster",
+            "plate":"selected.png","px":{"x":0,"y":0,"w":64,"h":64},"palette":[{"hex":"#14466e"}]}]}).to_string();
+        for (path, data) in [("comp.png",bytes.as_slice()),("candidate.png",bytes.as_slice()),
+            ("selected.png",b"selected asset must survive".as_slice()),(SPEC_PATH,spec.as_bytes()),
+            (".impeccable/build/state.json",b"{\"phase\":\"plates\",\"attempts\":7}".as_slice())] {
+            std::fs::write(dir.join(path),data).unwrap();
+        }
+        let before = ["comp.png","candidate.png","selected.png",SPEC_PATH,".impeccable/build/state.json"]
+            .map(|path| (path,std::fs::read(dir.join(path)).unwrap()));
+        let (mut io, output) = Io::captured("",dir.clone(),Default::default());
+        assert_eq!(run(&["check-plate","ground","--candidate","candidate.png","--json"].map(String::from), &mut io, &no_organic_scan),0);
+        let report: Value = serde_json::from_slice(&output.stdout.borrow()).unwrap();
+        assert_eq!(report["stateChanged"],false);
+        assert_eq!(report["plates"][0]["file"],"candidate.png");
+        assert_eq!(report["plates"][0]["status"],"ok");
+        for (path, bytes) in before { assert_eq!(std::fs::read(dir.join(path)).unwrap(),bytes); }
+        assert_eq!(run(&["check-plate","unknown","--candidate","candidate.png"].map(String::from), &mut io, &no_organic_scan),1);
+        // A candidate still goes through the exact same anti-copy validation.
+        let mut photo: Value = serde_json::from_str(&spec).unwrap();
+        photo["regions"][0]["kind"] = json!("image");
+        std::fs::write(dir.join(SPEC_PATH),photo.to_string()).unwrap();
+        let (mut io, output) = Io::captured("",dir.clone(),Default::default());
+        assert_eq!(run(&["check-plate","ground","--candidate","candidate.png","--json"].map(String::from), &mut io, &no_organic_scan),2);
+        assert!(String::from_utf8(output.stdout.borrow().clone()).unwrap().contains("comp crop"));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn plate_score_excludes_the_same_occluded_pixels_on_both_sides() {
+        let mut comp = r::create_image(128, 64, [30, 80, 120, 255]);
+        r::fill_rect(&mut comp, 10., 8., 55., 48., [210., 140., 70., 255.]);
+        let region = json!({"id":"photo","kind":"image","medium":"raster",
+            "px":{"x":0,"y":0,"w":128,"h":64},"palette":[{"hex":"#1e5078"}]});
+        let spec = json!({"regions":[region,{"id":"label","kind":"text",
+            "px":{"x":80,"y":0,"w":48,"h":24}}]});
+        let reference = prepare_plate_reference(&comp, &spec, &spec["regions"][0]);
+        let original = score_plate_reference(&reference, &comp, Some("image"));
+        let mut hidden_change = comp.clone();
+        r::fill_rect(&mut hidden_change, 80., 0., 48., 24., [255., 0., 190., 255.]);
+        let hidden = score_plate_reference(&reference, &hidden_change, Some("image"));
+        assert_eq!(original.to_json(), hidden.to_json());
+        let missing = r::create_image(128, 64, [30, 80, 120, 255]);
+        let missing = score_plate_reference(&reference, &missing, Some("image"));
+        assert!(!plate_verdict(&spec["regions"][0], &missing).0);
+    }
+
+    #[test]
+    fn control_lettering_gets_the_same_measurements_as_text_without_reclassification() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../comp/tests/fixtures");
+        let (io, _) = Io::captured("", root, Default::default());
+        let comp = load_raster(&io, "hero_comp_crop.png").unwrap();
+        let mut spec = json!({"regions":[{"id":"cta","kind":"text","px":{
+            "x":0,"y":0,"w":comp.width,"h":comp.height
+        }}]});
+        let state = json!({"comp":"hero_comp_crop.png"});
+        let text = hero_readings(&io, &state, Some(&spec), "hero_build_crop.png").unwrap();
+        assert!(!text.text.is_empty(), "fixture must expose a lettering mismatch");
+        spec["regions"][0]["kind"] = json!("control");
+        let control = hero_readings(&io, &state, Some(&spec), "hero_build_crop.png").unwrap();
+        assert_eq!(control.text, text.text);
+        for (message, ids) in text.region_ids {
+            assert_eq!(control.region_ids.get(&message), Some(&ids));
+        }
+        assert!(!control.chrome.is_empty(), "control geometry must still be checked");
+        assert_eq!(spec["regions"][0]["kind"], "control");
+    }
+
+    #[test]
+    fn non_text_control_keeps_geometry_checks_without_lettering_advice() {
+        let dir = std::env::temp_dir().join(format!("control-readings-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        for (name, y) in [("comp.png", 35.0), ("build.png", 65.0)] {
+            let mut image = r::create_image(400, 100, [255, 255, 255, 255]);
+            r::fill_rect(&mut image, 20.0, y, 360.0, 4.0, [0.0, 0.0, 0.0, 255.0]);
+            std::fs::write(dir.join(name), png_io::encode_png(&image, &[]).unwrap()).unwrap();
+        }
+        let (io, _) = Io::captured("", dir.clone(), Default::default());
+        let state = json!({"comp":"comp.png"});
+        let spec = json!({"regions":[{"id":"slider","kind":"control","px":{
+            "x":0,"y":0,"w":400,"h":100
+        }}]});
+        let readings = hero_readings(&io, &state, Some(&spec), "build.png").unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+        assert!(readings.text.is_empty());
+        assert!(!readings.chrome.is_empty(), "displaced rule must remain visible to the gate");
+    }
+
+    #[test]
+    fn native_frame_support_rejects_displacement_and_token_images() {
+        let region = |boxes: Vec<Value>| json!({"expectedBox":{"x":20.,"y":20.,"w":80.,"h":80.},"instances":boxes.into_iter().map(|b|json!({"status":"measured","changedPixelsInRegion":1,"element":{"box":b}})).collect::<Vec<_>>()});
+        assert!(native_frame_supported(&region(vec![
+            json!({"x":20.,"y":20.,"w":80.,"h":80.})
+        ])));
+        assert!(native_frame_supported(&region(vec![
+            json!({"x":21.,"y":21.,"w":78.,"h":78.})
+        ])));
+        assert!(!native_frame_supported(&region(vec![
+            json!({"x":60.,"y":20.,"w":80.,"h":80.})
+        ])));
+        assert!(!native_frame_supported(&region(vec![
+            json!({"x":59.,"y":59.,"w":2.,"h":2.})
+        ])));
+        assert!(native_frame_supported(&region(vec![
+            json!({"x":20.,"y":20.,"w":40.,"h":80.}),
+            json!({"x":60.,"y":20.,"w":40.,"h":80.})
+        ])));
+        assert!(!native_frame_supported(&region(vec![
+            json!({"x":20.,"y":20.,"w":30.,"h":80.}),
+            json!({"x":70.,"y":20.,"w":30.,"h":80.})
+        ])));
+        let mut duplicate = region(vec![
+            json!({"x":20.,"y":20.,"w":80.,"h":80.}),
+            json!({"x":20.,"y":20.,"w":80.,"h":80.}),
+        ]);
+        for item in duplicate["instances"].as_array_mut().unwrap() {
+            item["changedPixelsInRegion"] = json!(0);
+        }
+        duplicate["combinedContribution"] = json!({"changedPixelsInRegion":6400});
+        assert!(native_frame_supported(&duplicate));
+        let mut hidden_large = region(vec![
+            json!({"x":20.,"y":20.,"w":80.,"h":80.}),
+            json!({"x":59.,"y":59.,"w":2.,"h":2.}),
+        ]);
+        hidden_large["instances"][0]["changedPixelsInRegion"] = json!(0);
+        assert!(!native_frame_supported(&hidden_large));
+    }
+
+    #[test]
+    fn native_capture_rechecks_inputs_and_updates_the_persisted_gate() {
+        struct Changed(crate::entry_capture::EntryEvidence);
+        impl CapturedEntry for Changed {
+            fn evidence(&self) -> &crate::entry_capture::EntryEvidence {
+                &self.0
+            }
+            fn verify_current(&self) -> Result<(), String> {
+                Err("entry bytes changed".into())
+            }
+        }
+        let dir = std::env::temp_dir().join(format!("native-entry-stale-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("review")).unwrap();
+        let (io, _) = Io::captured("", dir.clone(), Default::default());
+        atomic_report(
+            &dir.join("review/report.json"),
+            &json!({"gate":{"ok":true},"regions":[]}),
+        )
+        .unwrap();
+        let capture = NativeCapture {
+            capture: Box::new(Changed(crate::entry_capture::EntryEvidence {
+                report: json!({"inputSnapshot":"original"}),
+                frames: vec![],
+            })),
+            directory: "native".into(),
+        };
+        let mut gate = Gate::fail(vec![]);
+        gate.ok = true;
+        gate.report = Some("review/report.json".into());
+        finish_native_capture(&io, "review", &mut gate, &capture);
+        assert!(!gate.ok);
+        assert!(gate.reasons.join(" ").contains("entry bytes changed"));
+        let report: Value =
+            serde_json::from_slice(&std::fs::read(dir.join("review/report.json")).unwrap())
+                .unwrap();
+        assert_eq!(report["gate"]["ok"], false);
+        assert_eq!(report["gate"]["reasons"], json!(gate.reasons));
+        assert_eq!(
+            report["nativeCapture"]["inputs"]["inputSnapshot"],
+            "original"
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn requested_native_capture_cannot_fall_back_to_saved_receipts() {
+        let dir =
+            std::env::temp_dir().join(format!("native-entry-no-renderer-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let (io, _) = Io::captured(
+            "",
+            dir.clone(),
+            [("IMPECCABLE_NATIVE_CAPTURE".into(), "1".into())].into(),
+        );
+        let mut state = json!({"artifact":"index.html","comp":"comp.png"});
+        let result = prepare_native_capture(
+            &io,
+            &mut state,
+            None,
+            None,
+            crate::entry_capture::EntryStage::Hero,
+        );
+        assert!(result.is_err());
+        let error = result.err().unwrap();
+        assert!(error.reasons.join(" ").contains("renderer unavailable"));
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn plate_gate_scores_sparse_and_partial_alpha_on_the_sampled_ground() {
+        let dir = std::env::temp_dir().join(format!("impeccable-plate-alpha-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(BUILD_DIR)).unwrap();
+        let (io, _) = Io::captured("", dir.clone(), Default::default());
+        let spec = json!({"comp": "comp.png", "regions": [{
+            "id": "art", "kind": "plate", "medium": "raster", "plate": "plate.png",
+            "px": {"x": 0, "y": 0, "w": 64, "h": 64},
+            "palette": [{"hex": "#183040"}]
+        }]});
+        std::fs::write(dir.join(SPEC_PATH), spec.to_string()).unwrap();
+        for partial in [false, true] {
+            let mut plate = r::create_image(64, 64, [200, 130, 80, 255]);
+            for (i, pixel) in plate.data.chunks_exact_mut(4).enumerate() {
+                if (i / 64 + i % 64) % 16 < 8 {
+                    pixel[..3].copy_from_slice(&[70, 160, 210]);
+                }
+                if partial {
+                    pixel[3] = 160; // No pixels below the old 128 cutoff.
+                } else if i / 64 < 8 && i % 64 < 8 {
+                    pixel.copy_from_slice(&[255, 0, 255, 0]); // Only 1.56% clear.
+                }
+            }
+            let mut flattened = r::create_image(64, 64, [24, 48, 64, 255]);
+            r::blit(&mut flattened, &plate, 0.0, 0.0);
+            std::fs::write(dir.join("comp.png"), png_io::encode_png(&flattened, &[]).unwrap()).unwrap();
+            // Compare scores independently of any other gate findings.
+            std::fs::write(dir.join("plate.png"), png_io::encode_png(&plate, &[]).unwrap()).unwrap();
+            let alpha_score = gate_plates(&io).plates.unwrap()[0]["score"].as_f64().unwrap();
+            std::fs::write(dir.join("plate.png"), png_io::encode_png(&flattened, &[]).unwrap()).unwrap();
+            let opaque_score = gate_plates(&io).plates.unwrap()[0]["score"].as_f64().unwrap();
+            assert!((alpha_score - opaque_score).abs() < 1e-9, "partial={partial}: {alpha_score} != {opaque_score}");
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn missing_plate_guidance_uses_the_configured_launcher() {
+        let dir = std::env::temp_dir().join(format!("impeccable-plate-launcher-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join(BUILD_DIR)).unwrap();
+        std::fs::write(dir.join(SPEC_PATH), json!({"comp":"comp.png","regions": [{"id": "art", "medium": "raster", "plate": "missing.png"}]}).to_string()).unwrap();
+        std::fs::write(dir.join("comp.png"), png_io::encode_png(&r::create_image(8,8,[255,255,255,255]), &[]).unwrap()).unwrap();
+        let env = [("IMPECCABLE_SELF".into(), "/custom/impeccable".into())].into();
+        let (io, _) = Io::captured("", dir.clone(), env);
+        let reasons = gate_plates(&io).reasons.join("\n");
+        std::fs::remove_dir_all(dir).unwrap();
+        assert!(reasons.contains("/custom/impeccable comp-spec --crop art"), "{reasons}");
+        assert!(reasons.contains("/custom/impeccable generate-image --ref"), "{reasons}");
+    }
+
+    #[test]
+    fn launcher_paths_are_quoted_but_command_prefixes_are_preserved() {
+        let dir = std::env::temp_dir().join(format!("impeccable-launcher-quoting-{}", std::process::id()));
+        std::fs::create_dir_all(dir.join("my tools")).unwrap();
+        let relative = if cfg!(windows) { "my tools/impeccable.cmd" } else { "my tools/impeccable" };
+        let launcher = dir.join(relative);
+        std::fs::write(&launcher, "").unwrap();
+        for value in [relative.to_string(), launcher.to_string_lossy().into_owned()] {
+            let env = [("IMPECCABLE_SELF".into(), value.clone())].into();
+            let (io, _) = Io::captured("", dir.clone(), env);
+            // Windows spells the quoted .cmd launcher as a PowerShell call
+            // on a literal string (#744); sh quotes the path in single quotes.
+            let expected = if cfg!(windows) { format!("& '{value}'") } else { format!("'{value}'") };
+            assert_eq!(self_cmd(&io), expected);
+            let next = next_instruction(&io, &json!({"phase": "plates"}));
+            assert!(next.contains(&format!("{expected} generate-image --ref")), "{next}");
+        }
+        for value in ["impeccable", "npx impeccable", "bunx impeccable", "npx --yes impeccable"] {
+            let env = [("IMPECCABLE_SELF".into(), value.into())].into();
+            let (io, _) = Io::captured("", dir.clone(), env);
+            assert_eq!(self_cmd(&io), value);
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn printed_launcher_path_survives_shell_parsing() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("impeccable-launcher-shell-{}", std::process::id()));
+        let launcher = dir.join("user's $assets `literal`/impeccable");
+        std::fs::create_dir_all(launcher.parent().unwrap()).unwrap();
+        std::fs::write(&launcher, "#!/bin/sh\nprintf '%s\\n' \"$@\"\n").unwrap();
+        std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let env = [("IMPECCABLE_SELF".into(), launcher.to_string_lossy().into_owned())].into();
+        let (io, _) = Io::captured("", dir.clone(), env);
+        let command = format!("{} generate-image --background transparent", self_cmd(&io));
+        let output = std::process::Command::new("/bin/sh").arg("-c").arg(command).current_dir(&dir).output().unwrap();
+        std::fs::remove_dir_all(dir).unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        assert_eq!(String::from_utf8(output.stdout).unwrap(), "generate-image\n--background\ntransparent\n");
+    }
+
+    #[test]
+    fn plates_use_supported_reference_edit_and_native_alpha_commands() {
+        let (io, _) = Io::captured("", std::env::temp_dir(), Default::default());
+        let instruction = next_instruction(&io, &json!({"phase": "plates"}));
+        assert!(instruction.contains("--background transparent"));
+        assert!(instruction.contains("--ref"));
+        assert!(instruction.contains("--prompt-file"));
+        assert!(!instruction.contains("generate-image --plate"));
+        assert!(!instruction.contains("PLATE-CHROMA"));
+    }
+}
+
+fn render_status(io: &Io, state: &Value) -> String {
+    let phase = state.get("phase").and_then(Value::as_str).unwrap_or("");
+    let comp = state.get("comp").and_then(Value::as_str);
+    let direction = state.get("direction").and_then(Value::as_str);
+    let bp = state.get("breakpoint").and_then(Value::as_str);
+    let mut lines = vec![format!(
+        "BUILD-PHASE {}  comp {}{}{}",
+        phase.to_uppercase(),
+        comp.unwrap_or("(pending comp round)"),
+        direction.map(|d| format!("  direction {d}")).unwrap_or_default(),
+        bp.map(|b| format!("  breakpoint {b}")).unwrap_or_default()
+    )];
+    for p in PHASES {
+        let sp = state.pointer(&format!("/phases/{p}"));
+        let status = sp.and_then(|v| v.get("status")).and_then(Value::as_str).unwrap_or("");
+        let mut line = format!("  {} {}", util::pad_end(p, 11), util::pad_end(status, 8));
+        if let Some(summary) = sp.and_then(|v| v.pointer("/gate/summary")).and_then(Value::as_str) {
+            line.push_str(&format!(" {summary}"));
+        }
+        let attempts = sp.and_then(|v| v.get("attempts")).and_then(Value::as_i64).unwrap_or(0);
+        if attempts > 1 {
+            line.push_str(&format!(" ({attempts} attempts)"));
+        }
+        if let Some(fr) = sp.and_then(|v| v.pointer("/forced/reason")).and_then(Value::as_str) {
+            line.push_str(&format!("  FORCED: {fr}"));
+        }
+        lines.push(line);
+    }
+    if let Some(finish) = state.get("finish").filter(|v| !v.is_null()) {
+        let disp = finish.get("disposition").and_then(Value::as_str).unwrap_or("");
+        let at = finish.get("at").and_then(Value::as_str).unwrap_or("");
+        lines.push(format!("  finish      {disp} at {at}"));
+    }
+    lines.push(format!("NEXT {}", next_instruction(io, state)));
+    lines.join("\n")
+}
+
+// ---- CLI -------------------------------------------------------------------
+
+/// `impeccable build-phase <cmd> ...`
+pub fn run(argv: &[String], io: &mut Io, organic_scan: OrganicScan) -> i32 {
+    run_with_renderer(argv,io,organic_scan,None)
+}
+pub fn run_with_renderer(argv: &[String],io: &mut Io,organic_scan: OrganicScan,renderer: Option<&dyn EntryRenderer>) -> i32 {
+    let cmd = argv.first().map(String::as_str);
+    if cmd.is_none() || flag(argv, "help") {
+        io.out("CANDIDATE CHECK: build-phase check-plate <region-id> --candidate <png> [--json] validates a separate file with the normal plate gate; never replaces the selected asset, records approval, or advances the phase.\n");
+        io.err("usage: build-phase.mjs start --comp <png> | --direction <key> [--decision-comp <png>] [--breakpoint WxH] [--artifact <entry file>] [--session-id <id>] | status [--json] | completion [--session-id <id>] | advance [--force --reason \"...\"] | record hero --build <png> | scaffold | note \"<text>\" | finish --disposition <word> | restore-comp\n");
+        return 1;
+    }
+    let cmd = cmd.unwrap();
+    if cmd == "check-plate" {
+        let Some(id) = argv.get(1).filter(|id| !id.starts_with('-')) else {
+            io.err("usage: build-phase check-plate <region-id> --candidate <png> [--json]\n");
+            return 1;
+        };
+        let Some(candidate) = arg(argv, "candidate").filter(|path| !path.is_empty()) else {
+            io.err("build-phase: check-plate needs --candidate <png>; it never replaces the selected plate\n");
+            return 1;
+        };
+        let Some(mut spec) = load_spec(&abs(io, SPEC_PATH)) else {
+            io.err("build-phase: no measured spec; run comp-spec --help for region coordinates\n");
+            return 1;
+        };
+        let region = spec["regions"].as_array_mut().and_then(|regions| regions.iter_mut().find(|r| r["id"] == id.as_str()));
+        let Some(region) = region.filter(|r| r["medium"] == "raster") else {
+            io.err(&format!("build-phase: {id} is not a measured raster region\n"));
+            return 1;
+        };
+        region["plate"] = json!(candidate);
+        let gate = gate_plates_for(io, &spec, Some(id));
+        if flag(argv, "json") {
+            io.out(&format!("{}\n", util::json_pretty(&json!({"ok":gate.ok,"candidate":candidate,
+                "region":id,"reasons":gate.reasons,"plates":gate.plates,"stateChanged":false}))));
+        } else {
+            io.out(&format!("{} {id}: {candidate} (candidate only; selected plate and build state unchanged)\n",
+                if gate.ok { "PASS" } else { "FAIL" }));
+            for reason in &gate.reasons { io.out(&format!("  - {reason}\n")); }
+        }
+        return if gate.ok { 0 } else { 2 };
+    }
+    if cmd == "restore-comp" {
+        let (message, code) = crate::approved_comp::restore(io);
+        if code == 0 { io.out(&message); } else { io.err(&message); }
+        return code;
+    }
+    if cmd == "completion" {
+        let state = load_state(io);
+        let session_id = arg(argv, "session-id").or_else(|| io.env("IMPECCABLE_SESSION_ID"))
+            .or_else(|| io.env("CODEX_THREAD_ID"));
+        let report = crate::completion::report(&io.cwd, state.as_ref(), session_id);
+        io.out(&format!("{}\n", util::json_pretty(&report)));
+        return 0;
+    }
+    if cmd == "start" {
+        let comp = arg(argv, "comp");
+        let direction = arg(argv, "direction");
+        let chosen_decision = arg(argv, "decision-comp");
+        if chosen_decision.is_some() && (comp.is_some() || direction.is_none()) {
+            io.err("build-phase: --decision-comp names option one of a comp round, so it goes with --direction and never with --comp\n");
+            return 1;
+        }
+        if comp.is_none() && direction.is_none() {
+            io.err("build-phase: start needs --comp <approved comp png> (comp already approved) or --direction <seed reference, or none> (comp round still to run)\n");
+            return 1;
+        }
+        if let Some(c) = comp {
+            if !abs(io, c).exists() {
+                io.err(&format!("build-phase: comp {c} does not exist\n"));
+                return 1;
+            }
+        }
+        if let Some(d) = chosen_decision {
+            if !abs(io, d).is_file() {
+                io.err(&format!("build-phase: decision comp {d} does not exist\n"));
+                return 1;
+            }
+        }
+        if direction.is_some() && arg(argv, "kind").is_some() {
+            io.out("choice ping skipped\n");
+        }
+        let _ = std::fs::remove_file(abs(io, &format!("{BUILD_DIR}/pending.json")));
+        let build_path = read_build_path(io);
+        if direction.is_some() && comp.is_none() && build_path.as_deref() == Some("code") {
+            io.out("CODE-LED (from .impeccable config): no comp round and no phase gates. Write the direction contract (reference/new-work.md section 5), build, and finish per section 7. The chosen decision comp, if any, rides to the finish review as the critique reference.\n");
+            return 0;
+        }
+        let mut breakpoint = arg(argv, "breakpoint").map(String::from);
+        if breakpoint.is_none() {
+            if let Some(c) = comp {
+                if let Ok(img) = load_raster(io, c) {
+                    breakpoint = Some(format!("{}x{}", img.width, img.height));
+                }
+            }
+        }
+        let existing = load_state(io);
+        if let Some(existing) = &existing {
+            if !flag(argv, "reset") {
+                io.out(&format!("build-phase: state exists (phase {}); pass --reset to start over\n", existing.get("phase").and_then(Value::as_str).unwrap_or("")));
+                io.out(&format!("{}\n", render_status(io, existing)));
+                return 0;
+            }
+        }
+        match comp {
+            Some(c) => {
+                if let Some(why) = crate::approved_comp::restart_refusal(io, c, &self_cmd(io)) {
+                    io.err(&format!("build-phase: start refused: {why}\n"));
+                    return 2;
+                }
+                if let Err(e) = crate::approved_comp::keep(io, c) {
+                    io.err(&format!("build-phase: start refused: {e}; make {BUILD_DIR} writable and start again\n"));
+                    return 1;
+                }
+            }
+            // A new comp round: the comp it approves is kept when the comps gate closes.
+            None => crate::approved_comp::forget(io),
+        }
+        let direction_ref = direction.map(|d| seed_reference(io, d));
+        let mut state = new_state(comp, breakpoint.as_deref(), arg(argv, "artifact"), direction_ref.as_deref());
+        if let Some(d) = chosen_decision { state["decisionComp"] = json!(d); }
+        if io.env("IMPECCABLE_NATIVE_CAPTURE")==Some("1") {state["capturePolicy"]=json!("native-html-v1");}
+        // Session identity is transport metadata, never guessed from a project
+        // path or an earlier build. Old/unidentified states remain unscoped.
+        if let Some(session_id) = arg(argv, "session-id")
+            .or_else(|| io.env("IMPECCABLE_SESSION_ID"))
+            .or_else(|| io.env("CODEX_THREAD_ID"))
+            .filter(|s| !s.is_empty())
+        {
+            state["sessionId"] = json!(session_id);
+        }
+        save_state(io, &state);
+        io.out(&format!("{}\n", render_status(io, &state)));
+        return 0;
+    }
+    let mut state = match load_state(io) {
+        Some(s) => s,
+        None => {
+            io.err(&format!("build-phase: no state at {}; run build-phase.mjs start --comp <approved comp>\n", state_path()));
+            return 1;
+        }
+    };
+    match cmd {
+        "status" => {
+            if flag(argv, "json") {
+                io.out(&format!("{}\n", util::json_pretty(&state)));
+            } else {
+                io.out(&format!("{}\n", render_status(io, &state)));
+            }
+            0
+        }
+        "scaffold" => {
+            let Some(spec) = load_spec(&abs(io, SPEC_PATH)) else {
+                io.err(&format!("build-phase: no spec at {SPEC_PATH}; run comp-spec.mjs first\n"));
+                return 1;
+            };
+            let out = write_scaffold(io, &spec);
+            let bp = state.get("breakpoint").and_then(Value::as_str).map(String::from).unwrap_or_else(|| {
+                let w = spec.pointer("/compSize/width").and_then(Value::as_i64).unwrap_or(0);
+                let h = spec.pointer("/compSize/height").and_then(Value::as_i64).unwrap_or(0);
+                format!("{w}x{h}")
+            });
+            io.out(&format!("SCAFFOLD {}\n", out.dir));
+            io.out(&format!("  {}   one custom property set per region (--r-<id>-x/y/w/h in % of the comp; --r-<id>-cap, --r-<id>-font, --r-<id>-weight where measured); bind these to your own markup\n", out.css));
+            io.out(&format!("  {}  a reference page: every region positioned at its box inside a {bp} frame, plates placed with object-fit: contain, text slots at the measured cap height in the ranked face\n", out.html));
+            io.out("  The reference is a check, not the page: keep your own semantic structure and bind the numbers to it (an element per region, its box from the properties). Overlapping boxes are overlapping boxes. What the gate reads is pixels; a page that lands each region at its box passes whatever markup it uses.\n");
+            0
+        }
+        "note" => {
+            let text = argv[1..].iter().filter(|a| !a.starts_with("--")).cloned().collect::<Vec<_>>().join(" ");
+            let phase = state.get("phase").and_then(Value::as_str).unwrap_or("").to_string();
+            if let Some(notes) = state.pointer_mut(&format!("/phases/{phase}/notes")).and_then(|v| v.as_array_mut()) {
+                notes.push(json!({ "at": now(), "text": text }));
+            }
+            save_state(io, &state);
+            io.out(&format!("noted on {phase}\n"));
+            0
+        }
+        "record" => {
+            let which = argv.get(1).map(String::as_str);
+            if which != Some("hero") {
+                io.err("build-phase: record hero --build <png>\n");
+                return 1;
+            }
+            if let Some(why) = hero_plan_review_refusal(io, &state) {
+                io.err(&format!("build-phase: record hero refused. {why}\n"));
+                return 1;
+            }
+            let build_path = arg(argv, "build").unwrap_or(HERO_REPRO).to_string();
+            let min = arg(argv, "min").map(|m| util::parse_f64(m, HERO_MIN)).unwrap_or(HERO_MIN);
+            let gate = gate_hero(io, &mut state, &build_path, min, ".impeccable/review/diff/hero", None, organic_scan, renderer);
+            let records = state.pointer("/phases/hero/records").and_then(Value::as_i64).unwrap_or(0) + 1;
+            if let Some(h) = state.pointer_mut("/phases/hero").and_then(|v| v.as_object_mut()) {
+                h.insert("records".into(), json!(records));
+                h.insert("gate".into(), gate.record_json(&now()));
+            }
+            save_state(io, &state);
+            let spec = load_spec(&abs(io, SPEC_PATH));
+            let plate_rows: Vec<String> = gate
+                .region_verdicts
+                .iter()
+                .filter(|(id, _)| {
+                    spec.as_ref()
+                        .and_then(|s| spec_regions(s).into_iter().find(|r| r.get("id").and_then(Value::as_str) == Some(id.as_str())))
+                        .map(|r| r.get("medium").and_then(Value::as_str) == Some("raster"))
+                        .unwrap_or(false)
+                })
+                .map(|(id, v)| format!("{id}:{}", v.as_str().unwrap_or("")))
+                .collect();
+            if !plate_rows.is_empty() {
+                io.out(&format!("PLATES {}\n", plate_rows.join(" ")));
+            }
+            io.out(&format!("{} {} (record: nothing advanced)\n", if gate.ok { "PASS" } else { "FAIL" }, gate.summary.clone().unwrap_or_default()));
+            for r in &gate.reasons {
+                io.out(&format!("  - {r}\n"));
+            }
+            for a in &gate.advisories {
+                io.out(&format!("  {a}\n"));
+            }
+            if !gate.worst.is_empty() {
+                io.out(&format!("  worst: {}\n", gate.worst.join("; ")));
+            }
+            if let Some(sbs) = &gate.side_by_side {
+                io.out(&format!("  open {sbs}\n"));
+            }
+            if gate.ok {
+                0
+            } else {
+                2
+            }
+        }
+        "advance" => {
+            let opts = GateOpts {
+                build_path: arg(argv, "build").map(String::from),
+                min: arg(argv, "min").map(|m| util::parse_f64(m, f64::NAN)),
+                artifact: arg(argv, "artifact").map(String::from),
+            };
+            let res = advance(io, &mut state, flag(argv, "force"), arg(argv, "reason"), &opts, organic_scan, renderer);
+            save_state(io, &state);
+            if !res.ok {
+                io.out(&format!("GATE {} FAILED (state unchanged)\n", res.phase.to_uppercase()));
+                if !res.worst_crops.is_empty() {
+                    io.out("  LOOK FIRST, in this order, before editing anything (comp on the left, your build on the right):\n");
+                    for c in &res.worst_crops {
+                        let file = c.get("file").and_then(Value::as_str).unwrap_or("");
+                        let id = c.get("id").and_then(Value::as_str).unwrap_or("");
+                        let verdict = c.get("verdict").and_then(Value::as_str).unwrap_or("");
+                        let sc = |k: &str| c.pointer(&format!("/score/{k}")).and_then(Value::as_f64).unwrap_or(0.0);
+                        io.out(&format!("    {file}   {id}: {verdict} {}% (structure {}%, color {}%, detail {}%)\n", pct0(sc("overall")), pct0(sc("structure")), pct0(sc("color")), pct0(sc("detail"))));
+                    }
+                    io.out("  A region scored missing needs its material (a plate placed, or produced), not a value change; contradicted needs its structure re-derived from the spec box; drift is where padding and size edits belong. When a thin chrome strip (masthead, breadcrumb, table header) is the worst region, check its box height in the spec against the comp first: a strip one grid row tall in the spec but 53px in the comp compares your build against ground it never had.\n");
+                    if res.worst_crops.iter().any(|c| c["verdict"] == "displaced") {
+                        io.out("  A region scored displaced is present but pushed out of the first viewport: restore it there by sizing what sits above it in proportion to the viewport, not by moving it alone; a px floor or fixed row height that grows at this width is the usual cause.\n");
+                    }
+                }
+                for r in &res.reasons {
+                    io.out(&format!("  - {r}\n"));
+                }
+                for a in &res.advisories {
+                    io.out(&format!("  {a}\n"));
+                }
+                if let Some(sbs) = &res.side_by_side {
+                    io.out(&format!("  then {sbs} for the whole viewport\n"));
+                }
+                return 2;
+            }
+            io.out(&format!(
+                "ADVANCED {} -> {}{}{}\n",
+                res.phase,
+                res.next.clone().unwrap_or_default(),
+                if res.forced { " (FORCED; recorded)" } else { "" },
+                res.gate_summary.map(|s| format!("  {s}")).unwrap_or_default()
+            ));
+            for a in &res.advisories {
+                io.out(&format!("  {a}\n"));
+            }
+            io.out(&format!("NEXT {}\n", next_instruction(io, &state)));
+            0
+        }
+        "finish" => {
+            let disposition = arg(argv, "disposition");
+            if !matches!(disposition, Some("ship") | Some("fix") | Some("rebuild") | Some("recapture")) {
+                io.err("build-phase: finish --disposition ship|fix|rebuild|recapture\n");
+                return 1;
+            }
+            let disposition = disposition.unwrap();
+            if disposition == "ship" {
+                if let Some(why) = comp_refusal(io) {
+                    io.err(&format!("build-phase: finish --disposition ship refused: {why}\n"));
+                    return 2;
+                }
+            }
+            let open_before = crate::completion::open_phases(&state, false);
+            if disposition == "ship" && !open_before.is_empty() {
+                let phase = state.get("phase").and_then(Value::as_str).unwrap_or("");
+                io.err(&format!(
+                    "build-phase: finish --disposition ship refused: {} {} not closed (phase {phase}). Record fix or rebuild, or close the phases first; a page shipped over an open hero is a page shipped against its own gate.\n",
+                    open_before.join(", "),
+                    if open_before.len() == 1 { "is" } else { "are" }
+                ));
+                return 2;
+            }
+            if disposition == "ship" && !native_capture(io, &state) {
+                let current = crate::completion::input_hash(&io.cwd);
+                if current.is_none() || state["responsiveInputSha256"].as_str() != current.as_deref() {
+                    state["phase"] = json!("responsive");
+                    state["phases"]["responsive"]["status"] = json!("open");
+                    state["phases"]["responsive"]["closedAt"] = Value::Null;
+                    save_state(io,&state);
+                    io.err("build-phase: frontend inputs changed since the responsive screenshots were checked. Recapture desktop and mobile, then advance responsive before finish; this does not reopen human review.\n");
+                    return 2;
+                }
+            }
+            // Review often changes CSS after responsive passed. A finish signature
+            // must cover a fresh native comparison of the final page, not merely
+            // a new hash alongside historical gates or model-supplied screenshots.
+            if disposition == "ship" && native_capture(io, &state) {
+                let gate = gate_responsive(io, &mut state, RESPONSIVE_MIN,
+                    ".impeccable/review/diff/desktop", arg(argv, "artifact"), renderer);
+                let at = now();
+                let responsive = &mut state["phases"]["responsive"];
+                responsive["attempts"] = json!(responsive["attempts"].as_u64().unwrap_or(0) + 1);
+                responsive["gate"] = gate.record_json(&at);
+                if !gate.ok {
+                    responsive["status"] = json!("open");
+                    responsive["closedAt"] = Value::Null;
+                    state["phase"] = json!("responsive");
+                    state["phases"]["review"]["status"] = json!("open");
+                    state["phases"]["review"]["closedAt"] = Value::Null;
+                    state["finish"] = json!({"disposition":"fix", "at":at,
+                        "phaseAtFinish":"responsive", "reason":"final native comparison failed"});
+                    save_state(io, &state);
+                    io.err("build-phase: finish --disposition ship refused: final native responsive comparison failed. Responsive reopened; repair the reported findings and advance it before finishing.\n");
+                    for reason in &gate.reasons { io.err(&format!("  - {reason}\n")); }
+                    return 2;
+                }
+                responsive["closedAt"] = json!(at);
+            }
+            let phase = state.get("phase").and_then(Value::as_str).unwrap_or("").to_string();
+            state.as_object_mut().unwrap().insert("finish".into(), json!({ "disposition": disposition, "at": now(), "phaseAtFinish": phase }));
+            if state["capturePolicy"] != "native-html-v1" {
+                if let Some(hash) = crate::completion::input_hash(&io.cwd) {
+                    state["finish"]["artifactInputsSha256"] = json!(hash);
+                }
+            }
+            if let Some(hash) = crate::completion::artifact_hash(&io.cwd, &state) {
+                state["finish"]["artifactSha256"] = json!(hash);
+            }
+            // Bind the finish to every file the final native capture read, not
+            // only the entry: a font or stylesheet edited after ship changes the
+            // shipped page as surely as the HTML does.
+            if disposition == "ship" && state["capturePolicy"] == "native-html-v1" {
+                match native_capture_inputs(io) {
+                    Some(files) => state["finish"]["captureInputs"] = json!(files),
+                    None => {
+                        // A ship that cannot name what it checked binds only the
+                        // entry, so a later font or stylesheet edit would pass
+                        // unseen. Refuse rather than record a weaker finish.
+                        state["finish"] = json!({"disposition":"fix", "at":now(), "phaseAtFinish":phase,
+                            "reason":"final native capture manifest unavailable"});
+                        save_state(io, &state);
+                        io.err("build-phase: finish --disposition ship refused: the final native capture's input manifest (.impeccable/review/native/responsive/inputs.json) is missing or unreadable, so the finish cannot bind the files it checked. Run finish --disposition ship again; if it is refused again, report that the native capture left no manifest.\n");
+                        return 2;
+                    }
+                }
+            }
+            if disposition == "ship" {
+                state["finish"]["spent"] = json!(spent_runtime_output(io, &state));
+            }
+            if phase == "review" {
+                if let Some(rev) = state.pointer_mut("/phases/review").and_then(|v| v.as_object_mut()) {
+                    rev.insert("status".into(), json!("closed"));
+                    rev.insert("closedAt".into(), json!(now()));
+                }
+            }
+            save_state(io, &state);
+            io.out(&format!("{}\n", render_status(io, &state)));
+            0
+        }
+        other => {
+            io.err(&format!("build-phase: unknown command {other}\n"));
+            1
+        }
+    }
+}
+
+#[cfg(test)]
+#[path = "build_phase/integrity_tests.rs"]
+mod integrity_tests;

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Oversized H1, rendered text and the first screen</title>
+  <!--
+    Should pass in a browser scan. oversized-h1 is a first-screen claim about
+    what a reader meets, so it counts the headline text that paints (a word
+    rotator keeps every word in the DOM and shows one) and skips a headline
+    that starts below the first viewport. The file scan has no layout and
+    counts textContent, so it reports both. oversized-h1-browser.html keeps the
+    flag case.
+  -->
+  <style>
+    body { font-family: Georgia, serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { padding: 32px; }
+    h1 { margin: 0; line-height: 1.04; }
+    .pass-rotator-h1 { max-width: 1040px; font-size: 120px; }
+    .rotator { position: relative; display: inline-block; }
+    .word-hidden { position: absolute; top: 0; left: 0; opacity: 0; }
+    .spacer { height: 1200px; }
+    .pass-below-fold-h1 { max-width: 1040px; font-size: 104px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="pass-rotator-h1"><span class="rotator"><span>Claude AI</span><span class="word-hidden">ChatGPT</span><span class="word-hidden">Perplexity</span><span class="word-hidden">Google AI</span></span> picked you.</h1>
+    <div class="spacer"></div>
+    <h1 class="pass-below-fold-h1">A sweeping closing headline that sprawls across the whole viewport and keeps going</h1>
+  </main>
+</body>
+</html>

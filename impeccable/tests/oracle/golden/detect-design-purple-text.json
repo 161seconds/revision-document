@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "\n1 file scanned with regex matching only (.jsx).\nRules that need a parsed page (tiny-text, low-contrast and other element rules) did not run on them; findings are an undercount, not a clean bill of health.\nFor the full check, scan the running dev server (npx impeccable detect http://localhost:PORT) or a static site's built .html.\n\n0 anti-patterns found.\n\n── Advisory (not counted as failures) ──\n\n<WS>/src/page.html\n  line 6: [design-system-color] text color rgb(124, 58, 237) on p \"The brand purple on a promotion.\" is outside DESIGN.md colors\n    → A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.\n\n1 advisory note. Suppress with --no-advisory.\n\nNote: ai-color-palette's purple/violet check is off: <WS>/DESIGN.md declares colors.primary (#5c2d91).\n",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

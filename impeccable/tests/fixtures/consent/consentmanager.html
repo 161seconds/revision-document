@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a consentmanager-shaped box in a shadow root</title>
+  <style>
+    /* A consentmanager.net-shaped box (its ids and classes, not its script):
+       `div#cmpbox` with role=dialog, fixed over the lower part of the first
+       screen, rendered inside the open shadow root of `div#cmpwrapper`, as
+       letour.fr serves it. Under it sit a faint line of copy and a CTA, real
+       contrast failures; inside it, the box's own faint text. The URL engine
+       hides the host before the rule pass. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .faint { position: absolute; top: 640px; left: 80px; width: 520px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .cta { position: absolute; top: 700px; left: 80px; display: inline-block; padding: 8px 16px; border-radius: 6px;
+      background: #ff7145; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>A page under a consentmanager box</h1>
+  <p>The copy near the top of the page is readable and nothing covers it.</p>
+  <p class="faint" id="covered-copy">Faint copy the consent box covers at load.</p>
+  <a href="#" class="cta" id="covered-cta">Read the route</a>
+  <div id="cmpwrapper" class="cmpwrapper"></div>
+  <script>
+    const host = document.getElementById('cmpwrapper');
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML = '<style>#cmpbox { position: fixed; left: 0; right: 0; top: 580px; height: 220px; padding: 20px 40px; background: #ffffff; border-top: 1px solid #ddd; z-index: 2147483640; } .cmpboxtxt { margin: 0; max-width: 700px; font-size: 14px; color: #b0b0b0; }</style>'
+      + '<div id="cmpbox" class="cmpbox cmpstyleroot" role="dialog" aria-modal="true" aria-label="Privacy settings" style="display: block;">'
+      + '<div class="cmpboxinner"><div id="cmpboxcontent"><div class="cmpboxtxt cmptxt_txt">We, our providers and partners, deposit cookies and similar technologies to store and access information on your device.</div></div>'
+      + '<a class="cmpboxbtn cmpboxbtnyes" role="button" href="#">Accept All Cookies</a></div></div>';
+  </script>
+</body>
+</html>

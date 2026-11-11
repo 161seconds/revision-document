@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Never painted: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for paint that never reaches the screen (round 7, branch 2):
+       the painted-at-capture predicate in crates/core/src/browser/painted.rs
+       and the rules that ask it.
+
+       Every should-pass case carries the measurement of its should-flag twin
+       and differs only in paint, or in what the probe can know: a
+       placeholder inked transparent, a label at font-size 0, the fallback
+       text of a <video>, the back face of a flip card, a card in a tab pane
+       at opacity 0, a gradient label in a drawer parked past the viewport
+       inside a fixed header, a clipping box on a slide parked past its
+       track, carousel windows named slick-list, tempWrap, rolling and reel,
+       lazy images a library has not shown yet, text below a collapsed
+       panel's max-height, a word caught part way through a scripted colour
+       reveal, a floating label the hit test passes through, a stretched
+       link's overlay, a link label at font-size 0, and overlapping text in
+       a ticker track.
+
+       Two should-flag twins pin what those skips must not reach: a block
+       label lying wholly under a wider heading, whose box is far wider than
+       its words (occlusion measures both sides by their glyphs), and copy
+       an editor coloured by hand under a theme's colour transition (a footer
+       list, one link per paragraph, TinyMCE spans in a sentence), which no
+       script is revealing. The should-flag cells sit in a page wrapper
+       named page-scroller that does not move: only a moving track near the
+       text silences a collision.
+
+       Each pass case wears colours of its own, so the page's one report of
+       a colour pair never hides it.
+
+       The occlusion cases sit in the first 800px on purpose: occlusion
+       probes only points inside the viewport.
+
+       The static HTML engine measures no boxes and runs no hit tests, so it
+       reports what it can see in both columns. The URL behaviour is pinned
+       by crates/browser/tests/never_painted.rs. */
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 16px 20px; }
+    .col { position: relative; width: 600px; }
+    .col-label { font: 600 16px/20px system-ui; margin: 0 0 8px; }
+    .case-label { font: 600 13px/17px system-ui; margin: 0 0 6px; color: #333; }
+    .case { position: relative; width: 600px; margin: 24px 0 0; }
+
+    /* Occlusion cells, inside the first viewport. */
+    .cells { display: grid; grid-template-columns: 290px 290px; gap: 10px 20px; }
+    .cell { position: relative; width: 290px; height: 150px; }
+    .field { position: absolute; top: 30px; left: 0; width: 270px; height: 56px; }
+    .field input { position: absolute; top: 0; left: 0; width: 270px; height: 56px; padding: 20px 12px 6px; border: 1px solid #cccccc; border-radius: 6px; background: #ffffff; font-size: 16px; }
+    .field label { position: absolute; top: 8px; left: 12px; font-size: 14px; line-height: 18px; color: #444444; }
+    .field-covered label { z-index: 0; }
+    .field-covered input { z-index: 1; }
+    .field-floating label { z-index: 1; pointer-events: none; }
+    .overlap-a { position: absolute; top: 40px; left: 0; font-size: 18px; line-height: 24px; white-space: nowrap; }
+    .overlap-b { position: absolute; top: 40px; left: 0; font-size: 18px; line-height: 24px; white-space: nowrap; }
+    .story { position: absolute; top: 24px; left: 0; width: 280px; height: 120px; background: #1d2433; }
+    .story-overlay { position: absolute; inset: 0; padding: 10px; }
+    .story-topic { font-size: 14px; line-height: 18px; color: #ffd166; }
+    .story-title { margin: 44px 0 0; font-size: 16px; line-height: 20px; }
+    .story-title a { color: #ffffff; text-decoration: none; }
+    .story-title a::after { content: ""; position: absolute; inset: 0; }
+    .brand { position: absolute; top: 24px; left: 0; width: 270px; height: 40px; }
+    .brand-label { position: absolute; top: 8px; left: 10px; font-size: 16px; line-height: 24px; color: #1a1a1a; }
+    .brand-link { position: absolute; inset: 0; display: block; font-size: 0; color: #0000ee; }
+    .brand-link-shown { position: absolute; inset: 0; display: block; padding: 8px 10px; font-size: 16px; line-height: 24px; color: #0000ee; }
+    @keyframes np-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .ticker { position: absolute; top: 30px; left: 0; width: 270px; height: 40px; overflow: hidden; }
+    .ticker-track { position: relative; width: 540px; height: 40px; animation: np-scroll 20s linear infinite paused; }
+    .ticker-track .overlap-a, .ticker-track .overlap-b { top: 8px; }
+
+    /* Dots, fallback copy, faces. */
+    .dot { display: block; width: 24px; height: 24px; padding: 0; border: 0; font-size: 14px; line-height: 24px; }
+    .dot-flag { color: #333333; background: #888888; }
+    .dot-pass { color: #444444; background: #999999; font-size: 0; }
+    .fallback-flag { width: 300px; height: 60px; padding: 8px; color: #0b0b0b; background: #0f1117; }
+    .fallback-pass { display: block; width: 300px; height: 150px; color: #0c0c0c; background: #101218; }
+    .flip-card { position: relative; width: 296px; height: 120px; }
+    .face { position: absolute; inset: 0; padding: 16px; font-size: 16px; line-height: 22px; color: #ffffff; }
+    .face-front { background: #3c8efe; }
+    .face-back { background: #3d8dfd; transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+
+    /* Side tabs. */
+    .tab-card { width: 300px; padding: 12px 16px; border-left: 3px solid #e11d48; border-radius: 10px; background: #fff7f8; }
+    .tab-pane-inactive { opacity: 0; }
+
+    /* Gradient text, on the page and in a drawer parked past the viewport
+       inside a fixed header that holds it (its backdrop-filter makes it the
+       drawer's containing block). */
+    .grad { font-size: 32px; font-weight: 800; background: linear-gradient(90deg, #7c3aed, #06b6d4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .np-header { position: fixed; top: 0; left: 0; width: 1px; height: 1px; backdrop-filter: blur(2px); }
+    .np-drawer { position: fixed; top: 0; left: 1400px; width: 240px; height: 400px; background: #ffffff; }
+
+    /* Clipping boxes. */
+    .clip-box { position: relative; width: 260px; height: 60px; overflow: hidden; background: #f1f5f9; }
+    .clip-tip { position: absolute; top: 70px; left: 10px; width: 200px; font-size: 14px; line-height: 18px; background: #111827; color: #ffffff; }
+    .strip { width: 300px; height: 60px; overflow: hidden; }
+    .strip-track { display: flex; width: 900px; }
+    .strip-panel { flex: 0 0 300px; width: 300px; height: 60px; }
+
+    /* Rasters. */
+    .raster { display: block; width: 400px; height: 200px; }
+
+    /* A collapsed "read more" panel taller than the viewport. */
+    .limit { max-height: 900px; overflow: hidden; }
+    .limit-body { height: 1400px; }
+    .limit-spacer { height: 1200px; }
+    .limit-top { margin: 0; color: #8a8a8a; }
+    .limit-past { margin: 0; color: #8b8b8b; }
+
+    /* Word runs. */
+    .words { margin: 0; font-size: 24px; line-height: 32px; }
+    .word-reveal { transition: color 0.15s; }
+    .cms a, .cms span { transition: all 0.3s ease-in-out; text-decoration: none; }
+    .cms-list { display: flex; gap: 16px; margin: 0; padding: 0; list-style: none; }
+    .cms p { margin: 0 0 4px; }
+
+    /* A block label under a wider heading's words. */
+    .kicker { position: absolute; top: 40px; left: 0; width: 270px; margin: 0; font-size: 11px; line-height: 15px; color: #555555; }
+    .kicker-heading { position: absolute; top: 32px; left: 0; width: 270px; margin: 0; font-size: 24px; line-height: 28px; font-weight: 700; color: #151515; }
+  </style>
+</head>
+<body>
+  <header class="np-header">
+    <nav class="np-drawer">
+      <span class="grad" id="pass-drawer-gradient">Menu AI</span>
+    </nav>
+  </header>
+  <div class="grid">
+    <section class="col" data-col="flag">
+      <h2 class="col-label">Should flag</h2>
+
+      <div class="page-scroller">
+      <div class="cells">
+        <div class="cell">
+          <h3 class="case-label">Label under its field</h3>
+          <div class="field field-covered">
+            <label for="flag-covered-input" id="flag-label-covered">Email address</label>
+            <input id="flag-covered-input" type="email">
+          </div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Text over text</h3>
+          <span class="overlap-a" id="flag-overlap-under">Opening hours today</span>
+          <span class="overlap-b" id="flag-overlap-over">Closed for renovation</span>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">The same words set twice, in the same face, from the same origin</h3>
+          <div class="brand">
+            <span class="brand-label" id="pass-overprint-label">Cupra models</span>
+            <a class="brand-link-shown" href="#cupra">Cupra models</a>
+          </div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">A link label over its card</h3>
+          <div class="brand">
+            <span class="brand-label" id="flag-brand-label">Audi models</span>
+            <a class="brand-link-shown" href="#audi">All Audi models</a>
+          </div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">A block label under a heading's words</h3>
+          <p class="kicker" id="flag-kicker-under">Menu</p>
+          <div class="kicker-heading">Team</div>
+        </div>
+      </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Dot label</h3>
+        <button class="dot dot-flag" id="flag-dot" type="button">1</button>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Copy in a box</h3>
+        <div class="fallback-flag" id="flag-fallback-copy">Your browser does not support the video tag.</div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Flip card front</h3>
+        <div class="flip-card"><div class="face face-front"><p id="flag-flip-front">Are you overhyping the AI? Get answers.</p></div></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Side tab card</h3>
+        <div class="tab-card" id="flag-side-tab">Week one: publish the first video</div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Gradient text</h3>
+        <span class="grad" id="flag-gradient">Launch faster</span>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">A box clips its tooltip</h3>
+        <div class="clip-box" id="flag-clip"><span class="clip-tip" role="tooltip">Tooltip the box cuts off</span></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Image held buried</h3>
+        <img class="raster" id="flag-buried" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Texture held buried" width="400" height="200" style="opacity: 0.05">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Placeholder</h3>
+        <input id="flag-placeholder" type="email" placeholder="Your email" style="width: 280px; height: 40px; padding: 8px; border: 1px solid #cccccc; background: #ffffff;">
+        <style>#flag-placeholder::placeholder { color: #bbbbbb; }</style>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Words in their own colour</h3>
+        <p class="words" id="flag-words"><span style="color: rgb(226, 226, 230)">Every</span> <span style="color: rgb(226, 226, 230)">word</span> <span style="color: rgb(226, 226, 230)">stays</span> <span style="color: rgb(226, 226, 230)">pale</span></p>
+      </div>
+
+      <div class="case cms">
+        <h3 class="case-label">Copy an editor coloured, under a transition</h3>
+        <ul class="cms-list"><li><a href="#about" style="color: #b1b1b1;">About us</a></li><li><a href="#careers" style="color: #b1b1b1;">Careers</a></li><li><a href="#press" style="color: #b1b1b1;">Press</a></li><li><a href="#contact" style="color: #b1b1b1;">Contact</a></li></ul>
+        <div><p>First paragraph with <a href="#one" style="color: #a9a9aa;">one link</a> inside.</p><p>Second paragraph with <a href="#two" style="color: #a9a9aa;">another link</a> here.</p><p>Third with <a href="#three" style="color: #a9a9aa;">a third link</a> too.</p></div>
+        <p>Shipping is free <span style="color: #c4c4c5;">on orders</span> over fifty euros <span style="color: #c4c4c5;">within the EU</span> and takes <span style="color: #c4c4c5;">three to five days</span> in most regions.</p>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Collapsed panel, top</h3>
+        <div class="limit"><div class="limit-body"><p class="limit-top" id="flag-limit-visible">Band list and supported frequencies</p></div></div>
+      </div>
+    </section>
+
+    <section class="col" data-col="pass">
+      <h2 class="col-label">Should pass</h2>
+
+      <div class="cells">
+        <div class="cell">
+          <h3 class="case-label">Floating label over its field</h3>
+          <div class="field field-floating">
+            <input id="pass-floating-input" type="email" placeholder="Email address">
+            <label for="pass-floating-input" id="pass-floating-label">Email address</label>
+          </div>
+          <style>#pass-floating-input::placeholder { color: transparent; }</style>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Topic under a stretched link</h3>
+          <div class="story">
+            <div class="story-overlay">
+              <div class="story-topic" id="pass-stretched-topic">Faits divers</div>
+              <h4 class="story-title"><a href="#story">A headline that links the whole card</a></h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Label under a link at font-size 0</h3>
+          <div class="brand">
+            <span class="brand-label" id="pass-brand-label">Belgee models</span>
+            <a class="brand-link" href="#belgee">Belgee models</a>
+          </div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Ticker words</h3>
+          <div class="ticker">
+            <div class="ticker-track">
+              <span class="overlap-a" id="pass-quote-under">VALE3: R$ 73,20</span>
+              <span class="overlap-b" id="pass-quote-over">ITUB4: R$ 38,10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Dot label at font-size 0</h3>
+        <button class="dot dot-pass" id="pass-dot-zero" type="button">2</button>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Video fallback copy</h3>
+        <video class="fallback-pass" id="pass-video-fallback" muted playsinline>Your browser does not support the video element.</video>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Flip card back face</h3>
+        <div class="flip-card"><div class="face face-back"><p id="pass-flip-back">Get real answers about AI in sales.</p></div></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Side tab card in an inactive pane</h3>
+        <div class="tab-pane-inactive"><div class="tab-card" id="pass-side-tab">Week two: schedule the posts</div></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">A box clips its tooltip on a parked slide</h3>
+        <div class="strip">
+          <div class="strip-track">
+            <div class="strip-panel"></div>
+            <div class="strip-panel"></div>
+            <div class="strip-panel"><div class="clip-box" id="pass-parked-clip"><span class="clip-tip" role="tooltip">Tooltip on a slide nobody sees</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Carousel windows</h3>
+        <div class="clip-box slick-list" id="pass-slick"><span class="clip-tip" role="tooltip">Next slide caption</span></div>
+        <div class="clip-box tempWrap" id="pass-tempwrap"><span class="clip-tip" role="tooltip">Next photo caption</span></div>
+        <ul class="clip-box notice-list notice_rolling" id="pass-rolling" style="margin: 0; padding: 0; list-style: none;"><li class="clip-tip"><span role="tooltip">Next notice</span></li></ul>
+        <div class="clip-box" id="pass-reel"><div class="tbl-recommendation-reel"></div><span class="clip-tip" role="tooltip">Next recommendation</span></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Lazy images not shown yet</h3>
+        <img class="raster lazy" id="pass-lazy-hidden" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Product photo" width="400" height="200" style="opacity: 0">
+        <img class="raster" id="pass-lazy-state" data-loaded="false" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Model photo" width="400" height="200" style="opacity: 0">
+        <img class="raster lazy" id="pass-lazy-fade" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Phone photo" width="400" height="200" style="display: inline; opacity: 0.07;">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Transparent placeholder</h3>
+        <input id="pass-placeholder-clear" type="email" placeholder="Work email" style="width: 280px; height: 40px; padding: 8px; border: 1px solid #cccccc; background: #fefefe;">
+        <style>#pass-placeholder-clear::placeholder { color: transparent; }</style>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Words part way through a colour reveal</h3>
+        <p class="words" id="pass-words"><span class="word-reveal" style="color: rgb(228, 228, 231)">Words</span> <span class="word-reveal" style="color: rgb(228, 228, 231)">light</span> <span class="word-reveal" style="color: rgb(228, 228, 231)">up</span> <span class="word-reveal" style="color: rgb(228, 228, 231)">later</span></p>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Collapsed panel, past its max-height</h3>
+        <div class="limit"><div class="limit-body"><div class="limit-spacer"></div><p class="limit-past" id="pass-limit-hidden">Rows the panel keeps folded away</p></div></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

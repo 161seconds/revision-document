@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat type hierarchy, an h1 set as a label</title>
+<!--
+  Should pass. A map tool page puts its h1 on a 14px form label ("Find
+  FBOs:") over 16px copy, and sets its real headline, 48px, on a div
+  (phillips66.com). A ladder topped by an h1 smaller than the body text
+  measures a label, not the page's title, and the rule declines rather than
+  report it. flat-type-hierarchy.html is the twin that still reports.
+-->
+<style>
+  body { margin: 0; padding: 24px; font-family: system-ui, sans-serif; background: #ffffff; color: #111111; }
+  p { font-size: 16px; line-height: 1.5; font-weight: 300; }
+  .note { font-size: 15px; }
+  h1 { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+  h2 { font-size: 15px; font-weight: 500; }
+  .headline { font-size: 48px; font-weight: 300; }
+</style>
+</head>
+<body>
+  <div class="headline">Use the search tool</div>
+  <h1>Find FBOs:</h1>
+  <p>Search by airport code, city or the name of the operator.</p>
+  <p>Results list every base with fuel, hangar and crew services.</p>
+  <p class="note">Hours and services change; call ahead to confirm.</p>
+  <h2>Company</h2>
+  <h2>Investors</h2>
+  <h2>Careers</h2>
+  <p>Links to the rest of the site sit in the footer columns.</p>
+</body>
+</html>

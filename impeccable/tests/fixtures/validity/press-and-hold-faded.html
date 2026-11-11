@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Expect More. Pay Less.</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { width: 960px; margin: 0 auto; padding: 32px 24px; }
+    p { font-size: 16px; line-height: 24px; }
+    /* HUMAN Security (PerimeterX) lays its "Press & hold" check over the
+       rendered page as a fixed iframe, target.com run 28. Here it is
+       held inside a wrapper faded to opacity 0: the sheet is not showing,
+       so the page is the page. */
+    .px-fade { opacity: 0; }
+    #px-captcha-modal { display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 2147483647; background-color: white; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Wellness event</h1>
+    <p>The retailer's home page renders under the check: deals, categories and a footer.</p>
+  </main>
+  <div class="px-fade"><iframe id="px-captcha-modal" srcdoc="&lt;p&gt;Press &amp;amp; hold to confirm you are a human (and not a bot).&lt;/p&gt;"></iframe></div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overused font share: should pass (browser-only)</title>
+  <!--
+    overused-font names the face most text elements are set in. In a browser
+    it also weighs characters: a face that sets under one character in twenty
+    of the text a visitor can see is not the page's face, whatever the element
+    count says. Here thirty two-digit step numbers are set in Inter and eight
+    paragraphs in Georgia. Inter is the most used face by element (a closed
+    drawer of Inter copy adds to its count) and sets about 3% of the visible
+    characters, so it stands down. The drawer's characters are not weighed.
+  -->
+  <style>
+    body { margin: 0; padding: 24px 40px; width: 1000px; color: #1a1a1a; background: #fff; font: 16px/24px Georgia, serif; }
+    h1 { font-size: 32px; line-height: 40px; margin: 0 0 16px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; width: 720px; margin: 0 0 24px; }
+    .tags span { display: block; padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font: 12px/16px Inter, sans-serif; }
+    p { width: 640px; margin: 0 0 16px; }
+    .drawer { display: none; width: 640px; font-family: Inter, sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Pass: Inter sets thirty step numbers and nothing else a visitor reads</h1>
+  <div class="tags">
+    <span>01</span>
+    <span>02</span>
+    <span>03</span>
+    <span>04</span>
+    <span>05</span>
+    <span>06</span>
+    <span>07</span>
+    <span>08</span>
+    <span>09</span>
+    <span>10</span>
+    <span>11</span>
+    <span>12</span>
+    <span>13</span>
+    <span>14</span>
+    <span>15</span>
+    <span>16</span>
+    <span>17</span>
+    <span>18</span>
+    <span>19</span>
+    <span>20</span>
+    <span>21</span>
+    <span>22</span>
+    <span>23</span>
+    <span>24</span>
+    <span>25</span>
+    <span>26</span>
+    <span>27</span>
+    <span>28</span>
+    <span>29</span>
+    <span>30</span>
+  </div>
+  <p>The workspace keeps every draft, review and decision in one place, so a team that picks up a project after a month away can read how it got to where it is without asking anyone who was there at the time.</p>
+  <p>Each record carries its own history. A change shows who made it and what it replaced, and a reviewer can step back through the versions one at a time until the point where the numbers stopped adding up.</p>
+  <p>Access follows the work. A contractor sees the two projects they were brought in for and nothing else, and when the engagement ends their access ends with it, on the date written into the invitation.</p>
+  <p>Exports are plain files in open formats. Nothing is held in a shape only this product can read, and a team that decides to leave takes its whole archive along in an afternoon without writing to support.</p>
+  <p>Alerts go to the person on call and to nobody else. The schedule is a table anyone on the team can read, and swapping a shift takes two taps from the phone, with the change noted for the rest of the week.</p>
+  <p>Billing counts active seats on the last day of the month. A seat that was added and removed inside the same month costs nothing, and the invoice lists each seat by name so finance can check it line by line.</p>
+  <p>Search reads every field, including the notes people leave in the margins, and it returns the record with the matching words marked so a reader can see at a glance why it came up in the first place.</p>
+  <p>Support answers in writing within a working day, and every answer is kept with the record it was about, so the next person to ask the same question finds the answer already waiting where they looked.</p>
+
+  <!-- Not rendered: a closed drawer whose copy is set in Inter. It counts as
+       Inter text elements, and its characters are not weighed. -->
+  <nav class="drawer">
+    <a href="#x">The workspace keeps every draft, review and decision in one place, so a team that picks up a project after a month away can read how it got to where it is without asking anyone who was there at the time.</a>
+    <a href="#x">Each record carries its own history. A change shows who made it and what it replaced, and a reviewer can step back through the versions one at a time until the point where the numbers stopped adding up.</a>
+    <a href="#x">Access follows the work. A contractor sees the two projects they were brought in for and nothing else, and when the engagement ends their access ends with it, on the date written into the invitation.</a>
+    <a href="#x">Exports are plain files in open formats. Nothing is held in a shape only this product can read, and a team that decides to leave takes its whole archive along in an afternoon without writing to support.</a>
+  </nav>
+</body>
+</html>

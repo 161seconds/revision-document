@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "serve-question: no state file for key k1 in <WS>/.impeccable/questions, and no live round recorded for it elsewhere. If this key's answer was already collected or --stop ran, the round is over; otherwise rerun --update from the directory where --start ran. The page may still be open: do not --start a second server.\n",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}

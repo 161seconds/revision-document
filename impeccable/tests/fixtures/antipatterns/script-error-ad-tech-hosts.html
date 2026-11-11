@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Script errors from ad-tech and tag hosts in run 28 (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { width: 640px; margin: 0 auto; padding: 32px 24px; }
+    p { font-size: 16px; line-height: 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>The page renders fine</h1>
+    <p>An accessibility overlay, a shared reporting tag and an ad core calling
+    Prebid throw on pages that render fine. Their errors are the vendors', so
+    they report as advisory and name the vendor. A script the site serves
+    from the same host as the reporting tag stays the site's.</p>
+  </main>
+  <script>
+    // Should flag (advisory, Nagich): walla.co.il's accessibility overlay.
+    setTimeout(new Function("[].x.some(Boolean)\n//# sourceURL=https://js.nagich.co.il/core/4.6.12/accessibility.js"), 0);
+    // Should flag (advisory, Chase Reporting): the shared reporting library.
+    setTimeout(new Function("Object.keys(null)\n//# sourceURL=https://asset.chase.com/web/library/digddsautomation/reportingjs/Reporting.js"), 0);
+    // Should flag (advisory, Prebid): an ad core calling a Prebid build that
+    // lacks the method, named in the message.
+    setTimeout(new Function("var ze = { _prebidjs: {} }; ze._prebidjs.getAdserverTargetingForAdUnitCode()\n//# sourceURL=https://tra.scds.pmdstatic.net/advertising-core/5/core-ads.js"), 0);
+    // Should flag (error): the site's own bundle on the reporting tag's host.
+    setTimeout(new Function("throw new TypeError('offer is undefined')\n//# sourceURL=https://asset.chase.com/web/app/main.js"), 100);
+  </script>
+</body>
+</html>

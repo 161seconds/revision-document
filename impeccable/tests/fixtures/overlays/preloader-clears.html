@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay hiding: a preloader that clears on its own</title>
+  <style>
+    /* A preloader the site removes about a second after load. The URL engine
+       waits for it and has nothing to hide. Pinned by
+       crates/browser/tests/overlay_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .loader-wrapper { position: fixed; inset: 0; z-index: 9999; background: #0b5c63; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .faint { margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+  </style>
+</head>
+<body>
+  <div class="loader-wrapper"><span>Loading...</span></div>
+  <h1>A page with a preloader that clears</h1>
+  <p class="faint" id="covered-copy">Faint copy the preloader covers for a second.</p>
+  <script>
+    window.addEventListener('load', () => setTimeout(() => document.querySelector('.loader-wrapper').remove(), 1000));
+  </script>
+</body>
+</html>

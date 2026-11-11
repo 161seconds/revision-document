@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>text-occlusion, text buried under the layer the answer lies on</title>
+<!--
+  The probe asks the page what is on top at each point of a run of text. When
+  the answer is other text, the two are read as colliding. That holds only
+  when the answer lies on the text itself.
+
+  Should pass: a form parked at z-index -1 under a hero photo. The headline
+  set on the photo answers the label's points, and the photo sits between the
+  two: a picture over text is never counted (bankofamerica.com).
+
+  Should pass: the same form under the white fill of its own container, which
+  only a negative z-index arranges.
+
+  Should flag: a headline laid straight over a label, nothing between them.
+
+  The static engine has no hit test; text-occlusion never reports there.
+-->
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #1a1a1a; background: #ffffff; margin: 24px; }
+  .hero { position: relative; width: 600px; height: 160px; margin: 0 0 24px; }
+  .stacks { z-index: 0; }
+  .fills { background: #ffffff; }
+  .form { position: absolute; z-index: -1; left: 12px; top: 20px; width: 240px; }
+  .form label { display: block; font-size: 16px; line-height: 20px; }
+  .photo { position: absolute; left: 0; top: 0; width: 600px; height: 160px; }
+  .headline { position: relative; margin: 0; padding: 12px; font-size: 28px; line-height: 36px; color: #ffffff; }
+  .fills .headline, .bare .headline { color: #1a1a1a; }
+  .bare .form { z-index: auto; }
+  .bare .headline { position: absolute; left: 0; top: 0; }
+</style>
+</head>
+<body>
+
+<div class="hero stacks">
+  <div class="form"><label class="pass-under-photo">User ID</label></div>
+  <img class="photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='160'%3E%3Crect width='600' height='160' fill='%23123a5c'/%3E%3C/svg%3E">
+  <h2 class="headline">Bank on your terms</h2>
+</div>
+
+<div class="hero fills">
+  <div class="form"><label class="pass-under-own-container">User ID</label></div>
+  <h2 class="headline">Bank on your terms</h2>
+</div>
+
+<div class="hero bare">
+  <div class="form"><label class="flag-under-headline">User ID</label></div>
+  <h2 class="headline">Bank on your terms</h2>
+</div>
+
+</body>
+</html>

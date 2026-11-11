@@ -1,0 +1,198 @@
+/*
+ * Popup: the toolbar sheet. Paper ground, the mark and the wordmark at the
+ * head, one count, three controls. Tokens and the severity language live in
+ * ../shared/kinpaku.css; only layout and the local pieces are here.
+ *
+ * The count is ink at every value: gold under 2:1 on paper cannot carry a
+ * numeral. What findings change is the rule under it, which lights gold.
+ * No button carries the kit's gold arrow, because popup.js rewrites
+ * the scan and overlay labels through textContent and would drop any child element.
+ */
+
+body {
+  width: 224px;
+  padding: 14px 14px 10px;
+}
+
+/* Head */
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ks-rule);
+}
+
+h1 {
+  font-family: var(--ks-font-wordmark);
+  font-size: var(--ks-type-ui);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--ks-ink);
+}
+
+/* Count */
+
+.count-display {
+  text-align: center;
+  padding: 18px 0 0;
+  margin-bottom: 16px;
+}
+
+.count-number {
+  display: inline-block;
+  min-width: 56px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--ks-rule);
+  font-family: var(--ks-font-wordmark);
+  font-size: 44px;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--ks-text-mute-deep);
+  transition: color var(--ks-settle) var(--ks-ease), border-color var(--ks-settle) var(--ks-ease);
+}
+
+/* Findings present: the numeral goes ink and the rule under it lights gold. */
+.count-number.has-findings {
+  color: var(--ks-ink);
+  border-bottom-color: var(--ks-kinpaku);
+}
+
+.count-label {
+  display: block;
+  margin-top: 8px;
+  font-size: var(--ks-type-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ks-text-muted);
+}
+
+/* Controls */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--ks-radius-sm);
+  font-family: inherit;
+  font-size: var(--ks-type-label);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--ks-quick) var(--ks-ease),
+    border-color var(--ks-quick) var(--ks-ease),
+    color var(--ks-quick) var(--ks-ease);
+}
+
+.btn-primary {
+  background: var(--ks-ink);
+  border-color: var(--ks-ink);
+  color: var(--ks-paper-raised);
+}
+
+.btn-primary:hover {
+  background: var(--ks-text);
+  border-color: var(--ks-text);
+}
+
+.btn-primary:active {
+  background: oklch(8% 0 0);
+  border-color: oklch(8% 0 0);
+}
+
+.btn:disabled {
+  background: transparent;
+  border-color: var(--ks-rule);
+  color: var(--ks-text-mute-deep);
+  cursor: default;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--ks-paper-raised);
+  border-color: var(--ks-edge);
+  color: var(--ks-ink);
+  box-shadow: var(--ks-cap-lift);
+}
+
+.btn-secondary:hover {
+  border-color: var(--ks-ink);
+}
+
+.btn-secondary:active {
+  background: var(--ks-gray);
+  box-shadow: var(--ks-cap-press);
+}
+
+/* A scan that did not run. The one vermilion in the extension. */
+
+.scan-error {
+  margin: -8px 0 14px;
+  padding-left: 8px;
+  border-left: 2px solid var(--ks-vermilion);
+  font-size: var(--ks-type-micro);
+  line-height: 1.45;
+  color: var(--ks-vermilion);
+}
+
+.scan-error[hidden] {
+  display: none;
+}
+
+.btn-secondary:disabled {
+  border-color: var(--ks-rule);
+  color: var(--ks-text-mute-deep);
+  background: transparent;
+  box-shadow: none;
+}
+
+.copy-status {
+  margin: -4px 0 14px;
+  color: var(--ks-text);
+  font-size: var(--ks-type-micro);
+  line-height: 1.45;
+}
+
+.copy-status:empty {
+  display: none;
+}
+
+.copy-status.is-error {
+  color: var(--ks-vermilion);
+}
+
+/* Foot */
+
+footer {
+  text-align: center;
+  padding-top: 10px;
+  border-top: 1px solid var(--ks-rule);
+}
+
+footer a {
+  font-size: var(--ks-type-micro);
+  color: var(--ks-text-muted);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: color var(--ks-quick) var(--ks-ease), border-color var(--ks-quick) var(--ks-ease);
+}
+
+footer a:hover {
+  color: var(--ks-ink);
+  border-bottom-color: var(--ks-kinpaku);
+}

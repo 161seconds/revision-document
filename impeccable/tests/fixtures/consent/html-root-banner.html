@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a banner appended to the html element</title>
+  <style>
+    /* A short page with copy of its own under a OneTrust-shaped banner the
+       manager appended to <html>, outside <body>. The banner's text is not
+       in body.innerText, so it is not subtracted from the page's own: the
+       page is scanned, not refused. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    #onetrust-consent-sdk { position: fixed; left: 0; right: 0; bottom: 0; padding: 24px; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Opening hours</h1>
+  <p>The studio is open Tuesday to Saturday from ten until six.</p>
+  <script>
+    const sdk = document.createElement('div');
+    sdk.id = 'onetrust-consent-sdk';
+    sdk.innerHTML = '<p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising and to measure its performance.</p>';
+    document.documentElement.appendChild(sdk);
+  </script>
+</body>
+</html>

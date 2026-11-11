@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a late Cookiebot-shaped dialog</title>
+  <style>
+    /* A Cookiebot-shaped dialog (its ids, not its script) the page injects
+       late, on its first scroll, with the underlay Cookiebot lays behind a
+       modal and the inline overflow: hidden a modal consent layer puts on
+       <body>. The URL engine's second hide pass, after the reveal sweep,
+       catches it: the copy under it reports, the dialog's own faint text does
+       not, and the scroll lock is undone. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .section { height: 900px; }
+    .faint { position: absolute; top: 360px; left: 380px; width: 520px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .cta { position: absolute; top: 420px; left: 380px; display: inline-block; padding: 8px 16px; border-radius: 6px;
+      background: #ff7145; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none; }
+    #CybotCookiebotDialogBodyUnderlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 2147483630; }
+    #CybotCookiebotDialog { position: fixed; top: 200px; left: 50%; width: 640px; margin-left: -320px; height: 360px;
+      padding: 28px; border-radius: 8px; background: #ffffff; z-index: 2147483631; }
+    #CybotCookiebotDialogBodyContentText { margin: 0 0 16px; font-size: 14px; color: #b0b0b0; }
+  </style>
+</head>
+<body>
+  <h1>A page with a late consent dialog</h1>
+  <div class="section"><p>The first section.</p></div>
+  <div class="section"><p>The second section.</p></div>
+  <p class="faint" id="covered-copy">Faint copy the consent dialog covers.</p>
+  <a href="#" class="cta" id="covered-cta">Book a demo</a>
+  <script>
+    // Cookiebot-style: the dialog arrives after load, here on the first scroll.
+    let shown = false;
+    window.addEventListener('scroll', () => {
+      if (shown) return;
+      shown = true;
+      const underlay = document.createElement('div');
+      underlay.id = 'CybotCookiebotDialogBodyUnderlay';
+      const dialog = document.createElement('div');
+      dialog.id = 'CybotCookiebotDialog';
+      dialog.className = 'CybotCookiebotDialogActive';
+      dialog.setAttribute('role', 'dialog');
+      dialog.style.display = 'flex';
+      dialog.innerHTML = '<div id="CybotCookiebotDialogBody"><p id="CybotCookiebotDialogBodyContentText">This website uses cookies to personalise content and to analyse our traffic.</p><button id="CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll" type="button">Allow all</button></div>';
+      document.body.appendChild(underlay);
+      document.body.appendChild(dialog);
+      document.body.style.overflow = 'hidden';
+    }, { passive: true });
+  </script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Clipped overflow container fixture</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; }
+    .col { padding: 16px; }
+    .box { position: relative; width: 200px; height: 120px; margin: 0 0 24px; padding: 16px; border: 1px solid #ddd; }
+    .pop { position: absolute; top: 100%; left: 0; width: 220px; background: #222; color: #fff; padding: 8px; }
+    .tip-negative { position: absolute; top: -34px; left: 16px; width: 160px; background: #222; color: #fff; padding: 8px; }
+    .flyout { position: absolute; top: 28px; left: 100%; width: 180px; background: #222; color: #fff; padding: 8px; }
+    .contained-badge { position: absolute; top: 10px; right: 10px; width: 36px; height: 24px; background: #e5f0ff; }
+    .button-shine { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); }
+    .crop-photo { position: absolute; inset: -18px; background: linear-gradient(135deg, #b7d7ff, #486aa3); }
+    .inside-overlay { position: absolute; left: 12px; right: 12px; bottom: 12px; min-height: 28px; background: rgba(255,255,255,.86); }
+    .pass-hidden-button { position: relative; overflow: hidden; width: 160px; height: 52px; border: 1px solid #ddd; background: #111; color: #fff; }
+    .pass-carousel-viewport,
+    .pass-fisheye-list,
+    .pass-split-container {
+      position: relative;
+      overflow: hidden;
+      width: 200px;
+      height: 120px;
+      margin: 0 0 24px;
+      border: 1px solid #ddd;
+    }
+    .carousel-slide-next { position: absolute; top: 100%; left: 0; width: 100%; height: 100%; padding: 16px; background: #f5f5f5; }
+    .fisheye-next-item { position: absolute; top: 100%; left: 0; width: 100%; padding: 8px; background: none; border: 0; text-align: left; }
+    .split-after-panel { position: absolute; top: 0; left: 50%; width: 100%; height: 100%; background: #f5f5f5; }
+    .ribbon { position: absolute; top: -12px; left: 16px; width: 120px; height: 24px; background: #2d5bd7; color: #fff; }
+    .rail-tooltip { position: absolute; top: -40px; left: 24px; width: 150px; height: 28px; background: #222; color: #fff; }
+    .rail-card { width: 160px; height: 88px; padding: 16px; border: 1px solid #ddd; }
+    .inner-clip { position: relative; overflow: hidden; width: 168px; height: 88px; padding: 16px; border: 1px solid #ddd; }
+    .translated-menu { position: absolute; top: 100%; left: 0; width: 180px; background: #222; color: #fff; padding: 8px; transform: translateY(6px); }
+    .tip-second { position: absolute; top: -30px; left: 16px; width: 150px; height: 24px; background: #222; color: #fff; }
+    .empty-menu { position: absolute; top: 100%; left: 0; width: 160px; height: 120px; background: #222; }
+    .contents-shell { display: contents; overflow: hidden; }
+    .media-bleed { position: absolute; inset: -24px; }
+    .corner-tick { position: absolute; top: -6px; left: -6px; width: 11px; height: 11px; pointer-events: none; background: #486aa3; }
+    .hover-sheen { position: absolute; bottom: -12px; left: 0; width: 160px; height: 32px; opacity: 0; }
+    .hover-sheen-fill { width: 160px; height: 32px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.6), transparent); }
+    .marquee-track { position: relative; width: 400px; height: 40px; }
+    .marquee-item { position: absolute; top: 8px; left: -100%; width: 200px; height: 24px; }
+    .x-clip-box { position: relative; overflow-x: clip; overflow-y: visible; width: 200px; height: 120px; margin: 0 0 24px; padding: 16px; border: 1px solid #ddd; }
+    .below-the-box { position: absolute; top: -30px; left: 16px; width: 160px; height: 24px; background: #eef3ff; }
+    .swiper { position: relative; overflow: hidden; width: 200px; height: 120px; margin: 0 0 24px; padding: 16px; border: 1px solid #ddd; }
+    .swiper-slide-next { position: absolute; top: 0; left: 100%; width: 200px; height: 120px; padding: 16px; background: #f5f5f5; }
+    .swap-copy { position: absolute; inset: 0; background: #f0f4ff; transform: translateY(100%); }
+  </style>
+</head>
+<body>
+  <div class="cols">
+    <!-- FLAG column: clipping container with a positioned child that needs to escape -->
+    <section class="col flag">
+      <div class="box flag-overflow-hidden" style="overflow: hidden">
+        <button>Menu</button>
+        <ul class="pop" role="menu">Dropdown that gets clipped by the hidden ancestor</ul>
+      </div>
+      <div class="box flag-overflow-clip" style="overflow: clip">
+        <button>Tooltip host</button>
+        <span class="pop" role="tooltip">Tooltip clipped by overflow clip</span>
+      </div>
+      <div class="box flag-overflow-negative" style="overflow: hidden">
+        <button>Help</button>
+        <span class="tip-negative" role="tooltip">Tooltip clipped above the host</span>
+      </div>
+      <div class="box flag-overflow-right" style="overflow: hidden">
+        <button>Actions</button>
+        <div class="flyout" role="menu">Flyout menu clipped to the right of the host</div>
+      </div>
+      <div class="box flag-shadow-utility" style="overflow: hidden">
+        <button>More</button>
+        <div class="pop bg-white shadow-lg" role="listbox">Dropdown with utility classes still gets clipped.</div>
+      </div>
+      <div class="box flag-overlay-surface" style="overflow: clip">
+        <button>Dialog</button>
+        <div class="pop modal-overlay" role="dialog">Overlay-style dialog content still needs to escape.</div>
+      </div>
+      <div class="box flag-rail-tooltip" style="overflow: hidden">
+        <div class="rail-card">Review card in a horizontal rail.</div>
+        <span class="rail-tooltip" role="tooltip">Posted on the web</span>
+      </div>
+      <!-- Two nested clips cut the same layer. The nearer one owns it, and a
+           second row is its own finding rather than one the shell absorbs. -->
+      <div class="box nested-outer-clip" style="overflow: hidden">
+        <div class="inner-clip flag-nested-row">
+          <button>Row actions</button>
+          <span class="tip-negative" role="tooltip">Tooltip clipped by both nested containers</span>
+        </div>
+        <div class="inner-clip flag-nested-note">
+          <button>Row notes</button>
+          <span class="tip-second" role="tooltip">Second row tooltip, cut by its own row</span>
+        </div>
+      </div>
+      <div class="box flag-translated-menu" style="overflow: hidden">
+        <button>Account</button>
+        <div class="translated-menu" role="menu">A menu parked by a transform is still a menu.</div>
+      </div>
+      <div class="box flag-empty-menu" style="overflow: hidden">
+        <button>Sort</button>
+        <div class="empty-menu" role="menu"></div>
+      </div>
+      <!-- An open native dialog is a dialog without role="dialog". -->
+      <div class="box flag-native-dialog" style="overflow: hidden">
+        <button>Share</button>
+        <dialog open class="pop native-dialog" style="margin: 0; border: 0">Native dialog clipped by the hidden ancestor.</dialog>
+      </div>
+      <!-- A BEM element name that names no track still reports. -->
+      <div class="box hero__panel flag-bem-tooltip" style="overflow: hidden">
+        <button>Details</button>
+        <span class="hero__badge-tooltip" role="tooltip" style="position: absolute; top: -34px; left: 16px; width: 160px; background: #222; color: #fff; padding: 8px">A BEM tooltip clipped above the host</span>
+      </div>
+    </section>
+
+    <!-- PASS column: no clipping, no positioned child, real scroll region, or contained decorative positioning -->
+    <section class="col pass">
+      <div class="box pass-hidden-no-abs" style="overflow: hidden">
+        <p style="position: static">Hidden container with only static content.</p>
+      </div>
+      <div class="box pass-visible-abs" style="overflow: visible">
+        <button>Visible host</button>
+        <span class="pop">Positioned child can escape because overflow is visible.</span>
+      </div>
+      <div class="box pass-scroll-abs" style="overflow: auto">
+        <button>Scroll host</button>
+        <span class="pop">A genuine scroll region is allowed to contain positioned children.</span>
+      </div>
+      <div class="box pass-contained-abs" style="overflow: hidden">
+        <p>Positioned decoration remains inside the clipping box.</p>
+        <span class="contained-badge" aria-hidden="true"></span>
+      </div>
+      <button type="button" class="pass-hidden-button pass-button-shine">
+        Save
+        <span class="button-shine" aria-hidden="true"></span>
+      </button>
+      <div class="box pass-crop-photo" style="overflow: hidden">
+        <span class="crop-photo" aria-hidden="true"></span>
+      </div>
+      <div class="box pass-contained-overlay" style="overflow: clip">
+        <p>Mockup frame with a contained absolute overlay.</p>
+        <span class="inside-overlay" aria-hidden="true"></span>
+      </div>
+      <div class="pass-carousel-viewport" aria-roledescription="carousel">
+        <div class="carousel-slide-next">A hidden next slide is clipped intentionally by the viewport.</div>
+      </div>
+      <div class="pass-fisheye-list">
+        <button type="button" class="fisheye-next-item">Next command</button>
+      </div>
+      <div class="pass-split-container">
+        <div class="split-after-panel">Before/after comparison panel clipped by the split frame.</div>
+      </div>
+      <div class="contents-shell pass-contents-shell">
+        <div class="box pass-contents-child" style="overflow: visible">
+          <p>A display contents wrapper has no box to clip with.</p>
+          <span class="tip-negative">Tooltip above a boxless wrapper.</span>
+        </div>
+      </div>
+      <div class="box pass-media-bleed" style="overflow: hidden">
+        <span class="media-bleed" style="width: 248px; height: 168px">
+          <img src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22248%22%20height%3D%22168%22%3E%3Crect%20width%3D%22248%22%20height%3D%22168%22%20fill%3D%22%23486aa3%22%2F%3E%3C%2Fsvg%3E" alt="" width="248" height="168" />
+        </span>
+      </div>
+      <div class="box pass-corner-ticks" style="overflow: hidden">
+        <p>Product frame with ornamental corner ticks.</p>
+        <i class="corner-tick"></i>
+      </div>
+      <button type="button" class="pass-hidden-button pass-hover-sheen">
+        Upgrade
+        <span class="hover-sheen"><span class="hover-sheen-fill"></span></span>
+      </button>
+      <div class="box pass-news-band" style="overflow: hidden">
+        <div class="marquee-track">
+          <span class="marquee-item">Ticker copy sliding through the band.</span>
+        </div>
+      </div>
+      <!-- The axis test is what exempts this in the static engine. A browser
+           computes the other axis to `auto` when one is `clip`, so there the
+           box is a scroll region and exempt one step earlier. -->
+      <div class="x-clip-box pass-x-clip">
+        <p>Only the horizontal axis is clipped here.</p>
+        <span class="below-the-box">Layer above the box, unclipped.</span>
+      </div>
+      <div class="swiper pass-swiper-rail">
+        <div class="swiper-slide-next">The next slide waits outside the swiper viewport.</div>
+      </div>
+      <div class="box pass-swap-reveal" style="overflow: hidden">
+        <p>Label swap masked by the box.</p>
+        <span class="swap-copy">Swapped label parked below by a transform.</span>
+      </div>
+      <!-- The words that name a moving track, read past BEM separators and
+           camelCase, and on the positioned child wherever it sits. -->
+      <div class="box kitify-m-content pass-bem-marquee" style="overflow: hidden">
+        <div class="kitify-text-marquee__text text--original">Hair Body Skincare</div>
+        <div class="kitify-text-marquee__text text--clone" style="position: absolute; top: 16px; left: 100%; width: 200px">Hair Body Skincare</div>
+      </div>
+      <div class="box pass-camel-host" id="hotStuffBox" style="overflow: hidden">
+        <div id="hotStuffScroller" style="position: absolute; top: 16px; left: -24px; width: 260px">Sofa, armchair and dining table listings</div>
+      </div>
+      <div class="box pass-nested-deck" style="overflow: hidden">
+        <div class="deck-track">
+          <span class="promo__slider-next" style="position: absolute; top: 0; left: 100%; width: 200px; height: 120px">The next promotion waits past the edge.</span>
+        </div>
+      </div>
+      <!-- Decision r6-t1-clipped-overflow-popovers: only a popover layer (a
+           menu, a listbox, a tooltip, a dialog) reports. A layer that is not
+           one is cut on purpose, whatever its words or its class. -->
+      <div class="box pass-ribbon-notch" style="overflow: hidden">
+        <p>Pricing card with a ribbon pinned above its top edge.</p>
+        <span class="ribbon">Most popular</span>
+      </div>
+      <div class="box pass-masthead-curve" style="overflow: hidden">
+        <h3>Curved masthead</h3>
+        <span class="pop" style="top: 60%; left: -20px; width: 260px; height: 120px; border-radius: 50%">Spring collection</span>
+      </div>
+      <div class="box pass-closed-dialog" style="overflow: hidden">
+        <button>Share</button>
+        <dialog class="pop closed-dialog">A closed dialog renders nothing.</dialog>
+      </div>
+      <!-- A modal dialog sits in the top layer, above the clip. -->
+      <div class="box pass-modal-dialog" style="overflow: hidden">
+        <button>Share</button>
+        <dialog class="pop modal-dialog" id="modal-dialog" style="margin: 0; border: 0">A modal dialog escapes every clip.</dialog>
+        <script>document.getElementById('modal-dialog').showModal();</script>
+      </div>
+      <div class="box pass-unnamed-dropdown" style="overflow: hidden">
+        <button>Sort</button>
+        <div class="pop dropdown-panel">A dropdown named only by its class keeps its silence.</div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

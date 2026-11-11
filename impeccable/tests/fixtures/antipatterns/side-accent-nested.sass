@@ -1,0 +1,42 @@
+// Side accents in indentation-syntax Sass. A nested rule that names its
+// parent with an ampersand, or a media query or mixin wrapper inside it,
+// reads the parent's corners. Every case carries a unique stripe width so
+// each finding attributes to one case.
+
+// FLAG: a state rule on a rounded card
+.flag-sass-state
+  border-radius: 12px
+  &.on
+    border-left: 3px solid #0f766e
+
+// FLAG: an accent inside a media query on a rounded card
+.flag-sass-media
+  border-radius: 12px
+  @media (min-width: 600px)
+    border-right: 5px solid #0f766e
+
+// FLAG: a state rule on a card a mixin rounds
+.flag-sass-mixin
+  +card-shape
+  &.on
+    border-left: 7px solid #0f766e
+
+// PASS: a state rule on a square box
+.pass-sass-state
+  border-radius: 0
+  &.on
+    border-left: 4px solid #0f766e
+
+// PASS: an accent inside a mixin wrapper on a square box
+.pass-sass-media
+  border-radius: 0
+  +breakpoint(md)
+    border-right: 6px solid #0f766e
+
+// PASS: a state rule whose child is rounded, on a box squared off
+.pass-sass-child
+  border-radius: 0
+  &.on
+    border-left: 8px solid #0f766e
+  .inner
+    border-radius: 12px

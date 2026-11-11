@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bounce easing: a bounce by name, or a pulse called one</title>
+  <!--
+    bounce-easing reads an animation's name. A name is not the motion: a
+    loader whose dots swell from nothing to their size and back is called
+    "bounceDelay" and neither moves nor passes its end value. When the
+    stylesheet shows the named keyframes and they only scale between 0 and 1
+    or fade, the name does not report. Keyframes that move the element, grow
+    it past full size or ease past the end value still do, and so does a
+    name whose keyframes are not there to read.
+    Explicit pixel dimensions throughout.
+  -->
+  <style>
+    body { margin: 0; padding: 24px 40px; width: 1000px; font: 16px/24px system-ui, sans-serif; color: #1a1a1a; background: #fff; }
+    h2 { font-size: 14px; line-height: 20px; margin: 32px 0 8px; color: #475569; }
+    .row { display: flex; gap: 12px; width: 320px; height: 48px; align-items: center; }
+    .dot, .ball, .badge { width: 24px; height: 24px; border-radius: 50%; background: #0f766e; }
+
+    /* PASS: SpinKit's three dots. Declared first, so the page form has to
+       read past it to reach the bounce below. */
+    .pass-loader .dot { animation: fixture-bounceDelay 1.4s infinite ease-in-out both; }
+    @keyframes fixture-bounceDelay { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    /* FLAG: a ball that travels. */
+    .flag-ball { animation: fixture-bounce 1s infinite; }
+    @keyframes fixture-bounce { 0%, 100% { transform: translateY(-25%); } 50% { transform: none; } }
+
+    /* FLAG: a badge that pops past its size and settles. */
+    .flag-pop { animation: fixture-bounce-in 0.6s both; }
+    @keyframes fixture-bounce-in { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+  <h2>Pass: loader dots that swell and shrink in place</h2>
+  <div class="row pass-loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+
+  <h2>Flag: a ball that bounces up and down</h2>
+  <div class="row"><div class="ball flag-ball"></div></div>
+
+  <h2>Flag: a badge that pops past its size</h2>
+  <div class="row"><div class="badge flag-pop"></div></div>
+</body>
+</html>

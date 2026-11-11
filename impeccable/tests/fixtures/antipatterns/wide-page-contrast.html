@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wide page contrast: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for a page laid out wider than the phone it is read on
+       (walkthroughs-28, inven.co.kr: a 1,090px page at 390px). The page
+       scrolls sideways, and its right column is read where the visitor
+       scrolls to it, so a link or a span there is scored: the page's width
+       is the document's, not the window's. A drawer parked left of the page
+       is still outside it.
+
+       Scan at 390px to see the difference (crates/browser/tests/
+       unread_surfaces.rs); at 1280px the whole layout is inside the window
+       and both engines report the flag column the same way. The static HTML
+       engine has no layout and also reports the parked drawer's label. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    .page { position: relative; width: 1100px; height: 400px; }
+    h1 { font: 600 28px/1.2 system-ui; margin: 0; padding: 16px 20px 8px; color: #111; }
+    .left { position: absolute; left: 20px; top: 80px; width: 500px; }
+    .right { position: absolute; left: 820px; top: 80px; width: 260px; }
+    .right h2, .left h2 { font: 600 15px/1.2 system-ui; margin: 0 0 8px; color: #111; }
+    .pale { font-size: 14px; line-height: 20px; color: #a9a9a9; }
+    .drawer { position: fixed; left: -400px; top: 200px; width: 320px; height: 120px; }
+    .drawer-label { font-size: 14px; line-height: 20px; color: #b0b0b0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Wide page contrast</h1>
+    <div class="left">
+      <h2>Should pass</h2>
+      <p>Body copy in the left column reads at full contrast.</p>
+    </div>
+    <div class="right">
+      <h2>Should flag</h2>
+      <span class="pale" id="flag-right-column-label">Right column label</span>
+    </div>
+  </div>
+  <div class="drawer" aria-hidden="true"><span class="drawer-label" id="pass-parked-drawer-label">Parked drawer label</span></div>
+</body>
+</html>

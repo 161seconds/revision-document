@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Color Palette: category colours</title>
+  <style>
+    /* URL engine. A violet, purple or cyan that is one of six or more hues
+       its role carries codes a category and does not report (corpus decision
+       r5-p28-ai-color-palette-category-colours). A role is one tag at one
+       font size and weight for ink, one tag at one box size for a gradient
+       fill. A lone violet heading or gradient still reports, and so do six
+       tiles of which five sit in the violet and cyan bands. The sixth, a sky
+       blue at hue 199 to 200, is outside the cyan band (170 to 197) since corpus decision
+       r6-t7-cyan-band and does not report itself, but one hue outside of six
+       does not make the set a category system.
+       The static engine reads no computed roles and reports the purple
+       headings of both columns. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1c1c24; margin: 0; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 1200px; margin: 0 auto; padding: 24px 0; }
+    .col > h2.label { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin: 0 0 16px; }
+    .section-title { font-size: 22px; line-height: 30px; font-weight: 700; margin: 0 0 8px; }
+    .feature-title { font-size: 28px; line-height: 36px; font-weight: 700; margin: 0 0 12px; color: #7c3aed; }
+    .tiles { display: grid; grid-template-columns: repeat(6, 56px); gap: 16px; margin: 0 0 24px; }
+    .tile { display: block; width: 56px; height: 56px; border-radius: 12px; }
+    .swatches { display: grid; grid-template-columns: repeat(6, 48px); gap: 16px; margin: 0 0 24px; }
+    .swatch { display: block; width: 48px; height: 48px; border-radius: 12px; }
+    .promo-ramp {
+      display: block; width: 480px; height: 160px; border-radius: 12px; margin: 0 0 24px;
+      background-image: linear-gradient(135deg, rgb(133, 38, 254) 0%, rgb(192, 88, 243) 100%);
+    }
+    p { font-size: 16px; line-height: 24px; margin: 0 0 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="col" aria-label="Should flag">
+      <h2 class="label">Should flag</h2>
+      <h3 class="feature-title" data-expect="flag" data-case="Flag Lone Violet Heading">Built for modern teams</h3>
+      <p>No other heading in this role wears another hue.</p>
+      <div class="promo-ramp" data-expect="flag" data-case="Flag Lone Purple Gradient"></div>
+      <div class="swatches">
+        <div class="swatch" data-expect="flag" data-case="Flag Violet Swatch" style="background-image: linear-gradient(135deg, rgb(124, 58, 237), rgb(139, 92, 246));"></div>
+        <div class="swatch" data-expect="flag" data-case="Flag Purple Swatch" style="background-image: linear-gradient(135deg, rgb(147, 51, 234), rgb(168, 85, 247));"></div>
+        <div class="swatch" data-expect="flag" data-case="Flag Fuchsia Swatch" style="background-image: linear-gradient(135deg, rgb(192, 38, 211), rgb(217, 70, 239));"></div>
+        <div class="swatch" data-expect="flag" data-case="Flag Cyan Swatch" style="background-image: linear-gradient(135deg, rgb(8, 145, 178), rgb(6, 182, 212));"></div>
+        <div class="swatch" data-expect="flag" data-case="Flag Teal Swatch" style="background-image: linear-gradient(135deg, rgb(13, 148, 136), rgb(20, 184, 166));"></div>
+        <div class="swatch" data-expect="pass" data-case="Pass Sky Swatch" style="background-image: linear-gradient(135deg, rgb(2, 132, 199), rgb(14, 165, 233));"></div>
+      </div>
+    </section>
+    <section class="col" aria-label="Should pass">
+      <h2 class="label">Should pass</h2>
+      <h3 class="section-title" style="color: #dc2626;">Politics</h3>
+      <h3 class="section-title" style="color: #ea580c;">Business</h3>
+      <h3 class="section-title" style="color: #16a34a;">Agriculture</h3>
+      <h3 class="section-title" style="color: #2563eb;">Technology</h3>
+      <h3 class="section-title" data-expect="pass" data-case="Pass Violet Section Heading" style="color: #7c3aed;">Travel</h3>
+      <h3 class="section-title" data-expect="pass" data-case="Pass Purple Section Heading" style="color: #9333ea;">Entertainment</h3>
+      <div class="tiles">
+        <div class="tile" style="background-image: linear-gradient(135deg, rgb(37, 99, 235), rgb(59, 130, 246));"></div>
+        <div class="tile" style="background-image: linear-gradient(135deg, rgb(22, 163, 74), rgb(34, 197, 94));"></div>
+        <div class="tile" data-expect="pass" data-case="Pass Purple Category Tile" style="background-image: linear-gradient(135deg, rgb(147, 51, 234), rgb(168, 85, 247));"></div>
+        <div class="tile" style="background-image: linear-gradient(135deg, rgb(234, 88, 12), rgb(249, 115, 22));"></div>
+        <div class="tile" style="background-image: linear-gradient(135deg, rgb(225, 29, 72), rgb(244, 63, 94));"></div>
+        <div class="tile" data-expect="pass" data-case="Pass Cyan Category Tile" style="background-image: linear-gradient(135deg, rgb(8, 145, 178), rgb(6, 182, 212));"></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Em dash overuse, prose beside a pricing matrix</title>
+<!--
+  Should flag. The prose leans on nine em dashes in a few short paragraphs, so
+  the page reports whatever the matrix beside it does. The lone dashes in the
+  matrix cells are not counted in a browser scan.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #111111; }
+  table { border-collapse: collapse; }
+  td, th { padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+</style>
+</head>
+<body>
+  <p>Your brand is invisible — until an answer engine cites it — and then it is everywhere.</p>
+  <p>We read every answer — every citation, every source — and tell you what moved.</p>
+  <p>Ship the briefs — the ones that climb — and watch the share change — week by week.</p>
+  <p>No card — no call — just the report.</p>
+  <table>
+    <thead><tr><th>Features</th><th>Starter</th><th>Growth</th><th>Scale</th></tr></thead>
+    <tbody>
+      <tr><td>Weekly report</td><td>✓</td><td>✓</td><td>—</td></tr>
+      <tr><td>API access</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Team seats</td><td>—</td><td>—</td><td>✓</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>

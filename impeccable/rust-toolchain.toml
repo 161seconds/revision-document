@@ -1,0 +1,6 @@
+# Stable, with the wasm target the in-page bundle and the extension core are
+# built for (`cargo xtask bundle`). rustup installs both automatically on the
+# first `cargo` invocation. See docs/ENGINE.md.
+[toolchain]
+channel = "stable"
+targets = ["wasm32-unknown-unknown"]

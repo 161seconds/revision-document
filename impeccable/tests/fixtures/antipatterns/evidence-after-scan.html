@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evidence: the page changes between the scan and the evidence step</title>
+  <style>
+    /* Six faint notes, each a real contrast failure at the scan (the typing
+       case has two: the paragraph flagged and the one the class moves to),
+       and a page halo declared through a custom property. As soon as the scan's capture
+       exists (`window.__impCap`), the page changes the way corpus pages did
+       between the scan and the evidence step:
+       - `.typing-note` moves to another paragraph, as a typing animation
+         moves `span.is-typing` (ascenix.co): the evidence measures the
+         paragraph the scan flagged, not the one the class now names.
+       - `.toast-note` leaves the document, as an intro screen's skip button
+         does (overmindlab.ai): the evidence finds nothing and calls it
+         transient.
+       - `.slide-note` sits in a track that slides 2,560px away and stays
+         there, as a carousel autoplays on (hse.de): the evidence measures it
+         again, and records the drift when it does not come back.
+       - `.bounce-note` slides away, and back 400ms after its box is first
+         read: measured again, it is back where the scan had it.
+       - `.vanish-note` slides away, and leaves the document 400ms after its
+         box is first read: measured again, it is gone, so it is transient
+         and keeps no rect from the first measure.
+       The `.orb` paints the halo `var(--accent)` resolves to; the page-level
+       finding's evidence anchor is that orb. Pinned by
+       crates/browser/tests/evidence.rs. */
+    :root { --accent: #7c6af7; }
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #f2f2f2; background: #0b0b10; overflow-x: hidden; }
+    p { margin: 0 0 24px; width: 520px; font-size: 14px; }
+    .faint { color: #3a3a44; }
+    /* A colour pair reports once (r14-t2), so each note wears its own ink. */
+    .later-note { color: #3b3a44; }
+    .toast-note { color: #3c3a44; }
+    .slide-note { color: #3d3a44; }
+    .bounce-note { color: #3e3a44; }
+    .vanish-note { color: #3f3a44; }
+    .track { position: relative; width: 600px; height: 40px; }
+    .orb { position: absolute; top: 300px; left: 700px; width: 400px; height: 400px; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); opacity: 0.35; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <h1>A page that changes after its capture</h1>
+  <p class="typing-note faint">Faint note the scan flagged, first of two.</p>
+  <p class="later-note faint">Faint note the class moves to, second of two.</p>
+  <p class="toast-note faint">Faint note that leaves the page after the scan.</p>
+  <div class="track" id="slide-track"><p class="slide-note faint">Faint note in a slide that moves away for good.</p></div>
+  <div class="track" id="bounce-track"><p class="bounce-note faint">Faint note in a slide that moves away and back.</p></div>
+  <div class="track" id="vanish-track"><p class="vanish-note faint">Faint note in a slide that moves away and is then removed.</p></div>
+  <div class="orb"></div>
+  <script>
+    const watch = setInterval(() => {
+      if (!window.__impCap) return;
+      clearInterval(watch);
+      const first = document.querySelector('.typing-note');
+      first.classList.remove('typing-note');
+      document.querySelector('.later-note').classList.add('typing-note');
+      document.querySelector('.toast-note').remove();
+      document.getElementById('slide-track').style.transform = 'translateX(-2560px)';
+      // The bounce comes back 400ms after its box is first read after the
+      // capture, so the evidence step's first measure finds it away.
+      const bounce = document.getElementById('bounce-track');
+      bounce.style.transform = 'translateX(-2560px)';
+      const note = bounce.querySelector('.bounce-note');
+      const read = Element.prototype.getBoundingClientRect;
+      note.getBoundingClientRect = function () {
+        if (!window.__bounceRead) {
+          window.__bounceRead = true;
+          setTimeout(() => { bounce.style.transform = ''; }, 400);
+        }
+        return read.call(this);
+      };
+      // The vanishing note is away at the first measure and removed 400ms
+      // after it, so a later measure finds nothing.
+      const vanishTrack = document.getElementById('vanish-track');
+      vanishTrack.style.transform = 'translateX(-2560px)';
+      const gone = vanishTrack.querySelector('.vanish-note');
+      gone.getBoundingClientRect = function () {
+        if (!window.__vanishRead) {
+          window.__vanishRead = true;
+          setTimeout(() => { gone.remove(); }, 400);
+        }
+        return read.call(this);
+      };
+    }, 10);
+  </script>
+</body>
+</html>

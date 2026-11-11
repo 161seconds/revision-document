@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rules a rendered page answers differently</title>
+  <!--
+    Each pair is a rule whose answer turns on what the browser computes, not
+    on the markup alone:
+    - gray-on-color: a gray utility class names gray only when the ink it
+      computes to is gray. A custom scale's `text-neutral-0` is white. A file
+      engine cannot know the class compiles at all, so it keeps reading the
+      class and reports the pass row; the browser does not.
+    - wide-tracking: capitals typed into the markup take the exemption
+      `text-transform: uppercase` does, wrapped onto two lines or not.
+    - ai-color-palette: a cyan stop tied with a mint green one is a brand
+      wash; tied with a blue one it is the stock ramp.
+    - side-tab: a stripe child reports on a card rounded away from it, and
+      a bar inside a heading marks the heading.
+    - numbered-section-labels: a count beside an icon over a card photo is
+      a badge, not a section number.
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #111827; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+    .case { margin: 0 0 32px; }
+    h2.col-title { font-size: 14px; margin: 0 0 16px; }
+
+    .text-gray-500 { color: #6b7280; }
+    .text-neutral-0 { color: #ffffff; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-red-700 { background-color: #b91c1c; }
+    .chip { display: inline-block; padding: 8px 12px; font-size: 14px; font-weight: 700; }
+
+    .tracked { width: 160px; font-size: 14px; line-height: 20px; letter-spacing: 0.28em; margin: 0; }
+
+    .glow { width: 400px; height: 200px; }
+
+    .stripe-card { display: flex; width: 320px; height: 100px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .stripe-square { border-radius: 0; }
+    .stripe { width: 4px; flex-shrink: 0; background: #f59e0b; }
+    .stripe-card .body { flex: 1; padding: 16px; }
+    .heading-marker { display: inline-flex; align-items: stretch; width: 320px; height: 28px; margin: 0; border-radius: 12px; font-size: 20px; }
+    .heading-marker .stripe { margin-right: 8px; border-radius: 12px; background: #16a34a; }
+
+    .sec-index { display: block; font-family: monospace; font-size: 11px; font-weight: 700; color: #b45309; margin: 0 0 8px; }
+    .sec h2 { font-size: 28px; margin: 0 0 12px; }
+    .venue { width: 280px; background: #ffffff; border: 1px solid #e5e7eb; margin: 0 0 24px; }
+    .venue-media { position: relative; height: 160px; overflow: hidden; background: #d1d5db; }
+    .venue-media img { display: block; width: 100%; height: 100%; }
+    .venue-badge { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(255, 255, 255, 0.9); font-family: monospace; font-size: 11px; font-weight: 700; color: #111827; }
+    .venue-badge svg { width: 12px; height: 12px; }
+    .venue-body { padding: 12px; }
+    .venue-body h3 { font-size: 20px; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="cols">
+    <section class="col">
+      <h2 class="col-title">Should flag</h2>
+      <div class="case"><span id="flag-gray-class" class="chip text-gray-500 bg-blue-600">Gray ink on a blue fill</span></div>
+      <div class="case"><p id="flag-tracked-mixed" class="tracked">Now available in the US, Canada and New Zealand</p></div>
+      <div class="case"><div id="flag-cyan-blue" class="glow" style="background-image: linear-gradient(90deg, rgb(6, 182, 212), rgb(37, 99, 235))"></div></div>
+      <div class="case"><div class="stripe-card"><div id="flag-stripe-rounded" class="stripe"></div><div class="body">Card body</div></div></div>
+      <div class="sec"><span class="sec-index">01</span><h2>First section of the page</h2></div>
+      <div class="sec"><span class="sec-index">02</span><h2>Second section of the page</h2></div>
+    </section>
+    <section class="col">
+      <h2 class="col-title">Should pass</h2>
+      <div class="case"><span id="pass-gray-class-white" class="chip text-neutral-0 bg-red-700">NEW</span></div>
+      <div class="case"><p id="pass-tracked-caps" class="tracked">NOW AVAILABLE IN THE US, CANADA AND NEW ZEALAND</p></div>
+      <div class="case"><div id="pass-cyan-mint" class="glow" style="background-image: linear-gradient(90deg, rgb(13, 107, 101), rgb(6, 255, 162))"></div></div>
+      <div class="case"><div class="stripe-card stripe-square"><div id="pass-stripe-square" class="stripe"></div><div class="body">Card body</div></div></div>
+      <div class="case"><h2 class="heading-marker"><span id="pass-stripe-heading" class="stripe"></span><span>Olho no lance</span></h2></div>
+      <div class="venue">
+        <div class="venue-media">
+          <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='160'%3E%3Crect width='280' height='160' fill='%239ca3af'/%3E%3C/svg%3E">
+          <div class="venue-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle></svg>35</div>
+        </div>
+        <div class="venue-body"><h3>Sparrow</h3></div>
+      </div>
+      <div class="venue">
+        <div class="venue-media">
+          <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='160'%3E%3Crect width='280' height='160' fill='%239ca3af'/%3E%3C/svg%3E">
+          <div class="venue-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle></svg>30</div>
+        </div>
+        <div class="venue-body"><h3>Luna Terrace</h3></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

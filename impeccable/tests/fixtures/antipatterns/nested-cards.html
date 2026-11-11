@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nested cards fixture</title>
+<!--
+  A browser scan reads card-likeness from the computed box: a card paints an
+  edge on at least three sides (borders, or a shadow that reaches past the
+  box there) or a fill that differs from the surface under it, and it is
+  rounded or casts a shadow. A one-sided rule is a divider, a pill or a
+  one-line eyebrow is a label, a band along a card's own edges is part of that
+  card, and a white box on a white card with a 2px lip is not a second surface.
+
+  Two decisions narrow what counts as the inner card. r4-p16: an inner box
+  counts only when it shows a border or casts a shadow, so a rounded tint (a
+  chat bubble, a stat tile) is not a card; the outer card may still be a
+  fill. r4-p17: a box that frames embedded content as its main child (an
+  svg or a canvas with a caption, a monospace output block, a media player)
+  is not an inner card, and neither is any box whose outer card is a dialog
+  (the dialog itself, or the first card inside it). Inner boxes holding
+  ordinary text and controls still report: a hidden sound element, an avatar
+  video, a promo's play button, an illustration beside copy and buttons, a
+  monospace tier with an Upgrade button, and a card nested further inside a
+  dialog's panel.
+
+  The file scan has no layout and reads class names and declared styles, so it
+  reports some of the pass column. crates/browser/tests/card_heuristics.rs pins
+  what the URL engine reports.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #f4f4f5; color: #18181b; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  .case { margin: 0 0 32px; }
+  p { margin: 0 0 8px; font-size: 16px; line-height: 24px; }
+  .card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; padding: 24px; }
+  .inner { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 16px; }
+  .raised { background: #ffffff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+  .band { background: #ffffff; border-top: 1px solid #e4e4e7; padding: 32px; }
+  .strip { background: #fafafa; border-bottom: 4px solid #18181b; padding: 32px; }
+  .pill { display: inline-block; border: 1px solid #d4d4d8; border-radius: 9999px; padding: 8px 16px; font-size: 12px; line-height: 16px; background: #f4f4f5; }
+  .eyebrow { display: inline-block; border: 1px solid #18181b; box-shadow: 3px 3px 0 #22d3ee; background: #f472b6; padding: 5px 10px; font-size: 12px; line-height: 18px; margin: 0 0 16px; }
+  .plain-card { padding: 0; }
+  .header-band { background: #f1f5f9; border-bottom: 1px solid #e4e4e7; border-radius: 16px 16px 0 0; padding: 20px; }
+  .card-rest { padding: 20px; }
+  .soft-card { background: #ffffff; border-radius: 28px; padding: 8px; box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.1); }
+  .lip { background: #ffffff; border-radius: 24px; padding: 16px; box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.12); }
+  .tint { background: #f4f4f5; border-radius: 12px; padding: 16px; }
+  .tint-raised { background: #f4f4f5; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+  .sized { width: 400px; }
+  .mono { font-family: "Courier New", monospace; }
+  .output { margin: 0; font-family: "Courier New", monospace; font-size: 13px; line-height: 20px; }
+  .seek { width: 240px; height: 8px; border-radius: 4px; background: #e4e4e7; }
+  .link-strip { display: flex; gap: 16px; border: 1px solid #e4e4e7; border-radius: 12px; padding: 12px 16px; background: #ffffff; }
+  .link-strip a { display: block; width: 112px; height: 40px; font-size: 14px; line-height: 40px; }
+  .split { display: flex; height: 240px; padding: 0; overflow: hidden; }
+  .split-main { width: 280px; padding: 24px; }
+  .split-side { display: flex; flex-direction: column; justify-content: flex-end; width: 160px; margin-left: auto; overflow: hidden; }
+  .corner-tab { height: 64px; border-top: 1px solid #e4e4e7; border-left: 1px solid #e4e4e7; border-radius: 0 0 16px 0; background: #f1f5f9; padding: 12px; }
+</style>
+</head>
+<body>
+<div class="cols">
+  <section class="flag" aria-label="Should flag">
+    <div class="case card border rounded-2xl" id="flag-outlined-outer">
+      <p>Outer card with a border on every side.</p>
+      <div class="inner border rounded-xl" id="flag-outlined-inner">
+        <p>An inner card, outlined on every side and rounded, holding its own copy.</p>
+        <p>A second line makes it a surface, not a label.</p>
+      </div>
+    </div>
+
+    <div class="case raised shadow-sm rounded-xl" id="flag-raised-outer">
+      <p>A white card lifted off the page by a small shadow.</p>
+      <div class="raised shadow-sm rounded-xl" id="flag-raised-inner">
+        <p>Another lifted white card inside it, holding a paragraph of its own.</p>
+        <p>Its shadow draws an edge on three sides.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-tint-shadow-outer">
+      <p>Outer card holding a tinted box that casts a shadow.</p>
+      <div class="tint-raised shadow-sm rounded-xl" id="flag-tint-shadow-inner">
+        <p>A tinted inner box lifted by its own shadow.</p>
+        <p>The shadow draws it as a second card.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-controls-outer">
+      <p>Outer card holding a settings panel.</p>
+      <div class="inner border rounded-xl" id="flag-controls-inner">
+        <p>Email me when a scan finishes, with a summary of what changed.</p>
+        <button type="button" style="width: 96px; height: 32px">Save</button>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-two-links-outer">
+      <p>Outer card holding a bordered box of two links.</p>
+      <div class="link-strip" id="flag-two-links-inner">
+        <a href="#">Release notes</a>
+        <a href="#">Status page</a>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-icon-outer">
+      <p>Outer card holding a feature tile with an icon.</p>
+      <div class="inner border rounded-xl" id="flag-icon-inner">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style="display: block; width: 24px; height: 24px"><circle cx="12" cy="12" r="10" fill="#18181b"></circle></svg>
+        <p>An icon beside copy is not a figure with a caption.</p>
+        <p>The tile is a card inside a card.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl mono" id="flag-mono-page-outer">
+      <p>An outer card set in a monospace face.</p>
+      <div class="inner border rounded-xl mono" id="flag-mono-page-inner">
+        <p>An inner card in the same face is not an output block.</p>
+        <p>The whole page is set this way.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-hidden-audio-outer">
+      <p>Outer card holding a settings panel with a sound element.</p>
+      <div class="inner border rounded-xl" id="flag-hidden-audio-inner">
+        <audio preload="none"></audio>
+        <p>Chime when a scan finishes, with a summary of what changed.</p>
+        <button type="button" style="width: 96px; height: 32px">Save</button>
+        <button type="button" style="width: 96px; height: 32px">Cancel</button>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-avatar-video-outer">
+      <p>Outer card holding a profile with a looping avatar.</p>
+      <div class="inner border rounded-xl" id="flag-avatar-video-inner">
+        <video width="48" height="48" muted style="display: block; width: 48px; height: 48px"></video>
+        <p>Jane Doe, head of design, writes about type and colour.</p>
+        <button type="button" style="width: 96px; height: 32px">Follow</button>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-promo-player-outer">
+      <p>Outer card holding a pricing tier with a promo clip.</p>
+      <div class="inner border rounded-xl" id="flag-promo-player-inner">
+        <p>Team plan with shared projects and review queues, billed yearly.</p>
+        <button type="button" style="width: 96px; height: 32px">Choose</button>
+        <button type="button" aria-label="Play intro" style="width: 96px; height: 32px">Play intro</button>
+        <progress value="20" max="100"></progress>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-illustration-outer">
+      <p>Outer card holding a feature tile with an illustration.</p>
+      <figure class="inner sized border rounded-xl" id="flag-illustration-inner" style="margin: 0">
+        <svg width="368" height="220" viewBox="0 0 368 220" aria-hidden="true" style="display: block; width: 368px; height: 220px"><rect width="368" height="220" fill="#e4e4e7"></rect></svg>
+        <h3>Automations</h3>
+        <p>Trigger workflows from any event, with retries and alerts.</p>
+        <button type="button" style="width: 96px; height: 32px">Try it</button>
+        <button type="button" style="width: 96px; height: 32px">Docs</button>
+        <figcaption>Automations</figcaption>
+      </figure>
+    </div>
+
+    <div class="case" role="dialog" aria-label="Settings" id="flag-dialog-nested-outer">
+      <div class="card border rounded-2xl">
+        <p>A dialog's panel holding a group of settings.</p>
+        <div class="inner border rounded-xl" id="flag-dialog-group">
+          <p>Notification settings, with their own controls.</p>
+          <div class="inner border rounded-xl" id="flag-dialog-nested-inner">
+            <p>A card inside the group, inside the dialog's panel.</p>
+            <button type="button" style="width: 96px; height: 32px">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="flag-mono-button-outer">
+      <p>Outer card holding a tier set in a monospace face.</p>
+      <div class="inner border rounded-xl mono" id="flag-mono-button-inner">
+        <p>Pro plan: unlimited scans, team seats and priority support.</p>
+        <button type="button" style="width: 96px; height: 32px">Upgrade</button>
+      </div>
+    </div>
+
+    <!-- One panel, one finding (taste call r14-t5): pgportal.gov.in's FAQ
+         panel held 18 bordered rows and reported 18 times. The first row
+         reports and counts the other two, `(and 2 more)`. -->
+    <div class="case card border rounded-2xl" id="flag-faq-outer">
+      <p>Frequently asked questions about filing a grievance.</p>
+      <div class="inner border rounded-xl" id="flag-faq-first"><p>How do I file a grievance online?</p><p>Sign in, choose the ministry and describe the issue.</p></div>
+      <div class="inner border rounded-xl" id="flag-faq-second"><p>How do I track a grievance I filed?</p><p>Use the registration number from your receipt.</p></div>
+      <div class="inner border rounded-xl" id="flag-faq-third"><p>Can I appeal a closed grievance?</p><p>Yes, within thirty days of the closing date.</p></div>
+    </div>
+
+    <!-- An inline ignore on the first row waives that row only: the second
+         reports and counts the third (URL engine; the file scan reads no
+         element for a page-level finding). -->
+    <div class="case card border rounded-2xl" id="flag-tiles-outer">
+      <p>Industry codes this service covers.</p>
+      <div class="inner border rounded-xl" id="pass-tiles-ignored" data-impeccable-ignore="nested-cards"><p>541511 Custom programming</p><p>Waived by the page for this tile.</p></div>
+      <div class="inner border rounded-xl" id="flag-tiles-second"><p>541512 Systems design</p><p>A second line makes it a surface.</p></div>
+      <div class="inner border rounded-xl" id="flag-tiles-third"><p>541519 Other computer services</p><p>A second line makes it a surface.</p></div>
+    </div>
+
+    <!-- A mockup's inner card (advisory) and a plain inner card in one panel
+         stay two findings: an advisory card never speaks for a counted one. -->
+    <div class="case card border rounded-2xl" id="flag-mixed-outer">
+      <p>Billing overview with a picture of the plan screen.</p>
+      <div class="inner border rounded-xl" id="flag-mixed-plain"><p>Your next invoice is due on June 3.</p><p>A second line makes it a surface.</p></div>
+      <div role="img" aria-label="The billing screen"><div class="inner border rounded-xl" id="adv-mixed-picture"><p>Pro plan, renews on June 3</p><p>A second line makes it a surface.</p></div></div>
+    </div>
+  </section>
+
+  <section class="pass" aria-label="Should pass">
+    <section class="case band border-t bg-white" id="pass-band-outer">
+      <p>A full-width section with a one-pixel top rule.</p>
+      <div class="inner border rounded-xl" id="pass-band-inner">
+        <p>A card inside a section that draws only a divider along its top.</p>
+        <p>The section is not a card, so nothing nests.</p>
+      </div>
+    </section>
+
+    <footer class="case strip border-b-[4px] border-black bg-gray-50" id="pass-strip-outer">
+      <p>A footer strip with a heavy bottom rule.</p>
+      <div class="inner border rounded-xl" id="pass-strip-inner">
+        <p>A card in a footer whose only edge is its bottom rule.</p>
+        <p>One edge is a divider.</p>
+      </div>
+    </footer>
+
+    <div class="case card" id="pass-pill-outer">
+      <p>A card holding a pill.</p>
+      <span class="pill border rounded-full" id="pass-pill-inner">Most popular plan</span>
+    </div>
+
+    <div class="case card" id="pass-eyebrow-outer">
+      <p class="eyebrow" id="pass-eyebrow-inner">Station numbers</p>
+      <p>A card whose eyebrow is drawn as a bordered box with an offset shadow.</p>
+    </div>
+
+    <article class="case card plain-card" id="pass-header-outer">
+      <div class="header-band" id="pass-header-band">
+        <p>Croatia, full service</p>
+        <p>A tinted header band along the card's own top edge.</p>
+      </div>
+      <div class="card-rest"><p>The rest of the card.</p></div>
+    </article>
+
+    <form class="case card" id="pass-field-outer">
+      <p>Book a visit with our team.</p>
+      <div class="field" id="pass-field-box" style="background: #e9ecef; border-radius: 10px; padding: 12px">
+        <select><option>Air Conditioning Installation</option><option>Furnace and Heating Repair</option></select>
+      </div>
+    </form>
+
+    <div class="case card" id="pass-media-outer">
+      <p>A card holding a video thumbnail in a bordered frame.</p>
+      <div class="inner" id="pass-media-frame" style="position: relative; width: 256px; padding: 8px; background: #25241f">
+        <img src="assets/thumbnail.jpg" alt="Demo recording" width="240" height="135" style="display: block; width: 240px; height: 135px">
+        <span style="position: absolute; right: 16px; bottom: 16px; color: #ffffff">18.2K views</span>
+      </div>
+      <p>Copy with a <mark class="inner" id="pass-mark-inline" style="display: inline; padding: 0 4px; background: rgba(217, 119, 6, 0.12)">golden hour highlight run</mark> inside a line.</p>
+    </div>
+
+    <div class="case soft-card" id="pass-lip-outer">
+      <div class="lip" id="pass-lip-inner">
+        <p>A white box on a white card with a 2px lip under it.</p>
+        <p>Nothing about it draws a second surface.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-tint-outer">
+      <p>A chat transcript inside a card.</p>
+      <div class="tint rounded-xl bg-gray-100" id="pass-tint-inner">
+        <p>A message bubble: a rounded tint with no border and no shadow.</p>
+        <p>It is not counted as an inner card.</p>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-figure-outer">
+      <p>A card holding a chart figure.</p>
+      <figure class="inner sized border rounded-xl" id="pass-figure-inner" style="margin: 0">
+        <svg width="368" height="180" viewBox="0 0 368 180" role="img" aria-label="Open weights against proprietary models" style="display: block; width: 368px; height: 180px"><polyline points="0,160 120,120 240,60 368,20" fill="none" stroke="#18181b" stroke-width="2"></polyline></svg>
+        <figcaption>Late 2024: open weights at roughly 40% of the best proprietary model.</figcaption>
+      </figure>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-canvas-outer">
+      <p>A card holding a canvas chart.</p>
+      <figure class="inner sized border rounded-xl" id="pass-canvas-inner" style="margin: 0">
+        <canvas width="368" height="120" style="display: block; width: 368px; height: 120px"></canvas>
+        <figcaption>Traffic by hour over the last week, drawn on a canvas, with its source and a note on the method below the chart.</figcaption>
+      </figure>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-output-outer">
+      <p>A card showing sample output.</p>
+      <div class="inner border rounded-xl" id="pass-output-inner">
+        <pre class="output">PHISHING INVESTIGATION REPORT
+==============================
+Sender domain: registered 2 days ago
+Verdict: malicious</pre>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-player-outer">
+      <p>A card holding an audio sample.</p>
+      <div class="inner border rounded-xl" id="pass-player-inner">
+        <audio preload="none"></audio>
+        <p>Sample audio, speaker A</p>
+        <button type="button" aria-label="Play" style="width: 32px; height: 32px"></button>
+        <div class="seek" role="slider" aria-label="Audio progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" tabindex="0"></div>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-link-strip-outer">
+      <p>Outer card holding a bordered row of links: one control.</p>
+      <div class="link-strip" id="pass-link-strip-inner">
+        <a href="#">Overview</a>
+        <a href="#">Plans</a>
+        <a href="#">Support</a>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl split" id="pass-corner-tab-outer">
+      <div class="split-main"><p>A panel with a clipped side column.</p></div>
+      <div class="split-side">
+        <div id="pass-corner-tab-inner" class="corner-tab"><p>Statistics and reports</p></div>
+      </div>
+    </div>
+
+    <div class="case card border rounded-2xl" id="pass-dialog-outer" role="dialog" aria-label="Welcome">
+      <p>A dialog drawn as a card.</p>
+      <div class="inner border rounded-xl" id="pass-dialog-inner">
+        <p>A panel inside the dialog is the dialog's content.</p>
+        <p>It does not report as a nested card.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

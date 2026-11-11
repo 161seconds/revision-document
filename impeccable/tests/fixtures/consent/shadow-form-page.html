@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a web-component sign-in form under a banner</title>
+  <style>
+    /* A sign-in page whose form lives in an open shadow root, under a
+       light-DOM OneTrust dialog that holds nearly all of the page's text.
+       The form is the page's content outside the manager, so the page is
+       scanned, not refused as a consent wall. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #fff; }
+    #onetrust-pc-sdk { position: fixed; top: 80px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }
+  </style>
+</head>
+<body>
+  <x-login></x-login>
+  <div id="onetrust-consent-sdk">
+    <div id="onetrust-pc-sdk" role="dialog" aria-label="Privacy preferences">
+      <h2>Your privacy choices</h2>
+      <p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising and to measure its performance.</p>
+    </div>
+  </div>
+  <script>
+    const root = document.querySelector('x-login').attachShadow({ mode: 'open' });
+    root.innerHTML = '<form style="display:block;padding:24px"><label>Email <input type="email" name="email"></label> <button type="submit">Sign in</button></form>';
+  </script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tight Leading — Should Flag vs Should Pass</title>
+  <!--
+    The 1.3 leading floor is a reading-comfort floor for body copy: text a
+    visitor reads at body scale, over more than one line. The should-pass
+    column is reduced from real pages reviewed against the rule, where the
+    floor was applied to type that is not body copy (display sizes and heading
+    text set on p / div / span), to text that renders one line, and to source
+    text that is never typeset at all.
+
+    Explicit pixel sizes and widths throughout: the static engine does no
+    layout, and the widths are what make the flag cases wrap in a browser.
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; background: #fafafa; padding: 24px; margin: 0; color: #1a1a1a; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col h2 { font-size: 14px; line-height: 20px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .col h3 { font-size: 11px; line-height: 16px; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 8px; color: #64748b; }
+
+    /* Should flag: multi-line reading copy under the floor. */
+    .card-blurb { width: 240px; font-size: 16px; line-height: 20px; margin: 0; }
+    .accordion-answer { width: 320px; font-size: 18px; line-height: 21.6px; margin: 0; }
+    .footer-legal { width: 260px; font-size: 12px; line-height: 14px; }
+    .story-excerpt { width: 420px; font-size: 22px; line-height: 25px; margin: 0; padding-left: 20px; }
+    .nested-desc { width: 300px; font-size: 16px; line-height: 17.6px; margin: 0; text-transform: none; letter-spacing: normal; }
+    .card-heading { font-size: 16px; margin: 0; text-transform: none; letter-spacing: normal; }
+    .bold-body-run { width: 240px; font-size: 16px; line-height: 19px; font-weight: 700; margin: 0; }
+    .medium-slot-title { width: 320px; font-size: 14px; line-height: 16px; font-weight: 500; }
+    .bold-clipped-summary { display: flow-root; overflow: hidden; max-height: 48px; width: 260px; font-size: 14px; line-height: 16px; font-weight: 700; }
+    .clamped-regular-blurb { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; width: 260px; font-size: 15px; line-height: 18px; font-weight: 400; }
+
+    .flex-long-run { display: flex; flex-wrap: wrap; column-gap: 10px; width: 260px; font-size: 12px; line-height: 14px; margin: 0; }
+    .run-sep { width: 1px; height: 12px; background: #cbd5e1; }
+
+    /* Should pass: display type, heading text, single lines, non-rendered. */
+    .display-statement { width: 560px; font-size: 32px; line-height: 36px; margin: 0; }
+    .headline-link { font-size: 30px; line-height: 34px; text-decoration: none; color: #1a1a1a; }
+    .card-title-role { font-size: 22px; line-height: 28px; font-weight: 600; display: block; width: 320px; }
+    .at-the-floor { width: 300px; font-size: 18px; line-height: 23.4px; margin: 0; }
+    .mobile-only-blurb { display: none; width: 240px; font-size: 14px; line-height: 15px; }
+    .sr-only-description { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); font-size: 12px; line-height: 12px; }
+    .single-line-note { display: block; width: 900px; white-space: nowrap; font-size: 12px; line-height: 13.8px; }
+    .col h2.teaser-heading { font-size: 19px; line-height: 24px; margin: 0; text-transform: none; letter-spacing: normal; color: #1a1a1a; }
+    .teaser-copy { width: 300px; font-size: 19px; line-height: 24px; text-transform: none; letter-spacing: normal; }
+    .links-block { width: 280px; font-size: 14px; line-height: 22px; }
+    .link-run { font-size: 12px; line-height: 11.4px; }
+    .bold-slot-title { width: 320px; font-size: 14px; line-height: 16px; font-weight: 700; }
+    .bold-ticker-link { font-size: 16px; line-height: 19px; font-weight: 670; color: #1a1a1a; text-decoration: none; }
+    .ticker-item { width: 440px; }
+    .clamped-exact-title { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; width: 260px; font-size: 14px; line-height: 16px; font-weight: 700; }
+    .items-row { display: flex; flex-wrap: wrap; column-gap: 10px; row-gap: 4px; width: 260px; font-size: 12px; line-height: 15px; margin: 0; }
+    .clamped-video-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; width: 290px; font-size: 15px; line-height: 18px; font-weight: 670; }
+  </style>
+  <!-- SHOULD PASS: stylesheet source is text the browser never typesets. -->
+  <style id="theme-overrides">
+    /* This comment is long enough to clear the fifty-character text gate the
+       leading check applies before it measures anything at all. */
+    .theme-dark { background: #0f172a; color: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Card blurb wrapping four lines at 1.25</h3>
+      <p class="card-blurb">This card description wraps to four lines in a narrow column, and every line sits closer to the next than reading copy at this size can carry.</p>
+
+      <h3>Accordion answer wrapping three lines at 1.20</h3>
+      <p class="accordion-answer">The answer paragraph inside this accordion runs to three lines, and at eighteen pixels the lines press together instead of separating.</p>
+
+      <h3>Footer legal block at 1.17</h3>
+      <!-- Reports as advisory: a `legal` class marks fine print (taste call
+           r5-p27, tests/fixtures/antipatterns/fine-print.html). -->
+      <div class="footer-legal">This footer legal block is the smallest reading copy on the page and still wraps to several lines, so the lines end up nearly touching each other.</div>
+
+      <h3>Story excerpt bullet at 1.14</h3>
+      <ul><li class="story-excerpt">The excerpt under the lead story runs to two lines of reading copy, and the descenders of the first line reach into the second.</li></ul>
+
+      <h3>Card description nested inside a heading at 1.10</h3>
+      <!-- A paragraph of reading copy nested in an h3 is body copy, not
+           heading text: the heading exemption must not reach a block. -->
+      <h3 class="card-heading"><p class="nested-desc">The service card puts its whole description paragraph inside the card heading, and it still wraps to several lines of reading copy.</p></h3>
+
+      <h3>Bold body text running four lines at 1.19</h3>
+      <!-- Bold is not a title by itself: past two lines the text is reading
+           copy set heavy, and it keeps the floor. -->
+      <p class="bold-body-run">This whole card description is set in bold, and it wraps to four lines in the narrow column, so its lines still crowd each other like body copy.</p>
+
+      <h3>Medium-weight two-line card title at 1.14</h3>
+      <!-- Weight 500 is under the 600 the bold-title exemption asks for. -->
+      <div class="medium-slot-title">Two southern residents charged over an international trafficking ring</div>
+
+      <h3>Regular-weight blurb in a three-line clamp at 1.20</h3>
+      <!-- A clamp exempts a bold title only: regular copy in one keeps the floor. -->
+      <div class="clamped-regular-blurb">The clamped teaser under the photo is regular reading copy, and the clamp cuts it after three lines that still sit too close together to read comfortably.</div>
+
+      <h3>Bold summary cut to three lines by a max-height at 1.14</h3>
+      <!-- A clipping box is no line clamp: max-height and overflow hidden
+           show three of the lines, and bold text of three lines keeps the
+           floor. -->
+      <div class="bold-clipped-summary">The whole summary is set in bold and runs on well past three lines in this column, but a max-height with overflow hidden shows only the first three of them to the reader.</div>
+
+      <h3>Flex row whose long text item wraps at 1.17</h3>
+      <!-- A flex row that holds its text as separate runs is measured run by
+           run: this first run is longer than the row is wide, so it wraps
+           inside its own item and its lines crowd each other. -->
+      <p class="flex-long-run">The first item of this flex row is a whole sentence of reading copy, long enough to wrap inside its own box<span class="run-sep"></span>Short note</p>
+    </div>
+
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Display statement set on a paragraph</h3>
+      <!-- SHOULD PASS: 32px display type, where tight leading is craft. The
+           page builder that produced it named the class "body-text". -->
+      <p class="display-statement">A statement set at display size carries its own leading, and a ratio under the body floor is exactly what the size wants.</p>
+
+      <h3>Headline text inside a heading link</h3>
+      <!-- SHOULD PASS: the heading owns the leading, the anchor owns the text
+           node, so the exemption has to follow the ancestor. -->
+      <h4><a class="headline-link" href="/news/story">The heading puts its text in a child anchor, which is how most cards and most news fronts are marked up.</a></h4>
+
+      <h3>Card title carrying the heading role</h3>
+      <!-- SHOULD PASS: a card title marked with role=heading rather than a
+           heading tag is still heading-scale type. -->
+      <div><span class="card-title-role" role="heading" aria-level="3">A testimonial card title set as a span with the heading role, wrapping to two lines of title type.</span></div>
+
+      <h3>Paragraph set at exactly the floor</h3>
+      <!-- SHOULD PASS: line-height 1.3 on 18px computes to 23.4px, and
+           23.4 / 18 lands just under 1.3 in binary floats. -->
+      <p class="at-the-floor">This paragraph sets its leading at exactly the floor the rule asks for, so it must never be reported for hitting it.</p>
+
+      <h3>Mobile variant that is not displayed</h3>
+      <!-- SHOULD PASS: display:none, so nothing of it is ever typeset. -->
+      <p class="mobile-only-blurb">The mobile copy of this card blurb is switched off at this width and paints nothing at all for the visitor.</p>
+
+      <h3>Screen-reader description clipped to a pixel</h3>
+      <!-- SHOULD PASS: the clip-rect pattern a video player uses for its
+           screen-reader text. -->
+      <p class="sr-only-description">This description belongs to the video player and is clipped to a single pixel box for assistive technology only.</p>
+
+      <h3>Analytics payload inside an inline script</h3>
+      <!-- SHOULD PASS: script source is not typeset text. -->
+      <script>window.__PAGE__ = { id: "tight-leading-fixture", section: "quality", locale: "en-us", experiments: [] };</script>
+
+      <h3>Tag manager fallback inside noscript</h3>
+      <!-- SHOULD PASS: noscript markup source is not typeset text either. -->
+      <noscript>&lt;iframe src="https://example.test/tag-manager" height="0" width="0" style="display:none;visibility:hidden"&gt;&lt;/iframe&gt;</noscript>
+
+      <h3>Single line that never wraps (browser engine only)</h3>
+      <!-- SHOULD PASS in the browser engine: the line box is the whole text
+           box, so there is no gap between lines to crowd. The static engine
+           has no layout and cannot see that, so it still reports this one;
+           the wrap test is pinned by the unit tests in crates/core. -->
+      <span class="single-line-note">This utility class sets tight leading on a label that renders as one single line.</span>
+
+      <h3>Heading copy in a block wrapper</h3>
+      <!-- SHOULD PASS: a design system wraps the headline's text in a div
+           inside the h2. It is heading text, as a span there would be. -->
+      <h2 class="teaser-heading"><div class="teaser-copy">New every week: let our latest collections inspire you again and again this season.</div></h2>
+
+      <h3>Inline run on its block's line boxes (browser engine only)</h3>
+      <!-- SHOULD PASS in the browser engine: the 12px run declares an 11.4px
+           line-height, but its lines sit on the 22px line boxes of the block
+           around it. The static engine has no layout to find the block that
+           sets the pitch, so it still reports this one. -->
+      <div class="links-block"><span class="link-run">Free furniture, free books, free clothes, free computers, free phones, free fridges and much more besides.</span></div>
+
+      <h3>Bold two-line card title on a div (browser engine only)</h3>
+      <!-- SHOULD PASS in the browser engine: weight 700 over two rendered
+           lines is a headline set on a div, and gets the exemption h1 to h6
+           have. The static engine cannot count lines, so it still reports
+           this one. -->
+      <div class="bold-slot-title">Two southern residents charged over an international trafficking ring</div>
+
+      <h3>Bold two-line ticker headline in an inline link (browser engine only)</h3>
+      <!-- SHOULD PASS in the browser engine: an inline run at weight 670 that
+           wraps to two lines. The static engine cannot count them. -->
+      <div class="ticker-item"><a class="bold-ticker-link" href="/news/awards">The tourism Oscars: Dubai on land, Qatar in the air, and who won for Israel?</a></div>
+
+      <h3>Bold title in a three-line clamp it fills exactly</h3>
+      <!-- SHOULD PASS: weight 700 in a -webkit-box line clamp of three lines.
+           The text runs exactly three, so the clamp hides nothing; the
+           clamp itself is what exempts it. -->
+      <div class="clamped-exact-title">Two southern residents charged over an international trafficking ring that ran for years across the border</div>
+
+      <h3>Flex row whose short text items wrap as whole items (browser engine only)</h3>
+      <!-- SHOULD PASS in the browser engine: each run is an anonymous flex
+           item that sets one line; the row wraps whole items onto a second
+           row, which is not a second line box of any run (outreign.io's
+           hero meta row). The static engine cannot see the items. -->
+      <p class="items-row">100 free lead searches<span class="run-sep"></span>14-day trial on paid plans<span class="run-sep"></span>Built with you on a call</p>
+
+      <h3>Bold title in a two-line clamp</h3>
+      <!-- SHOULD PASS: weight 670 in a -webkit-box line clamp, however many
+           lines the full text would run to. -->
+      <span class="clamped-video-title">The compact luxury crossover turning heads this season, with a cabin that feels far larger than it is and a price that undercuts every rival</span>
+    </div>
+
+  </div>
+</body>
+</html>

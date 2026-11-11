@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low Contrast On Text With No Reading Job: Failing vs Advisory vs Passing</title>
+  <style>
+    /* Taste call r3-04: avatar initials, build or version stamps, signatures
+       and text inside illustration mockups are reported as advisory, outside
+       the failure count. Each shape is read conservatively: where it is
+       uncertain the finding keeps failing. Every ratio here is far under the
+       bar, so the near-bar margin (r3-02) is never the reason. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1f2937; margin: 0; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col > h2 { font-size: 20px; margin: 0 0 16px; color: #1f2937; }
+    .panel { width: 340px; padding: 12px; margin: 0 0 12px; background: #ffffff; }
+    .row { display: flex; align-items: center; gap: 12px; }
+    .name { color: #1f2937; font-size: 15px; }
+
+    .av { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+      border-radius: 50%; background: #93c5fd; color: #ffffff; font-size: 14px; font-weight: 600; }
+    .tile { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      border-radius: 6px; background: #a5b4fc; color: #ffffff; font-size: 14px; }
+    .svg-av { display: block; width: 32px; height: 32px; }
+    .svg-ink { color: #ffffff; }
+    /* An unpainted row, so the letter's surface is the svg under it and only
+       the pixel pass can measure it (the URL engine). */
+    .bare { background: none; }
+    .stamp { color: #bbbbbb; font-size: 12px; margin: 0; }
+    .build { color: #c0c0c0; font-size: 12px; }
+    .sig { font-family: "Great Vibes", cursive; color: #c4840e; font-size: 22px; margin: 0; }
+    .sig-panel { background: #f6f1ea; }
+    .author-signature { color: #b0b0b0; font-size: 14px; }
+    .hero-mockup { width: 300px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #ffffff; }
+    .mock-label { color: #aaaaaa; font-size: 12px; }
+    .terminal { background: #111827; padding: 12px; border-radius: 8px; }
+    .terminal code { color: #6b7280; font-size: 13px; font-family: ui-monospace, monospace; }
+
+    /* Should flag: the same shapes where the evidence is missing. */
+    .letter-link { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+      background: #a5b4fc; color: #ffffff; font-size: 14px; text-decoration: none; }
+    .count { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+      border-radius: 50%; background: #93c5fd; color: #ffffff; font-size: 12px; }
+    .badge-new { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+      background: #a6b4fc; color: #ffffff; font-size: 11px; }
+    .corner { display: block; width: 40px; height: 40px; background: #94c5fd; color: #ffffff; font-size: 11px; text-align: left; }
+    .note { color: #bbbbbb; font-size: 14px; margin: 0; }
+    .script-title { font-family: "Great Vibes", cursive; color: #c4840e; font-size: 22px; font-weight: 400; margin: 0; }
+    .signature-dish { color: #a0a0a0; font-size: 14px; }
+    .fine-print { color: #b0b0b0; font-size: 14px; }
+    .utility-card { width: 300px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 12px; }
+    .utility-card span { color: #aaaaaa; font-size: 12px; }
+    .mockups p { color: #9f9f9f; font-size: 14px; margin: 0; }
+    /* A key in a shortcut hint and a lower-case info badge sit in avatar
+       boxes but are not initials. */
+    .hint { color: #1f2937; font-size: 14px; margin: 0; }
+    .key { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+      border: 1px solid #cccccc; border-radius: 4px; background: #f6f6f6; color: #b5b5b5; font-size: 12px; font-family: ui-monospace, monospace; }
+    .info { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px;
+      border-radius: 50%; background: #e5e7eb; color: #ffffff; font-size: 11px; font-weight: 700; }
+    /* A version as a changelog heading or a link is navigation; a year after
+       "Release" is not a build number. */
+    .release-h { color: #b7b7b7; font-size: 18px; margin: 0; }
+    .version-link { color: #b8b8b8; font-size: 14px; }
+    .release-year { color: #b9b9b9; font-size: 14px; }
+    /* A practice exam and an image credit are not mockups, and a sentence
+       under a mockups wrapper is copy about them. */
+    .mock-exam p { color: #a1a1a1; font-size: 14px; margin: 0; }
+    .illustration-credit p { color: #a2a2a2; font-size: 14px; margin: 0; }
+    .mockups-grid p { color: #a3a3a3; font-size: 14px; margin: 0; }
+
+    /* Should pass: readable twins. */
+    .av-ok { background: #1d4ed8; }
+    .stamp-ok { color: #4b5563; font-size: 12px; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag as advisory</h2>
+      <div class="panel row"><span class="av">JD</span><span class="name">Jane Doe</span></div>
+      <div class="panel row"><div class="tile">R</div><span class="name">Rohan</span></div>
+      <div class="panel row bare"><div class="svg-host"><svg class="svg-av" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#93c5fd"/><g class="svg-ink"><text x="16" y="21" text-anchor="middle" fill="currentColor" font-size="14" font-weight="700" font-family="system-ui, sans-serif">S</text></g></svg></div><span class="name">Samira</span></div>
+      <div class="panel"><p class="stamp">v2.4.1 · 2024-03-01</p></div>
+      <div class="panel"><span class="build">Build 1289</span></div>
+      <div class="panel sig-panel"><p class="sig">Pedro</p></div>
+      <div class="panel"><span class="author-signature">Maria Lopez</span></div>
+      <div class="panel"><div class="hero-mockup"><div class="row"><span class="mock-label">Ready</span><span class="mock-label">Draft saved</span></div></div></div>
+      <div class="panel"><div class="terminal" role="img" aria-label="Terminal running the build"><code>$ npm run build</code></div></div>
+    </div>
+    <div class="col">
+      <h2>Should flag</h2>
+      <div class="panel row"><a class="letter-link" href="#letter-a">A</a><span class="name">Index</span></div>
+      <div class="panel row"><span class="count">3</span><span class="name">Unread</span></div>
+      <div class="panel row bare"><div class="svg-host"><svg class="svg-av" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#93c5fd"/><g class="svg-ink"><text x="16" y="21" text-anchor="middle" fill="currentColor" font-size="14" font-weight="700" font-family="system-ui, sans-serif">7</text></g></svg></div><span class="name">Open tasks</span></div>
+      <div class="panel row"><div class="badge-new">NEW</div><span class="name">Release notes</span></div>
+      <div class="panel row"><div class="corner">K</div><span class="name">Kiosk</span></div>
+      <div class="panel"><p class="note">Version 2 adds dark mode to every plan</p></div>
+      <div class="panel sig-panel"><h3 class="script-title">Pedro</h3></div>
+      <div class="panel"><span class="signature-dish">Truffle Pasta</span></div>
+      <div class="panel"><span class="fine-print">Terms apply to every plan</span></div>
+      <div class="panel"><div class="utility-card"><span>Ready to publish</span></div></div>
+      <section class="panel mockups"><p>Every mockup ships with its source files</p></section>
+      <div class="panel"><p class="hint">Press <kbd class="key">K</kbd> to search</p></div>
+      <div class="panel row"><span class="info">i</span><span class="name">Details</span></div>
+      <article class="panel"><h3 class="release-h">v4.2.0</h3><p class="name">Fixed the export people asked about.</p></article>
+      <nav class="panel"><a class="version-link" href="#v3">v3.1.0</a></nav>
+      <div class="panel"><span class="release-year">Release 2024</span></div>
+      <div class="panel mock-exam"><p>Question 1 of 20</p></div>
+      <div class="panel illustration-credit"><p>Illustrations by Jane Doe</p></div>
+      <div class="panel mockups-grid"><p>Download our device frames and use them in your pitch deck for free.</p></div>
+    </div>
+    <div class="col">
+      <h2>Should pass</h2>
+      <div class="panel row"><span class="av av-ok">MK</span><span class="name">Mika</span></div>
+      <div class="panel"><p class="stamp-ok">v2.4.2 · 2024-04-01</p></div>
+    </div>
+  </div>
+</body>
+</html>

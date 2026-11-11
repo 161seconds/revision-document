@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Icon tiles above card titles set on a div</title>
+  <style>
+    /* URL engine. shadcn's CardTitle is a div.font-semibold, not a heading
+       (kin-ai.replit.app's twenty feature cards), and Tailwind 4 computes
+       bg-primary/10 to an oklab() fill at alpha 0.1. The tile rule anchors on
+       a short bold block title as it does on a heading. */
+    body { margin: 0; font-family: system-ui, sans-serif; background: #ffffff; color: #0f172a; }
+    main { display: grid; grid-template-columns: 480px 480px; gap: 40px; width: 1000px; margin: 0 auto; padding: 24px 0; }
+    .card { width: 400px; height: 180px; padding: 24px; margin: 0 0 24px; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .tile { width: 48px; height: 48px; border-radius: 16px; background: oklab(0.775 -0.135 -0.015 / 0.1); display: flex; align-items: center; justify-content: center; margin: 0 0 16px; }
+    .tile svg { width: 24px; height: 24px; }
+    .title { display: block; font-size: 18px; line-height: 28px; font-weight: 600; }
+    .note { display: block; font-size: 18px; line-height: 28px; font-weight: 400; }
+    .desc { font-size: 14px; line-height: 20px; margin: 4px 0 0; color: #64748b; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag">
+      <div class="card">
+        <div class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#0f766e" stroke-width="2"></circle></svg></div>
+        <div class="title" id="flag-div-title" data-expect="flag" data-case="Flag Tile Above A Div Title">Global Hotkey Overlay</div>
+        <p class="desc">Open the assistant from anywhere.</p>
+      </div>
+    </section>
+    <section aria-label="Should pass">
+      <div class="card">
+        <div class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#0f766e" stroke-width="2"></circle></svg></div>
+        <div class="note" id="pass-regular-text" data-expect="pass" data-case="Pass Tile Above Regular Text">Open the assistant from anywhere</div>
+        <p class="desc">A regular-weight line is copy, not a title.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

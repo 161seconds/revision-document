@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat type hierarchy, an h1 set at two sizes</title>
+<!--
+  Should pass. The page sets its h1 at two sizes once each, a 66px title and a
+  48px closing title, so no h1 size is dominant. The ladder keeps the h1 at the
+  larger size and the page has a clear step. Dropping the tied role left body
+  17px, h2 18.4px and h3 20.8px, which read as a flat hierarchy.
+-->
+<style>
+  body { margin: 0; padding: 24px; font-family: system-ui, sans-serif; background: #ffffff; color: #111111; }
+  p { font-size: 17px; line-height: 1.6; }
+  h2 { font-size: 18.4px; }
+  h3 { font-size: 20.8px; }
+  .title { font-size: 66.56px; }
+  .closing { font-size: 48.64px; }
+</style>
+</head>
+<body>
+  <h1 class="title">Cursor for circuit boards.</h1>
+  <p>An agent reads the spec, picks the parts and routes the board.</p>
+  <h2>CLI</h2>
+  <h2>Cloud</h2>
+  <h2>Team</h2>
+  <h2>Enterprise</h2>
+  <h3>spec</h3>
+  <h3>architecture</h3>
+  <h3>parts</h3>
+  <h3>schematic</h3>
+  <p>Every stage writes an artifact you can open and check.</p>
+  <h1 class="closing">Pay to not run it yourself.</h1>
+  <p>The hosted plan keeps the toolchain current for you.</p>
+</body>
+</html>

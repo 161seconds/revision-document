@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--
+  Regression fixture for issue #407: DOM named-property shadowing.
+
+  HTMLFormElement is [LegacyOverrideBuiltIns], so a named control shadows even
+  builtin getters: a <form> containing <input name="id"> makes `form.id` return
+  the INPUT ELEMENT, not the id string. Reading `.startsWith` on it throws
+  "elId.startsWith is not a function". Every Shopify product form ships an
+  <input name="id"> (the variant id), so this crashed the URL scan of essentially
+  every Shopify page. `<input name="className">` shadows `form.className` the same
+  way. The detector must read these via getAttribute (immune to shadowing).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shadowed form.id regression fixture</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #ffffff; color: #1a1a1a; margin: 0; padding: 24px; }
+  .product { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 12px; }
+  .price { font-size: 20px; font-weight: 600; }
+  form { margin-top: 16px; }
+  .add-to-cart { background: #1a1a1a; color: #ffffff; border: 0; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+  label { display: block; margin: 8px 0 4px; font-size: 14px; }
+  select, input[type="number"] { padding: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main class="product">
+  <h1>Impeccable Test Product</h1>
+  <p class="price">$49.00</p>
+
+  <!-- Shopify-style product form: the <input name="id"> shadows form.id. -->
+  <form method="post" action="/cart/add" id="product-form">
+    <input type="hidden" name="id" value="4001">
+    <input type="hidden" name="className" value="variant-default">
+    <label for="qty">Quantity</label>
+    <input type="number" id="qty" name="quantity" value="1" min="1">
+    <label for="variant">Variant</label>
+    <select id="variant" name="options[Size]">
+      <option value="s">Small</option>
+      <option value="m">Medium</option>
+      <option value="l">Large</option>
+    </select>
+    <button type="submit" class="add-to-cart">Add to cart</button>
+  </form>
+</main>
+<script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

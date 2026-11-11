@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content hidden at rest: scroll-linked reveals (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #ffffff; font-size: 16px; line-height: 1.6; }
+    main { width: 1120px; margin: 0 auto; }
+    h1 { font-size: 36px; line-height: 1.2; }
+    h2 { font-size: 24px; line-height: 1.3; }
+    p { width: 640px; }
+    .spacer { height: 1400px; }
+    /* Scrubbed by the script below: the opacity follows the scroll position,
+       the way a scroll-linked motion value writes it inline every frame. */
+    .scrub { opacity: 0; height: 600px; }
+    .stage-track { height: 2400px; position: relative; }
+    .stage { position: sticky; top: 0; height: 800px; }
+    .stage-copy { opacity: 0; width: 640px; padding-top: 200px; }
+    /* A reveal whose script never ran: it still counts. */
+    .stalled { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease-out; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Reveals that follow the scroll</h1>
+    <p>Each section below sits at opacity 0 while the page is at the top, where the hidden share is
+    measured, and shows once a visitor scrolls to it. A scan that scrolls to each one and looks
+    leaves them out of the hidden share; the stalled block at the end still counts.</p>
+
+    <div class="spacer"></div>
+
+    <!-- PASS: scrubbed in as its section crosses the viewport -->
+    <section class="scrub" id="scrubbed-section">
+      <h2>Automated material movement</h2>
+      <p>Autonomous vehicles keep every machine supplied. Raw materials and finished parts flow
+      between stations without a forklift queue, and the floor plan adapts as the order book
+      changes from one week to the next, so capacity follows demand instead of lagging it.</p>
+      <p>Operators see where every pallet is, what it carries and where it goes next.</p>
+    </section>
+
+    <!-- PASS: a sticky stage whose copy is scrubbed through its track -->
+    <div class="stage-track" id="stage-track">
+      <div class="stage">
+        <div class="stage-copy" id="stage-copy">
+          <h2>Intelligent workflows</h2>
+          <p>Software assigns and tracks tasks, gives operators contextual nudges and lifts
+          productivity across shifts. People handle the strategy and automation handles the
+          repetition, one stage at a time as the visitor scrolls through the track.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLAG: counted as hidden, a reveal that never ran -->
+    <div class="stalled" id="stalled-block">
+      <h2>Downtime, eliminated before it starts</h2>
+      <p>Sensors watch machine health and flag failures early.</p>
+    </div>
+  </main>
+  <script>
+    // `#frozen` keeps the scroll from driving anything: the should-flag twin
+    // of this page, the same markup with reveals that never run.
+    if (location.hash !== '#frozen') {
+      const clamp = (v) => Math.max(0, Math.min(1, v));
+      const scrub = document.getElementById('scrubbed-section');
+      const track = document.getElementById('stage-track');
+      const copy = document.getElementById('stage-copy');
+      const update = () => {
+        const vh = window.innerHeight;
+        const r = scrub.getBoundingClientRect();
+        // 0 until the section's top passes the bottom fifth of the viewport.
+        scrub.style.opacity = String(clamp((vh * 0.8 - r.top) / (vh * 0.4)));
+        const t = track.getBoundingClientRect();
+        // 0 until the track has scrolled a quarter of the way through.
+        const progress = clamp(-t.top / (t.height - vh));
+        copy.style.opacity = String(clamp((progress - 0.25) * 4));
+      };
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    }
+  </script>
+</body>
+</html>

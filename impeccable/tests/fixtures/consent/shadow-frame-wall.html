@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a framed message inside the manager's shadow root</title>
+  <style>
+    /* A page that is only a Sourcepoint-shaped message, drawn in an iframe
+       that sits in the manager container's own shadow root. The frame is
+       still the manager's content, so the page is refused as a consent wall.
+       Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f3f4f6; }
+    #sp_message_container_1234 { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div id="sp_message_container_1234"></div>
+  <script>
+    const root = document.getElementById('sp_message_container_1234').attachShadow({ mode: 'open' });
+    root.innerHTML = '<iframe title="Privacy message" style="width:640px;height:400px;border:0;background:#fff" srcdoc="&lt;p&gt;We and our partners use cookies to personalise content and ads.&lt;/p&gt;&lt;button&gt;Accept&lt;/button&gt;"></iframe>';
+  </script>
+</body>
+</html>

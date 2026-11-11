@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evidence for a duplicated id: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the URL engine's evidence rects and crops
+       (crates/browser/src/lib.rs, capture_post_scan). A page can give
+       several elements one id, the way a search widget rendered once per
+       breakpoint does (d3shop.ae has three inputs with one id, two of them
+       collapsed). The rule pass scores the visible copy, and its finding
+       names the generated selector `#dup-note`, which `querySelector`
+       resolves to the first copy, the collapsed one. The evidence has to
+       measure the element the scan flagged, not whatever the selector
+       resolves to first.
+
+       Should flag: faint copy whose id is shared with two collapsed copies
+       before it. Its rect must be the visible copy's box.
+       Should pass: faint copy whose id is shared with a collapsed copy
+       after it, and faint copy with a unique id. Both rects are what
+       `querySelector` returns, as before.
+
+       The static HTML engine measures no boxes and reports every faint
+       copy. The URL behavior is pinned by crates/browser/tests/
+       evidence.rs. */
+    body { margin: 0; background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; padding: 24px 20px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    .faint { margin: 0 0 12px; width: 420px; font-size: 18px; color: #c4c4c4; }
+    .collapsed { width: 0; height: 0; overflow: hidden; margin: 0; }
+    /* A colour pair reports once (r14-t2), so each case wears its own ink. */
+    #dup-first-note { color: #c5c5c5; }
+    #solo-note { color: #c6c6c6; }
+    .spacer { height: 320px; }
+    .marker { width: 420px; height: 60px; margin: 0 0 24px; background: #0a7d3b; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag: the visible copy of a shared id</h2>
+      <p class="faint collapsed" id="dup-note">Faint note, collapsed copy one.</p>
+      <p class="faint collapsed" id="dup-note">Faint note, collapsed copy two.</p>
+      <div class="spacer"></div>
+      <p class="faint" id="dup-note">Faint note, the copy a visitor sees.</p>
+      <div class="marker"></div>
+    </div>
+    <div class="col">
+      <h2>Should pass: the first copy is the visible one</h2>
+      <p class="faint" id="dup-first-note">Faint note, visible first copy.</p>
+      <p class="faint collapsed" id="dup-first-note">Faint note, collapsed later copy.</p>
+      <div class="marker"></div>
+      <h2>Should pass: a unique id</h2>
+      <p class="faint" id="solo-note">Faint note with an id of its own.</p>
+      <div class="marker"></div>
+    </div>
+  </div>
+</body>
+</html>

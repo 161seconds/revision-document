@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>repeated-container-text, the slides of one carousel</title>
+<!--
+  The rule looks for one string wired into three distinct spots of a card.
+
+  Should pass: three slides of one listing that differ only by classes that
+  carry a generated id (jet-listing-dynamic-post-43268). They are one spot
+  three times (kinghost.com.br).
+
+  Should pass, in the browser: three slides with slot names of their own, two
+  of them parked past the carousel's window. Text a visitor cannot see at
+  capture repeats nothing. The static engine measures no boxes and still
+  reports this one.
+
+  Should flag: one string in three named slots, all on screen.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #222222; background: #f5f5f4; margin: 0; padding: 40px; }
+  .panel { background: #ffffff; border: 1px solid #d6d3d1; border-radius: 10px; padding: 20px; width: 360px; margin-bottom: 32px; }
+  h2 { font-size: 22px; margin: 0 0 10px; }
+  .window { overflow: hidden; width: 320px; }
+  .strip { display: flex; width: 960px; }
+  .slide { flex: 0 0 320px; }
+  .term { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="panel" id="flag-three-slots">
+  <h2>Hosting plans</h2>
+  <div class="lead"><span class="term">Servidor VPS</span></div>
+  <div class="meta"><em class="term">Servidor VPS</em></div>
+  <p class="aside">Read more about <strong>Servidor VPS</strong> plans.</p>
+</div>
+
+<div class="panel" id="pass-id-classes">
+  <h2>From the blog</h2>
+  <div class="window">
+    <div class="strip">
+      <div class="slide jet-listing-dynamic-post-43268 elementor-dcss-67254963955209192"><a class="term" href="/a">Servidor VPS</a></div>
+      <div class="slide jet-listing-dynamic-post-22775 elementor-dcss-67254964000920024"><a class="term" href="/b">Servidor VPS</a></div>
+      <div class="slide jet-listing-dynamic-post-42287 elementor-dcss-67254963915743704"><a class="term" href="/c">Servidor VPS</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="pass-parked-slides">
+  <h2>More from the blog</h2>
+  <div class="window">
+    <div class="strip">
+      <div class="slide first"><a class="term" href="/a">Servidor VPS</a></div>
+      <div class="slide second"><a class="term" href="/b">Servidor VPS</a></div>
+      <div class="slide third"><a class="term" href="/c">Servidor VPS</a></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

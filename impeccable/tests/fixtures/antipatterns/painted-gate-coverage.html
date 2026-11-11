@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painted gate coverage: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the rules that joined the URL engine's painted-at-capture
+       predicate (crates/core/src/browser/painted.rs): blinking-cursor,
+       bounce-easing, dark-glow, ai-color-palette, italic-serif-display,
+       kicker-above-heading, the page-level forms of bounce-easing, dark-glow
+       and pulsing-dot, and text-occlusion. Every should-pass case carries the
+       measurement of its should-flag twin and differs only in paint: it sits
+       inside a closed <details>, a panel at opacity 0 or visibility: hidden,
+       a section with the hidden attribute, at display: none, or past a
+       track's clip.
+
+       text-occlusion also skips text blurred past reading and a lone emoji,
+       and names an SVG shape and a border-only box for what they are.
+
+       The cursor and occlusion cases sit in the first 800px on purpose: the
+       cursor rule reads the first viewport, and occlusion probes only points
+       inside it.
+
+       The static HTML engine measures no boxes and runs no hit tests, so it
+       reports what it can see in both columns. The URL behavior is pinned by
+       crates/browser/tests/painted_gate_coverage.rs. */
+
+    /* The page-level CSS-text forms report the first declaration in the
+       page's style text, so the should-pass declarations come first here:
+       their selectors match only elements that are not painted. */
+    .pass-glow-bar { width: 200px; height: 4px; background: #1a3ad6; box-shadow: 0 0 16px rgba(26, 58, 214, 0.8); }
+    .pass-bounce-loader { width: 40px; height: 40px; background: #334155; animation: pgc-bounce 1s infinite; }
+    .pass-bounce-row { width: 300px; height: 40px; opacity: 0; transform: translateY(-28px); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+    .pass-rail { display: none; }
+    .pass-rail .pgc-node::after { content: ""; display: block; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pgc-pulse 2.4s ease-out infinite; }
+    @keyframes pgc-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes pgc-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 16px 20px; }
+    .col { position: relative; width: 600px; }
+    .col-label { font: 600 16px/20px system-ui; margin: 0 0 8px; }
+    .case-label { font: 600 13px/17px system-ui; margin: 0 0 6px; color: #333; }
+
+    /* Blinking cursors: one showing, one caught in the off phase of an
+       opacity blink, one in the off phase of a visibility blink. */
+    @keyframes pgc-blink { 50% { opacity: 0; } }
+    @keyframes pgc-caret-vis { 50% { visibility: hidden; } }
+    .terminal { width: 280px; height: 32px; margin: 0 0 4px; padding: 6px 12px; background: #111; color: #eee; font: 14px/20px monospace; }
+    .cursor { display: inline-block; width: 10px; height: 18px; background: #33d17a; vertical-align: text-bottom; animation: pgc-blink 1s steps(1) infinite; }
+    .cursor-off { animation: pgc-blink 1s steps(1) -0.6s infinite paused; }
+    .cursor-vis-off { animation: pgc-caret-vis 1s steps(1) -0.6s infinite paused; }
+    .faded-panel { opacity: 0; }
+    .hidden-panel { visibility: hidden; }
+
+    /* Occlusion cells. */
+    .cells { display: grid; grid-template-columns: 290px 290px; gap: 10px 20px; }
+    .cell { position: relative; width: 290px; height: 160px; }
+    .menu { position: absolute; top: 20px; left: 0; }
+    .menu summary { font-size: 13px; line-height: 17px; }
+    .menu-copy { position: absolute; top: 44px; left: 0; width: 270px; margin: 0; font-size: 16px; line-height: 20px; }
+    .dropdown { position: absolute; top: 24px; left: 0; width: 270px; }
+    .dropdown a { display: block; width: 270px; font-size: 16px; line-height: 20px; color: #111; text-decoration: none; }
+    .overhang-card { position: absolute; top: 30px; left: 150px; width: 120px; height: 90px; background: #f4f5f7; border: 1px solid #dddddd; }
+    .overhang-title { position: absolute; top: 40px; left: 0; z-index: 1; width: 200px; margin: 0; font: 800 48px/56px system-ui; white-space: nowrap; }
+    .overhang-menu summary { font-size: 13px; line-height: 17px; }
+    .cover-copy { position: absolute; top: 40px; left: 0; width: 260px; margin: 0; font-size: 18px; line-height: 24px; }
+    .cover-box { position: absolute; top: 30px; left: 0; width: 200px; height: 50px; background: #1f7a3d; border-radius: 8px; }
+    .teaser { position: absolute; top: 40px; left: 0; width: 260px; filter: blur(8px); }
+    .teaser .cover-copy { position: static; }
+    .glyph-copy { position: absolute; top: 40px; left: 0; font-size: 30px; line-height: 36px; }
+    .glyph-box { position: absolute; top: 34px; left: 0; width: 60px; height: 48px; background: #222222; }
+    .svg-copy { position: absolute; top: 40px; left: 0; width: 200px; margin: 0; font-size: 16px; line-height: 24px; }
+    .svg-cover { position: absolute; top: 36px; left: 0; }
+    .input-copy { position: absolute; top: 40px; left: 0; width: 120px; margin: 0; font-size: 16px; line-height: 24px; }
+    .input-cover { position: absolute; top: 34px; left: 0; width: 160px; height: 36px; background: transparent; border: 1px solid #999999; }
+
+    /* Below the fold. */
+    .case { position: relative; width: 600px; margin: 24px 0 0; }
+    .bounce-row { width: 300px; height: 40px; background: #e2e8f0; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .dark { width: 320px; padding: 16px; background: #111827; }
+    .glow-cta { display: block; width: 197px; height: 40px; background: #1f2937; color: #ffffff; box-shadow: 0 0 24px rgba(0, 169, 255, 0.6); }
+    .ramp { display: block; width: 186px; height: 70px; border-radius: 10px; background-image: linear-gradient(90deg, rgb(130, 255, 247) 0%, rgb(71, 81, 255) 49%, rgb(133, 38, 254) 100%); }
+    .scroller { width: 300px; height: 90px; overflow: hidden; }
+    .track { display: flex; width: 900px; transform: translateX(-600px); }
+    .slide { flex: 0 0 300px; width: 300px; height: 90px; padding: 10px; }
+    .italic-display { margin: 0; font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 56px; line-height: 1.1; }
+    .kicker { display: block; width: 240px; margin: 0 0 8px; font-size: 12px; line-height: 16px; letter-spacing: 0.11em; text-transform: uppercase; color: #5b5046; }
+    .kicker-heading { margin: 0; font-size: 32px; line-height: 1.2; }
+    .slide-inactive { opacity: 0; visibility: hidden; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pgc-pulse 2.4s ease-out infinite; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <section class="col" data-col="flag">
+      <h2 class="col-label">Should flag</h2>
+
+      <h3 class="case-label">Cursors in a terminal</h3>
+      <div class="terminal">$ deploy <span class="cursor" id="flag-cursor"></span></div>
+      <div class="terminal">$ build <span class="cursor cursor-off" id="flag-cursor-off"></span></div>
+      <div class="terminal">$ test <span class="cursor cursor-vis-off" id="flag-cursor-vis-off"></span></div>
+
+      <div class="cells">
+        <div class="cell">
+          <h3 class="case-label">Open menu over copy</h3>
+          <p class="menu-copy" id="flag-details-copy">Plans for founders and teams who ship demos every week.</p>
+          <details class="menu" open>
+            <summary>For founders</summary>
+            <div class="dropdown"><a href="#compare" id="flag-details-link-1">Compare products</a><a href="#widget" id="flag-details-link-2">Free demo widget</a><a href="#site" id="flag-details-link-3">Bring your demo</a></div>
+          </details>
+        </div>
+
+        <div class="cell">
+          <div class="overhang-card"></div>
+          <h1 class="overhang-title" id="flag-overhang-title">Watch</h1>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Copy under an opaque box</h3>
+          <p class="cover-copy" id="flag-cover-copy">Palais Garnier, Paris</p>
+          <div class="cover-box"></div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Two letters under a box</h3>
+          <span class="glyph-copy" id="flag-two-letters">Go</span>
+          <div class="glyph-box"></div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Copy under an SVG shape</h3>
+          <p class="svg-copy" id="flag-svg-covered">Team settings</p>
+          <svg class="svg-cover" width="200" height="40" viewBox="0 0 200 40"><rect x="0" y="0" width="200" height="40" fill="#dddddd"/></svg>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Copy under a bordered field</h3>
+          <p class="input-copy" id="flag-input-covered">Calendar</p>
+          <input class="input-cover" aria-label="Search">
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Bounce easing on a row on screen</h3>
+        <div class="bounce-row" id="flag-bounce"></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Glow on a dark page</h3>
+        <div class="dark"><a class="glow-cta" id="flag-glow" href="#start">Start free</a></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Violet ramp on the first slide</h3>
+        <div class="scroller">
+          <div class="track" style="transform: none">
+            <div class="slide"><a class="ramp" id="flag-palette" href="#ramp"></a></div>
+            <div class="slide"></div>
+            <div class="slide"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Italic serif display heading</h3>
+        <h2 class="italic-display" id="flag-italic">Stories in motion</h2>
+      </div>
+
+      <div class="case">
+        <span class="kicker">Invitation protocol</span>
+        <h2 class="kicker-heading">Everything you need to launch</h2>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Live dot</h3>
+        <div class="live-dot" id="flag-live-dot"></div>
+      </div>
+    </section>
+
+    <section class="col" data-col="pass">
+      <h2 class="col-label">Should pass</h2>
+
+      <h3 class="case-label">Cursors in panels nobody sees</h3>
+      <div class="faded-panel"><div class="terminal">$ lint <span class="cursor" id="pass-cursor-faded"></span></div></div>
+      <div class="hidden-panel"><div class="terminal">$ format <span class="cursor" id="pass-cursor-hidden"></span></div></div>
+
+      <div class="cells">
+        <div class="cell">
+          <h3 class="case-label">Closed menu over copy</h3>
+          <p class="menu-copy" id="pass-details-copy">Plans for teams who host demos on their own site.</p>
+          <details class="menu">
+            <summary>For teams</summary>
+            <div class="dropdown"><a href="#alternatives" id="pass-details-link-1">Side-by-side alternatives</a><a href="#directory" id="pass-details-link-2">Demo directory</a><a href="#embed" id="pass-details-link-3">Embed a player</a></div>
+          </details>
+        </div>
+
+        <div class="cell">
+          <details class="overhang-menu"><summary>More</summary><div class="overhang-card"></div></details>
+          <h1 class="overhang-title" id="pass-overhang-title">Learn</h1>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">Blurred copy under a gate</h3>
+          <div class="teaser"><p class="cover-copy" id="pass-teaser-copy">Opera de Lyon, Lyon</p></div>
+          <div class="cover-box"></div>
+        </div>
+
+        <div class="cell">
+          <h3 class="case-label">One emoji under a box</h3>
+          <span class="glyph-copy" id="pass-emoji">&#x1F3AF;</span>
+          <div class="glyph-box"></div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Loader and row nobody sees</h3>
+        <div style="display: none"><div class="pass-bounce-loader" id="pass-bounce-loader"></div></div>
+        <div class="pass-bounce-row" id="pass-bounce-row"></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Glow inside a transparent wrapper</h3>
+        <div class="dark faded-panel"><a class="glow-cta" id="pass-glow-faded" href="#later">Start later</a></div>
+        <div class="faded-panel"><div class="pass-glow-bar" id="pass-glow-bar"></div></div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Violet ramp on a slide past the clip</h3>
+        <div class="scroller">
+          <div class="track">
+            <div class="slide"><a class="ramp" id="pass-palette-parked" href="#parked"></a></div>
+            <div class="slide"></div>
+            <div class="slide"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Italic serif heading in a hidden panel</h3>
+        <div class="hidden-panel"><h2 class="italic-display" id="pass-italic-hidden">Archive in motion</h2></div>
+      </div>
+
+      <div class="case">
+        <section hidden>
+          <span class="kicker">Channel battle</span>
+          <h2 class="kicker-heading">Which would you try first</h2>
+        </section>
+      </div>
+
+      <div class="case">
+        <div class="slide-inactive">
+          <span class="kicker">Investor relations</span>
+          <h2 class="kicker-heading">Second quarter results announced</h2>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Dot on a rail not drawn</h3>
+        <div class="pass-rail"><div class="pgc-node" id="pass-rail-node"></div></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

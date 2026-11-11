@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Third-party widgets: Taboola cards and Swiper slides</title>
+  <style>
+    /* URL engine. Findings inside a known vendor's markup name the vendor
+       ("(third-party: Taboola)") and keep their severity: visitors see them,
+       and the fix lives in the widget's configuration. Taboola injects its
+       whole feed, so everything under its container is Taboola's. Swiper
+       only owns its wrapper and slide elements; what the site puts inside a
+       slide is the site's. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1c1c24; margin: 0; padding: 24px; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 1200px; margin: 0 auto; }
+    .col > h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin: 0 0 16px; }
+    .video-cta-button {
+      display: inline-block; width: 72px; height: 24px; padding: 0; border: 0; border-radius: 4px;
+      font-size: 10px; line-height: 24px; background: #1c1c24; color: #ffffff;
+    }
+    .card { width: 480px; padding: 16px; margin: 0 0 16px; border: 1px solid #d8deea; }
+    .swiper { width: 480px; height: 200px; overflow: hidden; }
+    .swiper-wrapper { display: flex; width: 480px; height: 200px; }
+    .swiper-slide { flex: 0 0 480px; width: 480px; height: 200px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .slide-copy { font-size: 16px; line-height: 24px; margin: 16px; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="col" aria-label="Should flag, third-party">
+      <h2>Should flag, tagged with the vendor</h2>
+      <div id="taboola-mid-home-page-thumbnails" class="trc_related_container">
+        <div id="internal_trc_2016259095" class="card">
+          <div class="videoCube trc_spotlight_item">
+            <button class="video-cta-button" data-expect="flag" data-case="Flag Taboola Button">Learn More</button>
+          </div>
+        </div>
+      </div>
+      <div class="swiper">
+        <div id="swiper-wrapper-c3421110317cdd10" class="swiper-wrapper">
+          <div class="swiper-slide swiper-slide-visible" data-expect="flag" data-case="Flag Swiper Slide Transition">
+            <p class="slide-copy" data-expect="flag" data-case="Flag Site Copy In A Slide Untagged">The site's own copy in a slide.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="col" aria-label="Should flag, first-party">
+      <h2>Should flag, not tagged</h2>
+      <div class="card">
+        <button class="video-cta-button" data-expect="flag" data-case="Flag Site Button Untagged">Learn More</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

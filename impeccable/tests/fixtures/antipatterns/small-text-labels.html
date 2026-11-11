@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Small text: labels the class list cannot see, a 9px line</title>
+  <style>
+    /* URL engine. tiny-text is about running prose: a label typed in
+       capitals (adant.ai's card meta) and a command set in a monospace face
+       with its whitespace kept (stroq.dev's terminal mock) are not. The same
+       holds for wide-tracking, which counts a caps label's letters, not its
+       spaces and digits, and leaves a link's one-line label alone
+       (lpga.or.jp's bold CJK button). low-contrast scores a whole line of
+       9px text under a 10px line box (coachcall.ai's chat timestamps). */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    main { display: grid; grid-template-columns: 560px 560px; gap: 40px; width: 1160px; margin: 0 auto; padding: 24px 0; }
+    .case { width: 520px; margin: 0 0 32px; }
+    .tiny { display: block; font-size: 10px; line-height: 14px; margin: 0; }
+    .meta { display: block; font-size: 10px; line-height: 14px; font-family: ui-monospace, monospace; letter-spacing: 0.8px; }
+    .cmd { display: inline-block; font-size: 11px; line-height: 16px; font-family: ui-monospace, monospace; white-space: pre-wrap; }
+    .tracked { display: block; font-size: 14px; line-height: 20px; letter-spacing: 0.2em; margin: 0; }
+    /* The eyebrow stays on one line on every platform: tracked at 0.2em it
+       fits the 520px case in San Francisco and wraps in the wider DejaVu Sans
+       a Linux runner sets system-ui in, and a wrapped run is not a label. */
+    .eyebrow { white-space: nowrap; }
+    .link-label { display: inline-block; font-size: 12px; line-height: 40px; font-weight: 700; letter-spacing: 0.08em; color: #1c1c24; text-decoration: none; }
+    .stamp { display: block; width: 148px; font-size: 9px; line-height: 9.5px; color: #9ca3af; margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag">
+      <div class="case"><p class="tiny" id="flag-tiny-prose" data-expect="flag" data-case="Flag Tiny Running Prose">This paragraph of running prose is set at ten pixels, which is too small to read.</p></div>
+      <div class="case"><p class="tracked" id="flag-tracked-prose" data-expect="flag" data-case="Flag Tracked Running Prose">Tracked running prose spreads its letters too far apart to be read as words at this length.</p></div>
+      <div class="case"><p class="stamp" id="flag-nine-pixel-line" data-expect="flag" data-case="Flag Nine Pixel Line">8:24 AM, delivered</p></div>
+    </section>
+    <section aria-label="Should pass">
+      <div class="case"><span class="meta" id="pass-typed-caps-meta" data-expect="pass" data-case="Pass Typed Caps Meta">ANIMATION · CINEMATIC 3D · 20S</span></div>
+      <div class="case"><span class="cmd" id="pass-terminal-command" data-expect="pass" data-case="Pass Terminal Command">npx @stroq/cli replay --last --verbose</span></div>
+      <div class="case"><p class="tracked eyebrow" id="pass-typed-caps-eyebrow" data-expect="pass" data-case="Pass Typed Caps Eyebrow">SCHEDULE AND CREATE 100 SOCIAL VIDEOS IN 20 MINS</p></div>
+      <div class="case"><a class="link-label" href="#instagram" id="pass-link-label" data-expect="pass" data-case="Pass Tracked Link Label">日本女子プロゴルフ協会（JLPGA）Instagram</a></div>
+    </section>
+  </main>
+</body>
+</html>

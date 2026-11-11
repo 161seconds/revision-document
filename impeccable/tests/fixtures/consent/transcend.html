@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a Transcend banner in a shadow root</title>
+  <style>
+    /* A Transcend-shaped banner (its ids, not its script), as verizon.com
+       serves it: `div#transcend-consent-manager`, a zero-size fixed host on
+       <html>, whose open shadow root renders `div#consentManagerMainDialog`,
+       a fixed bar at the foot of the first screen. Under it sit a faint line
+       of copy and a CTA, real contrast failures; inside it, the banner's own
+       faint text. The URL engine hides the host before the rule pass. Pinned
+       by crates/browser/tests/consent_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .faint { position: absolute; top: 640px; left: 80px; width: 520px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .cta { position: absolute; top: 700px; left: 80px; display: inline-block; padding: 8px 16px; border-radius: 6px;
+      background: #ff7145; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>A page under a Transcend banner</h1>
+  <p>The copy near the top of the page is readable and nothing covers it.</p>
+  <p class="faint" id="covered-copy">Faint copy the consent banner covers at load.</p>
+  <a href="#" class="cta" id="covered-cta">Shop the phones</a>
+  <script>
+    const host = document.createElement('div');
+    host.id = 'transcend-consent-manager';
+    host.setAttribute('style', 'position: fixed; z-index: 2147483647;');
+    document.documentElement.appendChild(host);
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML = '<style>#consentManagerMainDialog { position: fixed; left: 0; right: 0; top: 600px; height: 200px; padding: 20px 40px; background: #ffffff; border-top: 1px solid #ddd; } .paragraph { margin: 0; max-width: 700px; font-size: 14px; color: #b0b0b0; }</style>'
+      + '<div><div id="consentManagerMainDialog" class="modal-container" role="region" aria-label="cookie consent banner">'
+      + '<p class="paragraph">We and our partners use cookies and similar technologies to collect information about your device.</p>'
+      + '<button type="button">Accept all</button></div></div>';
+  </script>
+</body>
+</html>

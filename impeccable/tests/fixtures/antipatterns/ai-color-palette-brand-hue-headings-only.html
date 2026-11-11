@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Color Palette: purple only in the headings</title>
+  <style>
+    /* URL engine. The headings of ai-color-palette-brand-hue.html on a page
+       whose nav bar is neutral and whose only other purple is a gradient:
+       nothing but headings and gradients wears the hue, so the headings
+       report. A purple pill in the nav is too small to be the nav bar. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1c1c24; margin: 0; }
+    .topbar { display: block; width: 1280px; height: 50px; background-color: #1c1c24; color: #ffffff; }
+    .topbar a { display: inline-block; padding: 14px 16px; color: #ffffff; font-size: 14px; }
+    .topbar .current { background-color: #5c2d91; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 1200px; margin: 0 auto; padding: 24px 0; }
+    .col > h2.label { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin: 0 0 16px; }
+    .section-header { font-size: 28px; line-height: 36px; margin: 0 0 12px; color: #5c2d91; }
+    .tile-header { font-size: 24px; line-height: 32px; margin: 0 0 12px; color: #6a35a6; }
+    .promo-ramp {
+      display: block; width: 480px; height: 160px; border-radius: 12px;
+      background-image: linear-gradient(135deg, rgb(133, 38, 254) 0%, rgb(192, 88, 243) 100%);
+    }
+    p { font-size: 16px; line-height: 24px; margin: 0 0 16px; }
+  </style>
+</head>
+<body>
+  <nav class="topbar" aria-label="Primary">
+    <a class="current" href="#">Personal</a><a href="#">Business</a><a href="#">Investors</a>
+  </nav>
+  <main>
+    <section class="col" aria-label="Should flag">
+      <h2 class="label">Should flag</h2>
+      <h1 class="section-header" data-expect="flag" data-case="Flag Heading-Only Purple">Featured services</h1>
+      <p>No brand surface wears this purple.</p>
+      <h2 class="tile-header" data-expect="flag" data-case="Flag Second Heading">Support and help</h2>
+      <div class="promo-ramp" data-expect="flag" data-case="Flag Purple Gradient"></div>
+    </section>
+    <section class="col" aria-label="Should pass">
+      <h2 class="label">Should pass</h2>
+      <p data-expect="pass" data-case="Pass Body Text">Body copy in the neutral ink.</p>
+    </section>
+  </main>
+</body>
+</html>

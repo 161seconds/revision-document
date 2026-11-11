@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Script error + content hidden fixture (browser-only)</title>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
+    section { margin: 0 0 480px; }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.4s ease-out, transform 0.4s ease-out; }
+    .reveal.in-view { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Visible hero headline stays readable</h1>
+    <p>The opening paragraph renders normally, exactly like the real broken sample: the
+    first viewport looks fine while everything below it never appears.</p>
+
+    <section class="reveal">
+      <h2>First hidden section</h2>
+      <p>This block waits for an IntersectionObserver that will never construct, because
+      the single script tag below fails to parse. Its text ships in the document but the
+      reveal class never lands, so the reader scrolls through blank space.</p>
+    </section>
+    <section class="reveal">
+      <h2>Second hidden section</h2>
+      <p>More shipped-but-invisible copy. Together the hidden sections carry well over
+      thirty percent of the character count of the page, which is the failed-reveal
+      signature this fixture exists to reproduce for the detector tests.</p>
+    </section>
+    <section class="reveal">
+      <h2>Third hidden section</h2>
+      <p>A final block of body copy that stays at opacity zero forever. A healthy page
+      with this exact markup reveals every one of these sections during the detector's
+      reveal sweep; this one cannot, because its JavaScript died at parse time.</p>
+    </section>
+  </main>
+
+  <script>
+    // Should flag: a throw that is not an Error. The finding names its
+    // properties and the function and script position it was thrown from:
+    // `Uncaught Object {code: "E_CONSENT", ...} (at loadConsentConfig, <url>:44:...)`.
+    function loadConsentConfig() { throw { code: 'E_CONSENT', message: 'consent config missing' }; }
+    setTimeout(loadConsentConfig, 0);
+    // Should flag: code with no script URL, built the way a tag manager builds
+    // a custom tag. It reports its type and V8's name for the script:
+    // `Uncaught ReferenceError: missingAnalyticsQueue is not defined (at eval, <anonymous>:3:1)`.
+    setTimeout(new Function('missingAnalyticsQueue.push({ event: "view" })'), 0);
+    // Should pass: a caught error and console.error never reach the page
+    // error stream.
+    try { throw new Error('handled quietly'); } catch (e) { console.error('handled quietly', e); }
+  </script>
+  <script>
+    const sections = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) { entry.target.classList.add('in-view'); io.unobserve(entry.target); }
+      }
+    }, { threshold: 0.1 });
+    sections.forEach((el) => io.observe(el));
+    // Deliberate syntax error: an unterminated string kills the whole block,
+    // including the observer wiring above.
+    const label = 'unterminated
+  </script>
+</body>
+</html>

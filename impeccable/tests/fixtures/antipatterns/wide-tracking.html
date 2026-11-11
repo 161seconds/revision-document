@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Wide tracking fixture</title>
+  <style>
+    body { font-family: Georgia, serif; margin: 0; color: #1a1a1a; background: #fff; }
+    .cols { display: grid; grid-template-columns: 520px 520px; gap: 24px; padding: 24px; }
+    .col { width: 520px; padding: 16px; }
+    h1 { font-size: 32px; margin: 24px 24px 0; }
+    h2 { font-size: 24px; margin: 0 0 16px; }
+    h3 { font-size: 18px; margin: 24px 0 8px; }
+    p { margin: 0 0 20px; }
+    .body-copy { font-size: 16px; line-height: 26px; }
+    .label { display: block; font-size: 12px; line-height: 18px; }
+  </style>
+</head>
+<body>
+  <h1>Wide tracking: reading text versus short capital labels</h1>
+  <div class="cols">
+    <!-- FLAG column: tracking applied to a run the reader has to read through -->
+    <section class="col flag">
+      <h2>Tracked running text</h2>
+
+      <h3>Lowercase paragraph pulled apart</h3>
+      <p class="body-copy" style="letter-spacing: 0.15em">Letter spacing this wide holds every character at arm's length, so the eye stops reading word shapes and starts spelling out one letter at a time.</p>
+
+      <h3>Capitals typed in the markup, past label length</h3>
+      <p class="body-copy" style="letter-spacing: 0.12em">SUPPORT HOURS RUN MONDAY TO FRIDAY, FROM NINE IN THE MORNING UNTIL SIX IN THE EVENING, EXCEPT ON PUBLIC HOLIDAYS.</p>
+
+      <h3>Mixed-case label at label length</h3>
+      <span class="label" style="letter-spacing: 0.18em">Fall 2026 technology preview</span>
+    </section>
+
+    <!-- PASS column: short capital labels, where the tracking is the treatment -->
+    <section class="col pass">
+      <h2>Short capital labels</h2>
+
+      <h3>Eyebrow set with text-transform</h3>
+      <span class="label" style="letter-spacing: 0.18em; text-transform: uppercase">Fall 2026 technology preview</span>
+
+      <h3>Badge typed in capitals</h3>
+      <span class="label" style="letter-spacing: 0.18em">LIMITED EDITION RELEASE 2026</span>
+
+      <h3>Capital label carrying punctuation</h3>
+      <span class="label" style="letter-spacing: 0.16em">SHIPPING AND RETURNS / FAQ</span>
+
+      <h3>Paragraph inside the tracking threshold</h3>
+      <p class="body-copy" style="letter-spacing: 0.01em">A hair of positive tracking keeps a tightly drawn face from crowding itself, and the reader never notices the correction at all.</p>
+
+      <h3>Capitals typed in the markup, past label length but short of a sentence</h3>
+      <p class="body-copy" style="letter-spacing: 0.12em">NOW AVAILABLE ACROSS THE UNITED STATES, CANADA AND NEW ZEALAND</p>
+
+      <h3>Japanese question set with open tracking</h3>
+      <p class="body-copy" style="letter-spacing: 0.1em">台風が近づいているときに気をつけることは何ですか？</p>
+
+      <h3>Reading block declared uppercase</h3>
+      <p class="body-copy" style="letter-spacing: 0.12em; text-transform: uppercase">Every booking is confirmed by email within one working day, and the deposit is refunded in full whenever a tour is cancelled a week ahead. Declared uppercase is the author saying the run is set in capitals; all-caps-body owns the length of it.</p>
+    </section>
+  </div>
+</body>
+</html>

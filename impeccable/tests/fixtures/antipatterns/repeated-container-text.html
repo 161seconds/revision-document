@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Repeated Container Text Fixture</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      margin: 0;
+      padding: 40px;
+      background: #f5f5f4;
+      color: #222222;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #d6d3d1;
+      border-radius: 10px;
+      padding: 20px;
+      width: 360px;
+      margin-bottom: 32px;
+    }
+    .shadow-card {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      padding: 20px;
+      width: 360px;
+      margin-bottom: 32px;
+    }
+    h2 { font-size: 22px; margin: 0 0 10px; }
+    .big-word { font-size: 30px; font-weight: 700; color: #b91c1c; }
+    .tag { font-size: 12px; text-transform: uppercase; color: #b91c1c; }
+    .row { padding: 6px 0; border-bottom: 1px solid #eeeeee; }
+    .status { font-size: 13px; color: #57534e; }
+    td, th { padding: 6px 10px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ SHOULD FLAG ══ -->
+
+  <!-- Same word wired into three structurally different slots of one card -->
+  <div class="card" id="flag-status-card">
+    <h2>Museumplein departure</h2>
+    <div class="headline"><span class="big-word">Suspended</span></div>
+    <div class="meta"><span class="tag">Suspended</span></div>
+    <p class="note">This service is <strong>Suspended</strong> until further notice.</p>
+  </div>
+
+  <!-- Four distinct slots inside one elevated card -->
+  <div class="shadow-card" id="flag-ticket-card">
+    <h2>Evening show</h2>
+    <div class="banner"><span class="big-word">Unavailable</span></div>
+    <div class="detail"><em class="tag">Unavailable</em></div>
+    <div class="footer"><span class="status">Unavailable</span></div>
+    <p class="aside">Currently <strong>Unavailable</strong> at this venue.</p>
+  </div>
+
+  <!-- ══ SHOULD PASS ══ -->
+
+  <!-- Table columns inside a card repeat by design -->
+  <div class="card" id="pass-table-card">
+    <h2>Deploy history</h2>
+    <table>
+      <tr><td>build 12</td><td>Rolled back</td></tr>
+      <tr><td>build 13</td><td>Rolled back</td></tr>
+      <tr><td>build 14</td><td>Rolled back</td></tr>
+    </table>
+  </div>
+
+  <!-- Parallel templated rows: identical structural position each time -->
+  <div class="card" id="pass-parallel-rows">
+    <h2>Departures</h2>
+    <div class="row"><span class="status">On schedule</span></div>
+    <div class="row"><span class="status">On schedule</span></div>
+    <div class="row"><span class="status">On schedule</span></div>
+  </div>
+
+  <!-- Nav list inside a card -->
+  <div class="card" id="pass-nav-card">
+    <h2>Sections</h2>
+    <nav>
+      <div class="a"><span>Overview page</span></div>
+      <div class="b"><em>Overview page</em></div>
+      <div class="c"><strong>Overview page</strong></div>
+    </nav>
+  </div>
+
+  <!-- Short strings never count -->
+  <div class="card" id="pass-short-text">
+    <h2>Toggles</h2>
+    <div class="one"><span>Off</span></div>
+    <div class="two"><em>Off</em></div>
+    <div class="three"><strong>Off</strong></div>
+  </div>
+
+  <!-- Digits-only strings never count -->
+  <div class="card" id="pass-numbers">
+    <h2>Scores</h2>
+    <div class="one"><span>2026</span></div>
+    <div class="two"><em>2026</em></div>
+    <div class="three"><strong>2026</strong></div>
+  </div>
+
+  <!-- One occurrence per card, three cards -->
+  <div class="card" id="pass-spread-a"><span class="tag">Standby mode</span></div>
+  <div class="card" id="pass-spread-b"><em class="tag">Standby mode</em></div>
+  <div class="card" id="pass-spread-c"><strong class="tag">Standby mode</strong></div>
+
+  <!-- Calendar-style grid repeats by design -->
+  <div class="card" id="pass-grid-card">
+    <h2>Availability</h2>
+    <div role="grid">
+      <div class="cell-a"><span>Open slot</span></div>
+      <div class="cell-b"><em>Open slot</em></div>
+      <div class="cell-c"><strong>Open slot</strong></div>
+    </div>
+  </div>
+
+  <!-- Only two structurally distinct occurrences: below threshold -->
+  <div class="card" id="pass-two-spots">
+    <h2>Corner case</h2>
+    <div class="headline"><span class="big-word">Rescheduled</span></div>
+    <div class="meta"><span class="tag">Rescheduled</span></div>
+  </div>
+
+</body>
+</html>

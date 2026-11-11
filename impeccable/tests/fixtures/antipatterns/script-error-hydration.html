@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Script error, React's recoverable hydration errors (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>A hydration failure React recovers from</h1>
+    <p>One hydration failure throws #418 and then #423, and React renders the root again
+    on the client, so the page shows complete. Those errors report as advisory. Every
+    other uncaught error on the page keeps failing the scan.</p>
+  </main>
+
+  <script>
+    const boilerplate = (n) => 'Minified React error #' + n + '; visit https://react.dev/errors/' + n + ' for the full message or use the non-minified dev environment for full errors and additional helpful warnings.';
+    // Should pass as advisory: the hydration chain, #418 then #423.
+    function hydrateRoot() { throw new Error(boilerplate(418)); }
+    function recoverRoot() { throw new Error(boilerplate(423)); }
+    setTimeout(hydrateRoot, 0);
+    setTimeout(recoverRoot, 0);
+    // Should flag as an error: a React invariant outside the recoverable set
+    // (#185, an update loop) and the site's own broken widget.
+    function updateLoop() { throw new Error(boilerplate(185)); }
+    function registerWidget() { const evo = {}; evo.article(); }
+    setTimeout(updateLoop, 0);
+    setTimeout(registerWidget, 0);
+  </script>
+</body>
+</html>

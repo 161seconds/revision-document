@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a banner the scroll probe brings in</title>
+  <style>
+    /* A page with a section whose opacity follows the scroll, so the scan
+       scrolls to it after the capture to see it show, and a OneTrust bar
+       the page injects the second time it is scrolled back to the top: the
+       reveal sweep's return is the first, the scroll probe's the second.
+       The bar arrives after every pre-capture hide pass, so the scan hides
+       it once more after probing. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    p { width: 640px; }
+    .spacer { height: 1400px; }
+    .scrub { opacity: 0; height: 600px; }
+    #onetrust-banner-sdk { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 1000; padding: 20px; border-top: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Reveals that follow the scroll</h1>
+  <p>The section below sits at opacity 0 while the page is at the top and shows once a visitor scrolls to it.</p>
+  <div class="spacer"></div>
+  <section class="scrub" id="scrubbed-section">
+    <h2>Automated material movement</h2>
+    <p>Autonomous vehicles keep every machine supplied. Raw materials and finished parts flow
+    between stations without a forklift queue, and the floor plan adapts as the order book
+    changes from one week to the next, so capacity follows demand instead of lagging it.</p>
+    <p>Operators see where every pallet is, what it carries and where it goes next.</p>
+  </section>
+  <div class="spacer"></div>
+  <script>
+    const clamp = (v) => Math.max(0, Math.min(1, v));
+    const scrub = document.getElementById('scrubbed-section');
+    let lastY = 0;
+    let returns = 0;
+    const inject = () => {
+      const sdk = document.createElement('div');
+      sdk.id = 'onetrust-consent-sdk';
+      sdk.innerHTML = '<div id="onetrust-banner-sdk"><p>By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation and analyze site usage.</p><button type="button">Accept All Cookies</button></div>';
+      document.body.appendChild(sdk);
+    };
+    window.addEventListener('scroll', () => {
+      const vh = window.innerHeight;
+      const r = scrub.getBoundingClientRect();
+      scrub.style.opacity = String(clamp((vh * 0.8 - r.top) / (vh * 0.4)));
+      if (window.scrollY === 0 && lastY > 0 && ++returns === 2) inject();
+      lastY = window.scrollY;
+    }, { passive: true });
+  </script>
+</body>
+</html>

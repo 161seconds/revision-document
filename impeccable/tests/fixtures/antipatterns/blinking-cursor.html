@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Blinking cursor fixture</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: monospace, monospace; font-size: 16px; }
+  .hero { padding: 40px; }
+  .terminal { background: #111; color: #eee; padding: 24px; width: 600px; }
+
+  @keyframes blink-anim { 50% { opacity: 0; } }
+  @keyframes flicker { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+  @keyframes caret-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* FLAG: solid block cursor in the hero terminal */
+  .flag-block-cursor {
+    display: inline-block; width: 10px; height: 18px;
+    background: #33d17a; vertical-align: text-bottom;
+    animation: blink-anim 1.1s steps(1) infinite;
+  }
+
+  /* FLAG: glyph cursor, animation name says nothing but keyframes toggle opacity */
+  .flag-glyph-cursor { animation: flicker 1s steps(2) infinite; }
+
+  /* FLAG: underscore bar cursor */
+  .flag-underscore-cursor {
+    display: inline-block; width: 12px; height: 3px;
+    background: #eee; vertical-align: baseline;
+    animation: caret-blink 0.9s steps(1) infinite;
+  }
+
+  /* PASS: same block cursor shape, but deep below the landing region */
+  .pass-below-fold-cursor {
+    display: inline-block; width: 10px; height: 18px;
+    background: #33d17a;
+    animation: blink-anim 1.1s steps(1) infinite;
+  }
+
+  /* PASS: cursor inside real editable surfaces */
+  .pass-editable-cursor, .pass-textbox-cursor {
+    display: inline-block; width: 10px; height: 18px;
+    background: #444;
+    animation: blink-anim 1s steps(1) infinite;
+  }
+
+  /* PASS: round pulsing dot stays with the pulsing-dot rule */
+  .pass-round-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: #33d17a; border-radius: 50%;
+    animation: blink-anim 2s steps(1) infinite;
+  }
+
+  /* PASS: spinner animates transform, not visibility */
+  .pass-spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #999; border-top-color: #333; border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  /* PASS: a blinking word is not a cursor shape */
+  .pass-blinking-word { animation: flicker 1s steps(2) infinite; }
+
+  /* PASS: large blinking panel fails the caret-size gates */
+  .pass-blinking-panel {
+    display: inline-block; width: 200px; height: 90px;
+    background: #222;
+    animation: blink-anim 2s steps(1) infinite;
+  }
+
+  .spacer { height: 1400px; }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>Terminal-flavored landing hero</h1>
+    <div class="terminal">
+      <p>user@host:~$ run demo <span class="flag-block-cursor" aria-hidden="true"></span></p>
+      <p>user@host:~$ tail -f logs <span class="flag-glyph-cursor" aria-hidden="true">▌</span></p>
+      <p>user@host:~$ next up <span class="flag-underscore-cursor" aria-hidden="true"></span></p>
+    </div>
+
+    <p style="margin-top: 24px;">Status <span class="pass-round-dot" aria-hidden="true"></span>
+      loading <span class="pass-spinner" aria-hidden="true"></span>
+      and a <span class="pass-blinking-word">LIVE</span> badge word
+      plus a big panel <span class="pass-blinking-panel" aria-hidden="true"></span></p>
+
+    <div contenteditable="true" class="terminal" style="margin-top: 24px;">
+      <p>editable prompt <span class="pass-editable-cursor" aria-hidden="true"></span></p>
+    </div>
+
+    <div role="textbox" class="terminal" style="margin-top: 24px;">
+      <p>textbox prompt <span class="pass-textbox-cursor" aria-hidden="true"></span></p>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <div class="terminal">
+    <p>deep footer terminal <span class="pass-below-fold-cursor" aria-hidden="true"></span></p>
+  </div>
+
+</body>
+</html>

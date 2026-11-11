@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "serve-question: every card on a direction or surface page declares its identity, and these do not: a declares no kind. Set \"kind\" on every option: \"assigned\" on the assigned direction (a surface round's dealt lead), \"pick\" on the IMPECCABLE’S PICK card, \"challenger\" on each dealt challenger, \"grounded\" on any other direction of your own (a safer round's lineup), or \"dealt\" on a surface round's other dealt structures; and on every challenger set \"catalogId\" to the SOURCE ID concept-seed printed for it, never the card's own id. Fix the payload and rerun --update on the same key; nothing was delivered.\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat type hierarchy, a tied heading level that stays flat</title>
+<!--
+  Should flag. The h2s, most of the page's headings, are set at 17px and
+  18px equally often, so no h2 size is dominant and the role drops out of the
+  ladder (body 16px, h3 16px, h1 18px). Whichever size stands for the h2s, the
+  ramp stays flat: 17px and 18px sit within a 1.13 step of the sizes around
+  them. The rule reports it. flat-type-hierarchy-dropped-role.html is the twin
+  whose dropped level holds a 20px size that would make a 1.25 step, and
+  declines.
+-->
+<style>
+  body { margin: 0; font: 16px/1.6 system-ui, sans-serif; color: #222222; background: #ffffff; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 24px; }
+  h1 { font-size: 18px; margin: 0 0 24px; }
+  h2 { margin: 32px 0 8px; }
+  h2.a { font-size: 17px; }
+  h2.b { font-size: 18px; }
+  h3 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Project notes</h1>
+  <p>Some opening copy about what this page covers and why it exists for readers who arrive here first.</p>
+  <h2 class="a">Background</h2>
+  <p>Paragraph of body copy that explains the background of the project in some detail for the reader.</p>
+  <p>Another paragraph of body copy that carries on the explanation with more words and more detail here.</p>
+  <h2 class="b">Approach</h2>
+  <p>Paragraph of body copy that explains the approach of the project in some detail for the reader here.</p>
+  <p>Another paragraph of body copy that carries on the explanation with more words and more detail here.</p>
+  <h2 class="a">Results</h2>
+  <p>Paragraph of body copy that explains the results of the project in some detail for the reader here.</p>
+  <p>Another paragraph of body copy that carries on the explanation with more words and more detail here.</p>
+  <h3>Caveats</h3>
+  <p>Paragraph of body copy about caveats that the reader should keep in mind when reading the results above.</p>
+  <h2 class="b">Next steps</h2>
+  <p>Paragraph of body copy that explains the next steps of the project in some detail for the reader.</p>
+  <p>Another paragraph of body copy that carries on the explanation with more words and more detail here.</p>
+</div>
+</body>
+</html>

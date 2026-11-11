@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low Contrast Placeholders: Only Label vs Hint Under A Label</title>
+  <style>
+    /* Taste call r5-p30: a low-contrast placeholder reports as advisory when
+       a visible label names the field (a label element, aria-labelledby
+       text, or a text label right above the field), and keeps its severity
+       when the placeholder is the field's only label. A label a reader
+       cannot see (display: none, screen-reader text, aria-label) is no
+       label. Every placeholder is #bbbbbb on white, 1.9:1. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1f2937; margin: 0; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col > h2 { font-size: 20px; margin: 0 0 16px; color: #1f2937; }
+    .row { width: 320px; margin: 0 0 20px; }
+    .row label, .row .caption { display: block; width: 280px; height: 20px; font-size: 14px; line-height: 20px; margin: 0 0 6px; color: #1f2937; }
+    .row h3 { width: 280px; height: 24px; font-size: 18px; line-height: 24px; margin: 0 0 6px; color: #1f2937; }
+    .row p.copy { width: 280px; height: 60px; font-size: 14px; line-height: 20px; margin: 0 0 6px; color: #1f2937; }
+    .field { display: block; width: 280px; height: 40px; padding: 8px 12px; font-size: 16px; box-sizing: border-box;
+      border: 1px solid #94a3b8; border-radius: 6px; background: #ffffff; color: #1f2937; }
+    textarea.field { height: 72px; }
+    .field::placeholder { color: #bbbbbb; }
+    .ink::placeholder { color: #4b5563; }
+    .hs-hidden { display: none !important; }
+    .row label.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .wrap { width: 280px; height: 40px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+      <!-- No label at all: the placeholder is the field's name. -->
+      <div class="row"><input class="field" type="email" placeholder="Work email address"></div>
+      <!-- A label for the field that is not rendered (HubSpot's forms). -->
+      <div class="row">
+        <label class="hs-hidden" for="flag-hidden-label">Website</label>
+        <div class="wrap"><input id="flag-hidden-label" class="field" type="text" placeholder="Company website link"></div>
+      </div>
+      <!-- A label written for screen readers only. -->
+      <div class="row">
+        <label class="sr-only" for="flag-sr-only">Search</label>
+        <input id="flag-sr-only" class="field" type="search" placeholder="Search trials and targets">
+      </div>
+      <!-- aria-label is never visible. -->
+      <div class="row"><input class="field" type="search" aria-label="Search the catalogue" placeholder="Plate number or VIN"></div>
+      <!-- A paragraph of copy above the field is not its label. -->
+      <div class="row">
+        <p class="copy">Every technology, target, product and trial in the field, linked together on one page.</p>
+        <input class="field" type="search" placeholder="Look up a compound">
+      </div>
+      <!-- A heading above the field is not its label. -->
+      <div class="row">
+        <h3>Stay in the loop</h3>
+        <input class="field" type="email" placeholder="Newsletter email address">
+      </div>
+      <!-- The first field's label does not name the second field. -->
+      <div class="row">
+        <div><label for="flag-first-of-two">First name</label><input id="flag-first-of-two" class="field ink" type="text" placeholder="Ada"></div>
+        <div><input class="field" type="text" placeholder="Family name goes here"></div>
+      </div>
+    </div>
+    <div class="col">
+      <h2>Should flag as advisory</h2>
+      <!-- A label element for the field. -->
+      <div class="row">
+        <label for="adv-label-for">Organization</label>
+        <input id="adv-label-for" class="field" type="text" placeholder="Optional for individuals">
+      </div>
+      <!-- A label for a field in a wrapper of its own. -->
+      <div class="row">
+        <label for="adv-label-wrapper">Message</label>
+        <div><textarea id="adv-label-wrapper" class="field" rows="2" placeholder="What are you working on this quarter"></textarea></div>
+      </div>
+      <!-- A label around the field. -->
+      <div class="row">
+        <label style="height: auto;">Your phone number
+          <input class="field" type="tel" placeholder="Include the country code">
+        </label>
+      </div>
+      <!-- A label element with no for, right above the field. -->
+      <div class="row">
+        <label>Your Name</label>
+        <input class="field" type="text" placeholder="What should we call you">
+      </div>
+      <!-- aria-labelledby pointing at visible text. -->
+      <div class="row">
+        <span class="caption" id="adv-labelledby-text">Delivery city</span>
+        <hr style="margin: 0 0 6px; border: 0; border-top: 1px solid #e2e8f0;">
+        <input class="field" type="text" aria-labelledby="adv-labelledby-text" placeholder="Where the parcel goes">
+      </div>
+      <!-- A short text label right above the field, in no label element.
+           Advisory where the layout is measured (the browser engines); a
+           file scan cannot see "right above" and keeps the severity. -->
+      <div class="row">
+        <span class="caption">Company</span>
+        <div class="wrap"><input class="field" type="text" placeholder="Where do you work today"></div>
+      </div>
+    </div>
+    <div class="col">
+      <h2>Should pass</h2>
+      <!-- A readable placeholder, labelled or not. -->
+      <div class="row">
+        <label for="pass-ink-labelled">Team size</label>
+        <input id="pass-ink-labelled" class="field ink" type="text" placeholder="Readable hint under a label">
+      </div>
+      <div class="row"><input class="field ink" type="text" placeholder="Readable placeholder alone"></div>
+    </div>
+  </div>
+</body>
+</html>

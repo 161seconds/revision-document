@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flat type hierarchy, the main heading level at three sizes</title>
+<!--
+  Should pass. A news front sets its h3 headlines, the heading level it uses
+  most, at three sizes equally often: 14px in a ticker, 16px in a list, 20px
+  on the lead cards (cnnbrasil.com.br). No h3 size is dominant, so the role
+  drops out of the ladder, and the ladder left (body 14px, h1 16px, h2 16px)
+  leaves out the headlines a reader sees. The 20px lead headlines would stand
+  a 1.25 step above the 16px h2s, so the ladder does not show the page flat,
+  and the rule declines rather than report it. flat-type-hierarchy.html is
+  the twin that still reports, and flat-type-hierarchy-dropped-flat.html
+  drops a level whose sizes keep the ramp flat, and reports.
+-->
+<style>
+  body { margin: 0; padding: 24px; font-family: system-ui, sans-serif; background: #ffffff; color: #111111; }
+  p { font-size: 14px; line-height: 1.5; }
+  h1 { font-size: 16px; font-weight: 400; }
+  h2 { font-size: 16px; }
+  .ticker { font-size: 14px; font-weight: 400; }
+  .list { font-size: 16px; }
+  .lead { font-size: 20px; }
+</style>
+</head>
+<body>
+  <h1>CNN front page</h1>
+  <h2>Politics</h2>
+  <h3 class="lead">The court opens the way for a vote on the case</h3>
+  <p>A short standfirst under the lead headline.</p>
+  <h3 class="lead">The analysis: the crisis in the institutions</h3>
+  <p>A short standfirst under the second lead.</p>
+  <h3 class="lead">The president turns to the benefits agenda</h3>
+  <p>A short standfirst under the third lead.</p>
+  <h2>Latest</h2>
+  <h3 class="list">Markets close higher on the day</h3>
+  <h3 class="list">The league confirms the fixture list</h3>
+  <h3 class="list">A storm front reaches the south coast</h3>
+  <p>More stories from the newsroom through the day.</p>
+  <h2>Live</h2>
+  <h3 class="ticker">Traffic slows on the ring road</h3>
+  <h3 class="ticker">The central bank holds its rate</h3>
+  <h3 class="ticker">Tickets go on sale for the final</h3>
+  <p>Updates from the live desk every few minutes.</p>
+</body>
+</html>

@@ -1,0 +1,1735 @@
+//! [`Dom`] over a serialized page snapshot.
+//!
+//! The in-page bundle measures the live DOM through the JS probe
+//! (`10-probe.js` → `crates/wasm/src/js_dom.rs`). Where WebAssembly cannot
+//! run next to the page — the Chrome extension on a strict-CSP site — the
+//! measurement happens in the content-script world (`15-snapshot.js`,
+//! measurement only), travels as JSON to wherever the wasm core does run
+//! (the extension's offscreen document), and this type answers every
+//! [`Dom`] question from it. Same rules, same core, one more probe.
+//!
+//! What the snapshot carries is exactly what the probe surface reads: the
+//! element tree in document order (child nodes with their text, so
+//! `textContent` and the direct text nodes come out byte-equal), attributes,
+//! the computed-style properties the rules read (`STYLE_PROPS`, interned
+//! values), `::before` / `::after` styles where `content` is set,
+//! `::placeholder` `color` on text controls, bounding rects, the
+//! client/scroll/offset metrics, `checkVisibility`, direct-text
+//! rects, viewport and scroll, hostname, quirks mode, `body.innerText`, the
+//! `@keyframes` rules, the document HTML for the regex pass, the media
+//! intrinsics the visual-contrast path needs, and the properties of the
+//! animations and transitions running on each element at capture (`an`,
+//! read only where the snapshot sets `anim`), and the open shadow trees
+//! (their elements after the light DOM, with `sh`, `as` and `ts` linking
+//! them into the flat tree, read only where the snapshot sets `shadow`).
+//!
+//! Two things a snapshot cannot answer up front:
+//!
+//! - **hit tests** (`elementFromPoint` / `elementsFromPoint`): the points
+//!   are decided by the rules. A miss records the point in
+//!   [`SnapshotDom::take_needs`] and answers "nothing there"; the caller
+//!   answers the points from the live page ([`SnapshotDom::add_facts`]) and
+//!   re-runs. Runs are deterministic, so the fixpoint is reached in a round
+//!   or two (the text-occlusion grid asks all its points in one pass).
+//! - **selectors**: `matches` / `closest` / `querySelector*` run through
+//!   [`super::selector`] (the `selectors` crate over the snapshot), which
+//!   observes Chrome's parse and match surface.
+//!
+//! Unknown computed-style properties (a rule reading a property the capture
+//! did not record) answer `""` and are counted in
+//! [`SnapshotDom::unknown_style_props`], so a parity run can prove the
+//! property list complete.
+
+use super::dom::{renders_no_text, Dom, DomChild, ElId, KeyframeFrame, Rect, SelectorError};
+
+use super::selector::Selector;
+
+use serde::{Deserialize, Serialize};
+
+use std::cell::RefCell;
+
+use std::collections::{HashMap, HashSet};
+
+pub const NS_XHTML: &str = "http://www.w3.org/1999/xhtml";
+
+pub const NS_SVG: &str = "http://www.w3.org/2000/svg";
+
+pub const NS_MATHML: &str = "http://www.w3.org/1998/Math/MathML";
+
+/// The computed-style properties the browser rules read (`getComputedStyle`
+/// spellings as the rules pass them). The capture reads exactly this list
+/// per element; the order is the column order of `SnapNode::style`. Keep in
+/// sync with `STYLE_PROPS` in `browser-bundle/15-snapshot.js` (the build
+/// checks the two lists agree).
+pub const STYLE_PROPS: &[&str] = &[
+    "animationComposition",
+    "animationDelay",
+    "animationDirection",
+    "animationDuration",
+    "animationFillMode",
+    "animationIterationCount",
+    "animationName",
+    "animationPlayState",
+    "animationTimeline",
+    "animationTimingFunction",
+    "aspectRatio",
+    "backdropFilter",
+    "backfaceVisibility",
+    "background",
+    "backgroundClip",
+    "backgroundColor",
+    "backgroundImage",
+    "backgroundPosition",
+    "backgroundRepeat",
+    "backgroundSize",
+    "blockSize",
+    "borderBottomColor",
+    "borderBottomWidth",
+    "borderBottomStyle",
+    "borderLeftColor",
+    "borderLeftWidth",
+    "borderLeftStyle",
+    "borderRadius",
+    "borderRightColor",
+    "borderRightWidth",
+    "borderRightStyle",
+    "borderTopColor",
+    "borderTopWidth",
+    "borderTopStyle",
+    "bottom",
+    "boxShadow",
+    "clip",
+    "clip-path",
+    "clipPath",
+    "color",
+    "colorScheme",
+    "contain",
+    "content",
+    "contentVisibility",
+    "cssFloat",
+    "cursor",
+    "direction",
+    "display",
+    "filter",
+    "flexWrap",
+    "float",
+    "fontFamily",
+    "fontFeatureSettings",
+    "fontSize",
+    "fontStretch",
+    "fontStyle",
+    "fontVariant",
+    "fontVariantCaps",
+    "fontWeight",
+    "height",
+    "hyphens",
+    "inlineSize",
+    "inset",
+    "insetBlock",
+    "insetBlockEnd",
+    "insetBlockStart",
+    "insetInline",
+    "insetInlineEnd",
+    "insetInlineStart",
+    "isolation",
+    "left",
+    "letterSpacing",
+    "lineHeight",
+    "marginBottom",
+    "marginLeft",
+    "marginRight",
+    "marginTop",
+    "maskImage",
+    "maxHeight",
+    "maxWidth",
+    "minHeight",
+    "minWidth",
+    "mixBlendMode",
+    "objectFit",
+    "objectPosition",
+    "opacity",
+    "order",
+    "outline",
+    "outlineColor",
+    "outlineOffset",
+    "outlineStyle",
+    "outlineWidth",
+    "overflow",
+    "overflowClipMargin",
+    "overflowX",
+    "overflowY",
+    "paddingBottom",
+    "paddingLeft",
+    "paddingRight",
+    "paddingTop",
+    "perspective",
+    "pointerEvents",
+    "position",
+    "right",
+    "rotate",
+    "scale",
+    "textAlign",
+    "textDecoration",
+    "textDecorationLine",
+    "textIndent",
+    "textOverflow",
+    "textShadow",
+    "textTransform",
+    "textWrap",
+    "textWrapStyle",
+    "top",
+    "transform",
+    "transitionDuration",
+    "transitionProperty",
+    "transitionTimingFunction",
+    "translate",
+    "unicodeBidi",
+    "verticalAlign",
+    "visibility",
+    "webkitBackgroundClip",
+    "webkitClipPath",
+    "webkitHyphens",
+    "webkitLineClamp",
+    "webkitMaskImage",
+    "webkitTextFillColor",
+    "webkitTextStrokeColor",
+    "webkitTextStrokeWidth",
+    "whiteSpace",
+    "width",
+    "willChange",
+    "wordBreak",
+    "wordSpacing",
+    "zIndex",
+];
+
+/// The `::before` / `::after` properties the rules read, recorded for
+/// pseudo-elements whose `content` is not `none` / empty (every rule gates
+/// on that first). Keep in sync with `PSEUDO_PROPS` in `15-snapshot.js`.
+pub const PSEUDO_PROPS: &[&str] = &[
+    "content",
+    "position",
+    "opacity",
+    "display",
+    "width",
+    "height",
+    "top",
+    "right",
+    "bottom",
+    "left",
+    "backgroundColor",
+    "backgroundImage",
+    "background",
+    "borderRadius",
+    "transform",
+    "visibility",
+    "zIndex",
+    "translate",
+    "scale",
+    "rotate",
+    "filter",
+    "fontSize",
+    // Appended, so a capture made before it (which carries its own
+    // `pseudoProps`) reads this column as unrecorded.
+    "maskImage",
+];
+
+/// One child of an element: an element (by id) or a text node's data.
+/// `CData` counts toward `textContent` but is not a `nodeType === 3` node.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum ChildNode {
+    El(u32),
+    Text(String),
+    CData(Vec<String>),
+}
+
+/// Media intrinsics for `<img>` / `<video>` / `<canvas>` (visual contrast).
+#[derive(Debug, Clone, Default, PartialEq, Deserialize, Serialize)]
+pub struct MediaInfo {
+    /// `naturalWidth` / `naturalHeight` (img).
+    #[serde(default)]
+    pub nw: f64,
+    #[serde(default)]
+    pub nh: f64,
+    /// `videoWidth` / `videoHeight` (video).
+    #[serde(default)]
+    pub vw: f64,
+    #[serde(default)]
+    pub vh: f64,
+    /// `width` / `height` IDL attributes.
+    #[serde(default)]
+    pub w: f64,
+    #[serde(default)]
+    pub h: f64,
+    /// `currentSrc`, `src`.
+    #[serde(default)]
+    pub cur: String,
+    #[serde(default)]
+    pub src: String,
+    /// `complete` (img). Absent from a capture recorded before the snapshot
+    /// read it, and from every element that is not an `<img>`: `None` is
+    /// "not recorded", never "still loading".
+    #[serde(rename = "cp", default, skip_serializing_if = "Option::is_none")]
+    pub complete: Option<bool>,
+    /// `readyState` (video). Absent from a capture recorded before the
+    /// snapshot read it, and from every element that is not a `<video>`.
+    #[serde(rename = "rs", default, skip_serializing_if = "Option::is_none")]
+    pub ready_state: Option<u8>,
+}
+
+/// One element as captured. Field names are one letter on the wire to keep
+/// multi-thousand-element snapshots small.
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct SnapNode {
+    /// `tagName`.
+    #[serde(rename = "t")]
+    pub tag: String,
+    /// Namespace: 0 xhtml, 1 svg, 2 mathml, 3 other (`nsUri` then set).
+    #[serde(rename = "n", default)]
+    pub ns: u8,
+    #[serde(rename = "nu", default)]
+    pub ns_uri: Option<String>,
+    #[serde(rename = "p", default)]
+    pub parent: Option<u32>,
+    /// `childNodes` in order (elements by id, text by data).
+    #[serde(rename = "c", default)]
+    pub child_nodes: Vec<ChildNode>,
+    /// Element children in order (derived from `child_nodes` on load).
+    #[serde(skip)]
+    pub children: Vec<u32>,
+    #[serde(skip)]
+    pub index_in_parent: usize,
+    /// `[name, value]` per attribute (`getAttributeNames` order).
+    #[serde(rename = "a", default)]
+    pub attrs: Vec<(String, String)>,
+    /// Computed style: value index per `STYLE_PROPS` column.
+    #[serde(rename = "s", default)]
+    pub style: Vec<u32>,
+    /// `::before` values per `PSEUDO_PROPS` when its `content` is set.
+    #[serde(rename = "b", default)]
+    pub before: Option<Vec<u32>>,
+    #[serde(rename = "f", default)]
+    pub after: Option<Vec<u32>>,
+    /// Interned `getComputedStyle(el, '::placeholder').color` when the
+    /// element has a non-empty `placeholder` attribute.
+    #[serde(rename = "ph", default)]
+    pub placeholder_color: Option<u32>,
+    /// `getBoundingClientRect` as `[x, y, width, height]`; `None` when the
+    /// element has no such method.
+    #[serde(rename = "r", default)]
+    pub rect: Option<[f64; 4]>,
+    /// `[clientWidth, clientHeight, clientLeft, scrollWidth, scrollLeft,
+    /// offsetWidth, offsetHeight, scrollHeight]` (`null` → NaN, as
+    /// `undefined` crosses into a wasm f64). Captures older than
+    /// `scrollHeight` carry seven columns, and it reads as NaN.
+    #[serde(rename = "m", default)]
+    pub metrics: Vec<Option<f64>>,
+    /// `checkVisibility`: 1 / 0, `-1` when the method is missing.
+    #[serde(rename = "v", default = "minus_one")]
+    pub visibility: i8,
+    /// `getDirectTextRect` as `[x, y, width, height]`.
+    #[serde(rename = "d", default)]
+    pub direct_text_rect: Option<[f64; 4]>,
+    /// The client rects of the element's OWN direct text, unmerged, each
+    /// `[x, y, width, height]` — `direct_text_rect` before it was merged into
+    /// a union. Own and not the subtree's: an element's rendered lines are
+    /// assembled from these across its descendants
+    /// ([`SnapshotDom::text_line_rects`]), so a line that rendered is
+    /// recorded once rather than once per ancestor. Empty is "no rendered
+    /// text", not "not recorded" — [`Snapshot::text_lines`] is what says a
+    /// capture recorded them at all.
+    #[serde(rename = "dl", default, skip_serializing_if = "Vec::is_empty")]
+    pub text_rects: Vec<[f64; 4]>,
+    /// [`Dom::last_word_rects`], each `[x, y, width, height]`: recorded only
+    /// on the prose blocks `straggler` reads, and only where the text holds
+    /// two words.
+    #[serde(rename = "lw", default, skip_serializing_if = "Option::is_none")]
+    pub last_word_rects: Option<[[f64; 4]; 2]>,
+    #[serde(rename = "e", default)]
+    pub content_editable: bool,
+    #[serde(rename = "h", default)]
+    pub hidden: bool,
+    /// `typeof el.id !== 'string'` (a form control named `id`).
+    #[serde(rename = "i", default)]
+    pub id_shadowed: bool,
+    /// `typeof el.className !== 'string'` (SVGAnimatedString).
+    #[serde(rename = "k", default)]
+    pub class_not_string: bool,
+    /// Pseudo-class states the element matched at capture time.
+    #[serde(rename = "st", default)]
+    pub states: Vec<String>,
+    #[serde(rename = "md", default)]
+    pub media: Option<MediaInfo>,
+    /// The properties of the animations and transitions running on the
+    /// element at capture, written only where there are some. Read only when
+    /// the snapshot says it recorded animations ([`Snapshot::animations_recorded`]).
+    #[serde(rename = "an", default)]
+    pub animations: Option<Vec<String>>,
+    /// The host of the open shadow tree this element is a top-level node
+    /// of. Shadow-tree elements are recorded after every light-DOM element
+    /// and are nobody's child, so document walks and selectors never reach
+    /// them; only the flat-tree walk does.
+    #[serde(rename = "sh", default)]
+    pub shadow_host: Option<u32>,
+    /// `assignedSlot`: the slot of an open shadow tree this element is
+    /// assigned to.
+    #[serde(rename = "as", default)]
+    pub assigned_slot: Option<u32>,
+    /// The slot this element's first non-blank direct text node is assigned
+    /// to (a shadow host whose own text is slotted).
+    #[serde(rename = "ts", default)]
+    pub text_slot: Option<u32>,
+}
+
+fn minus_one() -> i8 {
+    -1
+}
+
+/// A recorded hit test: `elementFromPoint` (`top`) and `elementsFromPoint`
+/// (`stack`) at `(x, y)`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct HitTest {
+    pub x: f64,
+    pub y: f64,
+    #[serde(default)]
+    pub top: u32,
+    #[serde(default)]
+    pub stack: Vec<u32>,
+}
+
+/// Facts a run asked for and the page must supply.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, PartialEq)]
+pub struct Needs {
+    /// `[x, y]` points to hit-test.
+    #[serde(default, rename = "hitTests")]
+    pub hit_tests: Vec<[f64; 2]>,
+}
+
+impl Needs {
+    pub fn is_empty(&self) -> bool {
+        self.hit_tests.is_empty()
+    }
+}
+
+/// Facts supplied in answer to [`Needs`] (also accepted inline in the
+/// snapshot as `hits`).
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct Facts {
+    #[serde(default)]
+    pub hits: Vec<HitTest>,
+    /// Answers to [`SnapshotDom::take_scroll_probes`]: whether a box hidden
+    /// with the page at the top showed once the page was scrolled to it.
+    /// Absent in recordings made before the probe existed, where nothing is
+    /// known and the box counts as hidden.
+    #[serde(rename = "shownOnScroll", default, skip_serializing_if = "Vec::is_empty")]
+    pub shown_on_scroll: Vec<ScrollShown>,
+}
+
+/// One answer of the scroll probe ([`Dom::shown_when_scrolled_to`]).
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ScrollShown {
+    pub el: ElId,
+    pub shown: bool,
+}
+
+/// The serialized page.
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct Snapshot {
+    #[serde(default)]
+    pub v: u32,
+    #[serde(default)]
+    pub hostname: String,
+    /// `document.compatMode === 'BackCompat'`.
+    #[serde(default)]
+    pub quirks: bool,
+    #[serde(rename = "innerWidth", default)]
+    pub inner_width: f64,
+    #[serde(rename = "innerHeight", default)]
+    pub inner_height: f64,
+    #[serde(rename = "scrollX", default)]
+    pub scroll_x: f64,
+    #[serde(rename = "scrollY", default)]
+    pub scroll_y: f64,
+    /// `document_html_for_patterns`.
+    #[serde(default)]
+    pub html: String,
+    /// `[name, frames]` in stylesheet order (first rule per name wins).
+    #[serde(default)]
+    pub keyframes: Vec<(String, Vec<Vec<(String, String)>>)>,
+    /// `[name, [keyText, ...]]` per `keyframes` entry: the selector of each
+    /// recorded frame. Absent in captures older than it.
+    #[serde(rename = "keyframeKeys", default)]
+    pub keyframe_keys: Vec<(String, Vec<String>)>,
+    /// `__snapLinkedStylesheetText()`: the readable linked-stylesheet corpus
+    /// (#709). Absent in captures older than that change.
+    #[serde(rename = "linkedCss", default)]
+    pub linked_css: String,
+    /// The property columns of `SnapNode::style` (normally `STYLE_PROPS`;
+    /// carried so an older capture stays readable).
+    #[serde(rename = "styleProps", default)]
+    pub style_props: Vec<String>,
+    #[serde(rename = "pseudoProps", default)]
+    pub pseudo_props: Vec<String>,
+    /// Interned style values.
+    #[serde(default)]
+    pub strings: Vec<String>,
+    /// Elements in document order; element id = index + 1.
+    #[serde(default)]
+    pub els: Vec<SnapNode>,
+    #[serde(rename = "documentElement", default)]
+    pub document_element: Option<u32>,
+    #[serde(default)]
+    pub body: Option<u32>,
+    #[serde(rename = "bodyInnerText", default)]
+    pub body_inner_text: Option<String>,
+    /// Whether this capture recorded the rects of each element's rendered
+    /// text (`SnapNode::text_rects`). False in captures older than that
+    /// change, where the union in `d` is all there is: a rule that needs the
+    /// lines stands down rather than inventing them from the union.
+    #[serde(rename = "textLines", default)]
+    pub text_lines: bool,
+    #[serde(default)]
+    pub hits: Vec<HitTest>,
+    /// Whether the capture read `document.getAnimations()`, so an element
+    /// without `an` has nothing running. Absent in captures older than that
+    /// read, and on a page without the Web Animations API, where nothing is
+    /// known about running animations.
+    #[serde(rename = "anim", default)]
+    pub animations_recorded: bool,
+    /// Whether the capture walked open shadow trees (`sh`, `as`, `ts`).
+    /// Absent in captures older than that walk, where nothing is known about
+    /// shadow trees.
+    #[serde(rename = "shadow", default)]
+    pub shadow_trees_recorded: bool,
+    /// [`Dom::text_wrap_pretty_supported`], `__snapTextWrapPrettySupported()`
+    /// in `15-snapshot.js`.
+    #[serde(rename = "prettyWrap", default)]
+    pub pretty_wrap: Option<bool>,
+    /// [`Dom::document_font_faces`], `__snapFontFaces()` in
+    /// `15-snapshot.js`. Absent in captures older than it.
+    #[serde(rename = "fontFaces", default, skip_serializing_if = "Option::is_none")]
+    pub font_faces: Option<Vec<(String, String)>>,
+    /// [`Dom::rendered_faces`], `__snapRenderedFaces()` in
+    /// `15-snapshot.js`. Absent in captures older than it.
+    #[serde(rename = "renderedFaces", default, skip_serializing_if = "Option::is_none")]
+    pub rendered_faces: Option<Vec<(String, bool)>>,
+    /// Derived on load: column index per style property name.
+    #[serde(skip)]
+    style_index: HashMap<String, usize>,
+    #[serde(skip)]
+    pseudo_index: HashMap<String, usize>,
+    /// Derived on load: the top-level shadow-tree nodes of each host.
+    #[serde(skip)]
+    shadow_kids: HashMap<u32, Vec<u32>>,
+}
+
+impl Snapshot {
+    /// Parse and index a snapshot.
+    pub fn from_json(json: &str) -> Result<Snapshot, serde_json::Error> {
+        let mut s: Snapshot = serde_json::from_str(json)?;
+        s.finish();
+        Ok(s)
+    }
+
+    /// Derive the indexes (children lists, sibling positions, column maps).
+    pub fn finish(&mut self) {
+        if self.style_props.is_empty() {
+            self.style_props = STYLE_PROPS.iter().map(|s| s.to_string()).collect();
+        }
+        if self.pseudo_props.is_empty() {
+            self.pseudo_props = PSEUDO_PROPS.iter().map(|s| s.to_string()).collect();
+        }
+        self.style_index = self
+            .style_props
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.clone(), i))
+            .collect();
+        self.pseudo_index = self
+            .pseudo_props
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (p.clone(), i))
+            .collect();
+        for i in 0..self.els.len() {
+            let kids: Vec<u32> = self.els[i]
+                .child_nodes
+                .iter()
+                .filter_map(|n| match n {
+                    ChildNode::El(id) => Some(*id),
+                    _ => None,
+                })
+                .collect();
+            for (pos, kid) in kids.iter().enumerate() {
+                if let Some(k) = self.els.get_mut((*kid as usize).wrapping_sub(1)) {
+                    k.index_in_parent = pos;
+                    k.parent = Some(i as u32 + 1);
+                }
+            }
+            self.els[i].children = kids;
+        }
+        self.shadow_kids.clear();
+        for i in 0..self.els.len() {
+            if let Some(host) = self.els[i].shadow_host {
+                self.shadow_kids.entry(host).or_default().push(i as u32 + 1);
+            }
+        }
+    }
+
+    #[inline]
+    pub fn node(&self, id: u32) -> &SnapNode {
+        &self.els[(id as usize) - 1]
+    }
+    pub fn get(&self, id: u32) -> Option<&SnapNode> {
+        if id == 0 {
+            None
+        } else {
+            self.els.get(id as usize - 1)
+        }
+    }
+    pub fn len(&self) -> usize {
+        self.els.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.els.is_empty()
+    }
+    pub fn ns_uri(&self, id: u32) -> &str {
+        let n = self.node(id);
+        match n.ns {
+            0 => NS_XHTML,
+            1 => NS_SVG,
+            2 => NS_MATHML,
+            _ => n.ns_uri.as_deref().unwrap_or(""),
+        }
+    }
+    pub fn attr(&self, id: u32, name: &str) -> Option<String> {
+        self.node(id)
+            .attrs
+            .iter()
+            .find(|(k, _)| k == name)
+            .map(|(_, v)| v.clone())
+    }
+    pub fn previous_element_sibling(&self, id: u32) -> Option<u32> {
+        let n = self.node(id);
+        let p = self.node(n.parent?);
+        if n.index_in_parent == 0 {
+            None
+        } else {
+            p.children.get(n.index_in_parent - 1).copied()
+        }
+    }
+    pub fn next_element_sibling(&self, id: u32) -> Option<u32> {
+        let n = self.node(id);
+        let p = self.node(n.parent?);
+        p.children.get(n.index_in_parent + 1).copied()
+    }
+    /// The interned style value for `prop`, `None` when the capture did not
+    /// record that property.
+    pub fn style_value(&self, id: u32, prop: &str) -> Option<&str> {
+        let col = *self.style_index.get(prop)?;
+        let idx = *self.node(id).style.get(col)? as usize;
+        Some(self.strings.get(idx).map(|s| s.as_str()).unwrap_or(""))
+    }
+    /// Descendant text in document order (`textContent`).
+    fn text_content_into(&self, id: u32, out: &mut String) {
+        for n in &self.node(id).child_nodes {
+            match n {
+                ChildNode::Text(t) => out.push_str(t),
+                ChildNode::CData(v) => {
+                    for t in v {
+                        out.push_str(t)
+                    }
+                }
+                ChildNode::El(c) => self.text_content_into(*c, out),
+            }
+        }
+    }
+    /// Preorder document walk from `root` (exclusive) — the order
+    /// `querySelectorAll` returns.
+    fn descendants(&self, root: Option<u32>, out: &mut Vec<u32>) {
+        match root {
+            None => {
+                if let Some(r) = self.document_element {
+                    out.push(r);
+                    self.descendants(Some(r), out);
+                }
+            }
+            Some(r) => {
+                for c in &self.node(r).children {
+                    out.push(*c);
+                    self.descendants(Some(*c), out);
+                }
+            }
+        }
+    }
+}
+
+fn rect4(v: &[f64; 4]) -> Rect {
+    Rect::from_xywh(v[0], v[1], v[2], v[3])
+}
+
+/// [`Dom`] over a [`Snapshot`], with per-run memo tables, a fact table for
+/// hit tests, and the record of what the run could not answer.
+pub struct SnapshotDom {
+    pub snap: Snapshot,
+    hits: RefCell<HashMap<(u64, u64), (Option<ElId>, Vec<ElId>)>>,
+    misses: RefCell<Vec<[f64; 2]>>,
+    missed_keys: RefCell<HashSet<(u64, u64)>>,
+    selectors: RefCell<HashMap<String, Option<Selector>>>,
+    closest_cache: RefCell<HashMap<(ElId, String), Result<Option<ElId>, SelectorError>>>,
+    text_cache: RefCell<HashMap<ElId, String>>,
+    unknown_props: RefCell<Vec<String>>,
+    shown_on_scroll: RefCell<HashMap<ElId, bool>>,
+    scroll_probes: RefCell<Vec<ElId>>,
+}
+
+impl SnapshotDom {
+    /// The media record of an HTML `<img>`. A `<picture>`, `<video>` or
+    /// `<canvas>` carries one too, with a natural size of 0 that says
+    /// nothing about an image.
+    fn image_media(&self, el: ElId) -> Option<&MediaInfo> {
+        let node = self.snap.get(el)?;
+        if node.ns != 0 || !node.tag.eq_ignore_ascii_case("img") {
+            return None;
+        }
+        node.media.as_ref()
+    }
+
+    pub fn new(snap: Snapshot) -> SnapshotDom {
+        let dom = SnapshotDom {
+            snap,
+            hits: RefCell::new(HashMap::new()),
+            misses: RefCell::new(Vec::new()),
+            missed_keys: RefCell::new(HashSet::new()),
+            selectors: RefCell::new(HashMap::new()),
+            closest_cache: RefCell::new(HashMap::new()),
+            text_cache: RefCell::new(HashMap::new()),
+            unknown_props: RefCell::new(Vec::new()),
+            shown_on_scroll: RefCell::new(HashMap::new()),
+            scroll_probes: RefCell::new(Vec::new()),
+        };
+        let inline: Vec<HitTest> = dom.snap.hits.clone();
+        dom.add_hits(&inline);
+        dom
+    }
+
+    pub fn from_json(json: &str) -> Result<SnapshotDom, serde_json::Error> {
+        Ok(SnapshotDom::new(Snapshot::from_json(json)?))
+    }
+
+    fn key(x: f64, y: f64) -> (u64, u64) {
+        (x.to_bits(), y.to_bits())
+    }
+
+    fn add_hits(&self, hits: &[HitTest]) {
+        let mut table = self.hits.borrow_mut();
+        for h in hits {
+            let top = if h.top == 0 { None } else { Some(h.top) };
+            table.insert(Self::key(h.x, h.y), (top, h.stack.clone()));
+        }
+    }
+
+    /// Supply facts for an earlier [`Self::take_needs`].
+    pub fn add_facts(&self, facts: &Facts) {
+        self.add_hits(&facts.hits);
+        {
+            let mut shown = self.shown_on_scroll.borrow_mut();
+            for s in &facts.shown_on_scroll {
+                shown.insert(s.el, s.shown);
+            }
+        }
+        self.scroll_probes.borrow_mut().clear();
+        // Answers may change what a later run asks; forget the misses.
+        self.misses.borrow_mut().clear();
+        self.missed_keys.borrow_mut().clear();
+    }
+
+    /// The questions the runs so far could not answer (drained).
+    pub fn take_needs(&self) -> Needs {
+        let hit_tests = std::mem::take(&mut *self.misses.borrow_mut());
+        self.missed_keys.borrow_mut().clear();
+        Needs { hit_tests }
+    }
+
+    /// The boxes [`Dom::shown_when_scrolled_to`] asked about that the facts
+    /// do not answer (drained), in first-asked order. Kept apart from
+    /// [`Self::take_needs`]: only the URL engine's hidden-text step answers
+    /// them, and a consumer that answers hit tests alone never sees them.
+    pub fn take_scroll_probes(&self) -> Vec<ElId> {
+        std::mem::take(&mut *self.scroll_probes.borrow_mut())
+    }
+
+    /// Whether anything is pending.
+    pub fn has_needs(&self) -> bool {
+        !self.misses.borrow().is_empty()
+    }
+
+    /// Computed-style properties a rule asked for that the capture did not
+    /// record (distinct, in first-read order).
+    pub fn unknown_style_props(&self) -> Vec<String> {
+        self.unknown_props.borrow().clone()
+    }
+
+    /// Forget per-run memo tables (selectors, closest, text) but keep facts.
+    pub fn reset_memo(&self) {
+        self.closest_cache.borrow_mut().clear();
+    }
+
+    fn hit(&self, x: f64, y: f64) -> Option<(Option<ElId>, Vec<ElId>)> {
+        let k = Self::key(x, y);
+        if let Some(v) = self.hits.borrow().get(&k) {
+            return Some(v.clone());
+        }
+        if self.missed_keys.borrow_mut().insert(k) {
+            self.misses.borrow_mut().push([x, y]);
+        }
+        None
+    }
+
+    fn with_selector<R>(
+        &self,
+        selector: &str,
+        f: impl FnOnce(&Selector) -> R,
+    ) -> Result<R, SelectorError> {
+        let mut cache = self.selectors.borrow_mut();
+        let entry = cache
+            .entry(selector.to_string())
+            .or_insert_with(|| Selector::parse(selector).ok());
+        match entry {
+            Some(sel) => Ok(f(sel)),
+            None => Err(SelectorError),
+        }
+    }
+
+    fn valid(&self, el: ElId) -> bool {
+        el != 0 && (el as usize) <= self.snap.els.len()
+    }
+}
+
+impl Dom for SnapshotDom {
+    fn document_element(&self) -> Option<ElId> {
+        self.snap.document_element
+    }
+    fn body(&self) -> Option<ElId> {
+        self.snap.body
+    }
+    fn query_all(&self, root: Option<ElId>, selector: &str) -> Result<Vec<ElId>, SelectorError> {
+        let mut out = Vec::new();
+        self.snap.descendants(root, &mut out);
+        let scope = root;
+        self.with_selector(selector, |sel| {
+            out.into_iter()
+                .filter(|el| sel.matches(&self.snap, *el, scope))
+                .collect()
+        })
+    }
+    fn query_one(&self, root: Option<ElId>, selector: &str) -> Result<Option<ElId>, SelectorError> {
+        let mut out = Vec::new();
+        self.snap.descendants(root, &mut out);
+        let scope = root;
+        self.with_selector(selector, |sel| {
+            out.into_iter()
+                .find(|el| sel.matches(&self.snap, *el, scope))
+        })
+    }
+    fn inner_width(&self) -> f64 {
+        self.snap.inner_width
+    }
+    fn inner_height(&self) -> f64 {
+        self.snap.inner_height
+    }
+    fn scroll_x(&self) -> f64 {
+        self.snap.scroll_x
+    }
+    fn scroll_y(&self) -> f64 {
+        self.snap.scroll_y
+    }
+    fn hostname(&self) -> String {
+        self.snap.hostname.clone()
+    }
+    fn text_wrap_pretty_supported(&self) -> Option<bool> {
+        self.snap.pretty_wrap
+    }
+    fn document_font_faces(&self) -> Option<Vec<(String, String)>> {
+        self.snap.font_faces.clone()
+    }
+    fn rendered_faces(&self) -> Option<Vec<(String, bool)>> {
+        self.snap.rendered_faces.clone()
+    }
+    fn element_from_point(&self, x: f64, y: f64) -> Option<ElId> {
+        self.hit(x, y).and_then(|(top, _)| top)
+    }
+    fn elements_from_point(&self, x: f64, y: f64) -> Vec<ElId> {
+        self.hit(x, y).map(|(_, stack)| stack).unwrap_or_default()
+    }
+    fn css_escape(&self, s: &str) -> String {
+        css_escape(s)
+    }
+    fn shown_when_scrolled_to(&self, el: ElId) -> Option<bool> {
+        if !self.valid(el) {
+            return None;
+        }
+        if let Some(shown) = self.shown_on_scroll.borrow().get(&el) {
+            return Some(*shown);
+        }
+        let mut pending = self.scroll_probes.borrow_mut();
+        if !pending.contains(&el) {
+            pending.push(el);
+        }
+        None
+    }
+    fn running_animation_properties(&self, el: ElId) -> Option<Vec<String>> {
+        if !self.snap.animations_recorded || !self.valid(el) {
+            return None;
+        }
+        Some(self.snap.node(el).animations.clone().unwrap_or_default())
+    }
+    fn flat_parent(&self, el: ElId) -> Option<ElId> {
+        if !self.valid(el) {
+            return None;
+        }
+        let node = self.snap.node(el);
+        node.assigned_slot
+            .filter(|s| self.valid(*s))
+            .or(node.parent)
+            .or(node.shadow_host.filter(|h| self.valid(*h)))
+    }
+    fn text_slot(&self, el: ElId) -> Option<ElId> {
+        if !self.valid(el) {
+            return None;
+        }
+        self.snap.node(el).text_slot.filter(|s| self.valid(*s))
+    }
+    fn shadow_children(&self, el: ElId) -> Vec<ElId> {
+        if !self.valid(el) {
+            return Vec::new();
+        }
+        self.snap
+            .shadow_kids
+            .get(&el)
+            .map(|kids| kids.iter().copied().filter(|k| self.valid(*k)).collect())
+            .unwrap_or_default()
+    }
+    fn shadow_trees_recorded(&self) -> bool {
+        self.snap.shadow_trees_recorded
+    }
+    fn keyframes(&self, name: &str) -> Option<Vec<KeyframeFrame>> {
+        if name.is_empty() {
+            return None;
+        }
+        self.snap
+            .keyframes
+            .iter()
+            .find(|(n, _)| n == name)
+            .map(|(_, frames)| {
+                frames
+                    .iter()
+                    .map(|decls| KeyframeFrame {
+                        decls: decls.clone(),
+                    })
+                    .collect()
+            })
+    }
+    fn keyframe_keys(&self, name: &str) -> Option<Vec<String>> {
+        let frames = self.snap.keyframes.iter().find(|(n, _)| n == name)?;
+        let keys = self.snap.keyframe_keys.iter().find(|(n, _)| n == name)?;
+        (keys.1.len() == frames.1.len()).then(|| keys.1.clone())
+    }
+    fn document_html_for_patterns(&self) -> String {
+        self.snap.html.clone()
+    }
+    fn linked_stylesheet_text(&self) -> String {
+        self.snap.linked_css.clone()
+    }
+    fn tag_name(&self, el: ElId) -> String {
+        self.snap.node(el).tag.clone()
+    }
+    fn namespace_uri(&self, el: ElId) -> String {
+        self.snap.ns_uri(el).to_string()
+    }
+    fn parent(&self, el: ElId) -> Option<ElId> {
+        self.snap.node(el).parent
+    }
+    fn children(&self, el: ElId) -> Vec<ElId> {
+        self.snap.node(el).children.clone()
+    }
+    fn previous_element_sibling(&self, el: ElId) -> Option<ElId> {
+        self.snap.previous_element_sibling(el)
+    }
+    fn next_element_sibling(&self, el: ElId) -> Option<ElId> {
+        self.snap.next_element_sibling(el)
+    }
+    fn first_element_child(&self, el: ElId) -> Option<ElId> {
+        self.snap.node(el).children.first().copied()
+    }
+    fn contains(&self, a: ElId, b: ElId) -> bool {
+        if !self.valid(a) || !self.valid(b) {
+            return false;
+        }
+        let mut cur = Some(b);
+        while let Some(c) = cur {
+            if c == a {
+                return true;
+            }
+            cur = self.snap.node(c).parent;
+        }
+        false
+    }
+    fn matches(&self, el: ElId, selector: &str) -> Result<bool, SelectorError> {
+        self.with_selector(selector, |sel| sel.matches(&self.snap, el, None))
+    }
+    fn closest(&self, el: ElId, selector: &str) -> Result<Option<ElId>, SelectorError> {
+        let key = (el, selector.to_string());
+        if let Some(hit) = self.closest_cache.borrow().get(&key) {
+            return *hit;
+        }
+        let out = self.with_selector(selector, |sel| {
+            let mut cur = Some(el);
+            while let Some(c) = cur {
+                if sel.matches(&self.snap, c, None) {
+                    return Some(c);
+                }
+                cur = self.snap.node(c).parent;
+            }
+            None
+        });
+        self.closest_cache.borrow_mut().insert(key, out);
+        out
+    }
+    fn attr(&self, el: ElId, name: &str) -> Option<String> {
+        // getAttribute lower-cases the name for HTML elements.
+        let n = self.snap.node(el);
+        if n.ns == 0 {
+            let lower = name.to_ascii_lowercase();
+            n.attrs
+                .iter()
+                .find(|(k, _)| *k == lower)
+                .map(|(_, v)| v.clone())
+        } else {
+            n.attrs
+                .iter()
+                .find(|(k, _)| k == name)
+                .map(|(_, v)| v.clone())
+        }
+    }
+    fn id_prop(&self, el: ElId) -> Option<String> {
+        if self.snap.node(el).id_shadowed {
+            return None;
+        }
+        Some(self.attr(el, "id").unwrap_or_default())
+    }
+    fn class_name_prop(&self, el: ElId) -> Option<String> {
+        if self.snap.node(el).class_not_string {
+            return None;
+        }
+        Some(self.attr(el, "class").unwrap_or_default())
+    }
+    fn text_content(&self, el: ElId) -> String {
+        if let Some(t) = self.text_cache.borrow().get(&el) {
+            return t.clone();
+        }
+        let mut s = String::new();
+        self.snap.text_content_into(el, &mut s);
+        self.text_cache.borrow_mut().insert(el, s.clone());
+        s
+    }
+    fn inner_text(&self, el: ElId) -> Option<String> {
+        if Some(el) == self.snap.body {
+            return self.snap.body_inner_text.clone().filter(|s| !s.is_empty());
+        }
+        None
+    }
+    fn direct_text_nodes(&self, el: ElId) -> Vec<String> {
+        self.snap
+            .node(el)
+            .child_nodes
+            .iter()
+            .filter_map(|n| match n {
+                ChildNode::Text(t) => Some(t.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+    /// A `CData` entry is not a `nodeType === 3` node, so it is left out
+    /// here as it is from [`Dom::direct_text_nodes`].
+    fn child_nodes(&self, el: ElId) -> Vec<DomChild> {
+        self.snap
+            .node(el)
+            .child_nodes
+            .iter()
+            .filter_map(|n| match n {
+                ChildNode::Text(t) => Some(DomChild::Text(t.clone())),
+                ChildNode::El(c) => Some(DomChild::Element(*c)),
+                ChildNode::CData(_) => None,
+            })
+            .collect()
+    }
+    fn is_content_editable(&self, el: ElId) -> bool {
+        self.snap.node(el).content_editable
+    }
+    fn hidden_prop(&self, el: ElId) -> bool {
+        self.snap.node(el).hidden
+    }
+    fn style(&self, el: ElId, prop: &str) -> String {
+        match self.snap.style_value(el, prop) {
+            Some(v) => v.to_string(),
+            None => {
+                let mut u = self.unknown_props.borrow_mut();
+                if !u.iter().any(|p| p == prop) {
+                    u.push(prop.to_string());
+                }
+                String::new()
+            }
+        }
+    }
+    fn pseudo_style(&self, el: ElId, pseudo: &str, prop: &str) -> Option<String> {
+        let n = self.snap.node(el);
+        if pseudo == "::placeholder" && prop == "color" {
+            return n
+                .placeholder_color
+                .and_then(|idx| self.snap.strings.get(idx as usize).cloned());
+        }
+        let vals = match pseudo {
+            "::before" | ":before" => n.before.as_ref(),
+            "::after" | ":after" => n.after.as_ref(),
+            _ => None,
+        };
+        match vals {
+            None => {
+                // Not recorded: the pseudo's `content` was none/empty (or the
+                // pseudo is one no rule reads). Answer as a real browser
+                // would for the gate every rule applies first.
+                if prop == "content" {
+                    Some("none".to_string())
+                } else {
+                    Some(String::new())
+                }
+            }
+            Some(vals) => {
+                let col = self.snap.pseudo_index.get(prop).copied();
+                match col.and_then(|c| vals.get(c)) {
+                    Some(idx) => Some(
+                        self.snap
+                            .strings
+                            .get(*idx as usize)
+                            .cloned()
+                            .unwrap_or_default(),
+                    ),
+                    None => {
+                        let mut u = self.unknown_props.borrow_mut();
+                        let key = format!("{pseudo}{prop}");
+                        if !u.iter().any(|p| *p == key) {
+                            u.push(key);
+                        }
+                        Some(String::new())
+                    }
+                }
+            }
+        }
+    }
+    fn rect(&self, el: ElId) -> Rect {
+        self.snap
+            .node(el)
+            .rect
+            .as_ref()
+            .map(rect4)
+            .unwrap_or_default()
+    }
+    fn client_width(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 0)
+    }
+    fn client_height(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 1)
+    }
+    fn client_left(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 2)
+    }
+    fn scroll_width(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 3)
+    }
+    fn scroll_left(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 4)
+    }
+    fn scroll_height(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 7)
+    }
+    fn offset_width(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 5)
+    }
+    fn offset_height(&self, el: ElId) -> f64 {
+        metric(&self.snap.node(el).metrics, 6)
+    }
+    fn image_natural_size(&self, el: ElId) -> Option<(f64, f64)> {
+        self.image_media(el).map(|m| (m.nw, m.nh))
+    }
+    fn image_complete(&self, el: ElId) -> Option<bool> {
+        self.image_media(el)?.complete
+    }
+    fn image_current_src(&self, el: ElId) -> Option<String> {
+        self.image_media(el).map(|m| m.cur.clone())
+    }
+    fn video_ready_state(&self, el: ElId) -> Option<u8> {
+        let node = self.snap.get(el)?;
+        if node.ns != 0 || !node.tag.eq_ignore_ascii_case("video") {
+            return None;
+        }
+        node.media.as_ref()?.ready_state
+    }
+    fn check_visibility(&self, el: ElId) -> Option<bool> {
+        match self.snap.node(el).visibility {
+            0 => Some(false),
+            1 => Some(true),
+            _ => None,
+        }
+    }
+    fn direct_text_rect(&self, el: ElId) -> Option<Rect> {
+        self.snap.node(el).direct_text_rect.as_ref().map(rect4)
+    }
+    /// Assembled from the per-element rects the capture recorded: the
+    /// element's own, then each descendant's, in document order, merged into
+    /// the lines they rendered as.
+    ///
+    /// `None` on a capture that never recorded them. The union in `d` is not
+    /// an answer here: a paragraph with one long line and a short tail has
+    /// the same union as one with two even lines, so dividing it by a line
+    /// height would invent widths that nothing on the page rendered.
+    fn text_line_rects(&self, el: ElId) -> Option<Vec<Rect>> {
+        if !self.snap.text_lines {
+            return None;
+        }
+        // A descendant that renders no text is skipped with its subtree, as
+        // the character count skips it (`renders_no_text`), so the lines and
+        // the characters divided among them describe the same text.
+        fn walk(dom: &SnapshotDom, el: ElId, out: &mut Vec<Rect>) {
+            let node = dom.snap.node(el);
+            out.extend(node.text_rects.iter().map(rect4));
+            for child in &node.children {
+                if !renders_no_text(dom, *child) {
+                    walk(dom, *child, out);
+                }
+            }
+        }
+        let mut rects = Vec::new();
+        walk(self, el, &mut rects);
+        Some(super::dom::merge_text_rects_into_lines(rects))
+    }
+    fn last_word_rects(&self, el: ElId) -> Option<[Rect; 2]> {
+        self.snap.node(el).last_word_rects.as_ref().map(|[a, b]| [rect4(a), rect4(b)])
+    }
+}
+
+/// `undefined` read into a wasm f64 is NaN (`offsetWidth` on an SVG
+/// element); a missing column reads the same way.
+fn metric(m: &[Option<f64>], i: usize) -> f64 {
+    match m.get(i) {
+        Some(Some(v)) => *v,
+        _ => f64::NAN,
+    }
+}
+
+/// `CSS.escape(s)` (CSSOM serialize-an-identifier).
+pub fn css_escape(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 4);
+    let chars: Vec<char> = s.chars().collect();
+    for (i, &c) in chars.iter().enumerate() {
+        let code = c as u32;
+        if code == 0 {
+            out.push('\u{FFFD}');
+        } else if (0x1..=0x1F).contains(&code) || code == 0x7F {
+            out.push_str(&format!("\\{:x} ", code));
+        } else if i == 0 && c.is_ascii_digit() {
+            out.push_str(&format!("\\{:x} ", code));
+        } else if i == 1 && c.is_ascii_digit() && chars[0] == '-' {
+            out.push_str(&format!("\\{:x} ", code));
+        } else if i == 0 && c == '-' && chars.len() == 1 {
+            out.push('\\');
+            out.push(c);
+        } else if code >= 0x80 || c == '-' || c == '_' || c.is_ascii_alphanumeric() {
+            out.push(c);
+        } else {
+            out.push('\\');
+            out.push(c);
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn snap(json: &str) -> SnapshotDom {
+        SnapshotDom::from_json(json).expect("snapshot json")
+    }
+
+    #[test]
+    fn shadow_trees_link_into_the_flat_tree_without_joining_the_document() {
+        let json = r#"{
+          "v": 1, "innerWidth": 1280, "innerHeight": 800, "shadow": true,
+          "styleProps": ["display"], "strings": ["block", "contents"],
+          "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2],"s":[0]},
+            {"t":"BODY","p":1,"c":[3],"s":[0]},
+            {"t":"TCG-BUTTON","p":2,"c":[4,"Read more"],"s":[0],"ts":6},
+            {"t":"H3","p":3,"c":["Investors"],"s":[0],"as":6},
+            {"t":"DIV","c":[6],"s":[0],"sh":3},
+            {"t":"SLOT","p":5,"c":[],"s":[1]}
+          ]
+        }"#;
+        let d = snap(json);
+        assert!(d.shadow_trees_recorded());
+        assert_eq!(d.parent(4), Some(3));
+        assert_eq!(d.flat_parent(4), Some(6));
+        assert_eq!(d.flat_parent(6), Some(5));
+        assert_eq!(d.flat_parent(5), Some(3));
+        assert_eq!(d.parent(5), None);
+        assert_eq!(d.text_slot(3), Some(6));
+        assert_eq!(d.text_slot(4), None);
+        assert!(!d.query_all(None, "*").unwrap().contains(&5));
+        assert!(crate::browser::dom::flat_contains(&d, 3, 6));
+        assert!(!d.contains(3, 6));
+        assert!(!snap(SMALL).shadow_trees_recorded());
+        assert_eq!(snap(SMALL).flat_parent(5), Some(4));
+    }
+
+    /// The wire name is `prettyWrap`; a capture without it, or with `null`,
+    /// did not ask, and nothing else pins the spelling both sides agree on.
+    #[test]
+    fn the_pretty_wrap_flag_rides_the_capture() {
+        let json = SMALL.replacen("\"v\": 1,", "\"v\": 1, \"prettyWrap\": false,", 1);
+        assert_eq!(snap(&json).text_wrap_pretty_supported(), Some(false));
+        assert_eq!(snap(SMALL).text_wrap_pretty_supported(), None);
+        // `fontFaces` (taste call r12-t2): absent or `null` is unknown.
+        let json = SMALL.replacen("\"v\": 1,", "\"v\": 1, \"fontFaces\": [[\"Inter\", \"error\"], [\"Lora\", \"loaded\"]],", 1);
+        assert_eq!(
+            snap(&json).document_font_faces(),
+            Some(vec![("Inter".to_string(), "error".to_string()), ("Lora".to_string(), "loaded".to_string())])
+        );
+        assert_eq!(snap(SMALL).document_font_faces(), None);
+        let json = SMALL.replacen("\"v\": 1,", "\"v\": 1, \"fontFaces\": null,", 1);
+        assert_eq!(snap(&json).document_font_faces(), None);
+        let json = SMALL.replacen("\"v\": 1,", "\"v\": 1, \"renderedFaces\": [[\"Inter\", false]],", 1);
+        assert_eq!(snap(&json).rendered_faces(), Some(vec![("Inter".to_string(), false)]));
+        assert_eq!(snap(SMALL).rendered_faces(), None);
+    }
+
+    const SMALL: &str = r#"{
+      "v": 1, "hostname": "example.test", "innerWidth": 1280, "innerHeight": 800,
+      "styleProps": ["display", "color"], "pseudoProps": ["content", "width"],
+      "strings": ["block", "rgb(0, 0, 0)", "inline", "\"\"", "4px", "none"],
+      "documentElement": 1, "body": 3,
+      "els": [
+        {"t":"HTML","c":[2,3],"a":[["lang","en"]],"s":[0,1],"r":[0,0,1280,800]},
+        {"t":"HEAD","p":1,"c":[],"s":[5,1]},
+        {"t":"BODY","p":1,"c":[4,"tail"],"a":[["class","home dark"]],"s":[0,1],"r":[0,0,1280,800]},
+        {"t":"DIV","p":3,"c":["Hello ",5,6],"a":[["id","main"],["class","card feature"]],"s":[0,1],"r":[10,10,300,100],"b":[3,4]},
+        {"t":"SPAN","p":4,"c":["world"],"s":[2,1],"r":[10,10,50,20],"st":["hover"]},
+        {"t":"svg","n":1,"p":4,"c":[],"a":[["class","icon"]],"s":[2,1],"k":true}
+      ]
+    }"#;
+
+    #[test]
+    fn tree_and_text() {
+        let d = snap(SMALL);
+        assert_eq!(d.document_element(), Some(1));
+        assert_eq!(d.body(), Some(3));
+        assert_eq!(d.tag_name(4), "DIV");
+        assert_eq!(d.parent(5), Some(4));
+        assert_eq!(d.children(4), vec![5, 6]);
+        assert_eq!(d.text_content(4), "Hello world");
+        assert_eq!(d.text_content(3), "Hello worldtail");
+        assert_eq!(d.direct_text_nodes(4), vec!["Hello ".to_string()]);
+        assert_eq!(d.previous_element_sibling(6), Some(5));
+        assert_eq!(d.next_element_sibling(5), Some(6));
+        assert!(d.contains(3, 5));
+        assert!(!d.contains(5, 3));
+        assert_eq!(d.style(5, "display"), "inline");
+        assert_eq!(d.style(5, "opacity"), "");
+        assert_eq!(d.unknown_style_props(), vec!["opacity".to_string()]);
+        assert_eq!(
+            d.pseudo_style(4, "::before", "content").as_deref(),
+            Some("\"\"")
+        );
+        assert_eq!(
+            d.pseudo_style(4, "::before", "width").as_deref(),
+            Some("4px")
+        );
+        assert_eq!(
+            d.pseudo_style(5, "::before", "content").as_deref(),
+            Some("none")
+        );
+        assert_eq!(d.class_name_prop(6), None);
+        assert_eq!(d.class_name_prop(4).as_deref(), Some("card feature"));
+        assert_eq!(d.id_prop(5).as_deref(), Some(""));
+        assert_eq!(d.rect(4).right, 310.0);
+        assert!(d.offset_width(6).is_nan());
+    }
+
+    #[test]
+    fn placeholder_color_is_readable_as_pseudo_style() {
+        let json = r#"{
+          "v": 1, "hostname": "example.test", "innerWidth": 1280, "innerHeight": 800,
+          "styleProps": ["display", "color"], "pseudoProps": ["content"],
+          "strings": ["block", "rgb(0, 0, 0)", "rgb(187, 187, 187)"],
+          "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2],"s":[0,1],"r":[0,0,1280,800]},
+            {"t":"BODY","p":1,"c":[3],"s":[0,1]},
+            {"t":"INPUT","p":2,"c":[],"a":[["placeholder","Jane"]],"s":[0,1],"ph":2}
+          ]
+        }"#;
+        let d = snap(json);
+        assert_eq!(
+            d.pseudo_style(3, "::placeholder", "color").as_deref(),
+            Some("rgb(187, 187, 187)")
+        );
+        assert_eq!(d.pseudo_style(2, "::placeholder", "color"), None);
+    }
+
+    /// A capture that records the full current `STYLE_PROPS` answers
+    /// `direction`, `unicodeBidi` and `aspectRatio` through `Dom::style`.
+    #[test]
+    fn bidi_and_aspect_ratio_round_trip() {
+        let props: Vec<&str> = STYLE_PROPS.to_vec();
+        for want in ["direction", "unicodeBidi", "aspectRatio"] {
+            assert!(props.contains(&want), "{want} missing from STYLE_PROPS");
+        }
+        // One interned value per column, so each element's `s` row is the
+        // column order itself and a read must land on its own property name.
+        let strings: Vec<String> = props.iter().map(|p| format!("v:{p}")).collect();
+        let cols: Vec<usize> = (0..props.len()).collect();
+        let json = serde_json::json!({
+            "v": 1,
+            "hostname": "example.test",
+            "innerWidth": 1280,
+            "innerHeight": 800,
+            "styleProps": props,
+            "pseudoProps": ["content"],
+            "strings": strings,
+            "documentElement": 1,
+            "body": 2,
+            "els": [
+                {"t": "HTML", "c": [2], "s": cols},
+                {"t": "BODY", "p": 1, "c": [], "s": cols},
+            ],
+        })
+        .to_string();
+        let d = snap(&json);
+        assert_eq!(d.style(2, "direction"), "v:direction");
+        assert_eq!(d.style(2, "unicodeBidi"), "v:unicodeBidi");
+        assert_eq!(d.style(2, "aspectRatio"), "v:aspectRatio");
+        // Every other column still lands on its own name.
+        assert_eq!(d.style(2, "display"), "v:display");
+        assert_eq!(d.style(2, "zIndex"), "v:zIndex");
+        assert!(d.unknown_style_props().is_empty());
+    }
+
+    /// Running animations are known only where the capture says it read
+    /// them: then an element without `an` has none running, and without the
+    /// flag nothing is known.
+    #[test]
+    fn running_animations_are_known_only_where_recorded() {
+        let els = serde_json::json!([
+            {"t": "HTML", "c": [2]},
+            {"t": "BODY", "p": 1, "c": [3]},
+            {"t": "SPAN", "p": 2, "c": ["solutions"], "an": ["opacity", "filter"]},
+        ]);
+        let recorded = serde_json::json!({
+            "v": 1, "documentElement": 1, "body": 2, "anim": true, "els": els,
+        })
+        .to_string();
+        let d = snap(&recorded);
+        assert_eq!(
+            d.running_animation_properties(3),
+            Some(vec!["opacity".to_string(), "filter".to_string()])
+        );
+        assert_eq!(d.running_animation_properties(2), Some(Vec::new()));
+        assert_eq!(d.running_animation_properties(0), None);
+        let older = serde_json::json!({ "v": 1, "documentElement": 1, "body": 2, "els": els }).to_string();
+        let d = snap(&older);
+        assert_eq!(d.running_animation_properties(3), None);
+        assert_eq!(d.running_animation_properties(2), None);
+    }
+
+    /// A capture recorded before the three properties were added still parses
+    /// and reads them as unknown rather than panicking or shifting columns.
+    #[test]
+    fn older_capture_without_the_new_props_still_loads() {
+        let d = snap(SMALL);
+        assert_eq!(d.style(5, "display"), "inline");
+        assert_eq!(d.style(5, "direction"), "");
+        assert_eq!(d.style(5, "unicodeBidi"), "");
+        assert_eq!(d.style(5, "aspectRatio"), "");
+        assert_eq!(
+            d.unknown_style_props(),
+            vec![
+                "direction".to_string(),
+                "unicodeBidi".to_string(),
+                "aspectRatio".to_string()
+            ]
+        );
+    }
+
+    /// The fill mode, direction, duration, delay, play state and composition of animations,
+    /// and the keyframe selectors, joined the capture later: a recording
+    /// without them reads each as empty or `None`, which the rules that end
+    /// an animation take as unknown.
+    #[test]
+    fn older_capture_without_animation_timing_props() {
+        let d = snap(SMALL);
+        for prop in [
+            "animationFillMode",
+            "animationDirection",
+            "animationDuration",
+            "animationDelay",
+            "animationPlayState",
+            "animationComposition",
+        ] {
+            assert!(STYLE_PROPS.contains(&prop), "{prop} missing from STYLE_PROPS");
+            assert_eq!(d.style(5, prop), "", "{prop}");
+        }
+        assert_eq!(d.keyframe_keys("anything"), None);
+    }
+
+    /// The containing-block properties and `scrollHeight` joined the capture
+    /// later: a recording without them reads the properties as empty and the
+    /// metric as NaN, which the paint gate takes as undecided.
+    #[test]
+    fn older_capture_without_containing_block_props_or_scroll_height() {
+        let d = snap(SMALL);
+        for prop in ["willChange", "contain", "translate", "scale", "rotate", "perspective"] {
+            assert_eq!(d.style(4, prop), "", "{prop}");
+            assert!(STYLE_PROPS.contains(&prop), "{prop} missing from STYLE_PROPS");
+        }
+        assert!(d.scroll_height(4).is_nan());
+        let json = r#"{
+          "v": 1, "hostname": "example.test", "innerWidth": 1280, "innerHeight": 800,
+          "styleProps": ["display"], "pseudoProps": ["content"], "strings": ["block"],
+          "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2],"s":[0],"m":[1280,800,0,1280,0,1280,800,800]},
+            {"t":"BODY","p":1,"c":[],"s":[0],"m":[1280,2400,0,1280,0,1280,2400]}
+          ]
+        }"#;
+        let d = snap(json);
+        assert_eq!(d.scroll_height(1), 800.0);
+        assert!(d.scroll_height(2).is_nan());
+    }
+
+    #[test]
+    fn selectors_over_snapshot() {
+        let d = snap(SMALL);
+        assert_eq!(d.query_all(None, "*").unwrap(), vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(d.query_all(None, "body *").unwrap(), vec![4, 5, 6]);
+        assert_eq!(d.query_all(Some(4), ":scope > span").unwrap(), vec![5]);
+        assert_eq!(d.query_one(None, "#main").unwrap(), Some(4));
+        assert_eq!(
+            d.query_one(None, "div.card.feature > span:nth-of-type(1)")
+                .unwrap(),
+            Some(5)
+        );
+        assert_eq!(d.closest(5, "[class*=\"CARD\" i]").unwrap(), Some(4));
+        assert_eq!(d.closest(5, ".nope").unwrap(), None);
+        assert!(d.matches(5, "span:hover").unwrap());
+        assert!(!d.matches(4, "div:hover").unwrap());
+        assert!(d.matches(6, "svg").unwrap());
+        assert!(
+            d.matches(6, "SVG").unwrap() == false,
+            "svg type selectors are case-sensitive"
+        );
+        assert!(d.matches(4, "DIV").unwrap());
+        assert!(d.matches(1, ":root").unwrap());
+        assert!(d.matches(1, ":lang(en)").unwrap());
+        assert!(d.matches(5, ":lang(en)").unwrap());
+        assert!(d.matches(3, "body:has(> div)").unwrap());
+        assert!(d.matches(2, ":empty").unwrap());
+        assert!(!d.matches(4, ":empty").unwrap());
+        assert!(d.matches(4, "div::before").unwrap() == false);
+        assert!(d.matches(4, "div:foo").is_err());
+        assert!(d.query_all(None, ".x)").is_err());
+        assert_eq!(
+            d.query_all(None, "h1, h2, [role=\"heading\"]").unwrap(),
+            Vec::<u32>::new()
+        );
+    }
+
+    #[test]
+    fn hit_tests_are_demand_driven() {
+        let d = snap(SMALL);
+        assert_eq!(d.element_from_point(20.0, 20.0), None);
+        assert!(d.has_needs());
+        let needs = d.take_needs();
+        assert_eq!(needs.hit_tests, vec![[20.0, 20.0]]);
+        d.add_facts(&Facts {
+            hits: vec![HitTest {
+                x: 20.0,
+                y: 20.0,
+                top: 5,
+                stack: vec![5, 4, 3, 1],
+            }],
+            ..Facts::default()
+        });
+        assert_eq!(d.element_from_point(20.0, 20.0), Some(5));
+        assert_eq!(d.elements_from_point(20.0, 20.0), vec![5, 4, 3, 1]);
+        assert!(!d.has_needs());
+    }
+
+    /// The scroll probe is asked on demand, kept apart from the hit tests a
+    /// consumer answers, and read from the facts once answered; the facts
+    /// leave the field out when there is nothing in it.
+    #[test]
+    fn scroll_probes_are_demand_driven_and_kept_apart() {
+        let d = snap(SMALL);
+        assert_eq!(d.shown_when_scrolled_to(5), None);
+        assert_eq!(d.shown_when_scrolled_to(5), None);
+        assert!(!d.has_needs());
+        assert_eq!(d.take_scroll_probes(), vec![5]);
+        assert!(d.take_scroll_probes().is_empty());
+        let facts: Facts = serde_json::from_str(r#"{"hits":[],"shownOnScroll":[{"el":5,"shown":true}]}"#).unwrap();
+        d.add_facts(&facts);
+        assert_eq!(d.shown_when_scrolled_to(5), Some(true));
+        assert!(d.take_scroll_probes().is_empty());
+        assert_eq!(serde_json::to_string(&Facts::default()).unwrap(), r#"{"hits":[]}"#);
+        let old: Facts = serde_json::from_str(r#"{"hits":[]}"#).unwrap();
+        assert!(old.shown_on_scroll.is_empty());
+    }
+
+    /// An `<img>` answers from its media record. `complete` is `None` on a
+    /// capture recorded before the snapshot read it, never `false`, and an
+    /// element that is not an `<img>` answers nothing even where it carries
+    /// a media record of its own.
+    #[test]
+    fn image_load_state_comes_from_the_media_record() {
+        const PAGE: &str = r#"{
+          "v": 1, "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2]},
+            {"t":"BODY","p":1,"c":[3,4,5,6,7]},
+            {"t":"IMG","p":2,"md":{"nw":0,"nh":0,"cur":"https://a.test/gone.png","src":"https://a.test/gone.png","cp":true}},
+            {"t":"IMG","p":2,"md":{"nw":0,"nh":0,"cur":"","src":"https://a.test/later.png","cp":false}},
+            {"t":"IMG","p":2,"md":{"nw":640,"nh":480,"cur":"https://a.test/old.png","src":"https://a.test/old.png"}},
+            {"t":"PICTURE","p":2,"md":{"nw":0,"nh":0,"cur":"","src":""}},
+            {"t":"image","n":1,"p":2}
+          ]
+        }"#;
+        let d = snap(PAGE);
+        assert_eq!(d.image_natural_size(3), Some((0.0, 0.0)));
+        assert_eq!(d.image_complete(3), Some(true));
+        assert_eq!(d.image_current_src(3).as_deref(), Some("https://a.test/gone.png"));
+        assert_eq!(d.image_complete(4), Some(false));
+        assert_eq!(d.image_current_src(4).as_deref(), Some(""));
+        // Recorded before `complete` was: the size is known, the state is not.
+        assert_eq!(d.image_natural_size(5), Some((640.0, 480.0)));
+        assert_eq!(d.image_complete(5), None);
+        for other in [1, 6, 7] {
+            assert_eq!(d.image_natural_size(other), None);
+            assert_eq!(d.image_complete(other), None);
+            assert_eq!(d.image_current_src(other), None);
+        }
+        // An old record serializes as it was read: no `cp` key appears.
+        let old = d.snap.node(5).media.as_ref().unwrap();
+        assert!(!serde_json::to_string(old).unwrap().contains("cp"));
+    }
+
+    /// A `<video>` answers its `readyState` from its media record; a record
+    /// from before the capture read it, and any other element, answer
+    /// nothing.
+    #[test]
+    fn video_ready_state_comes_from_the_media_record() {
+        const PAGE: &str = r#"{
+          "v": 1, "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2]},
+            {"t":"BODY","p":1,"c":[3,4,5]},
+            {"t":"VIDEO","p":2,"md":{"vw":1280,"vh":720,"cur":"","src":"","rs":4}},
+            {"t":"VIDEO","p":2,"md":{"vw":0,"vh":0,"cur":"","src":""}},
+            {"t":"IMG","p":2,"md":{"nw":1,"nh":1,"cur":"","src":"","rs":4}}
+          ]
+        }"#;
+        let d = snap(PAGE);
+        assert_eq!(d.video_ready_state(3), Some(4));
+        assert_eq!(d.video_ready_state(4), None);
+        assert_eq!(d.video_ready_state(5), None);
+        assert!(!serde_json::to_string(d.snap.node(4).media.as_ref().unwrap()).unwrap().contains("rs"));
+    }
+
+    /// A capture that recorded the text rects hands over the lines; one that
+    /// did not says so, and the caller stands down rather than reading lines
+    /// out of a union.
+    #[test]
+    fn text_lines_come_from_the_capture_or_not_at_all() {
+        const OLD: &str = r#"{
+          "v": 1, "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2]},
+            {"t":"BODY","p":1,"c":[3]},
+            {"t":"P","p":2,"c":["hello"],"d":[0,100,1000,43]}
+          ]
+        }"#;
+        assert_eq!(snap(OLD).text_line_rects(3), None);
+
+        // Each element records only its own text rects; an element's lines
+        // are assembled from its own plus its descendants'. Here the `<p>`
+        // wraps once and an inline `<b>` sits in the middle of its first
+        // line, so the first line arrives in three pieces from two elements.
+        const NEW: &str = r#"{
+          "v": 1, "textLines": true, "documentElement": 1, "body": 2,
+          "els": [
+            {"t":"HTML","c":[2]},
+            {"t":"BODY","p":1,"c":[3]},
+            {"t":"P","p":2,"c":["hello ",4," there"],"d":[0,100,1000,43],
+             "dl":[[0,100,600,19],[700,100,300,19],[0,124,120,19]]},
+            {"t":"B","p":3,"c":["bold"],"d":[600,100,100,19],"dl":[[600,100,100,19]]}
+          ]
+        }"#;
+        let lines = snap(NEW).text_line_rects(3).expect("lines");
+        assert_eq!(lines.len(), 2);
+        assert_eq!((lines[0].left, lines[0].width), (0.0, 1000.0));
+        assert_eq!((lines[1].top, lines[1].width), (124.0, 120.0));
+        // The `<b>` on its own is the one line it rendered.
+        assert_eq!(snap(NEW).text_line_rects(4).expect("lines").len(), 1);
+        // An element the capture found no rendered text under is not
+        // "unknown" — it is an element with no lines.
+        assert_eq!(snap(NEW).text_line_rects(1).map(|l| l.len()), Some(2));
+    }
+
+    /// The line walk skips the subtrees the character count skips: a
+    /// `content-visibility: hidden` box, a `display: none` box and a
+    /// `<script>`, whatever rects the capture holds for them. The inline `<b>`
+    /// also says `content-visibility: hidden`, which an inline box ignores,
+    /// so its rects are kept.
+    #[test]
+    fn text_line_rects_skip_subtrees_that_render_no_text() {
+        const PAGE: &str = r#"{
+          "v": 1, "textLines": true, "documentElement": 1, "body": 2,
+          "styleProps": ["display", "contentVisibility"],
+          "strings": ["block", "visible", "inline-block", "hidden", "none", "inline"],
+          "els": [
+            {"t":"HTML","c":[2],"s":[0,1]},
+            {"t":"BODY","p":1,"c":[3],"s":[0,1]},
+            {"t":"P","p":2,"c":["seen ",4,5,6,7],"s":[0,1],
+             "dl":[[0,100,300,19]]},
+            {"t":"SPAN","p":3,"c":["skipped"],"s":[2,3],"dl":[[0,124,900,19]]},
+            {"t":"SPAN","p":3,"c":["gone"],"s":[4,1],"dl":[[0,148,900,19]]},
+            {"t":"SCRIPT","p":3,"c":["x"],"s":[0,1],"dl":[[0,172,900,19]]},
+            {"t":"B","p":3,"c":["kept"],"s":[5,3],"dl":[[300,100,60,19]]}
+          ]
+        }"#;
+        let lines = snap(PAGE).text_line_rects(3).expect("lines");
+        assert_eq!(lines.len(), 1, "{lines:?}");
+        assert_eq!((lines[0].left, lines[0].width), (0.0, 360.0));
+    }
+
+    #[test]
+    fn css_escape_matches_spec() {
+        assert_eq!(css_escape("foo"), "foo");
+        assert_eq!(css_escape("1st"), "\\31 st");
+        assert_eq!(css_escape("-1"), "-\\31 ");
+        assert_eq!(css_escape("-"), "\\-");
+        assert_eq!(css_escape("a b.c"), "a\\ b\\.c");
+        assert_eq!(css_escape("\u{0}x"), "\u{FFFD}x");
+        assert_eq!(css_escape("é"), "é");
+        assert_eq!(css_escape("a\u{1}"), "a\\1 ");
+    }
+}

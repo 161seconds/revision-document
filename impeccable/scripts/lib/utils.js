@@ -1,0 +1,850 @@
+import fs from 'fs';
+import path from 'path';
+import { PROVIDERS } from './transformers/providers.js';
+
+// Per-project artifacts live inside `scripts/` of an installed skill but
+// belong to the consuming project, not the distributable skill. The build
+// excludes them from dist, and the harness-sync step preserves them across
+// the rm+recopy so local state isn't destroyed on every rebuild.
+// - config.json: legacy live-mode inject target list for existing projects.
+//   New installs write project config at .impeccable/live/config.json instead.
+export const PER_PROJECT_SCRIPT_ARTIFACTS = new Set(['config.json']);
+
+// Platform binaries under `scripts/bin/<os>-<arch>/` are fetched per machine
+// (scripts/fetch-engine.mjs) and never part of the source skill read: the
+// release build stages them into provider output separately, and the launcher
+// downloads them on first run when they are absent.
+export const SKILL_BINARY_DIR = 'bin';
+
+// Walk the harness-dir skill tree and return any per-project script
+// artifacts found, ready for restoration after a full sync rm+recopy.
+// Returns [{ relPath, content: Buffer }], where relPath is relative to
+// the passed-in rootDir (typically `<configDir>/skills`).
+export function stashPerProjectArtifacts(rootDir) {
+  if (!fs.existsSync(rootDir)) return [];
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) { walk(p); continue; }
+      // Only preserve files inside a skill's scripts/ directory.
+      if (path.basename(path.dirname(p)) !== 'scripts') continue;
+      if (PER_PROJECT_SCRIPT_ARTIFACTS.has(entry.name)) {
+        out.push({ relPath: path.relative(rootDir, p), content: fs.readFileSync(p) });
+      }
+    }
+  };
+  walk(rootDir);
+  return out;
+}
+
+export function restorePerProjectArtifacts(rootDir, stashed) {
+  for (const { relPath, content } of stashed) {
+    const target = path.join(rootDir, relPath);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, content);
+  }
+}
+
+/**
+ * cmd.exe seeks by byte offset when it runs `call :label` or `goto`, so a
+ * batch file with LF-only line endings fails with "The system cannot find the
+ * batch label specified" (#1098). Every emitted `.cmd` is written with CRLF.
+ */
+export function isBatchFile(name) {
+  return /\.(cmd|bat)$/i.test(name);
+}
+
+export function toCrlf(text) {
+  return text.replace(/\r?\n/g, '\r\n');
+}
+
+/**
+ * Paths of every batch file under `dirs` that still holds a bare LF. Missing
+ * directories are skipped.
+ */
+export function findBatchFilesWithBareLf(dirs) {
+  const bad = [];
+  const walk = (dir) => {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === 'node_modules' || entry.name === '.git') continue;
+        walk(entryPath);
+      } else if (entry.isFile() && isBatchFile(entry.name)) {
+        const text = fs.readFileSync(entryPath, 'latin1');
+        if (/(^|[^\r])\n/.test(text)) bad.push(entryPath);
+      }
+    }
+  };
+  for (const dir of dirs) walk(dir);
+  return bad;
+}
+
+function readSkillScripts(scriptsDir) {
+  const scripts = [];
+
+  const walk = (dir) => {
+    const entries = fs.readdirSync(dir, { withFileTypes: true })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    for (const entry of entries) {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (dir === scriptsDir && entry.name === SKILL_BINARY_DIR) continue;
+        walk(entryPath);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      if (PER_PROJECT_SCRIPT_ARTIFACTS.has(entry.name)) continue;
+
+      const relPath = path.relative(scriptsDir, entryPath).split(path.sep).join('/');
+      const raw = fs.readFileSync(entryPath, 'utf-8');
+      // `mode` travels with the entry so the launcher keeps its executable
+      // bit in every provider copy (see writeScriptFile in the transformer).
+      // A batch file ships with CRLF whatever this checkout holds (#1098).
+      scripts.push({
+        name: relPath,
+        content: isBatchFile(relPath) ? toCrlf(raw) : raw,
+        filePath: entryPath,
+        mode: fs.statSync(entryPath).mode & 0o777,
+      });
+    }
+  };
+
+  walk(scriptsDir);
+  return scripts;
+}
+
+/**
+ * Parse frontmatter from markdown content
+ * Returns { frontmatter: object, body: string }
+ */
+export function parseFrontmatter(content) {
+  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/;
+  const match = content.match(frontmatterRegex);
+
+  if (!match) {
+    return { frontmatter: {}, body: content };
+  }
+
+  const [, frontmatterText, body] = match;
+  const frontmatter = {};
+
+  // Simple YAML parser (handles basic key-value and arrays)
+  const lines = frontmatterText.split(/\r?\n/);
+  let currentKey = null;
+  let currentArray = null;
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+
+    // Calculate indent level
+    const leadingSpaces = line.length - line.trimStart().length;
+    const trimmed = line.trim();
+
+    // Array item at level 2 (nested under a key)
+    if (trimmed.startsWith('- ') && leadingSpaces >= 2) {
+      if (currentArray) {
+        if (trimmed.startsWith('- name:')) {
+          // New object in array
+          const obj = {};
+          obj.name = trimmed.slice(7).trim();
+          currentArray.push(obj);
+        } else {
+          // Simple string item in array
+          currentArray.push(trimmed.slice(2));
+        }
+      }
+      continue;
+    }
+
+    // Property of array object (indented further)
+    if (leadingSpaces >= 4 && currentArray && currentArray.length > 0) {
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > 0) {
+        const key = trimmed.slice(0, colonIndex).trim();
+        const value = trimmed.slice(colonIndex + 1).trim();
+        const lastObj = currentArray[currentArray.length - 1];
+        lastObj[key] = value === 'true' ? true : value === 'false' ? false : value;
+      }
+      continue;
+    }
+
+    // Top-level key-value pair
+    if (leadingSpaces === 0) {
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex > 0) {
+        const key = trimmed.slice(0, colonIndex).trim();
+        const value = trimmed.slice(colonIndex + 1).trim();
+        const isQuoted = /^(".*"|'.*')$/.test(value);
+        const unquotedValue = isQuoted ? value.slice(1, -1) : value;
+        const shouldCoerceBoolean =
+          key === 'user-invocable' || key === 'user-invokable' || !isQuoted;
+
+        if (value) {
+          frontmatter[key] = shouldCoerceBoolean
+            ? unquotedValue === 'true'
+              ? true
+              : unquotedValue === 'false'
+                ? false
+                : unquotedValue
+            : unquotedValue;
+          currentKey = key;
+          currentArray = null;
+        } else {
+          // Start of array
+          currentKey = key;
+          currentArray = [];
+          frontmatter[key] = currentArray;
+        }
+      }
+    }
+  }
+
+  return { frontmatter, body: body.trim() };
+}
+
+/**
+ * Recursively read all .md files from a directory
+ */
+export function readFilesRecursive(dir, fileList = []) {
+  if (!fs.existsSync(dir)) {
+    return fileList;
+  }
+
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      readFilesRecursive(filePath, fileList);
+    } else if (file.endsWith('.md')) {
+      fileList.push(filePath);
+    }
+  }
+
+  return fileList;
+}
+
+/**
+ * Read and parse the impeccable skill source.
+ * After v3.0 the repo holds exactly one user-invocable skill, flat at skill/.
+ * Returns { skills: [oneEntry] } so downstream array-shaped consumers stay happy.
+ *
+ * The source manifest is `SKILL.src.md`, NOT `SKILL.md`, on purpose: the
+ * `vercel-labs/skills` CLI discovers a skill by finding a literal `SKILL.md`
+ * and copies that directory verbatim. If `skill/SKILL.md` existed, `npx skills`
+ * would install the UNCOMPILED source (unresolved `{{placeholders}}` and
+ * `{{scripts_path}}`). Naming it `SKILL.src.md` hides it from discovery so the CLI falls
+ * through to a compiled harness dir (`.agents/skills/impeccable`) instead.
+ */
+export function readSourceFiles(rootDir) {
+  const skillDir = path.join(rootDir, 'skill');
+  const skills = [];
+
+  const skillMdPath = path.join(skillDir, 'SKILL.src.md');
+  if (!fs.existsSync(skillMdPath)) {
+    return { skills };
+  }
+
+  const content = fs.readFileSync(skillMdPath, 'utf-8');
+  const { frontmatter, body } = parseFrontmatter(content);
+
+  const references = [];
+  const referenceDir = path.join(skillDir, 'reference');
+  if (fs.existsSync(referenceDir)) {
+    const refFiles = fs.readdirSync(referenceDir).filter(f => f.endsWith('.md'));
+    for (const refFile of refFiles) {
+      const refPath = path.join(referenceDir, refFile);
+      references.push({
+        name: path.basename(refFile, '.md'),
+        content: fs.readFileSync(refPath, 'utf-8'),
+        filePath: refPath
+      });
+    }
+  }
+
+  // PER_PROJECT_SCRIPT_ARTIFACTS (defined at module top) are excluded from
+  // the distributable skill so the build never bundles one project's state
+  // into another's.
+  const scripts = [];
+  const scriptsDir = path.join(skillDir, 'scripts');
+  if (fs.existsSync(scriptsDir)) {
+    scripts.push(...readSkillScripts(scriptsDir));
+  }
+
+  // Provider payloads beside the skill: the dirs provider configs declare
+  // as pluginPayload.source (skill/hermes-plugin/), emitted verbatim.
+  const payloads = {};
+  for (const source of new Set(Object.values(PROVIDERS).map(c => c.pluginPayload?.source).filter(Boolean))) {
+    const dir = path.join(skillDir, source);
+    if (!fs.existsSync(dir)) continue;
+    payloads[source] = fs.readdirSync(dir, { withFileTypes: true })
+      .filter(f => f.isFile())
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(f => ({ name: f.name, content: fs.readFileSync(path.join(dir, f.name), 'utf-8') }));
+  }
+
+  const agents = [];
+  const agentsDir = path.join(skillDir, 'agents');
+  if (fs.existsSync(agentsDir)) {
+    const agentFiles = fs.readdirSync(agentsDir).filter(f => f.endsWith('.md'));
+    for (const agentFile of agentFiles) {
+      const agentPath = path.join(agentsDir, agentFile);
+      const agentContent = fs.readFileSync(agentPath, 'utf-8');
+      const { frontmatter: agentFrontmatter, body: agentBody } = parseFrontmatter(agentContent);
+      const name = agentFrontmatter.name || path.basename(agentFile, '.md');
+      const providersRaw = agentFrontmatter.providers;
+      let providers = null;
+      if (Array.isArray(providersRaw)) {
+        providers = providersRaw.map(p => String(p).trim()).filter(Boolean);
+      } else if (typeof providersRaw === 'string' && providersRaw.trim()) {
+        providers = providersRaw.split(',').map(p => p.trim()).filter(Boolean);
+      }
+      agents.push({
+        name,
+        codexName: agentFrontmatter['codex-name'] || name.replace(/-/g, '_'),
+        claudeName: agentFrontmatter['claude-name'] || name,
+        description: agentFrontmatter.description || '',
+        tools: agentFrontmatter.tools || '',
+        disallowedTools: agentFrontmatter['disallowed-tools'] || '',
+        model: agentFrontmatter.model || '',
+        effort: agentFrontmatter.effort || '',
+        maxTurns: agentFrontmatter['max-turns'] ? Number(agentFrontmatter['max-turns']) : '',
+        nicknameCandidates: agentFrontmatter['nickname-candidates'] || [],
+        providers,
+        body: agentBody,
+        filePath: agentPath,
+      });
+    }
+  }
+
+  skills.push({
+    name: frontmatter.name || 'impeccable',
+    description: frontmatter.description || '',
+    claudeCodeDescription: frontmatter['claude-code-description'] || '',
+    license: frontmatter.license || '',
+    compatibility: frontmatter.compatibility || '',
+    metadata: frontmatter.metadata || null,
+    allowedTools: frontmatter['allowed-tools'] || '',
+    userInvocable: frontmatter['user-invocable'] === true || frontmatter['user-invocable'] === 'true',
+    argumentHint: frontmatter['argument-hint'] || '',
+    context: frontmatter.context || null,
+    body,
+    filePath: skillMdPath,
+    references,
+    scripts,
+    agents,
+    payloads,
+  });
+
+  return { skills };
+}
+
+/**
+ * Ensure directory exists, create if needed
+ */
+export function ensureDir(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+}
+
+/**
+ * Clean directory (remove all contents)
+ */
+export function cleanDir(dirPath) {
+  if (fs.existsSync(dirPath)) {
+    fs.rmSync(dirPath, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Write file with automatic directory creation
+ */
+export function writeFile(filePath, content) {
+  const dir = path.dirname(filePath);
+  ensureDir(dir);
+  fs.writeFileSync(filePath, content, 'utf-8');
+}
+
+// Curated short-list for the homepage Antidote section. This intentionally
+// stays independent of SKILL.md extraction so the copy remains tight and
+// editorial.
+const CURATED_CATEGORIES = [
+  {
+    name: 'Typography',
+    do: [
+      'Pair a distinctive display face with a restrained body face; vary across projects.',
+      'Use a ≥1.25 scale ratio between hierarchy steps. Flat scales read as bland.',
+      'Cap body line length at 65–75ch. Wider is fatiguing.',
+    ],
+    dont: [
+      'Inter, Roboto, Plex, Fraunces, or any other reflex default. Look further.',
+      'Monospace as lazy shorthand for "technical."',
+      'Long passages in uppercase. Reserve all-caps for short labels.',
+    ],
+  },
+  {
+    name: 'Color & Contrast',
+    do: [
+      'Use OKLCH. Reduce chroma near lightness extremes.',
+      'Tint neutrals toward the brand hue. Chroma 0.005–0.01 is enough.',
+      'Pick a color strategy before picking colors (Restrained, Committed, Full, Drenched).',
+    ],
+    dont: [
+      'Pure #000 or #fff. Always tint.',
+      'Dark mode + purple-to-cyan gradients. The AI tell.',
+      'Gradient text via background-clip. Use weight or size for emphasis.',
+    ],
+  },
+  {
+    name: 'Layout & Space',
+    do: [
+      'Vary spacing for rhythm. Tight groupings, generous separations.',
+      'Use the simplest tool: Flexbox for 1D, Grid for 2D, plain flow often enough.',
+      'Let whitespace carry hierarchy before reaching for color or scale.',
+    ],
+    dont: [
+      'Wrap everything in cards. Nested cards are always wrong.',
+      'Identical card grids of icon + heading + text, repeated endlessly.',
+      'The hero-metric template: big number, small label, supporting stats, gradient accent.',
+    ],
+  },
+  {
+    name: 'Visual Details',
+    do: [
+      'Commit to an aesthetic direction and execute it with precision.',
+      'Use ornament only where it earns its place.',
+    ],
+    dont: [
+      'Side-stripe borders (border-left/-right > 1px). The dashboard tell.',
+      'Glassmorphism everywhere. Rare and purposeful or nothing.',
+      'Rounded rectangles with generic drop shadows. "Could be any AI output."',
+    ],
+  },
+  {
+    name: 'Motion',
+    do: [
+      'Use transform and opacity. Animate the composited properties only.',
+      'Ease out with exponential curves (quart / quint / expo).',
+      'Respect prefers-reduced-motion on every transition.',
+    ],
+    dont: [
+      'Animate layout (width, height, padding, margin).',
+      'Bounce or elastic easing. Feels dated and tacky.',
+      'Decorative motion for its own sake. Motion should signal state.',
+    ],
+  },
+  {
+    name: 'Interaction',
+    do: [
+      'Use optimistic UI: update immediately, sync later.',
+      'Design empty states that teach the interface, not just say "nothing here."',
+      'Progressive disclosure: start simple, reveal sophistication on demand.',
+    ],
+    dont: [
+      'Make every button primary. Hierarchy matters.',
+      'Default to a modal. Exhaust inline alternatives first.',
+      'Repeat information the user can already see.',
+    ],
+  },
+];
+
+export function readPatterns(_rootDir, _relativePath) {
+  return {
+    patterns: CURATED_CATEGORIES.map((c) => ({ name: c.name, items: c.do })),
+    antipatterns: CURATED_CATEGORIES.map((c) => ({ name: c.name, items: c.dont })),
+  };
+}
+
+/**
+ * Provider-specific placeholders
+ */
+export const PROVIDER_PLACEHOLDERS = {
+  'claude-code': {
+    model: 'Claude',
+    config_file: 'CLAUDE.md',
+    ask_instruction: 'Ask with the AskUserQuestion tool and wait for the answer before continuing.',
+    command_prefix: '/'
+  },
+  'cursor': {
+    model: 'the model',
+    config_file: '.cursorrules',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'dsh': {
+    model: 'DeepSeek',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask with the ask_user_question tool and wait for the answer before continuing.',
+    command_prefix: '/'
+  },
+  'gemini': {
+    model: 'Gemini',
+    config_file: 'GEMINI.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'codex': {
+    model: 'GPT',
+    config_file: 'AGENTS.md',
+    // Each value is a complete capitalized sentence, because every
+    // {{ask_instruction}} call site is sentence-initial. That is enforced by
+    // validateAskInstructionSites() in scripts/build.js, not left to authors:
+    // four reference files had already spliced the placeholder mid-sentence.
+    ask_instruction: "Ask with Codex's structured user-input/question tool when available, or directly in chat if it is not, and wait for the answer before continuing.",
+    command_prefix: '$'
+  },
+  'agents': {
+    model: 'the model',
+    config_file: '.github/copilot-instructions.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'kiro': {
+    model: 'Claude',
+    config_file: '.kiro/settings.json',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  opencode: {
+    model: 'Claude',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask with the `question` tool and wait for the answer before continuing.',
+    command_prefix: '/'
+  },
+  'pi': {
+    model: 'the model',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'omp': {
+    model: 'the model',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'qoder': {
+    model: 'the model',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'trae': {
+    model: 'the model',
+    config_file: 'RULES.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'rovo-dev': {
+    model: 'Rovo Dev',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  veto: {
+    model: 'the selected model',
+    config_file: '~/.veto/config.json',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/',
+  },
+  'vibe': {
+    model: 'Mistral',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'grok': {
+    model: 'Grok',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask with the AskUserQuestion tool and wait for the answer before continuing.',
+    command_prefix: '/'
+  },
+  'antigravity': {
+    model: 'Gemini',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'hermes': {
+    // Hermes is provider-agnostic and reads AGENTS.md / CLAUDE.md / .cursorrules
+    // for project context. "the model" matches the pi/opencode phrasing used
+    // for harnesses without a vendor-fixed assistant name.
+    model: 'the model',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask the user directly to clarify what you cannot infer.',
+    command_prefix: '/'
+  },
+  'devin': {
+    model: 'Devin',
+    config_file: 'AGENTS.md',
+    ask_instruction: 'Ask with the ask_user_question tool when available, or directly in chat if it is not, and wait for the answer before continuing.',
+    command_prefix: '/'
+  }
+};
+
+export const PROVIDER_BLOCK_TAGS = new Set([
+  'agents',
+  'antigravity',
+  'claude',
+  'claude-code',
+  'codex',
+  'cursor',
+  'devin',
+  'dsh',
+  'gemini',
+  'github',
+  'grok',
+  'hermes',
+  'kiro',
+  'opencode',
+  'pi',
+  'omp',
+  'qoder',
+  'rovo-dev',
+  'trae',
+  'trae-cn',
+  'vibe',
+  'veto',
+]);
+
+/**
+ * Compile harness-conditional markdown blocks.
+ *
+ * Known provider blocks must be written as standalone tags:
+ *
+ * <codex>
+ * Codex-only instructions.
+ * </codex>
+ *
+ * Matching blocks keep their body and drop the tags. Non-matching blocks are
+ * removed. Unknown tags are preserved so ordinary markdown/HTML is untouched.
+ */
+export function compileProviderBlocks(content, activeTags = []) {
+  const activeTagSet = new Set(activeTags);
+  const providerBlockPattern = /(^|\r?\n)[ \t]*<([a-z][a-z0-9-]*)>[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*<\/\2>[ \t]*(?=\r?\n|$)/g;
+  let didCompileBlock = false;
+
+  const compiled = content.replace(providerBlockPattern, (match, prefix, tag, body) => {
+    if (!PROVIDER_BLOCK_TAGS.has(tag)) return match;
+    didCompileBlock = true;
+    return activeTagSet.has(tag) ? `${prefix}${body}` : prefix;
+  });
+
+  return didCompileBlock ? compiled.replace(/(?:\r?\n){3,}/g, '\n\n') : compiled;
+}
+
+/**
+ * Strip `<!-- rule:id -->` markers from skill markdown.
+ *
+ * External eval tooling can pin each instruction line to a stable ID.
+ * Markers in the source keep that mapping verifiable in lock-step with
+ * the file. Staged SKILL.md files should not expose them, so this strip
+ * runs during the per-provider staging in factory.js.
+ *
+ * Removes the marker plus any leading whitespace on the same line, so
+ * `something. <!-- rule:foo -->` becomes `something.` and a standalone
+ * marker line collapses to an empty line that the existing
+ * blank-line normalization in compileProviderBlocks reaps.
+ */
+export function stripRuleMarkers(content) {
+  return content.replace(/[ \t]*<!--\s*rule:[a-z0-9-]+\s*-->/g, '');
+}
+
+/**
+ * Replace all {{placeholder}} tokens with provider-specific values
+ */
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const EXCLUDED_FROM_SUGGESTIONS = new Set([
+  'impeccable',               // foundational skill, not a steering command
+  'teach-impeccable',         // deprecated shim
+  'frontend-design',          // deprecated shim
+]);
+
+// Sub-commands of /impeccable that should appear in {{available_commands}}.
+// These are the commands that audit/critique/etc. reference when suggesting next steps.
+const IMPECCABLE_SUB_COMMANDS = [
+  'adapt', 'animate', 'audit', 'bolder', 'clarify', 'colorize',
+  'critique', 'delight', 'distill', 'document', 'harden', 'layout',
+  'onboard', 'optimize', 'overdrive', 'polish', 'quieter', 'shape', 'typeset',
+];
+
+export function replacePlaceholders(content, provider, commandNames = [], allSkillNames = []) {
+  const placeholders = PROVIDER_PLACEHOLDERS[provider] || PROVIDER_PLACEHOLDERS['cursor'];
+  const cmdPrefix = placeholders.command_prefix || '/';
+
+  // Build the available_commands list.
+  // After the v3.0 consolidation, commands are sub-commands of /impeccable.
+  // If there's only one user-invocable skill (impeccable), generate sub-command references.
+  // Otherwise fall back to listing skill names (backwards compat for forks).
+  const nonExcluded = commandNames.filter(n => !EXCLUDED_FROM_SUGGESTIONS.has(n));
+  let commandList;
+  if (nonExcluded.length === 0) {
+    // Single-skill architecture: list sub-commands as /impeccable <sub>
+    commandList = IMPECCABLE_SUB_COMMANDS
+      .map(n => `${cmdPrefix}impeccable ${n}`)
+      .join(', ');
+  } else {
+    // Multi-skill architecture (backwards compat)
+    commandList = nonExcluded.map(n => `${cmdPrefix}${n}`).join(', ');
+  }
+
+  let result = content
+    .replace(/\{\{model\}\}/g, placeholders.model)
+    .replace(/\{\{config_file\}\}/g, placeholders.config_file)
+    .replace(/\{\{ask_instruction\}\}/g, placeholders.ask_instruction)
+    .replace(/\{\{command_prefix\}\}/g, cmdPrefix)
+    .replace(/\{\{available_commands\}\}/g, commandList);
+
+  // Replace `/skillname` invocations with the correct command prefix for this provider
+  // (e.g., `/normalize` → `$normalize` for Codex). Require the slash to be
+  // outside a path or URL so `.github/hooks/impeccable.json`,
+  // `.codex/skills/impeccable`, and the launcher invocation
+  // `{{scripts_path}}/impeccable <verb>` (a `}}`-preceded path segment,
+  // resolved after this pass) remain untouched.
+  if (cmdPrefix !== '/' && allSkillNames.length > 0) {
+    const sorted = [...allSkillNames].sort((a, b) => b.length - a.length);
+    for (const name of sorted) {
+      result = result.replace(
+        new RegExp(`(?<![a-zA-Z0-9_./}>-])\\/(?=${escapeRegex(name)}(?:[^a-zA-Z0-9_-]|$))`, 'g'),
+        cmdPrefix
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Render the one explicit provider marker allowed in executable skill scripts.
+ *
+ * Do not run replacePlaceholders() across JavaScript source: slash-command
+ * heuristics can collide with regex literals and runtime paths. Only exact
+ * marker lines are replaced. The shipped scripts today (the launcher and the
+ * page JS) carry no marker; the binary derives its provider from its install
+ * path or IMPECCABLE_PROVIDER_ID at run time.
+ */
+export function replaceScriptProviderMarker(content, provider, buildProvider = provider) {
+  const placeholders = PROVIDER_PLACEHOLDERS[provider] || PROVIDER_PLACEHOLDERS.cursor;
+  const commandPrefix = placeholders.command_prefix || '/';
+  const prefixMarker = "export const IMPECCABLE_COMMAND_PREFIX = '/'; // @impeccable-provider-command-prefix";
+  const providerMarker = "export const IMPECCABLE_PROVIDER_ID = 'source'; // @impeccable-provider-id";
+  return content
+    .replace(prefixMarker, `export const IMPECCABLE_COMMAND_PREFIX = ${JSON.stringify(commandPrefix)};`)
+    .replace(providerMarker, `export const IMPECCABLE_PROVIDER_ID = ${JSON.stringify(buildProvider)};`);
+}
+
+/**
+ * Decide whether a YAML scalar string value must be quoted to survive parsing.
+ *
+ * Plain (unquoted) YAML scalars cannot contain `: ` or ` #`, cannot start with
+ * a YAML indicator character, cannot look like a boolean/null/number, and
+ * cannot carry leading/trailing whitespace. parseFrontmatter strips surrounding
+ * quotes on input, so we must re-detect the need to quote on output — otherwise
+ * descriptions like "Handles: critique/review..." round-trip into invalid YAML.
+ */
+function yamlNeedsQuoting(value) {
+  if (typeof value !== 'string') return false;
+  if (value === '') return true;
+  // Leading or trailing whitespace
+  if (/^\s|\s$/.test(value)) return true;
+  // Starts with a YAML flow/indicator character
+  if (/^[\[\]{},&*!|>'"%@`#]/.test(value)) return true;
+  // Starts with `?`, `:`, or `-` followed by space or end of string
+  if (/^[?:-](\s|$)/.test(value)) return true;
+  // Contains `: ` (ends plain scalar) or ` #` (starts comment), or ends with `:`
+  if (/: |\s#|:$/.test(value)) return true;
+  // Reserved keywords that YAML 1.1 parsers coerce to boolean/null
+  if (/^(true|false|null|yes|no|on|off|~)$/i.test(value)) return true;
+  // Looks like a number
+  if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(value)) return true;
+  return false;
+}
+
+function formatYamlScalar(value) {
+  if (typeof value !== 'string') return String(value);
+  if (yamlNeedsQuoting(value)) {
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+  }
+  return value;
+}
+
+function appendYamlObject(lines, data, indent = 0) {
+  const space = ' '.repeat(indent);
+
+  for (const [key, value] of Object.entries(data)) {
+    if (Array.isArray(value)) {
+      lines.push(`${space}${key}:`);
+      for (const item of value) {
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+          lines.push(`${space}  -`);
+          appendYamlObject(lines, item, indent + 4);
+        } else {
+          lines.push(`${space}  - ${formatYamlScalar(item)}`);
+        }
+      }
+    } else if (value && typeof value === 'object') {
+      lines.push(`${space}${key}:`);
+      appendYamlObject(lines, value, indent + 2);
+    } else if (typeof value === 'boolean') {
+      lines.push(`${space}${key}: ${value}`);
+    } else {
+      lines.push(`${space}${key}: ${formatYamlScalar(value)}`);
+    }
+  }
+}
+
+/**
+ * Generate YAML frontmatter string
+ */
+export function generateYamlFrontmatter(data) {
+  const lines = ['---'];
+
+  for (const [key, value] of Object.entries(data)) {
+    if (Array.isArray(value)) {
+      lines.push(`${key}:`);
+      for (const item of value) {
+        if (typeof item === 'object') {
+          lines.push(`  - name: ${formatYamlScalar(item.name)}`);
+          if (item.description) lines.push(`    description: ${formatYamlScalar(item.description)}`);
+          if (item.required !== undefined) lines.push(`    required: ${item.required}`);
+        } else {
+          lines.push(`  - ${formatYamlScalar(item)}`);
+        }
+      }
+    } else if (value && typeof value === 'object') {
+      lines.push(`${key}:`);
+      appendYamlObject(lines, value, 2);
+    } else if (typeof value === 'boolean') {
+      lines.push(`${key}: ${value}`);
+    } else {
+      lines.push(`${key}: ${formatYamlScalar(value)}`);
+    }
+  }
+
+  lines.push('---');
+  return lines.join('\n');
+}
+
+/**
+ * Generate a plain YAML document string.
+ */
+export function generateYamlDocument(data) {
+  const lines = [];
+  appendYamlObject(lines, data);
+  return lines.join('\n');
+}

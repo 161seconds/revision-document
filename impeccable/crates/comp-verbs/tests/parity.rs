@@ -1,0 +1,163 @@
+//! Parity checks for the deterministic (non-browser) comp-verb logic. The
+//! expected numbers were produced by the original JS scripts (run from git
+//! history) against the same `crates/comp/tests/fixtures` PNGs and confirmed
+//! byte-identical to this port's output during the Node-free swap.
+
+use std::path::PathBuf;
+
+use impeccable_comp::png_io;
+use impeccable_comp::raster::Image;
+use impeccable_comp_verbs::comp_diff;
+use impeccable_comp_verbs::comp_spec;
+use serde_json::{json, Value};
+
+fn fixtures() -> PathBuf {
+    // comp-verbs shares the comp crate's fixtures.
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../comp/tests/fixtures")
+}
+
+#[test]
+fn transparent_plate_prompt_preserves_paint_and_reference_spacing() {
+    let dir = std::env::temp_dir().join(format!("impeccable-alpha-prompt-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("spec.json"), json!({"regions": [{"id": "boat", "kind": "plate", "note": "White sails and three hull holes"}]}).to_string()).unwrap();
+    let (mut io, output) = impeccable_common::Io::captured("", dir.clone(), Default::default());
+    let args = [
+        "--spec",
+        "spec.json",
+        "--plate-prompt",
+        "boat",
+        "--background",
+        "transparent",
+    ]
+    .map(String::from);
+    assert_eq!(comp_spec::run(&args, &mut io), 0);
+    let prompt = String::from_utf8(output.stdout.borrow().clone()).unwrap();
+    std::fs::remove_dir_all(dir).unwrap();
+    assert!(prompt.contains("transparent alpha"), "{prompt}");
+    assert!(prompt.contains("white"));
+    assert!(prompt.contains("margins"));
+    assert!(!prompt.contains("edge to edge"));
+}
+
+fn load(name: &str) -> Image {
+    let buf = std::fs::read(fixtures().join(name)).unwrap();
+    png_io::decode_png(&buf).unwrap().image
+}
+
+#[test]
+fn comp_diff_scores_match_js() {
+    // JS: comp-diff.mjs --comp comp.png --build build_flat.png (no spec).
+    let comp = load("comp.png");
+    let build = load("build_flat.png");
+    let res = comp_diff::compare(&comp, &build, None, "top", "", None);
+    let w = &res.whole;
+    assert_eq!(w.overall, 0.8374, "overall");
+    assert_eq!(w.structure, 0.9846, "structure");
+    assert_eq!(w.color, 0.8306, "color");
+    assert_eq!(w.detail, 0.5407, "detail");
+    assert_eq!(comp_diff::verdict_for(w, None), "match");
+}
+
+#[test]
+fn grid_to_box_matches_js() {
+    // JS: gridToBox on a 10x10 grid.
+    assert_eq!(comp_spec::grid_to_box("E2:J4").unwrap(), (0.4, 0.2, 0.6, 0.3));
+    assert_eq!(comp_spec::grid_to_box("A0:J0").unwrap(), (0.0, 0.0, 1.0, 0.1));
+    assert_eq!(comp_spec::grid_to_box("a0:a0").unwrap(), (0.0, 0.0, 0.1, 0.1));
+    // reversed spans normalize the same way
+    assert_eq!(comp_spec::grid_to_box("J4:E2").unwrap(), (0.4, 0.2, 0.6, 0.3));
+    assert!(comp_spec::grid_to_box("Z9:A0").is_err());
+    assert!(comp_spec::grid_to_box("E2-J4").is_err());
+}
+
+#[test]
+fn measure_regions_shape_matches_js() {
+    // A raster region gets a plate path + raster medium; a text region snaps
+    // to ink and is measured semantic. `allowUncovered` lets the busy comp pass.
+    let comp = load("comp.png");
+    let input: Value = json!({
+        "allowUncovered": true,
+        "regions": [
+            { "id": "art", "kind": "plate", "grid": "E2:J4", "note": "an exploded illustration drawing" },
+            { "id": "body", "kind": "text", "grid": "A5:D8", "note": "a paragraph of body text content" }
+        ]
+    });
+    let spec = comp_spec::measure_regions(&comp, &input, "comp.png").unwrap();
+    let regions = spec.get("regions").and_then(Value::as_array).unwrap();
+    assert_eq!(regions.len(), 2);
+    let art = &regions[0];
+    assert_eq!(art.get("medium").and_then(Value::as_str), Some("raster"));
+    assert_eq!(art.get("plate").and_then(Value::as_str), Some("assets/plates/art.png"));
+    let body = &regions[1];
+    assert_eq!(body.get("medium").and_then(Value::as_str), Some("semantic"));
+    assert!(body.get("plate").unwrap().is_null());
+    // spec-level fields
+    assert_eq!(spec.get("tool").and_then(Value::as_str), Some("comp-spec"));
+    assert_eq!(spec.pointer("/compSize/width").and_then(Value::as_i64), Some(comp.width as i64));
+}
+
+#[test]
+fn measure_regions_refuses_painted_note_under_code_kind() {
+    // JS: a text/control/chrome region whose note names painted material is
+    // refused at the spec unless codeDrawn is set.
+    let comp = load("comp.png");
+    let input: Value = json!({
+        "allowUncovered": true,
+        "regions": [ { "id": "x", "kind": "chrome", "grid": "A0:B1", "note": "an exploded diagram illustration" } ]
+    });
+    let err = comp_spec::measure_regions(&comp, &input, "comp.png").unwrap_err();
+    assert!(err.contains("describes painted material"), "got: {err}");
+}
+
+#[test]
+fn measure_regions_refuses_oversized_code_region() {
+    let comp = load("comp.png");
+    let input: Value = json!({
+        "allowUncovered": true,
+        "regions": [ { "id": "col", "kind": "chrome", "grid": "A0:J9", "note": "a big column of things" } ]
+    });
+    let err = comp_spec::measure_regions(&comp, &input, "comp.png").unwrap_err();
+    assert!(err.contains("covers 100% of the comp") || err.contains("% of the comp"), "got: {err}");
+}
+
+#[test]
+fn remeasure_keeps_only_unchanged_reference_typography() {
+    let dir = std::env::temp_dir().join(format!("impeccable-remeasure-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::copy(fixtures().join("comp.png"), dir.join("comp.png")).unwrap();
+    let mut input = json!({"allowUncovered":true,"regions":[
+        {"id":"heading","kind":"text","note":"Main heading text","text":"Welcome","box":{"x":0.1,"y":0.1,"w":0.5,"h":0.1},"snap":false},
+        {"id":"other","kind":"text","note":"Other small text","text":"Details","box":{"x":0.1,"y":0.4,"w":0.5,"h":0.1},"snap":false}
+    ]});
+    let run = |input: &Value| {
+        std::fs::write(dir.join("regions.json"), input.to_string()).unwrap();
+        let (mut io, _) = impeccable_common::Io::captured("", dir.clone(), Default::default());
+        let args = ["--comp","comp.png","--regions","regions.json","--spec","spec.json"].map(String::from);
+        assert_eq!(comp_spec::run(&args, &mut io), 0);
+        serde_json::from_slice::<Value>(&std::fs::read(dir.join("spec.json")).unwrap()).unwrap()
+    };
+    let mut first = run(&input);
+    let measured = json!({"comp":{"capHeightPx":12},"chosen":{"family":"Example","stamp":"existing-stamp"}});
+    first["regions"][0]["type"] = measured.clone();
+    first["regions"][1]["type"] = measured.clone();
+    std::fs::write(dir.join("spec.json"), first.to_string()).unwrap();
+    input["regions"][1]["box"]["y"] = json!(0.5);
+    let next = run(&input);
+    assert_eq!(next["regions"][0]["type"], measured, "unrelated region edit erased typography");
+    assert!(next["regions"][1]["type"].is_null(), "moved region reused stale measurement");
+    input["regions"][0]["text"] = json!("Different");
+    assert!(run(&input)["regions"][0]["type"].is_null());
+    let mut prior = run(&input);
+    prior["regions"][0]["type"] = measured.clone();
+    std::fs::write(dir.join("spec.json"), prior.to_string()).unwrap();
+    std::fs::copy(fixtures().join("build_flat.png"), dir.join("comp.png")).unwrap();
+    assert!(run(&input)["regions"][0]["type"].is_null(), "replaced comp reused stale measurement");
+    // Unbound legacy records must be remeasured once, never guessed current.
+    let mut legacy = run(&input);
+    legacy.as_object_mut().unwrap().remove("compSha256");
+    legacy["regions"][0]["type"] = measured;
+    std::fs::write(dir.join("spec.json"), legacy.to_string()).unwrap();
+    assert!(run(&input)["regions"][0]["type"].is_null());
+    std::fs::remove_dir_all(dir).unwrap();
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-page screenshot, body scroller: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for pages that scroll inside the body instead of the
+       document: html and body are one viewport tall and the body scrolls
+       its overflow. The document itself is one viewport tall, so a
+       beyond-viewport capture paints nothing below the fold. The full-page
+       screenshot has to scroll the body and stitch (crates/browser/src/
+       fullpage.rs), and the pixel contrast pass has to scroll a candidate
+       into view before it reads its pixels (screenshot_contrast.rs).
+
+       Below the fold: white text on a near-white image background (the
+       visual pass samples the image with the text scrolled into view), white
+       text on pale vector artwork (only the pixel pass can answer it), and
+       faint copy the rule pass flags. The should-pass column carries dark
+       ink, or dark artwork, in the same places.
+
+       The static HTML engine reports the faint copy as well. The URL
+       behavior is pinned by crates/browser/tests/fullpage_screenshot.rs. */
+    html, body { height: 100%; overflow: hidden auto; }
+    body { position: relative; margin: 0; background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; width: 860px; padding: 24px 20px; }
+    .col { width: 420px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    .spacer { width: 420px; height: 2600px; background: repeating-linear-gradient(45deg, #dfe6ee 0 12px, #c3cfdc 12px 24px); }
+    .photo-panel {
+      width: 372px;
+      padding: 24px;
+      margin: 24px 0 0;
+      background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23f5f2ea'/></svg>") center / cover no-repeat;
+    }
+    .flag-white-on-photo { margin: 0; width: 372px; font-size: 16px; line-height: 1.6; color: #fdfdfd; }
+    .pass-ink-on-photo { margin: 0; width: 372px; font-size: 16px; line-height: 1.6; color: #262421; }
+    /* Text over vector artwork on a dark card. The background walk cannot
+       read SVG paint, so only the pixel pass can answer; the computed pass
+       reads the card and sees white on dark. */
+    .vector-panel {
+      position: relative;
+      isolation: isolate;
+      width: 420px;
+      height: 96px;
+      margin: 24px 0 0;
+      background: #1d2330 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='%231d2330'/><circle cx='8' cy='8' r='3' fill='%23262d3b'/></svg>") repeat;
+    }
+    .vector-panel svg { position: absolute; left: 0; top: 0; z-index: 0; display: block; width: 420px; height: 96px; }
+    .vector-panel p { position: relative; z-index: 1; margin: 0; padding: 24px; width: 372px; font-size: 16px; line-height: 1.6; color: #fdfdfd; }
+    .second-spacer { width: 420px; height: 1400px; background: repeating-linear-gradient(-45deg, #e6e0d2 0 12px, #cfc6b3 12px 24px); }
+    .foot { width: 420px; height: 120px; margin: 24px 0 0; }
+    .faint { margin: 0; width: 420px; font-size: 18px; color: #c4c4c4; }
+    .ink { margin: 0; width: 420px; font-size: 18px; color: #222222; }
+    .marker { width: 420px; height: 60px; margin: 12px 0 0; background: #0a7d3b; }
+    /* Fixed chrome paints where the viewport is. The stitched screenshot
+       shows it once, in the first viewport, not on every tile. */
+    /* The badge's parent is hidden and its child sets visibility back, as a
+       toggled chat panel does. */
+    .fixed-badge { position: fixed; right: 16px; bottom: 16px; z-index: 5; width: 120px; height: 48px; visibility: hidden; }
+    .fixed-badge span { display: block; width: 120px; height: 48px; background: #d4145a; visibility: visible; }
+    /* A tooltip that is absolutely positioned inside the scrolling body and
+       re-placed at the viewport's foot on every scroll, as a floating tip
+       tied to fixed chrome is. It paints once too. */
+    .anchored-tip { position: absolute; left: 16px; top: 736px; z-index: 5; width: 120px; height: 48px; background: #1b8fd4; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag: text below the fold of a body scroller</h2>
+      <div class="spacer"></div>
+      <div class="photo-panel">
+        <p class="flag-white-on-photo" id="flag-scroller-photo-copy">White text on a near-white photo, reached only by scrolling the body.</p>
+      </div>
+      <div class="vector-panel">
+        <svg viewBox="0 0 420 96" aria-hidden="true"><rect width="420" height="96" fill="#f5f2ea"/></svg>
+        <p id="flag-scroller-vector-copy">White text on pale vector artwork.</p>
+      </div>
+      <div class="second-spacer"></div>
+      <div class="foot">
+        <p class="faint" id="flag-scroller-foot-copy">Faint grey copy at the foot of the body scroller.</p>
+        <div class="marker"></div>
+      </div>
+    </div>
+    <div class="col">
+      <h2>Should pass: ink below the fold of a body scroller</h2>
+      <div class="spacer"></div>
+      <div class="photo-panel">
+        <p class="pass-ink-on-photo" id="pass-scroller-photo-copy">Dark ink on the same photo, reached only by scrolling the body.</p>
+      </div>
+      <div class="vector-panel">
+        <svg viewBox="0 0 420 96" aria-hidden="true"><rect width="420" height="96" fill="#141922"/></svg>
+        <p id="pass-scroller-vector-copy">White text on dark vector artwork.</p>
+      </div>
+      <div class="second-spacer"></div>
+      <div class="foot">
+        <p class="ink" id="pass-scroller-foot-copy">Dark ink at the foot of the body scroller.</p>
+        <div class="marker"></div>
+      </div>
+    </div>
+  </div>
+  <div class="fixed-badge" aria-hidden="true"><span></span></div>
+  <div class="anchored-tip" id="anchored-tip" aria-hidden="true"></div>
+  <script>
+    (() => {
+      const tip = document.getElementById('anchored-tip');
+      const place = () => {
+        tip.style.top = (document.body.scrollTop + window.innerHeight - 64) + 'px';
+      };
+      document.body.addEventListener('scroll', place, { passive: true });
+      place();
+    })();
+  </script>
+</body>
+</html>

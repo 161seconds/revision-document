@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { DEFAULT_SUITES, matchesSuiteTriggers } from './test-suites.mjs';
+
+const eventName = process.env.GITHUB_EVENT_NAME || '';
+const localNoChanges = !eventName && !process.env.CI_CHANGED_FILES;
+// The nightly schedule exists for exactly one thing: the full live-e2e
+// matrix. A schedule event has no diff base, so the change-detection path
+// degenerates to "everything changed"; without this guard that would flip on
+// every file-triggered opt-in suite, including the ones that bill LLM APIs
+// (skill-behavior, accept-cleanup, deepseek), every single night.
+const isSchedule = eventName === 'schedule';
+const changedFiles = localNoChanges || isSchedule ? [] : getChangedFiles();
+const forceDeterministic = localNoChanges || isSchedule || eventName === 'push' || eventName === 'workflow_dispatch';
+const forceOptIn = eventName === 'workflow_dispatch';
+// The Rust workspace (the engine) builds and tests when its own inputs move.
+// tests/oracle is included: the goldens are the engine's behavior gate and
+// the oracle job replays them against a source build.
+const RUST_PATTERNS = [
+  /^crates\//,
+  /^Cargo\.(toml|lock)$/,
+  /^rust-toolchain\.toml$/,
+  /^browser-bundle\//,
+  /^tests\/oracle\//,
+  /^\.github\/workflows\/ci\.yml$/,
+];
+const rustChanged = changedFiles.some((file) => RUST_PATTERNS.some((re) => re.test(file)));
+
+const plan = isSchedule
+  ? {
+    core: true,
+    oracle: true,
+    rust: true,
+    detector: true,
+    live: true,
+    framework: true,
+    cli_remote_e2e: false,
+    live_e2e: true,
+    new_work_e2e: false,
+    live_e2e_accept_cleanup: false,
+    skill_behavior: false,
+    live_svelte_adapter_deepseek: false,
+  }
+  : {
+    core: true,
+    oracle: forceDeterministic || matchesSuiteTriggers('oracle', changedFiles),
+    rust: forceDeterministic || rustChanged,
+    detector: forceDeterministic || matchesSuiteTriggers('detector', changedFiles),
+    live: forceDeterministic || matchesSuiteTriggers('live', changedFiles),
+    framework: forceDeterministic || matchesSuiteTriggers('framework', changedFiles),
+    cli_remote_e2e: forceOptIn,
+    live_e2e: forceOptIn || matchesSuiteTriggers('live-e2e', changedFiles),
+    new_work_e2e: forceOptIn || matchesSuiteTriggers('new-work-e2e', changedFiles),
+    live_e2e_accept_cleanup: forceOptIn || matchesSuiteTriggers('live-e2e-accept-cleanup', changedFiles),
+    skill_behavior: forceOptIn || matchesSuiteTriggers('skill-behavior', changedFiles),
+    live_svelte_adapter_deepseek: forceOptIn || matchesSuiteTriggers('live-svelte-adapter-deepseek', changedFiles),
+  };
+
+writeGithubOutputs(plan);
+printSummary(plan, changedFiles);
+
+function getChangedFiles() {
+  if (process.env.CI_CHANGED_FILES) {
+    return process.env.CI_CHANGED_FILES
+      .split(/\r?\n/)
+      .map((file) => file.trim())
+      .filter(Boolean);
+  }
+
+  const event = process.env.GITHUB_EVENT_NAME || '';
+  const sha = process.env.GITHUB_SHA || 'HEAD';
+
+  if (event === 'pull_request' && process.env.GITHUB_BASE_REF) {
+    const base = `origin/${process.env.GITHUB_BASE_REF}`;
+    return gitDiffNames(`${base}...${sha}`) || gitDiffNames(`${base}...HEAD`) || allChanged();
+  }
+
+  const before = process.env.GITHUB_EVENT_BEFORE;
+  if (before && !/^0+$/.test(before)) {
+    return gitDiffNames(`${before}..${sha}`) || allChanged();
+  }
+
+  return allChanged();
+}
+
+function allChanged() {
+  return git(['ls-files']).split(/\r?\n/).filter(Boolean);
+}
+
+function gitDiffNames(range) {
+  try {
+    return git(['diff', '--name-only', range]).split(/\r?\n/).filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+function git(args) {
+  return execFileSync('git', args, { encoding: 'utf-8' });
+}
+
+function writeGithubOutputs(outputs) {
+  const outputPath = process.env.GITHUB_OUTPUT;
+  if (!outputPath) return;
+  const lines = [];
+  for (const [key, value] of Object.entries(outputs)) {
+    lines.push(`${key}=${value ? 'true' : 'false'}`);
+  }
+  fs.appendFileSync(outputPath, lines.join('\n') + '\n');
+}
+
+function printSummary(outputs, files) {
+  const deterministic = DEFAULT_SUITES.map((name) => `${name}=${outputs[name]}`).join(' ');
+  console.log(`Event: ${eventName || 'local'}`);
+  console.log(`Changed files: ${files.length}`);
+  console.log(`Deterministic suites: ${deterministic} rust=${outputs.rust}`);
+  console.log(
+    [
+      `cli_remote_e2e=${outputs.cli_remote_e2e}`,
+      `live_e2e=${outputs.live_e2e}`,
+      `live_e2e_accept_cleanup=${outputs.live_e2e_accept_cleanup}`,
+      `skill_behavior=${outputs.skill_behavior}`,
+      `deepseek=${outputs.live_svelte_adapter_deepseek}`,
+    ].join(' '),
+  );
+}

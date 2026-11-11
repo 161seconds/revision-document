@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>text-occlusion, shapes that cover nothing</title>
+<!--
+  observations-42 rows 13 and 17. Pass: a padded inline button alone in its
+  line, whose fill hangs past the line onto nothing; a sticker over the empty
+  end of a wrapped paragraph's box, past its words; a scroller's paging arrow
+  over the card that peeks out under it, at the strip's right end as a
+  button and at its left end as a `role="button"` box; an inline fill with
+  no padding, which stays inside its line above the paragraph under it.
+  Flag: the padded inline fill leaking onto the paragraph below it, the
+  sticker over the words, a small box over a card in a strip, and a deck of
+  cards whose front card covers the text of the one behind it (named as the
+  layer that covers it). Browser engine only: the hit tests are the page's.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; }
+  .cols { display: grid; grid-template-columns: 620px 620px; }
+  .cols h2 { font-size: 14px; line-height: 20px; padding: 16px 30px 0; }
+  section { padding: 16px 30px; position: relative; }
+  .line { font-size: 16px; line-height: 25.6px; }
+  .cta { display: inline; background: #13151c; color: #ffffff; padding: 20px 30px; font-size: 14px; line-height: 22.4px; }
+  .tag { display: inline; background: #13151c; color: #ffffff; padding: 0 8px; font-size: 14px; line-height: 22.4px; }
+  .after { font-size: 16px; line-height: 24px; }
+
+  .micro-host { position: relative; width: 340px; }
+  .micro { width: 340px; font-size: 11px; line-height: 16px; }
+  .sticker { position: absolute; width: 120px; height: 120px; border-radius: 60px; background: #f8ff3c; top: -36px; }
+  .sticker.past { left: 220px; }
+  .sticker.over { left: 0; }
+
+  .strip-host { position: relative; width: 560px; height: 100px; background: #f5f5f5; }
+  .strip { display: flex; width: 560px; height: 100px; overflow-x: scroll; scrollbar-width: none; }
+  .strip .card { flex: none; width: 80px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .arrow { position: absolute; top: 0; right: 0; width: 80px; height: 100px; background: #f5f5f5; border: 0; }
+  .arrow.small { top: 30px; height: 40px; }
+  .arrow.prev { right: auto; left: 0; }
+
+  .deck { position: relative; height: 220px; width: 460px; }
+  .deck-card { position: absolute; width: 320px; height: 170px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; }
+  .deck-back { left: 0; top: 0; }
+  .deck-front { left: 80px; top: 40px; padding: 0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
+  .deck-row { border: 1px solid #e5e7eb; border-radius: 8px; height: 80px; padding: 8px; font-size: 12px; }
+  .deck-back .status { position: absolute; left: 4px; top: 70px; width: 200px; white-space: nowrap; font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="cols">
+    <div data-col="flag">
+      <h2>Should flag</h2>
+      <section>
+        <div class="deck">
+          <div class="deck-card deck-back"><span class="status flag-deck-status">Needs attention before close</span></div>
+          <div class="deck-card deck-front"><div class="deck-row">Trial balance</div></div>
+        </div>
+      </section>
+      <section>
+        <div class="micro-host"><p class="micro flag-under-sticker">After AutoPay<br>and $15/mo<br>switch discount</p><span class="sticker over"></span></div>
+      </section>
+      <section>
+        <div class="line flag-leak-host"><a class="cta flag-inline-leak" href="#">Read the report</a><p class="after">The paragraph under the button's line.</p></div>
+      </section>
+      <section>
+        <div class="strip-host">
+          <div class="strip"><span class="card">MEX</span><span class="card">ARG</span><span class="card">BRA</span><span class="card">URU</span><span class="card">CHI</span><span class="card">PER</span><span class="card"><span class="flag-small-box-card">ALB</span></span><span class="card">POR</span></div>
+          <button class="arrow small" aria-label="Next"></button>
+        </div>
+      </section>
+    </div>
+    <div data-col="pass">
+      <h2>Should pass</h2>
+      <section>
+        <div class="micro-host"><p class="micro pass-past-the-words">Before AutoPay<br>and $20/mo<br>loyalty discount</p><span class="sticker past"></span></div>
+      </section>
+      <section>
+        <div class="line"><a class="cta pass-inline-alone" href="#">Share your feedback</a></div>
+      </section>
+      <section>
+        <div class="strip-host">
+          <div class="strip"><span class="card">MEX</span><span class="card">ARG</span><span class="card">BRA</span><span class="card">URU</span><span class="card">CHI</span><span class="card">PER</span><span class="card"><span class="pass-arrow-card">ALB</span></span><span class="card">POR</span></div>
+          <button class="arrow" aria-label="Next"></button>
+        </div>
+      </section>
+      <section>
+        <div class="strip-host">
+          <div class="strip"><span class="card"><span class="pass-prev-arrow-card">MEX</span></span><span class="card">ARG</span><span class="card">BRA</span><span class="card">URU</span><span class="card">CHI</span><span class="card">PER</span><span class="card">ALB</span><span class="card">POR</span></div>
+          <div class="arrow prev" role="button" aria-label="Previous"></div>
+        </div>
+      </section>
+      <section>
+        <div class="line"><a class="tag pass-inline-no-overhang" href="#">Read the notes</a><p class="after">The paragraph under the highlighted link.</p></div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

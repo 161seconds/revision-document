@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Line length fixture (browser-only)</title>
+  <!--
+    line-length estimates characters per line, so it needs layout: the static
+    engine never reports it. The browser engine measures where the text is
+    (the union of its Range client rects and the line boxes it spans), not the
+    box the text sits in. Explicit pixel widths throughout.
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px 40px; color: #1a1a1a; background: #fff; }
+    h2 { font-size: 14px; line-height: 20px; margin: 32px 0 8px; color: #475569; }
+    .copy { font-size: 16px; line-height: 24px; margin: 0; }
+    .wide { width: 1000px; }
+    .cjk-wide { width: 1200px; font-size: 12px; line-height: 20px; }
+    .note { width: 1100px; font-size: 14px; line-height: 20px; margin: 0; }
+    .centred { width: 1100px; text-align: center; }
+    .cjk { width: 1000px; }
+    .narrow { width: 560px; }
+  </style>
+</head>
+<body>
+  <!-- FLAG: running prose across a wide column -->
+  <h2>Flag: a paragraph running across a 1,000px column</h2>
+  <p class="copy wide flag-wide">Reading copy set across a column this wide asks the eye to travel a long way back to the start of every line, and after a few lines of it a reader starts to lose their place. The measure is what a designer sets with a max-width on the text block, and this block sets none at all, so every line runs the full width of the column it sits in from one edge to the other.</p>
+
+  <h2>Flag: the same prose with its words wholly in inline children</h2>
+  <p class="copy wide flag-inline-prose"><b>Reading copy set across a column this wide</b> <i>asks the eye to travel a long way back to the start of every line, and after a few lines of it a reader starts to lose their place. The measure is what a designer sets with a max-width on the text block, and this block sets none at all, so every line runs the full width of the column.</i></p>
+
+  <h2>Flag: the wide column set on an airy line-height of 2.4</h2>
+  <!-- Two lines whose Range rect is one pitch plus one content area, short of
+       1.5 pitches: counted from the line-height, they are two lines. -->
+  <p class="copy wide flag-tall-leading" style="line-height: 2.4">Reading copy set across a column this wide and spaced this far apart still asks the eye to travel a long way back to the start of every line, and the extra air between the lines does nothing to shorten the trip across the column for the reader.</p>
+
+  <h2>Flag: CJK prose across a 1,200px column at 12px</h2>
+  <p class="copy cjk-wide flag-cjk-wide">戸建やマンションのお客さまは、NTTから送付される「開通のご案内」に記載されているご利用サービス名など、回線事業者からの案内を必ずご確認のうえ、お住まいのタイプに合ったコースをお選びください。ファミリータイプの場合は戸建コース、マンションタイプの場合はマンションコースをお選びいただけます。お申し込みの前に、ご利用中の回線の種類とプロバイダーの契約内容もあわせてご確認いただくと、切り替えの手続きがよりスムーズに進みます。</p>
+
+  <h2>Flag: prose set in a 24px span across a 1,200px column</h2>
+  <p class="copy flag-large-span" style="width: 1200px"><span style="font-size: 24px; line-height: 36px">Words set at a larger size in a span inside a smaller paragraph still run across a column this wide at about a hundred characters a line, and every line asks the eye to travel that far back to where the next one starts, which is more than the comfortable measure for reading.</span></p>
+
+  <h2>Flag: monospace prose across a 1,000px column</h2>
+  <p class="copy flag-mono" style="width: 1000px; font: 14px/22px ui-monospace, Menlo, Consolas, monospace">A monospace face advances six tenths of an em a glyph, so a column this wide holds about a hundred and nineteen characters a line at fourteen pixels, which is far past a comfortable measure. Reading notes set this way across a whole page lose the reader at every return.</p>
+
+  <!-- PASS: lines that never fill the box, CJK at its own width, a narrow measure -->
+  <h2>Pass: a one-line note in a 1,100px box</h2>
+  <p class="note pass-one-line">This is not a ticketing platform. Every event links directly to the official venue page.</p>
+
+  <h2>Pass: centred lines ended by breaks in a 1,100px box</h2>
+  <p class="copy centred pass-centred">Three short lines of a closing statement, set in the centre,<br>each of them ended by a break well before the box is full,<br>so the widest line is sixty characters and never more.</p>
+
+  <h2>Pass: CJK prose across a 1,000px column at 16px</h2>
+  <p class="copy cjk pass-cjk">戸建やマンションのお客さまは、NTTから送付される「開通のご案内」に記載されているご利用サービス名など、回線事業者からの案内を必ずご確認のうえ、お住まいのタイプに合ったコースをお選びください。ファミリータイプの場合は戸建コース、マンションタイプの場合はマンションコースをお選びいただけます。</p>
+
+  <h2>Pass: a 16px paragraph whose words sit in a 24px span</h2>
+  <!-- cvs.com's subheadline: at the span's size the lines hold about 68
+       characters, not the 102 the paragraph's own 16px would give. -->
+  <p class="copy pass-large-span" style="width: 813px"><span style="font-size: 24px; line-height: 36px">Create a good morning routine that helps students get ahead of the day, with a few simple habits that stick through the school year.</span></p>
+
+  <h2>Pass: monospace prose across a 680px column at 14px</h2>
+  <!-- avikmukherjee.com: a monospace face at 0.6em holds about 81 characters
+       a line here, where half an em counted 97. -->
+  <p class="copy pass-mono" style="width: 680px; font: 14px/22px ui-monospace, Menlo, Consolas, monospace">How do you keep state correct when an external system is asynchronous, authoritative, and capable of reversing a decision you already published?</p>
+
+  <h2>Pass: a 560px measure</h2>
+  <p class="copy narrow pass-narrow">A paragraph held to a comfortable measure wraps long before the eye has far to travel back, whatever its length, and this one keeps to about seventy characters a line from its first sentence to its last.</p>
+</body>
+</html>

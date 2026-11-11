@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>undersized-ui-text: labels with no reading job (taste call r5-p3)</title>
+<!--
+  Text under the UI text floor reports as advisory when it is a label with no
+  reading job: a pill or eyebrow of a few words beside a heading, a unit or
+  step marker beside a number, a tick or axis label inside a chart. Prices,
+  form help, navigation and controls keep failing. Every row below is under
+  the 11px floor, so every row reports; the column says at which severity.
+
+  The static engine has no layout, so the two rows that need rects (a label
+  drawn over a plot, labels lined up along an axis) fail there and are
+  advisory in the browser engine.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #1a1a1a; background: #fff; }
+  .col { display: inline-block; width: 400px; vertical-align: top; }
+  .row { margin: 0 0 20px; position: relative; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  h3 { font-size: 18px; margin: 0; }
+  .small { font-size: 10px; }
+  .tone { background-color: #e6f0ff; border-radius: 999px; padding: 2px 8px; }
+  .title { font-size: 19px; font-weight: 600; }
+  .num { font-size: 16px; font-weight: 700; }
+  .big { font-size: 32px; font-weight: 700; }
+  .step-name { font-size: 15px; }
+  .body { font-size: 16px; margin: 0; }
+  .trace { display: block; width: 300px; height: 120px; background: #eef2f7; }
+  .trace-cell { position: relative; width: 300px; height: 120px; }
+  .over { position: absolute; right: 8px; bottom: 6px; font-size: 9.5px; }
+  .week { position: relative; width: 300px; height: 150px; }
+  .hour { position: absolute; left: 0; font-size: 9.5px; }
+</style>
+</head>
+<body>
+
+<!-- ================= FAILS: read to act, or no evidence of a label ================= -->
+<div class="col" id="fails">
+  <h2>Fails</h2>
+
+  <!-- a short label with no heading beside it -->
+  <div class="row"><p class="small fail-lone">Also included</p><div><span>Multi-step sequences</span></div></div>
+
+  <!-- a kicker above a paragraph, not a heading -->
+  <div class="row"><div class="small fail-kicker">Noticed on its own</div><p class="body">Four tickets have gone two days with no reply from anyone.</p></div>
+
+  <!-- a label after its heading is a subtitle -->
+  <div class="row"><h3>Enterprise</h3><div class="small fail-subtitle">committed volume</div></div>
+
+  <!-- a note that closes one block is not the next heading's eyebrow -->
+  <div class="row"><p class="body">Selected work</p><span class="small fail-closing">Case studies</span><h3>The next block</h3></div>
+
+  <!-- a price beside a heading is read -->
+  <div class="row"><span class="small fail-price">From $9</span><h3>Premium</h3></div>
+
+  <!-- a discount and a date beside a heading are read -->
+  <div class="row"><span class="small fail-discount">Save 20%</span><h3>Annual</h3></div>
+  <div class="row"><span class="small fail-date">September 17</span><h3>Release notes</h3></div>
+
+  <!-- a pill that is a link is a control -->
+  <div class="row"><a href="/new" class="small fail-link">New</a><h3>Reports</h3></div>
+
+  <!-- navigation, a form hint and a table cell -->
+  <nav class="row" aria-label="sections"><span class="small fail-nav">Overview</span><h3>Docs</h3></nav>
+  <form class="row"><span class="small fail-hint">Optional</span><h3>Company</h3></form>
+  <table class="row"><tbody><tr><td class="small fail-cell">Days</td><td class="num">05</td></tr></tbody></table>
+
+  <!-- a stat's label says what the number means; it is not a unit -->
+  <div class="row"><strong class="big">10,000</strong><span class="small fail-stat">Customers</span></div>
+
+  <!-- a label under a figure set large says what the figure means -->
+  <div class="row"><div class="big">1-3</div><div class="small fail-figure">Truck fleets</div></div>
+
+  <!-- a count beside a label is read -->
+  <div class="row"><span class="small fail-count">12</span><span class="step-name">Inbox</span></div>
+
+  <!-- a step marker inside a button is part of a control -->
+  <div class="row"><button type="button"><span class="small fail-step-button">01</span><span class="step-name">Triage the queue</span></button></div>
+
+  <!-- a row of tags is not an axis -->
+  <div class="row"><span class="small fail-tags">How-To</span> <span class="small">Hot Take</span> <span class="small">Story</span></div>
+
+  <!-- a label beside a plot, not over it -->
+  <div class="row"><canvas class="trace" width="300" height="120"></canvas><span class="small fail-beside">Sampled hourly</span></div>
+</div>
+
+<!-- ================= ADVISORY: labels with no reading job ================= -->
+<div class="col" id="advisory">
+  <h2>Advisory</h2>
+
+  <!-- a pill beside a heading -->
+  <div class="row"><span class="small adv-pill">Popular</span><h3>Premium</h3></div>
+
+  <!-- an eyebrow above a wrapped heading -->
+  <div class="row"><span class="small adv-eyebrow">What's inside</span><div><h3>Formula and benefits</h3></div></div>
+
+  <!-- a pill beside an untagged title set at 19px -->
+  <div class="row"><span class="small adv-flag">Most popular</span><div class="title">Pro</div></div>
+
+  <!-- a pill after its heading, drawn as a pill -->
+  <div class="row"><h3>Team</h3><span class="small tone adv-after">Best value</span></div>
+
+  <!-- a pill in a wrapper that holds nothing else -->
+  <div class="row"><div><span class="small adv-wrapped">New</span></div><h3>Reports</h3></div>
+
+  <!-- a unit under the number it counts -->
+  <div class="row"><strong class="num">05</strong><span class="small adv-unit">Days</span></div>
+
+  <!-- a step marker beside the step it numbers -->
+  <div class="row"><span class="small adv-step">01</span><span class="step-name">Connect your inbox</span></div>
+
+  <!-- a tick inside a marked chart -->
+  <div class="row usage-chart"><div><span class="small adv-tick">Q3</span></div></div>
+
+  <!-- browser engine only: a label drawn over a sibling plot -->
+  <div class="row trace-cell"><canvas class="trace" width="300" height="120"></canvas><span class="over adv-over">60 Hz display</span></div>
+
+  <!-- browser engine only: labels lined up along an axis -->
+  <div class="row week">
+    <span class="hour" style="top: 0">7 am</span>
+    <span class="hour" style="top: 60px">Noon</span>
+    <span class="hour" style="top: 120px">6 pm</span>
+  </div>
+</div>
+
+</body>
+</html>

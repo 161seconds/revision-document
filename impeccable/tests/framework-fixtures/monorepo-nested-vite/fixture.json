@@ -1,0 +1,42 @@
+{
+  "name": "Repo root + nested Vite app in website/",
+  "config": {
+    "files": ["**/index.html"],
+    "insertBefore": "</body>",
+    "commentSyntax": "html"
+  },
+  "sourceFiles": [
+    "website/index.html",
+    "website/src/App.jsx",
+    "website/src/main.jsx",
+    "website/src/styles.css",
+    "website/vite.config.js"
+  ],
+  "generatedFiles": [],
+  "wrapCases": [
+    {
+      "name": "wraps hero title in the nested app's source JSX",
+      "args": { "classes": "hero-title", "tag": "h1" },
+      "expectedFile": "website/src/App.jsx"
+    }
+  ],
+  "runtime": {
+    "styling": "plain-css",
+    "appDir": "website",
+    "install": ["npm", "install", "--no-audit", "--no-fund", "--loglevel=error"],
+    "devCommand": ["npx", "vite", "--host", "127.0.0.1"],
+    "readyPattern": "Local:\\s+https?://[^:]+:(\\d+)",
+    "readyTimeoutMs": 120000,
+    "pickSelector": "h1.hero-title",
+    "probe": {
+      "expectLiveInit": true,
+      "expectConsoleClean": true
+    },
+    "steer": {
+      "message": "steer-e2e mark hero",
+      "expectSelector": "h1.hero-title[data-e2e-steer=\"e2e\"]",
+      "expectSourceContains": "data-e2e-steer=\"e2e\"",
+      "sourceFile": "src/App.jsx"
+    }
+  }
+}

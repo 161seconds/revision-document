@@ -1,0 +1,7 @@
+{
+  "stdout": "ANSWER: {\"optionId\":\"a\",\"steer\":\"\",\"comp\":\".impeccable/mocks/decision/a.png\",\"buildPath\":\"comp\",\"buildPathFlipped\":false}\nCHOSEN COMP: the decision comp at that path is compositional option one. On a comp-led build pass it to build-phase start as --decision-comp <that path>, and the comp round adds two variations beside it where it stands; on a code-led build it returns at the finish review as the critique reference. Never regenerate it from scratch.\nBUILD PATH: comp (the round’s recorded default). Comp-led: the chosen card’s comp is law; generate it before building when it does not exist yet, and the finish review audits the build against it.\nCOMP SIDECAR MISSING: .impeccable/mocks/decision/a.png, .impeccable/mocks/decision/b.png landed with no prompt sidecar. Every decision comp records the exact prompt that produced it in its sidecar, the image's full file name plus .json (a.png gets a.png.json), as {\"prompt\": \"...\"} (generate-image writes it itself, a harness image tool does not), and that prompt is written under the comp rules in <REPO>/skill/reference/visualize.md. Write each missing sidecar now, and read that file before the next comp prompt if you have not.\n",
+  "stderr": "",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Framed HTML demos read as mock context by structure (taste call r5-p26)</title>
+<!--
+  Text inside a framed HTML demo counts as mock context without a mock class:
+  a window with three title-bar dots, a framed box under a preview caption, a
+  device frame that is scaled or tilted in 3D, a frame turned in the page
+  plane and scaled down, or a frame under a wrapper that carries the scale. Inside one, undersized-ui-text,
+  tiny-text and low-contrast report as advisory. Sentence-length copy, a link
+  that goes somewhere, a button and the preview caption itself keep failing. Every row
+  reports; the column says at which severity.
+
+  Decision r8-t1-mockups-by-caption (narrow): a frame with no chrome at all
+  counts when a sample or illustrative caption sits on it (its first or last
+  child) or beside it. A sentence that works the word in, a label that is not
+  a sample claim, and a caption on a box not drawn as a frame say nothing.
+  Decision r8-t2-occlusion-stacked-mockup: text covered inside a recognised
+  mockup reports text-occlusion as advisory; covered page text keeps failing.
+
+  Round 14 (row 1 of observations-1010, decision r14-t1): a title bar after
+  an aria-hidden or absolute layer with no text, or at the box's padding
+  edge, still makes a window; an illustrative caption's label ends at a
+  comma, and "fictional" said alone or of data or a company names a mock;
+  a phone (a portrait frame with an h:mm clock in a status bar in its top
+  50px) is mock context unless it is the page's own shell (it holds the
+  page's h1). A phone shape with no clock, a portrait card with a lone time
+  on it, and captions that only open with the words say nothing.
+
+  Decision r14-t7: a dotted window whose text is mostly code (a pre, code,
+  kbd or samp, or a monospace face) is no mock; its code reports in full.
+
+  No class here says mock, preview, terminal or code: those are exempt from
+  two of the three rules already.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #1a1a1a; background: #fff; }
+  .col { display: inline-block; width: 440px; vertical-align: top; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  .shot { width: 400px; height: 150px; margin: 0 0 24px; background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); overflow: hidden; }
+  .plain { width: 400px; height: 150px; margin: 0 0 24px; background-color: #ffffff; }
+  .bar { width: 400px; height: 32px; background-color: #f1f3f5; }
+  .lights { display: inline-block; padding: 11px 12px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #e5484d; margin-right: 6px; vertical-align: top; }
+  .pane { padding: 12px; }
+  .small { font-size: 9px; display: block; }
+  .dim { font-size: 12px; color: #b4b4b4; display: block; }
+  .says { font-size: 9px; float: right; padding: 10px 12px; }
+  .stage { width: 400px; height: 150px; margin: 0 0 24px; }
+  .stage > .shot { margin: 0; }
+  .small-shot { width: 100px; height: 60px; background-color: #ffffff; border: 1px solid #d0d7de; border-radius: 12px; }
+  .turned { margin: 48px 0; }
+  .head { width: 400px; height: 56px; background-color: #f1f3f5; }
+  .title { font-size: 14px; display: inline-block; padding: 18px 12px; }
+  .pill { font-size: 12px; float: right; margin: 16px 12px; padding: 2px 8px; border: 1px solid #d0d7de; border-radius: 999px; }
+  .strip { font-size: 12px; margin: 0; padding: 8px 12px; border-top: 1px solid #d0d7de; }
+  .set { width: 400px; margin: 0 0 24px; }
+  .set .shot { margin: 0 0 8px; }
+  .note { font-size: 12px; margin: 0; }
+  .stack { position: relative; height: 100px; }
+  .covered { position: absolute; top: 20px; left: 20px; width: 200px; margin: 0; font-size: 16px; }
+  .cover { position: absolute; top: 10px; left: 10px; width: 240px; height: 50px; background-color: #1f7a3d; border-radius: 8px; z-index: 5; }
+  .glowing { position: relative; }
+  .glow { position: absolute; top: 0; left: 0; width: 400px; height: 150px; }
+  .padded { width: 352px; height: 102px; padding: 24px; }
+  .padded .bar { width: 352px; }
+  .phone { width: 220px; height: 440px; margin: 0 0 24px; border-radius: 32px; background-color: #111111; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); padding: 8px; box-sizing: border-box; }
+  .screen { width: 204px; height: 424px; padding-bottom: 16px; box-sizing: border-box; border-radius: 24px; background-color: #ffffff; overflow: hidden; }
+  .status { height: 24px; padding: 6px 16px 0; font-size: 10px; }
+  .phone h1 { font-size: 16px; margin: 8px 16px; }
+  .reel { position: relative; width: 200px; height: 356px; margin: 0 0 24px; padding: 12px; box-sizing: border-box; border-radius: 16px; background-color: #1b1b1f; }
+  .reel .dur { position: absolute; top: 12px; left: 12px; font-size: 12px; color: #fff; }
+  .reel .small { position: absolute; bottom: 16px; left: 14px; color: #fff; }
+  .talk { width: 200px; height: 360px; margin: 0 0 24px; border: 1px solid #ddd; border-radius: 18px; box-sizing: border-box; }
+  .talk .t { display: block; padding: 16px 16px 0; font-size: 14px; }
+  .talk .small { padding: 12px 16px; }
+  .app { width: 240px; height: 480px; margin: 0 0 24px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); background-color: #fff; overflow: hidden; }
+  .app .top { display: flex; justify-content: space-between; padding: 8px 16px; font-size: 13px; }
+  .app .small { padding: 12px 16px; }
+  .status { display: flex; justify-content: space-between; box-sizing: border-box; }
+  .battery { display: inline-block; width: 20px; height: 9px; border: 1px solid #111; border-radius: 3px; }
+  .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+</style>
+</head>
+<body>
+
+<!-- ================= FAILS ================= -->
+<div class="col" id="fails">
+  <h2>Fails</h2>
+
+  <!-- r8-t2: page text under an opaque box, outside any mockup. The two
+       covered rows lead their columns: the hit tests read the first
+       viewport. -->
+  <div class="plain">
+    <div class="stack"><p class="covered fail-covered-page">Needs attention</p><div class="cover" aria-hidden="true"></div></div>
+  </div>
+
+  <!-- two dots are not a title bar -->
+  <div class="shot">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane"><span class="small fail-two-dots">Ready</span></div>
+  </div>
+
+  <!-- pagination bullets are not window chrome -->
+  <div class="shot">
+    <div class="bar"><span class="lights pagination"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane"><span class="small fail-pager">Slide two</span></div>
+  </div>
+
+  <!-- in a window: sentence-length copy, a link that goes somewhere, a
+       button, and the caption that calls it a preview -->
+  <div class="shot">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span><span class="says fail-says-so">Simulated preview</span></div>
+    <div class="pane">
+      <span class="small fail-sentence">Your export is ready to download from the dashboard.</span>
+      <a href="/plans" class="small fail-goes">See plans</a>
+      <button type="button" class="small fail-tab">Any agent</button>
+    </div>
+  </div>
+
+  <!-- a preview caption over a box that is not drawn as a frame -->
+  <div class="plain">
+    <div class="bar"><span class="says">Live preview</span></div>
+    <div class="pane"><span class="small fail-unframed">Draft saved</span></div>
+  </div>
+
+  <!-- scaled, but not drawn as a frame -->
+  <div class="plain" style="transform: scale(0.7)"><div class="pane"><span class="small fail-bare-scale">8:24 AM</span></div></div>
+
+  <!-- a resting card at scale(0.9) is layout -->
+  <div class="shot" style="transform: scale(0.9)"><div class="pane"><span class="small fail-scale-90">Starter</span></div></div>
+
+  <!-- a tilted slide in a coverflow holds real content -->
+  <div class="shot swiper-slide" style="transform: rotateY(40deg)"><div class="pane"><span class="small fail-slide">Jane Doe</span></div></div>
+
+  <!-- a card flipped on its back is not tilted -->
+  <div class="shot" style="transform: rotateY(180deg)"><div class="pane"><span class="small fail-flipped">Back face</span></div></div>
+
+  <!-- a polaroid fanned at full size is content, and so is a frame turned
+       under 3 degrees -->
+  <div class="shot turned" style="transform: rotate(-6deg)"><div class="pane"><span class="small fail-polaroid">Best tool we bought</span></div></div>
+  <div class="shot" style="transform: rotate(2deg) scale(0.78)"><div class="pane"><span class="small fail-slight-turn">Nearly level</span></div></div>
+
+  <!-- a wrapper scaled down over a plain box, and over a frame too small to
+       be a window -->
+  <div class="stage" style="scale: 0.85"><div class="plain"><div class="pane"><span class="small fail-wrapper-plain">Synced</span></div></div></div>
+  <div class="stage" style="scale: 0.85"><div class="small-shot"><span class="small fail-wrapper-small">Paid</span></div></div>
+
+  <!-- r8-t1: a sentence that works the word in is not a caption
+       (suitemigration.com) -->
+  <div class="shot">
+    <div class="pane"><span class="small fail-prose-example">Mapping fields</span></div>
+    <p class="strip">An example project mid-migration. Each stage shows how far the data has travelled.</p>
+  </div>
+
+  <!-- a label with the word in it that is not a sample claim -->
+  <div class="shot">
+    <div class="head"><span class="title">Recorder</span><span class="pill">Sample rate</span></div>
+    <div class="pane"><span class="small fail-sample-rate">Mono channel</span></div>
+  </div>
+
+  <!-- a sample caption on a box that is not drawn as a frame -->
+  <div class="plain">
+    <div class="pane"><span class="small fail-sample-unframed">Not synced</span></div>
+    <p class="strip">Sample data</p>
+  </div>
+
+  <!-- round 14: a phone shape with no status clock, and a phone-shaped app
+       shell that is the page's own (it holds the h1) -->
+  <div class="phone"><div class="screen"><div class="status">Inbox</div><span class="small fail-phone-no-clock">Two drafts</span></div></div>
+  <div class="phone"><div class="screen"><div class="status"><span>9:41</span><i class="battery"></i></div><h1>Departures</h1><span class="small fail-phone-shell">Gate B12</span></div></div>
+
+  <!-- decision r14-t7: a dotted window that holds a code sample is reading
+       content, so its faint and small code reports in full -->
+  <div class="shot">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane mono">
+      <span class="small fail-config-small">timeout_ms = 3000</span>
+      <span class="dim fail-config-dim" style="color: #ababab">retries = 2  # attempts after the first</span>
+      <span class="small">backoff = "exponential"</span>
+    </div>
+  </div>
+
+  <!-- round 14 review: a time alone on a portrait card is no status bar: a
+       video's duration badge, a talk's start time, and an app column whose
+       header sets a title beside the time -->
+  <div class="reel"><span class="dur">0:45</span><span class="small fail-reel">12K views</span></div>
+  <div class="talk"><span class="t">09:30</span><span class="small fail-talk">Main hall</span></div>
+  <div class="app"><div class="top"><span>Central Station</span><span>14:05</span></div><span class="small fail-app-header">Platform 4</span></div>
+
+  <!-- round 14 review: a comma closes only an illustrative label, and
+       "fictional" said of anything but data or a company is a tagline -->
+  <div class="set">
+    <div class="shot"><div class="pane"><span class="small fail-caption-sample">Exports this month</span></div></div>
+    <p class="note">Sample data, exports and reports are kept for 30 days on every plan.</p>
+  </div>
+  <div class="set">
+    <div class="shot"><div class="pane"><span class="small fail-caption-fictional">Hardback, 384 pages</span></div></div>
+    <p class="note">Fictional worlds, real heartbreak.</p>
+  </div>
+
+  <!-- round 14: a long caption that only mentions the word is no label -->
+  <div class="set">
+    <div class="shot"><div class="pane"><span class="small fail-comma-prose">Quarter close</span></div></div>
+    <p class="note">Illustrations, photos and the case study by our own team in Berlin.</p>
+  </div>
+
+  <!-- in a captioned panel: a button, and the caption itself -->
+  <div class="shot">
+    <div class="pane"><button type="button" class="small fail-sample-button">Approve</button></div>
+    <span class="small fail-sample-says">Sample data</span>
+  </div>
+</div>
+
+<!-- ================= ADVISORY ================= -->
+<div class="col" id="advisory">
+  <h2>Advisory</h2>
+
+  <!-- r8-t2: text covered inside a mockup is covered on purpose -->
+  <div class="shot">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="stack"><p class="covered adv-covered">Needs attention</p><div class="cover" aria-hidden="true"></div></div>
+  </div>
+
+  <!-- a window with three title-bar dots: undersized-ui-text, tiny-text, low-contrast -->
+  <div class="shot">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane">
+      <span class="small adv-dots">847 results</span>
+      <span class="small adv-dots-run">VP Sales at Lattice since 2021</span>
+      <span class="dim adv-dots-dim">Draft saved</span>
+    </div>
+  </div>
+
+  <!-- a framed box under a preview caption -->
+  <div class="shot">
+    <div class="bar"><span class="says">Live preview</span></div>
+    <div class="pane"><span class="small adv-captioned">Draft saved</span></div>
+  </div>
+
+  <!-- a device frame scaled down -->
+  <div class="shot" style="transform: scale(0.7)"><div class="pane"><span class="small adv-scaled">8:24 AM</span></div></div>
+
+  <!-- a device frame tilted in 3D -->
+  <div class="shot" style="transform: perspective(900px) rotateX(8deg)"><div class="pane"><span class="small adv-tilted">coldtea.ai</span></div></div>
+
+  <!-- a frame turned in the page plane and scaled down (suitemigration.com's
+       hero deck) -->
+  <div class="shot turned" style="transform: rotate(-12deg) scale(0.78)"><div class="pane"><span class="small adv-turned">Metadata mapping</span></div></div>
+
+  <!-- a wrapper carries the scale, the frame under it carries no transform
+       (maritime.sh) -->
+  <div class="stage" style="scale: 0.85"><div class="shot"><div class="pane"><span class="small adv-wrapper">mail.google.com</span></div></div></div>
+
+  <!-- r8-t1: a panel with a sample caption on it: a pill in a header taller
+       than a title bar, and a footer note (getpaidlens.com) -->
+  <div class="shot">
+    <div class="head"><span class="title">Decision center</span><span class="pill">Illustrative</span></div>
+    <div class="pane"><span class="small adv-pill">Confidence</span></div>
+  </div>
+  <div class="shot">
+    <div class="pane"><span class="small adv-footnote">Recommendation</span></div>
+    <p class="strip">Illustrative example. Figures shown are not customer data.</p>
+  </div>
+
+  <!-- a sample caption beside the panel: it closes the set the panel sits
+       in (ascenix.co) -->
+  <div class="set">
+    <div class="tab"><div class="shot"><div class="pane"><span class="small adv-beside">Falls by time of day</span></div></div></div>
+    <p class="note">Sample data. No real resident information appears on this site.</p>
+  </div>
+
+  <!-- round 14 gap 1: the window opens with an aria-hidden absolute glow
+       (cursorhelper.vercel.app), and a bar at the padding edge
+       (mymanagment.net) -->
+  <div class="shot glowing">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane"><span class="small adv-glow">Context Router</span></div>
+  </div>
+  <div class="shot padded">
+    <div class="bar"><span class="lights"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+    <div class="pane"><span class="small adv-padded">mymanagment.net</span></div>
+  </div>
+
+  <!-- round 14 gap 3: a caption labelled up to a comma (usedefinite.com),
+       and a fictional one -->
+  <div class="set">
+    <div class="shot"><div class="pane"><span class="small adv-comma">Close in progress</span></div></div>
+    <p class="note">Illustrative values, shown only to explain each workflow.</p>
+  </div>
+  <div class="set">
+    <div class="shot"><div class="pane"><span class="small adv-fictional">Northwind Traders</span></div></div>
+    <p class="note">Fictional company</p>
+  </div>
+
+  <!-- round 14: a phone with a status clock in its top 50px (aproov.es) -->
+  <div class="phone"><div class="screen"><div class="status"><span>9:41</span><i class="battery"></i></div><span class="small adv-phone">Newsletter 4.2k</span></div></div>
+</div>
+
+</body>
+</html>

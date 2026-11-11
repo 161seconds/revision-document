@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Body text viewport edge — Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the body-text-viewport-edge rule. The rule fires
+       when a <p> or <li> with substantial text content has rect.left
+       within 16px of the viewport edge (or rect.right within 16px
+       of viewport.width) AND the element has no own background-color
+       AND is not inside <nav>/<header> AND is in normal flow. */
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .col h2 { font: 600 14px/1 system-ui; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .case-label { display: block; font-size: 12px; color: #64748b; margin: 16px 0 4px; font-style: italic; }
+    .container-good { max-width: 720px; margin: 0 auto; padding: 16px 32px; }
+    .container-tight { padding: 16px 32px; }
+    .full-bleed-section { background: #fef3c7; padding: 24px 16px; }
+    nav.site-nav { padding: 12px 24px; background: #f5f5f5; }
+    header.banner { padding: 12px 24px; background: #e5e7eb; }
+
+    /* Override the grid container's own padding so we can demonstrate
+       a paragraph that genuinely bleeds to the viewport edge inside
+       the flag column — the col itself shouldn't reset its padding. */
+    .flag-fullwidth-p { /* no container; placed directly in body via .escape */ }
+    .escape { position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; width: 100vw; padding: 0; }
+    .edge-list { margin: 0; padding: 0; list-style-position: inside; }
+    .edge-list li { margin: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════
+       FLAG CASES — body text bleeds to viewport edge (under 16px of the
+       side of a window wider than 480px).
+       These paragraphs are placed OUTSIDE the .grid container so
+       their bounding rect actually touches the viewport edges.
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="escape">
+    <p>Lucia opened this place in 1978. She cooked every night for fifty years, making the same dishes: spaghetti carbonara, eggplant parmigiana, veal saltimbocca, fresh lasagna. She did not change a single recipe in all that time. Her grandson Anthony runs the kitchen now, using the same recipes with the same care.</p>
+  </div>
+  <div class="escape">
+    <p>This second flush-to-edge paragraph confirms the rule fires on every body paragraph that touches the viewport, not just one. The rendered width should be the full viewport, with text starting essentially at x=0.</p>
+  </div>
+  <div class="escape">
+    <ul class="edge-list">
+      <li>This is a list item whose text content is substantially long enough to qualify as body content. It also runs flush against the viewport edge with no left padding.</li>
+    </ul>
+  </div>
+  <!-- The paragraph's words sit wholly in inline children: it is prose all
+       the same, measured on the paragraph. -->
+  <div class="escape">
+    <p class="flag-inline-prose"><b>An intro set in bold,</b> <i>and the rest of it set in italic, running to the left edge of the viewport with no gutter to hold it in.</i></p>
+  </div>
+  <!-- ════════════════════════════════════════════════════════════
+       PAGE OVERFLOW CASES — body text that runs past the window's edge.
+       That is not a missing gutter but a page wider than its window, and
+       the paragraphs report no gutter finding. They count toward one
+       page-level finding. Wrappers that hide overflow cut three of them,
+       but the page scrolls to the other two, so the message says it scrolls
+       sideways. The widest box that sets its width is the 3800px column row
+       further down, a div with no class or id and no identifying ancestor,
+       named by the start of its text.
+       ═══════════════════════════════════════════════════════════ -->
+  <!-- A wrapper that only hides sideways overflow (Tailwind's
+       overflow-x-hidden) cuts the words off at the screen edge. Nothing
+       scrolls them into view: the cut is the page's overflow, not a
+       carousel track. -->
+  <div class="escape" style="overflow-x: hidden">
+    <p class="past-cut-by-wrapper" style="width: 1400px; margin: 0 0 0 40px">A paragraph given a fixed width wider than the window, inside a page wrapper that hides whatever runs past the right edge, so the end of every line is cut off mid-word where the screen stops and no visitor can ever read it, however far they scroll.</p>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PASS CASES — body text with adequate container padding.
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="grid">
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <span class="case-label">paragraph in centered container with 32px padding</span>
+      <div class="container-good">
+        <p>This paragraph sits inside a max-width container that's centered and has 32px horizontal padding. It does not touch the viewport edges and should not trigger the rule.</p>
+      </div>
+
+      <span class="case-label">paragraph inside &lt;nav&gt; (excluded — nav can bleed)</span>
+      <nav class="site-nav">
+        <p>This nav legitimately bleeds to the edges as a full-width header strip; the rule excludes elements inside &lt;nav&gt; or &lt;header&gt; so this does not flag.</p>
+      </nav>
+
+      <span class="case-label">paragraph inside &lt;header&gt; (excluded — header can bleed)</span>
+      <header class="banner">
+        <p>Banner headers commonly bleed to viewport edges with their own internal layout. The rule excludes &lt;header&gt; descendants.</p>
+      </header>
+
+      <span class="case-label">paragraph inside full-bleed section with own background</span>
+      <section class="full-bleed-section">
+        <p>This paragraph sits in a full-bleed section that has its own background-color set (intentional design move). The rule excludes paragraphs whose element has its own background-color.</p>
+      </section>
+
+      <span class="case-label">short label / button-ish text (excluded — &lt; 40 chars)</span>
+      <p class="container-tight">Short label.</p>
+    </div>
+
+    <div class="col" data-col="flag-notes">
+      <h2>Notes</h2>
+      <p>The flag cases above (rendered outside this grid) demonstrate the failure. The pass cases here show acceptable patterns. The rule gates aggressively to avoid false positives: it only flags &lt;p&gt; and &lt;li&gt; with &gt;40 chars whose width spans more than 50% of the viewport AND whose rect.left or rect.right is within 16px of a viewport edge AND which are not inside nav/header AND which have no own background-color AND which are in normal flow (not position:fixed/absolute).</p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PASS CASES — full-width boxes whose text keeps off the edges.
+       The rule measures the glyphs, not the box.
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="escape">
+    <p class="pass-centred-text" style="text-align: center">A closing line set in the centre of a full-width paragraph box.</p>
+  </div>
+  <div class="escape">
+    <p class="pass-padded-text" style="padding: 0 40px">This paragraph's box spans the viewport, and its own 40px of side padding keeps every line of the text well away from both edges of the window.</p>
+  </div>
+  <!-- A slide in a carousel track the visitor swipes: the track scrolls on x
+       and has the slide to scroll to, so its clip at the viewport edge is not
+       a missing page gutter. A box that only hides overflow proves no track
+       (flag-cut-by-wrapper above). -->
+  <div class="escape">
+    <div style="overflow-x: auto; margin-left: 700px; width: 580px">
+      <p class="pass-clipped-slide" style="width: 700px; margin: 0">The second slide of a carousel whose track clips it at the right edge of the viewport while it waits to scroll into view.</p>
+    </div>
+  </div>
+
+  <!-- A column wholly past the window: a desktop layout at a phone width
+       parks it past the right edge of a page that scrolls sideways. No edge
+       of the window touches text that is not in it. -->
+  <div style="width: 3800px">
+    <p class="pass-past-viewport" style="width: 1100px; margin: 0 0 0 2600px">A column of a fixed-width desktop layout that starts past the right edge of the window, where nothing of it can touch the window's edge.</p>
+  </div>
+  <!-- The same column starting inside the window runs past its right edge. -->
+  <div style="width: 2400px">
+    <p class="past-runs-on" style="width: 1100px; margin: 0 0 0 1100px">A column of a fixed-width desktop layout that starts inside the window and runs on past its right edge, cutting every line where the screen stops.</p>
+  </div>
+  <!-- A ticker moves its track with transforms inside a box that only hides
+       overflow. The items the clip cuts are brought into view by the script,
+       not by a missing gutter. -->
+  <div class="escape" style="overflow: hidden">
+    <ul style="display: flex; margin: 0; padding: 0; list-style: none; transform: translateX(-300px)">
+      <li style="flex: 0 0 1000px; margin: 0"><p class="pass-ticker-first" style="margin: 0">The first ticker item, moved part way past the left edge of the window by the transform on its track, waiting to slide back into view.</p></li>
+      <li style="flex: 0 0 1000px; margin: 0"><p class="pass-ticker-second" style="margin: 0">The second ticker item, cut by the right edge of the window while the track carries it along, one of a row of items the script scrolls.</p></li>
+    </ul>
+  </div>
+  <!-- A row that never wraps, inside a page wrapper as wide as the window that
+       hides overflow: its second column starts 140px before the right edge
+       and the wrapper cuts the rest. However little of it shows, that is a
+       layout bug a visitor sees, not a copy a carousel parks, and it counts
+       toward the page's overflow. -->
+  <div class="escape" style="overflow: hidden">
+    <div style="display: flex; width: max-content">
+      <div style="flex: 0 0 1140px; height: 40px"></div>
+      <p class="past-shell-sliver" style="flex: 0 0 720px; margin: 0">The second column of a row that never wraps, starting just before the right edge of the window, so the page wrapper cuts off almost every word of it.</p>
+    </div>
+  </div>
+  <!-- A wrapper carried by a transform that holds one paragraph and no row of
+       items is no track, and the paragraph it lets the clip cut counts. -->
+  <div class="escape" style="overflow: hidden">
+    <div style="transform: translateX(0)">
+      <p class="past-transformed-wrapper" style="width: 1400px; margin: 0 0 0 40px">A paragraph given a fixed width wider than the window, inside a wrapper a reveal animation left transformed, so the end of every line is cut off mid-word at the right edge of the screen, and nothing a visitor does brings the words back into view however far they scroll.</p>
+    </div>
+  </div>
+
+  <!-- FLAG: a paragraph that runs past the right edge and keeps 8px on
+       the left. The overflow counts toward the page-level finding; the 8px
+       is still a gutter under the 16px floor, and reports as one. -->
+  <div style="width: 2000px">
+    <p class="flag-gutter-beside-overflow" style="width: 1400px; margin: 0 0 0 8px">A paragraph set 8px from the left edge of the window that runs on past its right edge, so it is both too close to one side and wider than the page. Its lines are long enough to fill the whole 1400px measure, which carries every one of them beyond the right side of the window, where a visitor has to scroll sideways to read the end of each line and back again to start the next.</p>
+  </div>
+
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

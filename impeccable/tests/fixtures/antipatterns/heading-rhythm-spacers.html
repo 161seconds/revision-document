@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>heading-rhythm, spacer wrappers and the end of the main content</title>
+<!--
+  Two misreads of the block around a heading, beside two crowded headings
+  that still flag (the rule reports only from two violations up).
+
+  Should pass: a bare div that wraps a 40px spacer block holds space open
+  exactly as the spacer does (kinghost.com.br). Read as a block, it put the
+  heading 0px under "the block above". With the wrapper read as space the
+  heading has 40px above and 24px below.
+
+  Should pass: a heading that ends the main content has nothing under it in
+  that landmark. The page footer below is another region, not the content
+  the heading introduces (improved-rotary-phone-two.vercel.app).
+
+  The static engine measures no gaps; heading-rhythm never reports there.
+-->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Georgia, serif; font-size: 16px; line-height: 24px; width: 800px; padding: 32px 20px; }
+  h2 { font-size: 28px; line-height: 36px; }
+  .blk { height: 48px; overflow: hidden; }
+  .spacer { height: 40px; }
+  .above-8 { margin-top: 8px; }
+  .below-24 { margin-bottom: 24px; }
+  .below-40 { margin-bottom: 40px; }
+  .case { margin-bottom: 64px; }
+  footer { margin-top: 40px; height: 60px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="case">
+    <p class="blk">The paragraph that closes the block above the first crowded heading.</p>
+    <h2 class="flag-crowded-one above-8 below-40">Crowded under the block above</h2>
+    <p class="blk">The content this heading introduces sits forty pixels away.</p>
+  </div>
+
+  <div class="case">
+    <p class="blk">The paragraph that closes the block above the second crowded heading.</p>
+    <h2 class="flag-crowded-two above-8 below-40">Crowded a second time</h2>
+    <p class="blk">The content this heading introduces sits forty pixels away.</p>
+  </div>
+
+  <p class="blk">The section above ends here, and a wrapped spacer follows it.</p>
+  <div><div class="spacer" aria-hidden="true"></div></div>
+  <section class="case">
+    <h2 class="pass-under-wrapped-spacer below-24">Forty pixels of spacer above</h2>
+    <p class="blk">Twenty-four pixels below: the heading is bound to its own content.</p>
+  </section>
+
+  <section>
+    <p class="blk">The last block of the main content, eight pixels above the closing heading.</p>
+    <h2 class="pass-ends-main above-8">Nothing follows in main</h2>
+  </section>
+</main>
+<footer><p>Copyright and links, forty pixels under the closing heading.</p></footer>
+</body>
+</html>

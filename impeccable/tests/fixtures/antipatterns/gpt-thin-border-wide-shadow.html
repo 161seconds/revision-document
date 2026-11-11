@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Hairline border with wide shadow fixture</title>
+  <!--
+    The rule reports a hairline border paired with a wide shadow only where a
+    row of comparable cards all wear it. The row is what the layout repeats:
+    the card's siblings, or the cards at the same depth inside sibling
+    wrappers of one kind (a link per grid cell, an article per panel), up to
+    two wrappers up. A lone popover, a pair of cards, a tight shadow, a shadow
+    drawn inside the box and boxes of very different sizes are the resting
+    styles of most design systems and stay silent. So does a nav bar whose
+    items each hold a flyout: the cards of a row have to show at rest, and a
+    flyout laid out ahead of its hover (transparent, hidden, or closed) is a
+    popover waiting for its trigger.
+
+    A file scan has no layout, so it reads a card of the row as a box with the
+    same tag whose declared pixel sizes are comparable; a browser scan compares
+    rects, and the size tolerance is exercised further by the browser tests in
+    crates/core/src/browser/element_checks.rs.
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; }
+    .col { padding: 16px; }
+    h2 { font-size: 20px; margin: 0 0 12px; }
+    h3 { font-size: 14px; margin: 0 0 8px; color: #52525b; }
+    .case { margin: 0 0 16px; }
+    .row { display: flex; gap: 16px; }
+    .card { width: 180px; height: 88px; padding: 12px; border-radius: 12px; box-sizing: border-box; font-size: 13px; }
+    .cell { display: block; color: inherit; text-decoration: none; }
+    .stack { display: flex; flex-direction: column; gap: 12px; }
+    .outcome { display: flex; gap: 16px; align-items: center; }
+    .copy { width: 160px; margin: 0; font-size: 13px; }
+    .panel { margin: 0; }
+    .nav { display: flex; gap: 24px; min-height: 120px; margin: 0; padding: 0; list-style: none; }
+    .nav-item { position: relative; }
+    .nav-trigger { font-size: 13px; color: inherit; }
+    .flyout { position: absolute; top: 24px; left: 0; opacity: 0; visibility: hidden; transform: translateY(8px); }
+    .nav-item:hover .flyout { opacity: 1; visibility: visible; transform: none; }
+    .dropdown { position: absolute; top: 24px; left: 0; display: none; }
+    .nav-item:focus-within .dropdown { display: block; }
+  </style>
+</head>
+<body>
+  <div class="cols">
+    <!-- FLAG column: the pair repeated across a row of cards -->
+    <section class="col flag">
+      <h2>Every card of the row wears both</h2>
+
+      <div class="case">
+        <h3>Three identical cards, 40px halo</h3>
+        <div class="row">
+          <div class="card flag-row-first" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">First card of the row.</div>
+          <div class="card flag-row-second" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Second card of the row.</div>
+          <div class="card flag-row-third" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Third card of the row.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>Cards that differ a little in size still read as one row</h3>
+        <div class="row">
+          <div class="card flag-tolerant-narrow" style="width: 168px; height: 80px; border: 1px solid #d4d4d8; box-shadow: 0 0 48px rgba(15,23,42,0.2)">Narrower tile.</div>
+          <div class="card flag-tolerant-middle" style="width: 180px; height: 88px; border: 1px solid #d4d4d8; box-shadow: 0 0 48px rgba(15,23,42,0.2)">Middle tile.</div>
+          <div class="card flag-tolerant-wide" style="width: 192px; height: 96px; border: 1px solid #d4d4d8; box-shadow: 0 0 48px rgba(15,23,42,0.2)">Wider tile.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A row lit from above, 8px offset under a 40px blur</h3>
+        <div class="row">
+          <div class="card flag-offset-first" style="border: 1px solid #e5e7eb; box-shadow: 0 8px 40px rgba(15,23,42,0.22)">First priced tier.</div>
+          <div class="card flag-offset-second" style="border: 1px solid #e5e7eb; box-shadow: 0 8px 40px rgba(15,23,42,0.22)">Second priced tier.</div>
+          <div class="card flag-offset-third" style="border: 1px solid #e5e7eb; box-shadow: 0 8px 40px rgba(15,23,42,0.22)">Third priced tier.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>Grid cells that each wrap their card in a link</h3>
+        <div class="row">
+          <a class="cell" href="#first"><div class="card flag-wrapped-first" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">First linked card.</div></a>
+          <a class="cell" href="#second"><div class="card flag-wrapped-second" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Second linked card.</div></a>
+          <a class="cell" href="#third"><div class="card flag-wrapped-third" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Third linked card.</div></a>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>One panel per article, two wrappers down, the middle one flipped</h3>
+        <div class="stack">
+          <article class="outcome">
+            <p class="copy">First outcome.</p>
+            <div class="viz"><figure class="card panel flag-panel-first" style="border: 1px solid rgba(15,126,126,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 30px 60px -12px rgba(8,33,25,0.6)"></figure></div>
+          </article>
+          <article class="outcome">
+            <div class="viz"><figure class="card panel flag-panel-second" style="border: 1px solid rgba(15,126,126,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 30px 60px -12px rgba(8,33,25,0.6)"></figure></div>
+            <p class="copy">Second outcome.</p>
+          </article>
+          <article class="outcome">
+            <p class="copy">Third outcome.</p>
+            <div class="viz"><figure class="card panel flag-panel-third" style="border: 1px solid rgba(15,126,126,0.35); box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 30px 60px -12px rgba(8,33,25,0.6)"></figure></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PASS column: the same pair where it is the conventional treatment -->
+    <section class="col pass">
+      <h2>The pair on its own is ordinary craft</h2>
+
+      <div class="case">
+        <h3>A single floating panel, edge and elevation both earned</h3>
+        <div class="card pass-lone-popover" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">
+          One popover over arbitrary content.
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>Two cards are not yet a row</h3>
+        <div class="row">
+          <div class="card pass-pair-left" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Left of a pair.</div>
+          <div class="card pass-pair-right" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Right of a pair.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A row with a tight shadow, not a wide one</h3>
+        <div class="row">
+          <div class="card pass-tight-first" style="border: 1px solid #e5e7eb; box-shadow: 0 0 24px rgba(15,23,42,0.18)">First pill.</div>
+          <div class="card pass-tight-second" style="border: 1px solid #e5e7eb; box-shadow: 0 0 24px rgba(15,23,42,0.18)">Second pill.</div>
+          <div class="card pass-tight-third" style="border: 1px solid #e5e7eb; box-shadow: 0 0 24px rgba(15,23,42,0.18)">Third pill.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A row whose negative spread pulls a 40px blur into a tight lift</h3>
+        <div class="row">
+          <div class="card pass-spread-first" style="border: 1px solid #e5e7eb; box-shadow: 0 18px 40px -26px rgba(0,0,0,0.95)">First lifted card.</div>
+          <div class="card pass-spread-second" style="border: 1px solid #e5e7eb; box-shadow: 0 18px 40px -26px rgba(0,0,0,0.95)">Second lifted card.</div>
+          <div class="card pass-spread-third" style="border: 1px solid #e5e7eb; box-shadow: 0 18px 40px -26px rgba(0,0,0,0.95)">Third lifted card.</div>
+        </div>
+      </div>
+
+      <!-- Its own band, so a file scan, which cannot read the surface and
+           reports this row, does not count its cards as mates of the pair
+           above. -->
+      <section class="dark-band" style="background: #0a0a0b; padding: 16px">
+        <div class="case">
+          <h3 style="color: #a1a1aa">A black halo on a near-black surface, around cards rimmed in their own fill</h3>
+          <div class="row">
+            <div class="card pass-dark-first" style="background: #18181b; color: #e4e4e7; border: 1px solid #1c1c1f; box-shadow: 0 0 40px rgba(0,0,0,0.18)">First dark card.</div>
+            <div class="card pass-dark-second" style="background: #18181b; color: #e4e4e7; border: 1px solid #1c1c1f; box-shadow: 0 0 40px rgba(0,0,0,0.18)">Second dark card.</div>
+            <div class="card pass-dark-third" style="background: #18181b; color: #e4e4e7; border: 1px solid #1c1c1f; box-shadow: 0 0 40px rgba(0,0,0,0.18)">Third dark card.</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="case">
+        <h3>A row whose wide shadow is drawn inside the box</h3>
+        <div class="row">
+          <div class="card pass-inset-first" style="border: 1px solid #e5e7eb; box-shadow: inset 0 0 40px rgba(15,23,42,0.18)">First well.</div>
+          <div class="card pass-inset-second" style="border: 1px solid #e5e7eb; box-shadow: inset 0 0 40px rgba(15,23,42,0.18)">Second well.</div>
+          <div class="card pass-inset-third" style="border: 1px solid #e5e7eb; box-shadow: inset 0 0 40px rgba(15,23,42,0.18)">Third well.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A row whose hairline is too faint to read as an edge</h3>
+        <div class="row">
+          <div class="card pass-faint-first" style="border: 1px solid rgba(148,163,184,0.16); box-shadow: 0 0 40px rgba(15,23,42,0.18)">First quiet card.</div>
+          <div class="card pass-faint-second" style="border: 1px solid rgba(148,163,184,0.16); box-shadow: 0 0 40px rgba(15,23,42,0.18)">Second quiet card.</div>
+          <div class="card pass-faint-third" style="border: 1px solid rgba(148,163,184,0.16); box-shadow: 0 0 40px rgba(15,23,42,0.18)">Third quiet card.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A row with a deliberate heavy edge, not a hairline</h3>
+        <div class="row">
+          <div class="card pass-thick-first" style="border: 3px solid #18181b; box-shadow: 0 0 40px rgba(15,23,42,0.18)">First framed card.</div>
+          <div class="card pass-thick-second" style="border: 3px solid #18181b; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Second framed card.</div>
+          <div class="card pass-thick-third" style="border: 3px solid #18181b; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Third framed card.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>Three boxes of one tag and treatment, sized nothing alike</h3>
+        <div class="row">
+          <div class="card pass-mismatch-rail" style="width: 72px; height: 150px; border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Rail.</div>
+          <div class="card pass-mismatch-banner" style="width: 280px; height: 56px; border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Banner panel.</div>
+          <div class="card pass-mismatch-chip" style="width: 140px; height: 32px; border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Chip.</div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>One panel in a stack of articles that hold no panel</h3>
+        <div class="stack">
+          <article class="outcome">
+            <p class="copy">The one outcome with a chart.</p>
+            <div class="viz"><figure class="card panel pass-lone-panel" style="border: 1px solid rgba(15,126,126,0.35); box-shadow: 0 30px 60px -40px rgba(8,33,25,0.6)"></figure></div>
+          </article>
+          <article class="outcome">
+            <p class="copy">An outcome told in words.</p>
+            <div class="viz"><figure class="card panel pass-plain-panel-second"></figure></div>
+          </article>
+          <article class="outcome">
+            <p class="copy">Another outcome told in words.</p>
+            <div class="viz"><figure class="card panel pass-plain-panel-third"></figure></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>A flyout per nav item, laid out but hidden until hovered</h3>
+        <ul class="nav">
+          <li class="nav-item"><a class="nav-trigger" href="#products">Products</a><div class="card flyout pass-flyout-first" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Products menu.</div></li>
+          <li class="nav-item"><a class="nav-trigger" href="#solutions">Solutions</a><div class="card flyout pass-flyout-second" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Solutions menu.</div></li>
+          <li class="nav-item"><a class="nav-trigger" href="#resources">Resources</a><div class="card flyout pass-flyout-third" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Resources menu.</div></li>
+        </ul>
+      </div>
+
+      <div class="case">
+        <h3>A dropdown per nav item, closed with display: none</h3>
+        <ul class="nav">
+          <li class="nav-item"><a class="nav-trigger" href="#plans">Plans</a><div class="card dropdown pass-dropdown-first" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Plans menu.</div></li>
+          <li class="nav-item"><a class="nav-trigger" href="#teams">Teams</a><div class="card dropdown pass-dropdown-second" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Teams menu.</div></li>
+          <li class="nav-item"><a class="nav-trigger" href="#docs">Docs</a><div class="card dropdown pass-dropdown-third" style="border: 1px solid #e5e7eb; box-shadow: 0 0 40px rgba(15,23,42,0.18)">Docs menu.</div></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Text overflow fixture (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    .cols { display: grid; grid-template-columns: 320px 1fr; gap: 24px; padding: 24px; align-items: start; }
+    .col { padding: 16px; }
+    /* The flag column hides its overflow at 320px, so every spill in it is
+       cut off by a clipping ancestor: text-overflow reports a spill only
+       when a clip cuts it, it runs into another box, or it reaches the
+       viewport edge. */
+    .col.flag { overflow: hidden; }
+    .row { padding: 24px; }
+    .stats { display: grid; grid-template-columns: 92px 92px; column-gap: 8px; width: 192px; }
+    .stat { font-size: 36px; line-height: 40px; white-space: nowrap; }
+    .free { width: 120px; }
+    .headline { width: 300px; margin: 0; font-size: 48px; line-height: 52px; font-weight: 400; color: #111; }
+    .box { width: 160px; border: 1px solid #ddd; margin: 0 0 24px; padding: 8px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      white-space: nowrap;
+      border-width: 0;
+    }
+    .sr-only-clip-path { clip-path: inset(50%); }
+    .sr-only-legacy-clip { clip: rect(0, 0, 0, 0); }
+    .sr-only-tiny-hidden { clip: auto; }
+    .sr-only-clipped-wide {
+      position: absolute;
+      width: 160px;
+      height: 20px;
+      overflow: visible;
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+    .hidden-slide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .hidden-slide .pass-hidden-slide-overflow {
+      display: block;
+      width: 120px;
+      white-space: nowrap;
+    }
+    .ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .truncate { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .flag-pseudo-suffix::after { content: " and a long generated suffix that runs past the box"; }
+    .icon-link { display: block; width: 30px; height: 30px; overflow: hidden; font-size: 24px; line-height: 24px; white-space: nowrap; color: #036; }
+    .icon-link::before { content: "\2605"; display: block; width: 30px; height: 30px; margin-bottom: 4px; line-height: 30px; text-align: center; }
+.icon-link.crosses::before { height: 20px; margin-bottom: 0; line-height: 20px; }
+    /* A filled button whose content box is 13 letters wide with 2 letters
+       of padding a side, its label set in 12px monospace on one line. The
+       box is sized in `ch`, the face's own advance, so the label lands the
+       same whatever monospace face the system has. */
+    .button-label { display: inline-block; box-sizing: content-box; width: 13ch; padding: 8px 2ch; background: #1f6f2a; color: #fff; font: 12px/16px monospace; white-space: nowrap; }
+    /* A terminal window and a fixed-height excerpt that clip their code on
+       purpose, set where an unclipped line would run off the window. */
+    .term { width: 460px; margin-left: calc(100vw - 520px); border-radius: 12px; background: #0b0b0f; overflow: hidden; }
+    .term pre { margin: 0; padding: 16px; color: #9f9; font: 13px/1.6 monospace; }
+    .excerpt { width: 340px; height: 80px; margin-left: calc(100vw - 400px); overflow: hidden; background: #f6f8fa; border: 1px solid #ddd; }
+    .excerpt pre { margin: 0; padding: 12px; color: #333; font: 13px/1.6 monospace; }
+    /* A filled, padded pre in a terminal window that clips it. Its 16
+       letters overrun the 13-letter content box by 3 letters and end 1
+       letter past the pre's own edge, under the window's clip. Measured on
+       the padding box (scrollWidth) the spill is under 16px. */
+    .term-tight { display: inline-block; overflow: hidden; background: #000; }
+    .term-tight pre, .pre-painted { box-sizing: content-box; width: 13ch; margin: 0; padding: 8px 2ch; background: #1e1e2e; color: #9f9; font: 12px/16px monospace; white-space: pre; }
+    .chip { display: inline-block; width: 120px; border: 1px solid #ccc; border-radius: 999px; padding: 4px 10px; white-space: nowrap; font: 14px sans-serif; }
+    .hl { display: inline-block; background: #ffeb3b; padding: 0 4px; font-size: 44px; width: 200px; white-space: nowrap; }
+    .typing { width: 360px; overflow: hidden; white-space: nowrap; font-size: 20px; line-height: 24px; }
+    .typing.opening { animation: typing-open 600s linear 1; }
+    @keyframes typing-open { from { width: 120px; } to { width: 360px; } }
+  </style>
+</head>
+<body>
+  <div class="cols">
+    <!-- FLAG column: content forced wider than its box with no scroll
+         affordance, cut off by the column's clip -->
+    <section class="col flag">
+      <div class="box flag-nowrap" style="white-space: nowrap">A single long line of running text that refuses to wrap and clearly spills past its fixed-width box.</div>
+      <div class="box flag-longword">Supercalifragilisticexpialidocioussupercalifragilisticexpialidocious</div>
+      <!-- Inline owner: the span has no client geometry, so only the rect-vs-container
+           path can catch it. The parent box has no direct text and must not flag. -->
+      <div class="box"><span class="flag-inline-spill" style="white-space: nowrap">IOC-QARTOD-ARGO-PROFILES-SPILLING-WELL-PAST-THE-CELL</span></div>
+      <!-- Clipped with no marker: the line is cut off mid-word, a real spill. -->
+      <div class="box flag-hidden-no-marker" style="overflow: hidden; white-space: nowrap; text-overflow: clip">A clipped line with no ellipsis that simply cuts the words off at the edge.</div>
+      <!-- Truncation classes on an inline span: overflow does not apply to an
+           inline box, so nothing clips or ellipsizes and the line spills. -->
+      <div class="box"><span class="flag-inline-truncate truncate">Order #4821 shipped to the Rotterdam warehouse on Tuesday</span></div>
+      <!-- A page wrapper that hides x overflow (Tailwind overflow-x-hidden)
+           computes the shorthand to `hidden auto`: it scrolls only on y and
+           exempts nothing on x. -->
+      <div style="overflow-x: hidden"><div class="box flag-in-x-hidden-wrapper" style="white-space: nowrap">A long unwrapped line inside a page wrapper that only hides sideways overflow.</div></div>
+      <!-- Generated content past the box. No text rect covers a pseudo-element,
+           so the engine cannot measure it and the spill stands. -->
+      <div class="box flag-pseudo-suffix" style="white-space: nowrap">Tag</div>
+      <!-- The same icon link with its label starting 10px inside the 30px
+           clip: the top of the word shows, and the clip cuts it on x. -->
+      <a class="flag-icon-label-crosses-clip icon-link crosses" href="#">Youtube</a>
+      <!-- The same icon link at `overflow: clip` with an 8px clip margin:
+           the label 4px below the box paints inside the margin, and its
+           spill shows. -->
+      <a class="flag-icon-label-in-clip-margin icon-link" href="#" style="overflow: clip; overflow-clip-margin: 8px">Youtube</a>
+      <!-- The typing heading below at rest in a box too narrow for it. -->
+      <div class="typing flag-typing-at-rest" style="width: 120px">A heading that types itself out</div>
+    </section>
+
+    <!-- PASS column: real scroll regions, code that scrolls or runs into free space, wrapping text, scroll ancestors -->
+    <section class="col pass">
+      <div class="box pass-scroll" style="overflow-x: auto; white-space: nowrap">The very same unwrapping line, but inside a genuine horizontal scroll region meant to scroll.</div>
+      <!-- Preformatted code in a box that draws no edge runs past it into
+           free space, where nothing cuts or covers it. Code that runs on to
+           the viewport edge, under a clip or out of a drawn box is a spill
+           like any other text (flag-pre-unwrapped). -->
+      <pre class="pass-pre" style="overflow: visible; width: 160px">a-preformatted-line-past-its-box</pre>
+      <pre class="box pass-pre-scroll" style="overflow-x: auto">a-very-long-preformatted-code-line-that-intentionally-extends-beyond-the-box-width</pre>
+      <div class="box pass-wrap">Ordinary wrapping paragraph text that stays comfortably within its container.</div>
+      <div class="box" style="overflow-x: auto"><span class="pass-inside-scroll" style="white-space: nowrap; display: inline-block">A long line living inside a scroll ancestor, which must not be flagged.</span></div>
+      <span class="pass-sr-only-clip-path sr-only sr-only-clip-path">A screen-reader-only label with long text that should never draw a visible overflow finding.</span>
+      <span class="pass-sr-only-legacy sr-only sr-only-legacy-clip">A legacy clipped screen-reader-only label with long text that should not be flagged.</span>
+      <span class="pass-sr-only-tiny-hidden sr-only sr-only-tiny-hidden">A tiny overflow-hidden screen-reader-only label without a clip declaration should not be flagged.</span>
+      <span class="pass-sr-only-clipped-wide sr-only-clipped-wide">A fully clipped label with a normal-sized box and overflowing text should not be flagged.</span>
+      <div class="hidden-slide">
+        <span class="pass-hidden-slide-overflow">An inactive carousel slide can contain long text that overflows while hidden.</span>
+      </div>
+      <div class="box"><span class="pass-inline-fits" style="white-space: nowrap">Fits fine</span></div>
+      <div class="box"><span class="pass-inline-wraps">An ordinary inline span with wrapping text that stays inside its container across several lines.</span></div>
+      <!-- Truncation the author asked for: an ellipsis, a line clamp, and an
+           inline run inside an ellipsizing row all end at their marker. -->
+      <div class="box pass-ellipsis ellipsis">A byline long enough to end in an ellipsis inside its narrow box.</div>
+      <div class="box pass-clamp clamp">Supercalifragilisticexpialidocioussupercalifragilisticexpialidocious in a two line clamp.</div>
+      <div class="box ellipsis"><span class="pass-inline-in-ellipsis">An inline headline run that the ellipsizing row around it truncates.</span></div>
+      <!-- scrollWidth counts content that paints nothing past the box: an
+           empty ripple layer, text pushed out of a clipping box to show a
+           sprite, a min-width reserve kept for a rotating word. -->
+      <a class="box pass-ripple" href="#" style="display: inline-flex; position: relative; overflow: hidden; width: 120px">Shop now<span style="position: absolute; display: block; width: 340px; height: 340px; left: -110px; top: -150px"></span></a>
+      <a class="box pass-image-replacement" href="#" style="display: block; overflow: hidden; text-indent: -9999px; height: 20px">Internet access plans</a>
+      <div class="box pass-reserve">Durable streams on <span style="display: inline-block; min-width: 220px">storage</span></div>
+      <!-- Icon-font image replacement on the y axis (valero.com's social
+           links): a block ::before glyph fills the 30px clip and the label
+           lays out below it, so none of its width is painted. -->
+      <a class="icon-link pass-icon-label-below-clip" href="#">Youtube</a>
+      <!-- A heading that types itself out: its box opens from 120px to 360px
+           over ten minutes, once. Caught part way, the words spill out of a
+           box that ends wide enough to hold them. -->
+      <div class="typing opening pass-typing-opening">A heading that types itself out</div>
+      <!-- scrollWidth counts absolutely positioned descendants too. A hover
+           tooltip parked above a platform name at opacity 0 (clipto.com) and
+           a badge pinned past a tab's corner (coachcall.ai's "Popular") are
+           placed there by their author, beside the next item; neither is the
+           element's own text running out of its box. -->
+      <div class="row pass-positioned-row" style="padding: 48px 0 0">
+        <span class="pass-hover-tooltip" style="display: inline-block; position: relative">iOS<span style="position: absolute; left: 0; bottom: 100%; width: 184px; opacity: 0; background: #fff">Scan to download the app</span></span>
+        <span>Android</span>
+      </div>
+      <div class="row" style="display: flex; column-gap: 32px; padding: 12px 0 0">
+        <button class="pass-corner-badge" style="position: relative; border: 0; background: none; font: inherit; padding: 12px 0 8px">ACCOUNTABILITY<span style="position: absolute; top: -4px; right: -32px; padding: 0 6px; font-size: 12px; background: #dbeafe; border-radius: 999px">Popular</span></button>
+        <button style="border: 0; background: none; font: inherit; padding: 12px 0 8px">Pricing</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- FLAG: the spill runs into another box. Two stats in 92px cells with
+       an 8px gap (v0-optimus-delta.vercel.app at 390px): the first runs
+       past its cell into the second, and the two read as one number. -->
+  <div class="row">
+    <div class="stats">
+      <div class="stat flag-stat-collides">99.99%</div>
+      <div class="stat pass-stat-neighbor">&lt;9ms</div>
+    </div>
+  </div>
+
+  <!-- FLAG: the spill reaches the viewport edge. A status line in a 120px
+       box set 160px from the right edge of the window runs off the side of
+       it (a report panel on a phone, soc-workflows-ai-cyb-tstb.bolt.host). -->
+  <div class="row" style="padding-left: 0; padding-right: 0">
+    <div style="margin-left: calc(100vw - 160px); width: 120px">
+      <div class="flag-viewport-edge" style="white-space: nowrap">A status line that never wraps and runs off the side of the window</div>
+    </div>
+  </div>
+
+  <!-- FLAG: an unwrapped code sample that does not scroll runs off the side
+       of the window (w3c.github.io's samples on a phone). -->
+  <div class="row" style="padding-left: 0; padding-right: 0">
+    <div style="margin-left: calc(100vw - 160px); width: 120px">
+      <pre class="flag-pre-unwrapped" style="margin: 0">npx impeccable detect --json --no-config ./src/components</pre>
+    </div>
+  </div>
+
+  <!-- PASS: code clipped on purpose. A terminal window in a hero and an
+       excerpt cut at a fixed height end the line where their author meant;
+       unclipped, both lines would run off the window. -->
+  <div class="row" style="padding-left: 0; padding-right: 0">
+    <div class="term"><pre><code class="pass-terminal-code">$ acme deploy --project my-really-long-project-identifier --region us-east-1</code></pre></div>
+  </div>
+  <div class="row" style="padding-left: 0; padding-right: 0">
+    <div class="excerpt"><pre><code class="pass-excerpt-code">export async function handler(request: Request, env: Env, ctx: ExecutionContext): Promise&lt;Response&gt; {</code></pre></div>
+  </div>
+
+  <!-- PASS: a filled, padded pre whose text ends just past its own edge,
+       inside a terminal window that clips it there. A clip around code is
+       the author's. -->
+  <div class="row">
+    <div class="term-tight"><pre class="pass-padded-pre-clipped">$ acme deploy -y</pre></div>
+  </div>
+  <!-- PASS: the same filled pre with nothing clipping it, its last letter
+       in free space. Code is reported only where it meets the viewport
+       edge or another box. -->
+  <div class="row">
+    <pre class="pre-painted pass-padded-pre-free-space">$ acme deploy -y</pre>
+  </div>
+
+  <!-- PASS: code that spills into free space beside a clipped column. The
+       left column cuts its long line at 200px, so the part of that line
+       laid out under the code's spill is never painted: nothing is there
+       for the code to run into. -->
+  <div class="row" style="display: grid; grid-template-columns: 200px 400px; column-gap: 24px; align-items: start">
+    <div class="ellipsis" style="width: 200px; font: 13px/20px monospace">a-clipped-line-that-lays-out-far-past-its-column-and-under-the-code</div>
+    <pre class="pass-pre-beside-clipped-text" style="width: 120px; margin: 0; font: 13px/20px monospace">a-line-into-free-space-here</pre>
+  </div>
+
+  <!-- PASS (r4-p19): a spill the scroll width measures into free space,
+       out of a box that draws its edge. A bordered nowrap chip and a
+       highlighter heading stay quiet, as unpainted text in free space does. -->
+  <div class="row">
+    <span class="chip pass-chip-free-space">Category: Developer productivity tools</span>
+  </div>
+  <div class="row">
+    <span class="hl pass-highlighter-free-space">Highlighted words here</span>
+  </div>
+
+  <!-- FLAG: the spill runs under a positioned box with no text of its own.
+       An image and a filled box laid over the end of the line cover it. -->
+  <div class="row">
+    <div style="position: relative; width: 120px; height: 24px">
+      <span class="flag-under-positioned-image" style="display: block; white-space: nowrap; line-height: 24px">Contact sales at sales@example.com</span>
+      <img alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="position: absolute; left: 180px; top: 0; width: 60px; height: 24px">
+    </div>
+  </div>
+  <div class="row">
+    <div style="position: relative; width: 120px; height: 24px">
+      <span class="flag-under-positioned-box" style="display: block; white-space: nowrap; line-height: 24px">Contact sales at sales@example.com</span>
+      <div style="position: absolute; left: 180px; top: 0; width: 60px; height: 24px; background: #036"></div>
+    </div>
+  </div>
+
+  <!-- FLAG: the label runs out of the button it paints. 16 letters in a
+       13-letter content box use up the 2-letter right padding and end 1
+       letter (about 7px) past the green edge, onto the page. Measured on
+       the padding box (scrollWidth) the spill is under 16px. -->
+  <div class="row">
+    <a class="button-label flag-label-past-button" href="#">LEARN-MORE-ABOUT</a>
+  </div>
+
+  <!-- PASS: the same button with 14 letters: the label eats into the
+       padding and ends inside the button. -->
+  <div class="row">
+    <a class="button-label pass-label-in-padding" href="#">LEARN-MORE-NOW</a>
+  </div>
+
+  <!-- PASS: a positioned hairline with no text (a 1px grid line) over the
+       spill is decoration the text reads over, not a box it runs into. -->
+  <div class="row">
+    <div style="position: relative; width: 120px; height: 24px">
+      <span class="pass-under-hairline" style="display: block; white-space: nowrap; line-height: 24px">Contact sales at sales@example.com</span>
+      <div style="position: absolute; left: 180px; top: -24px; width: 1px; height: 72px; background: rgba(0, 0, 0, 0.1)"></div>
+    </div>
+  </div>
+
+  <!-- PASS: text that runs past its own box into free space, where nothing
+       is cut or covered. A white-space: pre contact line in a 120px column
+       with empty page beside it (bt.cn's footer), and a nowrap headline
+       line with the next line of the heading set right below it
+       (v0-compute-11.vercel.app). -->
+  <div class="row">
+    <div class="free">
+      <span class="pass-free-space-pre" style="display: block; white-space: pre">Business QQ (sales): 394030111</span>
+    </div>
+  </div>
+  <div class="row">
+    <h2 class="headline">
+      <span class="pass-free-space-headline" style="display: block; white-space: nowrap">Distributed compute,</span>
+      <span style="display: block">agents</span>
+    </h2>
+  </div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+/*
+ * Side accents written with nesting, the way SCSS, Less and CSS-in-JS
+ * author them. A left or right accent reports only on a card rounded away
+ * from the stripe, and a nested rule that names its parent with an
+ * ampersand reads the parent's corners. The flag cases round other selectors
+ * in this file, so every square case squares itself off. Every case carries a
+ * unique stripe width so each finding attributes to one case.
+ */
+
+/* ── FLAG: nested ::before bar on a rounded card ── */
+.flag-nested-pseudo {
+  position: relative;
+  border-radius: 12px;
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #0f766e;
+  }
+}
+
+/* ── FLAG: nested ::after bar inside a media query on a rounded card ── */
+.flag-nested-media {
+  position: relative;
+  border-radius: 12px;
+  @media (min-width: 600px) {
+    &::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      background: #0f766e;
+    }
+  }
+}
+
+/* ── FLAG: a state class on a rounded card ── */
+.flag-nested-state {
+  border-radius: 12px;
+  &.is-accent {
+    border-left: 6px solid #0f766e;
+  }
+}
+
+/* ── FLAG: a BEM modifier on a rounded card ── */
+.flag-nested-modifier {
+  border-radius: 12px;
+  &--accent {
+    box-shadow: inset 7px 0 0 #0f766e;
+  }
+}
+
+/* ── FLAG: a hover-revealed bar on a rounded card ── */
+.flag-hover-reveal {
+  position: relative;
+  border-radius: 12px;
+}
+.flag-hover-reveal:hover::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: #0f766e;
+}
+
+/* ── PASS: nested ::before bar on a square box ── */
+.pass-nested-pseudo {
+  position: relative;
+  border-radius: 0;
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #0f766e;
+  }
+}
+
+/* ── PASS: bars on the square children of a rounded card ── */
+.pass-nested-child {
+  border-radius: 12px;
+  & .row {
+    border-radius: 0;
+  }
+  & .row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 9px;
+    background: #0f766e;
+  }
+  .note {
+    border-radius: 0;
+    border-left: 10px solid #0f766e;
+  }
+}
+
+/* ── PASS: a square BEM element of a rounded card ── */
+.pass-nested-element {
+  border-radius: 12px;
+  &__part {
+    border-radius: 0;
+    border-left: 11px solid #0f766e;
+  }
+}
+
+/* ── FLAG: an accent inside a media query on a rounded card ── */
+.flag-media-accent {
+  border-radius: 12px;
+  @media (min-width: 600px) {
+    border-left: 12px solid #0f766e;
+  }
+}
+
+/* ── FLAG: an accent inside a mixin's content block on a rounded card ── */
+.flag-include-accent {
+  border-radius: 12px;
+  @include breakpoint(md) {
+    border-right: 13px solid #0f766e;
+  }
+}
+
+/* ── FLAG: a nested bar on a card a mixin rounds ── */
+.flag-mixin-radius {
+  position: relative;
+  @include card-shape;
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: #0f766e;
+  }
+}
+
+/* ── PASS: an accent inside a media query on a square box ── */
+.pass-media-accent {
+  border-radius: 0;
+  @media (min-width: 600px) {
+    border-left: 15px solid #0f766e;
+  }
+}
+
+/* ── PASS: an accent inside a mixin's content block on a square box ── */
+.pass-include-accent {
+  border-radius: 0;
+  @include breakpoint(md) {
+    border-right: 16px solid #0f766e;
+  }
+}
+
+/* ── FLAG: a state rule in a second block for a card rounded in the first ── */
+.flag-second-block {
+  border-radius: 12px;
+}
+.flag-second-block {
+  &.is-accent {
+    border-left: 17px solid #0f766e;
+  }
+}
+
+/* ── FLAG: a flat compound rule after the card's own rule ── */
+.flag-flat-compound {
+  border-radius: 12px;
+}
+.flag-flat-compound.is-accent {
+  border-right: 18px solid #0f766e;
+}

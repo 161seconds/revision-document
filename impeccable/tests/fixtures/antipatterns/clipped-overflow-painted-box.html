@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>clipped-overflow-container, popover layers by their box</title>
+<!--
+  Only a popover layer is a layer a clip traps (decision
+  r6-t1-clipped-overflow-popovers). A transparent wrapper a few pixels
+  larger than the button it holds (mk.co.kr, bankofamerica.com) is not one,
+  and stays silent wherever it sits. The same wrapper marked as a menu is
+  cut by its border box: a layer that really opens reports whatever wraps it.
+
+  A tooltip inside a card in a row that scrolls sideways belongs to that row:
+  the row cuts and scrolls its cards, and a column that clips the row's
+  overhang cuts the row, not the tooltip (gamer.com.tw). The same row with
+  its overflow visible leaves the tooltip to the column.
+
+  The static engine measures no boxes, so it reads only the declared offsets.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #1a1a1a; background: #ffffff; margin: 24px; }
+  .col { display: inline-block; width: 480px; vertical-align: top; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  .story { position: relative; overflow: hidden; width: 358px; height: 120px; margin: 0 0 24px; background: #f4f4f5; }
+  .story p { margin: 16px; width: 260px; }
+  .more { position: absolute; top: 40px; width: 40px; height: 40px; padding: 5px; box-sizing: border-box; }
+  .more button { display: block; width: 30px; height: 30px; padding: 0; border: 0; background: #2f2f2f; color: #ffffff; font-size: 14px; line-height: 30px; overflow: hidden; }
+  .pass-transparent-wrapper { left: 322px; }
+  .flag-menu-wrapper { left: 322px; }
+  .column { overflow: hidden; width: 374px; margin: 0 0 24px 8px; }
+  .row { display: flex; position: relative; margin: 0 -8px; padding: 0; list-style: none; }
+  .row li { flex: 0 0 195px; }
+  .tile { display: block; position: relative; height: 122px; margin: 0 4px; overflow: hidden; background: #d4d4d8; }
+  .tile span { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 4px 8px; font-size: 14px; background: rgba(0, 0, 0, 0.6); color: #ffffff; }
+  .scrolls { overflow-x: auto; overflow-y: hidden; }
+</style>
+</head>
+<body>
+
+<div class="col" id="should-flag">
+  <h2>Should flag</h2>
+  <div class="story flag-cuts-menu">
+    <p>A menu wrapper reaches 4px past the edge of the story.</p>
+    <div class="more flag-menu-wrapper" role="menu"><button type="button" role="menuitem">+</button></div>
+  </div>
+  <div class="column flag-cuts-tooltip">
+    <ul class="row">
+      <li><a class="tile" href="/one"><span role="tooltip">First tip</span></a></li>
+      <li><a class="tile" href="/two"><span role="tooltip">Second tip</span></a></li>
+    </ul>
+  </div>
+</div>
+
+<div class="col" id="should-pass">
+  <h2>Should pass</h2>
+  <div class="story pass-holds-wrapper">
+    <p>A 40px wrapper reaches 4px past the edge, and it is no popover.</p>
+    <div class="more pass-transparent-wrapper"><button type="button">+</button></div>
+  </div>
+  <div class="column pass-holds-scrolling-row">
+    <ul class="row scrolls">
+      <li><a class="tile" href="/one"><span role="tooltip">First tip</span></a></li>
+      <li><a class="tile" href="/two"><span role="tooltip">Second tip</span></a></li>
+      <li><a class="tile" href="/three"><span role="tooltip">Third tip</span></a></li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

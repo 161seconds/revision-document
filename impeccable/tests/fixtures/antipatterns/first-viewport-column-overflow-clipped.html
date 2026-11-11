@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow, a tile column its box scrolls</title>
+<!--
+  Should pass. An opening section sets a lead tile beside a column of eleven
+  smaller tiles. The column is a 610px box that scrolls its tiles, inside a
+  section that hides the rest (cuisineactuelle.fr). Laid out, the tiles run
+  to about three viewports; on screen both columns end at the 610px box, and
+  the fold falls where the section does. first-viewport-column-overflow.html
+  keeps the flag case.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+  .highlight { height: 610px; overflow: hidden; margin: 240px 40px 0; }
+  .tiles { display: flex; gap: 24px; height: 610px; }
+  .lead { flex: 1; height: 610px; overflow-y: auto; }
+  .lead article { height: 570px; background: #f3f3f3; padding: 16px; }
+  .column { flex: 1; height: 610px; overflow-y: auto; }
+  .column article { height: 152px; margin-bottom: 16px; background: #f3f3f3; padding: 16px; }
+</style>
+</head>
+<body>
+  <section class="highlight">
+    <div class="tiles">
+      <div class="lead"><article><p>The lead story, with its photo and standfirst.</p></article></div>
+      <div class="column">
+        <article><p>Second story.</p></article>
+        <article><p>Third story.</p></article>
+        <article><p>Fourth story.</p></article>
+        <article><p>Fifth story.</p></article>
+        <article><p>Sixth story.</p></article>
+        <article><p>Seventh story.</p></article>
+        <article><p>Eighth story.</p></article>
+        <article><p>Ninth story.</p></article>
+        <article><p>Tenth story.</p></article>
+        <article><p>Eleventh story.</p></article>
+        <article><p>Twelfth story.</p></article>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

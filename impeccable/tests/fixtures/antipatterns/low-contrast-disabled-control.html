@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>low-contrast, a disabled control</title>
+<!--
+  observations-42 row 6 (lance.com.br). A disabled control is faded on
+  purpose and asks nothing of the reader; its colours are not a contrast
+  verdict (WCAG 1.4.3 exempts inactive controls). Each pass case is a way a
+  control is disabled: the attribute on a button, on the button around the
+  text, on the fieldset around the button, `aria-disabled="true"` on a link
+  and on a `role="button"` box. Each flag case is its enabled twin, white on
+  #16a34a at 3.3:1, including `aria-disabled="false"`, which disables
+  nothing.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; padding: 40px; }
+  .cols { display: grid; grid-template-columns: 400px 400px; column-gap: 40px; width: 840px; }
+  .cols h2 { font-size: 14px; line-height: 20px; margin-bottom: 16px; color: #111111; }
+  .case-label { display: block; width: 400px; font-size: 12px; line-height: 16px; margin-bottom: 8px; color: #334155; }
+  fieldset { border: 0; padding: 0; width: 283px; }
+  .confirm { display: block; width: 283px; height: 40px; margin-bottom: 24px; padding: 0; border: 0; border-radius: 6px; background: #16a34a; color: #ffffff; font-family: inherit; font-size: 14px; font-weight: 400; line-height: 40px; text-align: center; text-decoration: none; }
+  .confirm span { display: block; width: 283px; height: 40px; }
+  .confirm:disabled, fieldset:disabled .confirm, .confirm[aria-disabled="true"] { opacity: 0.5; }
+</style>
+</head>
+<body>
+  <div class="cols">
+    <div data-col="flag">
+      <h2>Should flag</h2>
+      <span class="case-label">an enabled button</span>
+      <button type="button" class="confirm flag-enabled">Confirmar palpite</button>
+      <span class="case-label">an enabled button whose label sits in a span</span>
+      <button type="button" class="confirm"><span class="flag-enabled-label">Enviar palpite</span></button>
+      <span class="case-label">a link drawn as a button, enabled</span>
+      <a href="#" class="confirm flag-enabled-link">Ver classificação</a>
+      <span class="case-label">aria-disabled="false" disables nothing</span>
+      <button type="button" class="confirm flag-aria-false" aria-disabled="false">Salvar rascunho</button>
+      <span class="case-label">an enabled button in a fieldset that is not disabled</span>
+      <fieldset><button type="button" class="confirm flag-enabled-in-fieldset">Criar liga</button></fieldset>
+    </div>
+    <div data-col="pass">
+      <h2>Should pass</h2>
+      <span class="case-label">a disabled button, faded to half (lance.com.br)</span>
+      <button type="button" class="confirm pass-disabled" disabled>Confirmar aposta</button>
+      <span class="case-label">the label in a span inside a disabled button</span>
+      <button type="button" class="confirm" disabled><span class="pass-disabled-label">Enviar aposta</span></button>
+      <span class="case-label">a link drawn as a button, aria-disabled="true"</span>
+      <a href="#" class="confirm pass-aria-disabled-link" aria-disabled="true">Ver tabela</a>
+      <span class="case-label">a role="button" box, aria-disabled="true"</span>
+      <div role="button" class="confirm pass-aria-disabled-role" aria-disabled="true">Salvar depois</div>
+      <span class="case-label">a button inside a disabled fieldset</span>
+      <fieldset disabled><button type="button" class="confirm pass-disabled-fieldset">Criar grupo</button></fieldset>
+    </div>
+  </div>
+</body>
+</html>

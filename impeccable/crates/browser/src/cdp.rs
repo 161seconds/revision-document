@@ -1,0 +1,2644 @@
+//! Headless Chrome launch and a small Chrome DevTools Protocol client.
+//!
+//! Why hand-written over `tungstenite` rather than `headless_chrome`: the
+//! JS engine's observable behaviour is puppeteer's (its launch flags,
+//! `newPage` setup, `goto` lifecycle semantics, `evaluate` error text,
+//! `screenshot` parameters). `headless_chrome` re-implements those with its
+//! own defaults (different flags, its own navigation wait, a tab abstraction
+//! that hides lifecycle events, and a `fetch` feature that downloads
+//! browsers), so matching puppeteer would mean fighting the crate. The
+//! protocol surface we need is tiny (a dozen methods, six events), and a
+//! flat JSON-RPC layer over one websocket keeps every CDP call visible and
+//! auditable against puppeteer's source.
+//!
+//! Everything here is synchronous: one websocket, one thread; events that
+//! arrive while a command is in flight are handled by the page state machine
+//! as they come, and the rest are swept up after every call.
+
+use std::collections::{HashMap, HashSet};
+use std::io::{BufRead, BufReader};
+use std::net::TcpStream;
+use std::path::PathBuf;
+use std::process::{Child, Command, Stdio};
+use std::sync::mpsc;
+use std::time::{Duration, Instant};
+
+use serde_json::{Map, Value, json};
+use tungstenite::client::IntoClientRequest;
+use tungstenite::protocol::WebSocketConfig;
+use tungstenite::{Message, WebSocket};
+
+/// puppeteer's `launch` timeout (`timeout: 30000` in BrowserLauncher).
+const LAUNCH_TIMEOUT: Duration = Duration::from_secs(30);
+/// puppeteer's per-command `protocolTimeout` (180 s).
+const PROTOCOL_TIMEOUT: Duration = Duration::from_secs(180);
+/// How many distinct uncaught errors a page keeps: the scan reports a few
+/// per kind (`SCRIPT_ERROR_CAP` in lib.rs), and a page that throws a new
+/// message every tick must not grow the list without bound (issue #1253).
+const PAGE_ERROR_CAP: usize = 50;
+/// How long a screenshot of an attached page may take. A window that paints
+/// no frames (hidden on some systems) never answers one, and the scan of
+/// someone else's app should not sit on it for the protocol timeout.
+const ATTACHED_SCREENSHOT_TIMEOUT: Duration = Duration::from_secs(15);
+
+#[derive(Debug, Clone)]
+pub struct CdpError {
+    pub message: String,
+}
+
+impl CdpError {
+    pub fn new(message: impl Into<String>) -> Self {
+        CdpError {
+            message: message.into(),
+        }
+    }
+}
+
+impl From<String> for CdpError {
+    fn from(message: String) -> Self {
+        CdpError { message }
+    }
+}
+
+pub type CdpResult<T> = Result<T, CdpError>;
+
+/// puppeteer's `ChromeLauncher.defaultArgs()` (headless, no extensions) plus
+/// the user args, in the order puppeteer emits them, with one feature more
+/// switched off (see `--disable-features` below). `--remote-debugging-port`
+/// and `--user-data-dir` are appended by the launcher afterwards, as
+/// puppeteer's `computeLaunchArguments` does.
+pub fn default_chrome_args(user_args: &[String], dangerous_no_sandbox: bool) -> Vec<String> {
+    let mut args: Vec<String> = [
+        "--allow-pre-commit-input",
+        "--disable-background-networking",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-breakpad",
+        "--disable-client-side-phishing-detection",
+        "--disable-component-extensions-with-background-pages",
+        "--disable-crash-reporter",
+        "--disable-default-apps",
+        "--disable-dev-shm-usage",
+        "--disable-hang-monitor",
+        "--disable-infobars",
+        "--disable-ipc-flooding-protection",
+        "--disable-popup-blocking",
+        "--disable-prompt-on-repost",
+        "--disable-renderer-backgrounding",
+        "--disable-search-engine-choice-screen",
+        "--disable-sync",
+        "--enable-automation",
+        "--export-tagged-pdf",
+        "--force-color-profile=srgb",
+        "--generate-pdf-document-outline",
+        "--metrics-recording-only",
+        "--no-first-run",
+        "--password-store=basic",
+        "--use-mock-keychain",
+        // puppeteer's list plus `DeviceBoundSessions`. With that feature on,
+        // Chrome holds every request of a new profile until it has created
+        // and read the profile's bound-session store, which comes after the
+        // cookie store and has no protocol call to wait on. On a busy disk
+        // that took over 15 s, out of the first navigation's timeout. A
+        // throwaway profile has no bound session to honour.
+        "--disable-features=Translate,AcceptCHFrame,MediaRouter,OptimizationHints,WebUIReloadButton,ProcessPerSiteUpToMainFrameThreshold,IsolateSandboxedIframes,DeviceBoundSessions",
+        "--enable-features=PdfOopif",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    if dangerous_no_sandbox && !user_args.iter().any(|a| a == "--no-sandbox") {
+        args.push("--no-sandbox".to_string());
+    }
+    args.push("--headless=new".to_string());
+    args.push("--hide-scrollbars".to_string());
+    args.push("--mute-audio".to_string());
+    args.push("--disable-extensions".to_string());
+    if user_args.iter().all(|a| a.starts_with('-')) {
+        args.push("about:blank".to_string());
+    }
+    args.extend(user_args.iter().cloned());
+    args
+}
+
+/// A running headless browser: the process, its temp profile, and the
+/// browser-level CDP connection. A browser reached with [`Browser::connect`]
+/// (`detect --cdp`) belongs to someone else: it has no process or profile
+/// here, and closing it only drops the connection.
+pub struct Browser {
+    child: Option<Child>,
+    user_data_dir: Option<PathBuf>,
+    conn: Connection,
+    /// The DevTools websocket URL this connection was opened on.
+    ws_url: String,
+    /// Sessions of `worker` targets whose exceptions count as page errors,
+    /// keyed by session id → owning page session id.
+    worker_owner: HashMap<String, String>,
+}
+
+// A timestamp is not a reservation: concurrent calls can observe the same tick.
+// Exclusive mkdir also avoids reusing a stale profile from a previous process.
+fn reserve_profile(parent: &std::path::Path, stamp: u128) -> CdpResult<PathBuf> {
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    for _ in 0..128 {
+        let serial = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let path = parent.join(format!(
+            "impeccable_dev_chrome_profile-{}-{stamp}-{serial}",
+            std::process::id()
+        ));
+        match std::fs::create_dir(&path) {
+            Ok(()) => return Ok(path),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(e) => {
+                return Err(CdpError::new(format!(
+                    "Failed to create a temporary browser profile: {e}"
+                )));
+            }
+        }
+    }
+    Err(CdpError::new(
+        "Failed to reserve a unique temporary browser profile",
+    ))
+}
+
+impl Browser {
+    /// Launch `executable` headless the way puppeteer does and connect to its
+    /// DevTools websocket.
+    pub fn launch(
+        executable: &std::path::Path,
+        user_args: &[String],
+        dangerous_no_sandbox: bool,
+    ) -> CdpResult<Browser> {
+        let mut args = default_chrome_args(user_args, dangerous_no_sandbox);
+        args.push("--remote-debugging-port=0".to_string());
+        let stamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let user_data_dir = reserve_profile(&std::env::temp_dir(), stamp)?;
+        args.push(format!("--user-data-dir={}", user_data_dir.display()));
+
+        let mut child = match Command::new(executable)
+            .args(&args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+        {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = std::fs::remove_dir_all(&user_data_dir);
+                return Err(CdpError::new(format!(
+                    "Failed to launch the browser process! {}: {e}",
+                    executable.display()
+                )));
+            }
+        };
+        let stderr = child.stderr.take();
+        let (tx, rx) = mpsc::channel::<String>();
+        if let Some(stderr) = stderr {
+            // Drain stderr for the life of the process so a chatty browser
+            // never blocks on a full pipe; forward lines for endpoint discovery.
+            std::thread::spawn(move || {
+                let reader = BufReader::new(stderr);
+                for line in reader.lines() {
+                    match line {
+                        Ok(l) => {
+                            let _ = tx.send(l);
+                        }
+                        Err(_) => break,
+                    }
+                }
+            });
+        }
+        let started = Instant::now();
+        let mut collected = String::new();
+        let ws_url = loop {
+            let remaining = LAUNCH_TIMEOUT.saturating_sub(started.elapsed());
+            if remaining.is_zero() {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = std::fs::remove_dir_all(&user_data_dir);
+                return Err(CdpError::new(format!(
+                    "Timed out after {} ms while waiting for the WS endpoint URL to appear in stdout!",
+                    LAUNCH_TIMEOUT.as_millis()
+                )));
+            }
+            match rx.recv_timeout(remaining.min(Duration::from_millis(200))) {
+                Ok(line) => {
+                    if let Some(rest) = line.strip_prefix("DevTools listening on ") {
+                        break rest.trim().to_string();
+                    }
+                    collected.push_str(&line);
+                    collected.push('\n');
+                }
+                Err(mpsc::RecvTimeoutError::Timeout) => {}
+                Err(mpsc::RecvTimeoutError::Disconnected) => {
+                    let _ = child.wait();
+                    let _ = std::fs::remove_dir_all(&user_data_dir);
+                    return Err(CdpError::new(format!(
+                        "Failed to launch the browser process!{}",
+                        if collected.trim().is_empty() {
+                            String::new()
+                        } else {
+                            format!(" {}", collected.trim())
+                        }
+                    )));
+                }
+            }
+            if let Ok(Some(status)) = child.try_wait() {
+                // Give the reader a moment to flush the last lines.
+                while let Ok(line) = rx.recv_timeout(Duration::from_millis(50)) {
+                    collected.push_str(&line);
+                    collected.push('\n');
+                }
+                let _ = std::fs::remove_dir_all(&user_data_dir);
+                return Err(CdpError::new(format!(
+                    "Failed to launch the browser process! (exit {status}){}",
+                    if collected.trim().is_empty() {
+                        String::new()
+                    } else {
+                        format!(" {}", collected.trim())
+                    }
+                )));
+            }
+        };
+        let mut conn = match Connection::connect(&ws_url, LAUNCH_TIMEOUT) {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = std::fs::remove_dir_all(&user_data_dir);
+                return Err(e);
+            }
+        };
+        // A fresh profile loads its cookie store on the first request that
+        // needs it, and every page request waits for that load. On Windows the
+        // load (an encrypted SQLite store) takes 1 to 5 s and has taken over
+        // 15 s with several browsers starting at once, which the first
+        // navigation then spent out of its own timeout. Asking for the cookies
+        // here makes the launch wait for the load instead, under the protocol
+        // timeout, so a navigation deadline measures only the navigation.
+        let _ = conn.send(None, "Storage.getCookies", json!({}), PROTOCOL_TIMEOUT);
+        Ok(Browser {
+            child: Some(child),
+            user_data_dir: Some(user_data_dir),
+            conn,
+            ws_url,
+            worker_owner: HashMap::new(),
+        })
+    }
+
+    /// Connect to a browser someone else runs, at its DevTools websocket
+    /// (`/devtools/browser/<id>`). Nothing is launched, and [`Browser::close`]
+    /// leaves the browser running.
+    pub fn connect(ws_url: &str) -> CdpResult<Browser> {
+        let conn = Connection::connect(ws_url, Duration::from_secs(10))?;
+        Ok(Browser {
+            child: None,
+            user_data_dir: None,
+            conn,
+            ws_url: ws_url.to_string(),
+            worker_owner: HashMap::new(),
+        })
+    }
+
+    /// The DevTools websocket URL this connection uses. For a launched
+    /// browser its port is the one Chrome picked for `--remote-debugging-port=0`.
+    pub fn ws_url(&self) -> &str {
+        &self.ws_url
+    }
+
+    /// `browser.close()`: `Browser.close`, wait for exit, remove the temp
+    /// profile. On a browser reached with [`Browser::connect`] it closes the
+    /// connection and nothing else.
+    pub fn close(mut self) {
+        if self.child.is_none() {
+            let _ = self.conn.ws.close(None);
+            let _ = self.conn.ws.flush();
+            return;
+        }
+        let _ = self
+            .conn
+            .send(None, "Browser.close", json!({}), Duration::from_secs(5));
+        let deadline = Instant::now() + Duration::from_secs(5);
+        if let Some(child) = self.child.as_mut() {
+            loop {
+                match child.try_wait() {
+                    Ok(Some(_)) => break,
+                    Ok(None) if Instant::now() < deadline => {
+                        std::thread::sleep(Duration::from_millis(25))
+                    }
+                    _ => {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        break;
+                    }
+                }
+            }
+        }
+        if let Some(dir) = self.user_data_dir.as_ref() {
+            for _ in 0..10 {
+                if std::fs::remove_dir_all(dir).is_ok() || !dir.exists() {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(100));
+            }
+        }
+    }
+
+    /// `Target.getTargets`: every target the browser knows, as CDP
+    /// `TargetInfo` objects.
+    pub fn targets(&mut self) -> CdpResult<Vec<Value>> {
+        let res = self.conn.send(None, "Target.getTargets", json!({}), PROTOCOL_TIMEOUT)?;
+        Ok(res.get("targetInfos").and_then(Value::as_array).cloned().unwrap_or_default())
+    }
+
+    /// Attach to a page someone else opened, without changing it: no new
+    /// document scripts, no network or auto-attach setup, and
+    /// [`Page::close`] detaches instead of closing the target. Every
+    /// evaluation runs in an isolated world on the page's current document,
+    /// so the page's own scripts never see the scan's globals and the scan
+    /// never sees what the page did to its built-ins. A navigation ends the
+    /// world, and the next evaluation fails instead of reading the new
+    /// document.
+    pub fn attach_page(&mut self, target_id: &str) -> CdpResult<Page<'_>> {
+        let attached = self.conn.send(
+            None,
+            "Target.attachToTarget",
+            json!({ "targetId": target_id, "flatten": true }),
+            PROTOCOL_TIMEOUT,
+        )?;
+        let session_id = attached
+            .get("sessionId")
+            .and_then(Value::as_str)
+            .ok_or_else(|| CdpError::new("Target.attachToTarget returned no sessionId"))?
+            .to_string();
+        let mut page = Page {
+            browser: self,
+            session_id,
+            target_id: target_id.to_string(),
+            frames: HashMap::new(),
+            main_frame_id: String::new(),
+            page_errors: Vec::new(),
+            swapped: false,
+            same_document_navigation: false,
+            iframe_sessions: HashSet::new(),
+            main_document_response: None,
+            response_capture: None,
+            execution_contexts: HashMap::new(),
+            attached: true,
+            default_world: None,
+        };
+        if let Err(e) = page.initialize_attached() {
+            page.close();
+            return Err(e);
+        }
+        Ok(page)
+    }
+
+    /// Browser-reported capture environment, independent of page script overrides.
+    pub fn version(&mut self) -> CdpResult<Value> {
+        self.conn
+            .send(None, "Browser.getVersion", json!({}), PROTOCOL_TIMEOUT)
+    }
+
+    /// `browser.newPage()`: a fresh target in the default context, attached
+    /// flat, with puppeteer's page setup applied.
+    pub fn new_page(&mut self) -> CdpResult<Page<'_>> {
+        let created = self.conn.send(
+            None,
+            "Target.createTarget",
+            json!({ "url": "about:blank" }),
+            PROTOCOL_TIMEOUT,
+        )?;
+        let target_id = created
+            .get("targetId")
+            .and_then(Value::as_str)
+            .ok_or_else(|| CdpError::new("Target.createTarget returned no targetId"))?
+            .to_string();
+        let attached = self.conn.send(
+            None,
+            "Target.attachToTarget",
+            json!({ "targetId": target_id, "flatten": true }),
+            PROTOCOL_TIMEOUT,
+        )?;
+        let session_id = attached
+            .get("sessionId")
+            .and_then(Value::as_str)
+            .ok_or_else(|| CdpError::new("Target.attachToTarget returned no sessionId"))?
+            .to_string();
+        let mut page = Page {
+            browser: self,
+            session_id,
+            target_id,
+            frames: HashMap::new(),
+            main_frame_id: String::new(),
+            page_errors: Vec::new(),
+            swapped: false,
+            same_document_navigation: false,
+            iframe_sessions: HashSet::new(),
+            main_document_response: None,
+            response_capture: None,
+            execution_contexts: HashMap::new(),
+            attached: false,
+            default_world: None,
+        };
+        page.initialize()?;
+        Ok(page)
+    }
+}
+
+impl Drop for Browser {
+    fn drop(&mut self) {
+        // Belt and braces for the error paths that skip `close()`. A browser
+        // this process did not launch is never touched.
+        if let Some(child) = self.child.as_mut() {
+            if let Ok(None) = child.try_wait() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+        }
+        if let Some(dir) = self.user_data_dir.as_ref() {
+            let _ = std::fs::remove_dir_all(dir);
+        }
+    }
+}
+
+/// Origin-scoped basic-auth injection state (JS `applyOriginScopedAuth`,
+/// issue #657): while armed, `Fetch.requestPaused` events on the session are
+/// answered inline with `Fetch.continueRequest`, adding the Authorization
+/// header only for same-origin requests.
+struct OriginAuth {
+    session_id: String,
+    origin: String,
+    header: String,
+}
+
+/// One websocket to the browser, and its JSON-RPC ids.
+struct Connection {
+    ws: WebSocket<TcpStream>,
+    next_id: u64,
+    auth: Option<OriginAuth>,
+}
+
+/// What [`Connection::next`] read: the awaited reply's result, or an event
+/// that arrived ahead of it.
+enum Reply {
+    Result(Value),
+    Event(Value),
+}
+
+impl Connection {
+    fn connect(ws_url: &str, timeout: Duration) -> CdpResult<Connection> {
+        let parsed = url_host_port(ws_url)
+            .ok_or_else(|| CdpError::new(format!("Unexpected DevTools endpoint: {ws_url}")))?;
+        let stream = connect_tcp(&parsed, timeout).map_err(|e| {
+            CdpError::new(format!("Could not connect to the browser at {ws_url}: {e}"))
+        })?;
+        // The handshake reads under a deadline too: a port that accepts and
+        // never answers (not a DevTools server) fails instead of hanging.
+        let _ = stream.set_read_timeout(Some(timeout));
+        let _ = stream.set_nodelay(true);
+        let request = ws_url
+            .into_client_request()
+            .map_err(|e| CdpError::new(format!("Bad DevTools endpoint {ws_url}: {e}")))?;
+        let config = WebSocketConfig::default()
+            .max_message_size(Some(256 * 1024 * 1024))
+            .max_frame_size(Some(256 * 1024 * 1024));
+        let (ws, _response) =
+            tungstenite::client::client_with_config(request, stream, Some(config)).map_err(
+                |e| CdpError::new(format!("WebSocket handshake with the browser failed: {e}")),
+            )?;
+        Ok(Connection {
+            ws,
+            next_id: 0,
+            auth: None,
+        })
+    }
+
+    /// JS `page.on('request', ...)` handler body from `applyOriginScopedAuth`:
+    /// answer a paused request, attaching Authorization only when the request
+    /// URL's origin equals the armed origin. Returns true when the message was
+    /// a `Fetch.requestPaused` for the armed session (consumed).
+    fn maybe_handle_request_paused(&mut self, msg: &Value) -> bool {
+        let Some(auth) = &self.auth else { return false };
+        if msg.get("method").and_then(Value::as_str) != Some("Fetch.requestPaused") {
+            return false;
+        }
+        if msg.get("sessionId").and_then(Value::as_str) != Some(auth.session_id.as_str()) {
+            return false;
+        }
+        let (session_id, origin, header) = (
+            auth.session_id.clone(),
+            auth.origin.clone(),
+            auth.header.clone(),
+        );
+        let params = msg.get("params").cloned().unwrap_or(Value::Null);
+        let Some(request_id) = params.get("requestId").and_then(Value::as_str) else {
+            return true;
+        };
+        let req_url = params
+            .pointer("/request/url")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        // JS: invalid request URL -> continue without auth.
+        let same_origin = url::Url::parse(req_url)
+            .map(|u| u.origin().ascii_serialization() == origin)
+            .unwrap_or(false);
+        let mut cont = Map::new();
+        cont.insert("requestId".into(), json!(request_id));
+        if same_origin {
+            // JS `{ ...request.headers(), authorization: header }`: puppeteer's
+            // request.headers() lowercases names, so authorization overrides.
+            let mut headers: Vec<Value> = Vec::new();
+            if let Some(obj) = params
+                .pointer("/request/headers")
+                .and_then(Value::as_object)
+            {
+                for (k, v) in obj {
+                    let name = k.to_ascii_lowercase();
+                    if name == "authorization" {
+                        continue;
+                    }
+                    headers.push(json!({ "name": name, "value": v.as_str().unwrap_or("") }));
+                }
+            }
+            headers.push(json!({ "name": "authorization", "value": header }));
+            cont.insert("headers".into(), Value::Array(headers));
+        }
+        // JS `void request.continue(...).catch(() => {})`.
+        let _ = self.post(
+            Some(&session_id),
+            "Fetch.continueRequest",
+            Value::Object(cont),
+        );
+        true
+    }
+
+    /// Write a command and return its id without waiting for the reply.
+    fn post(&mut self, session_id: Option<&str>, method: &str, params: Value) -> CdpResult<u64> {
+        self.next_id += 1;
+        let id = self.next_id;
+        let mut msg = Map::new();
+        msg.insert("id".into(), json!(id));
+        msg.insert("method".into(), json!(method));
+        msg.insert("params".into(), params);
+        if let Some(sid) = session_id {
+            msg.insert("sessionId".into(), json!(sid));
+        }
+        let text = Value::Object(msg).to_string();
+        self.ws
+            .send(Message::Text(text.into()))
+            .map_err(|e| CdpError::new(format!("Protocol error ({method}): {e}")))?;
+        Ok(id)
+    }
+
+    /// Read until the reply to `id` or an event, whichever comes first.
+    /// Replies to other commands (fire-and-forget posts) are dropped. A
+    /// `{ error }` reply becomes `Protocol error (method): message`
+    /// (puppeteer's wording); `deadline` passing is the command's timeout.
+    fn next(&mut self, id: u64, method: &str, deadline: Instant) -> CdpResult<Reply> {
+        loop {
+            let Some(msg) = self.read_one(deadline)? else {
+                return Err(CdpError::new(format!(
+                    "{method} timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed."
+                )));
+            };
+            if msg.get("id").and_then(Value::as_u64) == Some(id) {
+                if let Some(err) = msg.get("error") {
+                    let text = err.get("message").and_then(Value::as_str).unwrap_or("");
+                    let data = err.get("data").and_then(Value::as_str);
+                    let full = match data {
+                        Some(d) if !d.is_empty() => format!("{text} {d}"),
+                        _ => text.to_string(),
+                    };
+                    return Err(CdpError::new(format!("Protocol error ({method}): {full}")));
+                }
+                return Ok(Reply::Result(msg.get("result").cloned().unwrap_or(Value::Null)));
+            }
+            if msg.get("method").is_some() {
+                return Ok(Reply::Event(msg));
+            }
+        }
+    }
+
+    /// Send a browser-level command and wait for its result. These run
+    /// outside any page (the target list, a new target, a page's close), so
+    /// an event that arrives meanwhile has no listener and is dropped. A
+    /// page's commands go through [`Page::send_with_timeout`], which handles
+    /// its events as they come.
+    fn send(
+        &mut self,
+        session_id: Option<&str>,
+        method: &str,
+        params: Value,
+        timeout: Duration,
+    ) -> CdpResult<Value> {
+        let id = self.post(session_id, method, params)?;
+        let deadline = Instant::now() + timeout;
+        loop {
+            if let Reply::Result(value) = self.next(id, method, deadline)? {
+                return Ok(value);
+            }
+        }
+    }
+
+    /// Read one message, or `None` when `deadline` passes first.
+    fn read_one(&mut self, deadline: Instant) -> CdpResult<Option<Value>> {
+        loop {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                return Ok(None);
+            }
+            let _ = self
+                .ws
+                .get_ref()
+                .set_read_timeout(Some(remaining.max(Duration::from_millis(1))));
+            match self.ws.read() {
+                Ok(Message::Text(t)) => match serde_json::from_str::<Value>(&t) {
+                    Ok(v) => {
+                        // Answer paused requests inline so a pending command
+                        // (goto, evaluate) whose completion depends on them
+                        // cannot deadlock the single-threaded client.
+                        if self.maybe_handle_request_paused(&v) {
+                            continue;
+                        }
+                        return Ok(Some(v));
+                    }
+                    Err(_) => continue,
+                },
+                Ok(Message::Close(_)) => {
+                    return Err(CdpError::new("Protocol error: Target closed"));
+                }
+                Ok(_) => continue,
+                Err(tungstenite::Error::Io(e))
+                    if matches!(
+                        e.kind(),
+                        std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                    ) =>
+                {
+                    return Ok(None);
+                }
+                Err(e) => {
+                    return Err(CdpError::new(format!(
+                        "Protocol error: connection closed ({e})"
+                    )));
+                }
+            }
+        }
+    }
+
+    /// Events already readable without waiting.
+    fn take_events(&mut self) -> Vec<Value> {
+        let mut out = Vec::new();
+        let deadline = Instant::now() + Duration::from_millis(1);
+        while let Ok(Some(msg)) = self.read_one(deadline) {
+            if msg.get("method").is_some() {
+                out.push(msg);
+            }
+        }
+        out
+    }
+}
+
+/// `TcpStream::connect` over every address `host:port` resolves to, each
+/// with a deadline.
+pub(crate) fn connect_tcp(host_port: &str, timeout: Duration) -> std::io::Result<TcpStream> {
+    use std::net::ToSocketAddrs;
+    let mut last = std::io::Error::new(std::io::ErrorKind::NotFound, "no address");
+    for addr in host_port.to_socket_addrs()? {
+        match TcpStream::connect_timeout(&addr, timeout) {
+            Ok(s) => return Ok(s),
+            Err(e) => last = e,
+        }
+    }
+    Err(last)
+}
+
+fn url_host_port(ws_url: &str) -> Option<String> {
+    let rest = ws_url.strip_prefix("ws://")?;
+    let host_port = rest.split('/').next()?;
+    if host_port.contains(':') {
+        Some(host_port.to_string())
+    } else {
+        Some(format!("{host_port}:80"))
+    }
+}
+
+#[derive(Default, Debug)]
+struct FrameState {
+    parent: Option<String>,
+    loader_id: String,
+    lifecycle: HashSet<String>,
+    has_started_loading: bool,
+}
+
+/// puppeteer's `Viewport` subset we use.
+#[derive(Debug, Clone, Copy)]
+pub struct Viewport {
+    pub width: u32,
+    pub height: u32,
+}
+
+/// A puppeteer `Page`: one attached target with lifecycle tracking, page
+/// error capture, and the evaluate/screenshot helpers the URL engine uses.
+pub struct Page<'a> {
+    browser: &'a mut Browser,
+    session_id: String,
+    target_id: String,
+    frames: HashMap<String, FrameState>,
+    main_frame_id: String,
+    page_errors: Vec<PageError>,
+    swapped: bool,
+    same_document_navigation: bool,
+    /// Auto-attached OOPIF sessions whose Page events feed the frame map.
+    iframe_sessions: HashSet<String>,
+    /// The CDP `Network.Response` of the main frame's latest document load
+    /// (the last one wins, so after redirects this is the final response).
+    main_document_response: Option<Value>,
+    response_capture: Option<crate::response_capture::ResponseCapture>,
+    execution_contexts: HashMap<i64, String>,
+    /// A page this process attached to rather than opened
+    /// ([`Browser::attach_page`]): screenshots never resize its view, no
+    /// evaluation counts as a user gesture, and closing detaches.
+    attached: bool,
+    /// Where [`Page::evaluate`] runs when set: the isolated world an
+    /// attached page is scanned in.
+    default_world: Option<IsolatedWorld>,
+}
+
+/// An opaque, document-bound isolated execution context. Never falls back to
+/// the page world or a newly navigated document.
+#[derive(Clone)]
+pub struct IsolatedWorld {
+    unique_id: String,
+    context_id: i64,
+    session_id: String,
+    frame_id: String,
+    loader_id: String,
+}
+
+/// A raw `Runtime.evaluate` outcome.
+pub enum EvalOutcome {
+    Value(Value),
+    /// The page threw: message as puppeteer's `createEvaluationError` renders it.
+    Exception(String),
+}
+
+impl<'a> Page<'a> {
+    fn send(&mut self, method: &str, params: Value) -> CdpResult<Value> {
+        self.send_with_timeout(method, params, PROTOCOL_TIMEOUT)
+    }
+
+    /// Send a command on this page's session and wait for its result. An
+    /// event that arrives while the reply is pending is handled as it comes,
+    /// never queued: the page decides how many it sends (a console or
+    /// exception flood) and how long the command takes (a sweep of a tall
+    /// page, a busy main thread), so a queue held until the reply grew by
+    /// hundreds of MB a second on such a page (issue #1253).
+    fn send_with_timeout(&mut self, method: &str, params: Value, timeout: Duration) -> CdpResult<Value> {
+        let sid = self.session_id.clone();
+        let id = self.browser.conn.post(Some(&sid), method, params)?;
+        let deadline = Instant::now() + timeout;
+        let out = loop {
+            match self.browser.conn.next(id, method, deadline) {
+                Ok(Reply::Result(value)) => break Ok(value),
+                Ok(Reply::Event(ev)) => self.on_event(&ev),
+                Err(e) => break Err(e),
+            }
+        };
+        self.pump_events();
+        out
+    }
+
+    /// Start a fresh diagnostic journal before navigation. Cache, authentication,
+    /// and service-worker behavior remain unchanged. No response is refetched.
+    pub fn begin_response_capture(&mut self) -> CdpResult<()> {
+        // Blink counts decoded strings in its inspector buffer (UTF-16 may
+        // need twice their UTF-8 bytes). Reserve representation headroom while
+        // ResponseCapture still enforces the original decoded-byte limits.
+        self.send(
+            "Network.enable",
+            json!({
+                "maxTotalBufferSize": crate::response_capture::MAX_TOTAL * 2,
+                "maxResourceBufferSize": crate::response_capture::MAX_BODY * 2
+            }),
+        )?;
+        self.response_capture = Some(crate::response_capture::ResponseCapture::default());
+        Ok(())
+    }
+
+    /// All requests observed for the current document, including failed/missing dependencies.
+    pub fn observed_response_urls(&mut self) -> CdpResult<Vec<String>> {
+        self.pump_events();
+        let capture=self.response_capture.as_ref().ok_or_else(||CdpError::new("response capture is not enabled"))?;
+        let loader=self.frames.get(&self.main_frame_id).map(|f|f.loader_id.as_str()).unwrap_or("");
+        Ok(capture.urls(&self.main_frame_id,loader))
+    }
+
+    /// Retrieve observed main-document response payloads for exact URLs.
+    /// This is transport evidence only: it does not prove rendered use or fidelity.
+    pub fn response_evidence(
+        &mut self,
+        urls: &[String],
+    ) -> CdpResult<crate::response_capture::ResponseEvidence> {
+        self.pump_events();
+        let capture = self
+            .response_capture
+            .as_ref()
+            .ok_or_else(|| CdpError::new("response capture is not enabled"))?;
+        let frame = self.main_frame_id.clone();
+        let loader = self
+            .frames
+            .get(&frame)
+            .map(|f| f.loader_id.clone())
+            .unwrap_or_default();
+        let revision = capture.revision;
+        let pending = capture.pending(urls, &frame, &loader);
+        for (index, request_id) in pending {
+            let body = self
+                .send("Network.getResponseBody", json!({"requestId": request_id}))
+                .map_err(|e| e.message);
+            self.response_capture
+                .as_mut()
+                .unwrap()
+                .store_body(index, body);
+        }
+        Ok(self
+            .response_capture
+            .as_ref()
+            .unwrap()
+            .evidence(urls, &frame, &loader, revision))
+    }
+
+    /// puppeteer's `CdpPage` + `FrameManager.initialize` for a new target.
+    fn initialize(&mut self) -> CdpResult<()> {
+        self.send("Page.enable", json!({}))?;
+        let tree = self.send("Page.getFrameTree", json!({}))?;
+        if let Some(ft) = tree.get("frameTree") {
+            self.handle_frame_tree(ft, None);
+        }
+        self.send("Page.setLifecycleEventsEnabled", json!({ "enabled": true }))?;
+        // Before any page script on every document this page loads: keep the
+        // built-ins the snapshot producer uses where page script cannot
+        // replace them (`natives_prelude_script`).
+        self.send("Page.addScriptToEvaluateOnNewDocument", json!({ "source": natives_prelude_script() }))?;
+        // URL mode injects only the snapshot producer (plain JS) and runs the
+        // rules natively in this process over `SnapshotDom` (triage D2; see
+        // WASM-BUNDLE.md in the detector repo): no WebAssembly is compiled next
+        // to the page, so the page's Content-Security-Policy no longer gates
+        // the scan and `Page.setBypassCSP` is not needed. Leaving CSP enforced keeps the
+        // scan passive — a strict-CSP page's blocked inline scripts stay
+        // blocked, matching the puppeteer engine (which never bypassed CSP).
+        self.send("Runtime.enable", json!({}))?;
+        self.send("Network.enable", json!({}))?;
+        self.send("Performance.enable", json!({}))?;
+        self.send("Log.enable", json!({}))?;
+        self.send(
+            "Target.setAutoAttach",
+            json!({ "autoAttach": true, "waitForDebuggerOnStart": true, "flatten": true }),
+        )?;
+        Ok(())
+    }
+
+    /// The non-owning setup [`Browser::attach_page`] does: the frame tree
+    /// with the current document's loader, Runtime for execution contexts
+    /// and the page's errors, then an isolated world on that document as the
+    /// default for every evaluation. Domains enabled here are this session's
+    /// and end with it.
+    fn initialize_attached(&mut self) -> CdpResult<()> {
+        self.send("Page.enable", json!({}))?;
+        let tree = self.send("Page.getFrameTree", json!({}))?;
+        let Some(ft) = tree.get("frameTree") else {
+            return Err(CdpError::new("the page has no frame tree"));
+        };
+        self.handle_frame_tree(ft, None);
+        let loader = ft.pointer("/frame/loaderId").and_then(Value::as_str).unwrap_or("").to_string();
+        let main = self.main_frame_id.clone();
+        if let Some(frame) = self.frames.get_mut(&main) {
+            frame.loader_id = loader;
+        }
+        self.send("Runtime.enable", json!({}))?;
+        let world = self.create_isolated_world()?;
+        self.default_world = Some(world);
+        Ok(())
+    }
+
+    /// Whether this page was attached to ([`Browser::attach_page`]) rather
+    /// than opened.
+    pub fn is_attached(&self) -> bool {
+        self.attached
+    }
+
+    /// `Page.getLayoutMetrics`: the visual viewport's document position and
+    /// size, `(x, y, width, height)` in CSS pixels, and the layout
+    /// viewport's size.
+    pub fn viewport_metrics(&mut self) -> CdpResult<((f64, f64, f64, f64), (f64, f64))> {
+        let res = self.send("Page.getLayoutMetrics", json!({}))?;
+        let num = |v: Option<&Value>, k: &str| v.and_then(|v| v.get(k)).and_then(Value::as_f64);
+        let visual = res.get("cssVisualViewport").or_else(|| res.get("visualViewport"));
+        let layout = res.get("cssLayoutViewport").or_else(|| res.get("layoutViewport"));
+        let missing = || CdpError::new("Page.getLayoutMetrics returned no viewport");
+        Ok((
+            (
+                num(visual, "pageX").ok_or_else(missing)?,
+                num(visual, "pageY").ok_or_else(missing)?,
+                num(visual, "clientWidth").ok_or_else(missing)?,
+                num(visual, "clientHeight").ok_or_else(missing)?,
+            ),
+            (num(layout, "clientWidth").ok_or_else(missing)?, num(layout, "clientHeight").ok_or_else(missing)?),
+        ))
+    }
+
+    fn handle_frame_tree(&mut self, tree: &Value, parent: Option<String>) {
+        let Some(frame) = tree.get("frame") else {
+            return;
+        };
+        let Some(id) = frame.get("id").and_then(Value::as_str) else {
+            return;
+        };
+        let id = id.to_string();
+        let parent_id = frame
+            .get("parentId")
+            .and_then(Value::as_str)
+            .map(|s| s.to_string())
+            .or(parent);
+        if parent_id.is_none() && self.main_frame_id.is_empty() {
+            self.main_frame_id = id.clone();
+        }
+        let entry = self.frames.entry(id.clone()).or_default();
+        entry.parent = parent_id;
+        if let Some(children) = tree.get("childFrames").and_then(Value::as_array) {
+            for child in children {
+                self.handle_frame_tree(child, Some(id.clone()));
+            }
+        }
+    }
+
+    /// Sweep the CDP events already readable into page state (frames, errors,
+    /// auto-attach).
+    fn pump_events(&mut self) {
+        let events = self.browser.conn.take_events();
+        for ev in events {
+            self.on_event(&ev);
+        }
+    }
+
+    fn on_event(&mut self, ev: &Value) {
+        let method = ev.get("method").and_then(Value::as_str).unwrap_or("");
+        let session = ev.get("sessionId").and_then(Value::as_str).unwrap_or("");
+        let params = ev.get("params").cloned().unwrap_or(Value::Null);
+        if session == self.session_id {
+            match method {
+                "Runtime.executionContextCreated" => {
+                    if let (Some(id), Some(unique)) = (
+                        params.pointer("/context/id").and_then(Value::as_i64),
+                        params.pointer("/context/uniqueId").and_then(Value::as_str),
+                    ) {
+                        if self.execution_contexts.len() < 512 {
+                            self.execution_contexts.insert(id, unique.to_owned());
+                        }
+                    }
+                }
+                "Runtime.executionContextDestroyed" => {
+                    if let Some(id) = params.get("executionContextId").and_then(Value::as_i64) {
+                        self.execution_contexts.remove(&id);
+                    }
+                }
+                "Runtime.executionContextsCleared" => self.execution_contexts.clear(),
+                _ => {}
+            }
+            if let Some(capture) = &mut self.response_capture {
+                capture.event(method, &params);
+            }
+        }
+        let is_page_session = session == self.session_id || self.iframe_sessions.contains(session);
+        match method {
+            "Target.attachedToTarget" => {
+                let Some(new_session) = params.get("sessionId").and_then(Value::as_str) else {
+                    return;
+                };
+                let new_session = new_session.to_string();
+                let ttype = params
+                    .pointer("/targetInfo/type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("");
+                let waiting = params
+                    .get("waitingForDebugger")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                // Only targets hanging off this page (or its iframes) matter.
+                if !is_page_session {
+                    if waiting {
+                        let _ = self.browser.conn.post(
+                            Some(&new_session),
+                            "Runtime.runIfWaitingForDebugger",
+                            json!({}),
+                        );
+                    }
+                    return;
+                }
+                // Fire-and-forget setup, in order, so the target is configured
+                // before it resumes (puppeteer's FrameManager / WebWorker init).
+                let conn = &mut self.browser.conn;
+                match ttype {
+                    "iframe" => {
+                        self.iframe_sessions.insert(new_session.clone());
+                        let _ = conn.post(Some(&new_session), "Page.enable", json!({}));
+                        let _ = conn.post(
+                            Some(&new_session),
+                            "Page.setLifecycleEventsEnabled",
+                            json!({ "enabled": true }),
+                        );
+                        let _ = conn.post(Some(&new_session), "Runtime.enable", json!({}));
+                        let _ = conn.post(Some(&new_session), "Network.enable", json!({}));
+                    }
+                    "worker" => {
+                        self.browser
+                            .worker_owner
+                            .insert(new_session.clone(), self.session_id.clone());
+                        let _ = conn.post(Some(&new_session), "Runtime.enable", json!({}));
+                    }
+                    _ => {}
+                }
+                let _ = conn.post(
+                    Some(&new_session),
+                    "Target.setAutoAttach",
+                    json!({ "autoAttach": true, "waitForDebuggerOnStart": true, "flatten": true }),
+                );
+                if waiting {
+                    let _ = conn.post(
+                        Some(&new_session),
+                        "Runtime.runIfWaitingForDebugger",
+                        json!({}),
+                    );
+                }
+            }
+            "Target.detachedFromTarget" => {
+                if let Some(sid) = params.get("sessionId").and_then(Value::as_str) {
+                    self.iframe_sessions.remove(sid);
+                    self.browser.worker_owner.remove(sid);
+                }
+            }
+            "Runtime.exceptionThrown" => {
+                let counts = session == self.session_id
+                    || self
+                        .browser
+                        .worker_owner
+                        .get(session)
+                        .map(|owner| *owner == self.session_id)
+                        .unwrap_or(false);
+                if counts && self.page_errors.len() < PAGE_ERROR_CAP {
+                    if let Some(details) = params.get("exceptionDetails") {
+                        // First line, trimmed, 160 characters, deduped. One
+                        // throw that surfaces both synchronously and as an
+                        // unhandled rejection reports once, as it first
+                        // arrived.
+                        let message = page_error_message(details);
+                        let key = page_error_key(&message);
+                        if !message.is_empty()
+                            && !self.page_errors.iter().any(|e| page_error_key(&e.message) == key)
+                        {
+                            self.page_errors.push(PageError {
+                                message,
+                                source: page_error_source(details),
+                            });
+                        }
+                    }
+                }
+            }
+            _ if !is_page_session => {}
+            "Page.frameAttached" => {
+                let (Some(id), Some(parent)) = (
+                    params.get("frameId").and_then(Value::as_str),
+                    params.get("parentFrameId").and_then(Value::as_str),
+                ) else {
+                    return;
+                };
+                if !self.frames.contains_key(id) {
+                    self.frames.insert(
+                        id.to_string(),
+                        FrameState {
+                            parent: Some(parent.to_string()),
+                            ..Default::default()
+                        },
+                    );
+                }
+            }
+            "Page.frameDetached" => {
+                let Some(id) = params.get("frameId").and_then(Value::as_str) else {
+                    return;
+                };
+                let reason = params
+                    .get("reason")
+                    .and_then(Value::as_str)
+                    .unwrap_or("remove");
+                if reason == "swap" {
+                    if id == self.main_frame_id {
+                        self.swapped = true;
+                    }
+                } else {
+                    self.remove_frame_recursively(id);
+                }
+            }
+            "Page.frameNavigated" => {
+                let Some(frame) = params.get("frame") else {
+                    return;
+                };
+                let Some(id) = frame.get("id").and_then(Value::as_str) else {
+                    return;
+                };
+                let is_main = frame.get("parentId").and_then(Value::as_str).is_none();
+                if is_main && id != self.main_frame_id {
+                    // Main frame id changed (cross-process swap): carry state over.
+                    let old = self.frames.remove(&self.main_frame_id).unwrap_or_default();
+                    self.frames.insert(id.to_string(), old);
+                    self.main_frame_id = id.to_string();
+                } else if !self.frames.contains_key(id) {
+                    self.frames.insert(
+                        id.to_string(),
+                        FrameState {
+                            parent: frame
+                                .get("parentId")
+                                .and_then(Value::as_str)
+                                .map(String::from),
+                            ..Default::default()
+                        },
+                    );
+                }
+                let ntype = params
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("Navigation");
+                if ntype == "BackForwardCacheRestore" {
+                    self.swapped = true;
+                }
+            }
+            "Network.responseReceived" => {
+                if session == self.session_id
+                    && params.get("type").and_then(Value::as_str) == Some("Document")
+                    && params.get("frameId").and_then(Value::as_str)
+                        == Some(self.main_frame_id.as_str())
+                {
+                    self.main_document_response = params.get("response").cloned();
+                }
+            }
+            "Page.navigatedWithinDocument" => {
+                if params.get("frameId").and_then(Value::as_str)
+                    == Some(self.main_frame_id.as_str())
+                {
+                    self.same_document_navigation = true;
+                }
+            }
+            "Page.frameStartedLoading" => {
+                if let Some(id) = params.get("frameId").and_then(Value::as_str) {
+                    if let Some(f) = self.frames.get_mut(id) {
+                        f.has_started_loading = true;
+                    }
+                }
+            }
+            "Page.frameStoppedLoading" => {
+                if let Some(id) = params.get("frameId").and_then(Value::as_str) {
+                    if let Some(f) = self.frames.get_mut(id) {
+                        f.lifecycle.insert("DOMContentLoaded".into());
+                        f.lifecycle.insert("load".into());
+                    }
+                }
+            }
+            "Page.lifecycleEvent" => {
+                let (Some(id), Some(name)) = (
+                    params.get("frameId").and_then(Value::as_str),
+                    params.get("name").and_then(Value::as_str),
+                ) else {
+                    return;
+                };
+                let loader = params.get("loaderId").and_then(Value::as_str).unwrap_or("");
+                if let Some(f) = self.frames.get_mut(id) {
+                    if name == "init" {
+                        f.loader_id = loader.to_string();
+                        f.lifecycle.clear();
+                    }
+                    f.lifecycle.insert(name.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn remove_frame_recursively(&mut self, id: &str) {
+        let children: Vec<String> = self
+            .frames
+            .iter()
+            .filter(|(_, f)| f.parent.as_deref() == Some(id))
+            .map(|(k, _)| k.clone())
+            .collect();
+        for c in children {
+            self.remove_frame_recursively(&c);
+        }
+        self.frames.remove(id);
+    }
+
+    /// LifecycleWatcher#checkLifecycle over the frame tree.
+    fn lifecycle_complete(&self, frame_id: &str, expected: &str) -> bool {
+        let Some(frame) = self.frames.get(frame_id) else {
+            return false;
+        };
+        if !frame.lifecycle.contains(expected) {
+            return false;
+        }
+        for (id, child) in &self.frames {
+            if child.parent.as_deref() == Some(frame_id)
+                && child.has_started_loading
+                && !self.lifecycle_complete(id, expected)
+            {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Start the page's clock at `epoch_ms` for every document this page loads:
+    /// `new Date()`, `Date()`, `Date.now()` and an argument-less
+    /// `Intl.DateTimeFormat` format begin at that instant and advance in real
+    /// time, so a page that renders the current time or day renders the same
+    /// state in every capture pinned to the same instant, while code that measures
+    /// elapsed time still sees time pass. Call before navigating.
+    pub fn pin_clock(&mut self, epoch_ms: f64) -> CdpResult<()> {
+        if !epoch_ms.is_finite() {
+            return Err(CdpError::new("pinned clock must be a finite epoch"));
+        }
+        self.send("Page.addScriptToEvaluateOnNewDocument", json!({ "source": pinned_clock_script(epoch_ms) }))?;
+        Ok(())
+    }
+
+    /// Explicit screenshot-environment preference; never injected as page CSS.
+    pub fn set_reduced_motion(&mut self, reduce: bool) -> CdpResult<()> {
+        self.send("Emulation.setEmulatedMedia", json!({"features": [{
+            "name": "prefers-reduced-motion", "value": if reduce { "reduce" } else { "no-preference" }
+        }]}))?;
+        Ok(())
+    }
+
+    pub fn set_viewport(&mut self, viewport: Viewport) -> CdpResult<()> {
+        self.send(
+            "Emulation.setDeviceMetricsOverride",
+            json!({
+                "mobile": false,
+                "width": viewport.width,
+                "height": viewport.height,
+                "deviceScaleFactor": 1,
+                "screenOrientation": { "angle": 0, "type": "portraitPrimary" },
+            }),
+        )?;
+        self.send(
+            "Emulation.setTouchEmulationEnabled",
+            json!({ "enabled": false }),
+        )?;
+        Ok(())
+    }
+
+    /// JS detect-url.mjs#applyOriginScopedAuth(page, href, credentials):
+    /// page.authenticate is page-wide (a cross-origin redirect that then 401s
+    /// would receive the credentials), so Authorization is attached only to
+    /// requests on the scan origin, via Fetch interception.
+    pub fn apply_origin_scoped_auth(
+        &mut self,
+        href: &str,
+        username: &str,
+        password: &str,
+    ) -> CdpResult<()> {
+        let Ok(parsed) = url::Url::parse(href) else {
+            return Ok(());
+        };
+        let origin = parsed.origin().ascii_serialization();
+        if origin.is_empty() {
+            return Ok(());
+        }
+        // JS `basicAuthHeader(credentials)`.
+        use base64::Engine as _;
+        let header = format!(
+            "Basic {}",
+            base64::engine::general_purpose::STANDARD.encode(format!("{username}:{password}"))
+        );
+        // JS `page.setRequestInterception(true)`.
+        self.send("Fetch.enable", json!({}))?;
+        self.browser.conn.auth = Some(OriginAuth {
+            session_id: self.session_id.clone(),
+            origin,
+            header,
+        });
+        Ok(())
+    }
+
+    /// `page.goto(url, { waitUntil, timeout })`. `wait_until` is puppeteer's
+    /// name (`load`, `domcontentloaded`, `networkidle0`, `networkidle2`).
+    pub fn goto(&mut self, url: &str, wait_until: &str, timeout: Duration) -> CdpResult<()> {
+        let expected = match wait_until {
+            "load" => "load",
+            "domcontentloaded" => "DOMContentLoaded",
+            "networkidle0" => "networkIdle",
+            "networkidle2" => "networkAlmostIdle",
+            other => {
+                return Err(CdpError::new(format!(
+                    "Unknown value for options.waitUntil: {other}"
+                )));
+            }
+        };
+        self.pump_events();
+        let initial_loader = self
+            .frames
+            .get(&self.main_frame_id)
+            .map(|f| f.loader_id.clone())
+            .unwrap_or_default();
+        self.swapped = false;
+        self.same_document_navigation = false;
+        self.main_document_response = None;
+        let deadline = Instant::now() + timeout;
+        let timeout_msg = format!("Navigation timeout of {} ms exceeded", timeout.as_millis());
+
+        let sid = self.session_id.clone();
+        let frame_id = self.main_frame_id.clone();
+        let nav_id = self.browser.conn.post(
+            Some(&sid),
+            "Page.navigate",
+            json!({ "url": url, "frameId": frame_id }),
+        )?;
+        // Race the navigate reply against the lifecycle watcher's timeout.
+        let ensure_new_document;
+        loop {
+            let msg = match self.browser.conn.read_one(deadline)? {
+                Some(m) => m,
+                None => return Err(CdpError::new(timeout_msg)),
+            };
+            if msg.get("id").and_then(Value::as_u64) == Some(nav_id) {
+                if let Some(err) = msg.get("error") {
+                    let text = err.get("message").and_then(Value::as_str).unwrap_or("");
+                    return Err(CdpError::new(format!(
+                        "Protocol error (Page.navigate): {text}"
+                    )));
+                }
+                let result = msg.get("result").cloned().unwrap_or(Value::Null);
+                ensure_new_document = result
+                    .get("loaderId")
+                    .and_then(Value::as_str)
+                    .map(|s| !s.is_empty())
+                    .unwrap_or(false);
+                if let Some(text) = result.get("errorText").and_then(Value::as_str) {
+                    if !text.is_empty() && text != "net::ERR_HTTP_RESPONSE_CODE_FAILURE" {
+                        return Err(CdpError::new(format!("{text} at {url}")));
+                    }
+                }
+                break;
+            }
+            if msg.get("method").is_some() {
+                self.on_event(&msg);
+                if !self.frames.contains_key(&self.main_frame_id) {
+                    return Err(CdpError::new("Navigating frame was detached"));
+                }
+            }
+        }
+        // Wait for the lifecycle + (new-document | same-document) condition.
+        loop {
+            self.pump_events();
+            if !self.frames.contains_key(&self.main_frame_id) {
+                return Err(CdpError::new("Navigating frame was detached"));
+            }
+            let lifecycle_ok = self.lifecycle_complete(&self.main_frame_id.clone(), expected);
+            if lifecycle_ok {
+                let loader_changed = self
+                    .frames
+                    .get(&self.main_frame_id)
+                    .map(|f| f.loader_id != initial_loader)
+                    .unwrap_or(false);
+                let new_doc = self.swapped || loader_changed;
+                if ensure_new_document {
+                    if new_doc {
+                        return Ok(());
+                    }
+                } else if self.same_document_navigation {
+                    return Ok(());
+                }
+            }
+            match self.browser.conn.read_one(deadline)? {
+                Some(msg) => {
+                    if msg.get("method").is_some() {
+                        self.on_event(&msg);
+                    }
+                }
+                None => return Err(CdpError::new(timeout_msg)),
+            }
+        }
+    }
+
+    /// Create an opt-in world with separate JS globals/prototypes, on the current
+    /// main document. No universal cross-origin access is granted.
+    pub fn create_isolated_world(&mut self) -> CdpResult<IsolatedWorld> {
+        self.pump_events();
+        let frame_id = self.main_frame_id.clone();
+        let loader_id = self
+            .frames
+            .get(&frame_id)
+            .map(|f| f.loader_id.clone())
+            .unwrap_or_default();
+        if frame_id.is_empty() || loader_id.is_empty() {
+            return Err(CdpError::new("no current document for isolated capture"));
+        }
+        let created=self.send("Page.createIsolatedWorld",json!({"frameId":frame_id,"worldName":"impeccable-diagnostic-capture","grantUniveralAccess":false}))?;
+        let id = created["executionContextId"]
+            .as_i64()
+            .ok_or_else(|| CdpError::new("isolated world returned no context id"))?;
+        let unique_id = self
+            .execution_contexts
+            .get(&id)
+            .cloned()
+            .ok_or_else(|| CdpError::new("isolated context identity unavailable"))?;
+        let world = IsolatedWorld {
+            unique_id,
+            context_id: id,
+            session_id: self.session_id.clone(),
+            frame_id,
+            loader_id,
+        };
+        self.validate_world(&world)?;
+        Ok(world)
+    }
+
+    /// Inspect native DOM coverage, including authored closed shadow roots that
+    /// page-world selectors cannot see. This never treats hidden trees as absent.
+    pub fn capture_dom_coverage(&mut self, world: &IsolatedWorld) -> CdpResult<Value> {
+        self.validate_world(world)?;
+        let tree = self.send("DOM.getDocument", json!({"depth":-1,"pierce":true}))?;
+        self.validate_world(world)?;
+        let root = tree
+            .get("root")
+            .ok_or_else(|| CdpError::new("native DOM coverage unavailable"))?;
+        let mut stack = vec![root];
+        let mut nodes = 0;
+        let mut closed = 0;
+        while let Some(node) = stack.pop() {
+            nodes += 1;
+            if nodes > 5000 {
+                return Err(CdpError::new("native capture DOM exceeds 5000 nodes"));
+            }
+            if node.get("shadowRootType").and_then(Value::as_str) == Some("closed") {
+                closed += 1;
+            }
+            for key in ["children", "shadowRoots", "pseudoElements"] {
+                if let Some(children) = node.get(key).and_then(Value::as_array) {
+                    stack.extend(children);
+                }
+            }
+            for key in ["contentDocument", "templateContent"] {
+                if let Some(child) = node.get(key).filter(|v| v.is_object()) {
+                    stack.push(child);
+                }
+            }
+        }
+        Ok(json!({"inspectedNodes":nodes,"closedShadowRoots":closed}))
+    }
+
+    /// Inspector-owned stylesheet; never a page-authored style element.
+    pub fn create_capture_stylesheet(&mut self, world: &IsolatedWorld) -> CdpResult<String> {
+        self.validate_world(world)?;
+        self.send("DOM.enable", json!({}))?;
+        self.send("CSS.enable", json!({}))?;
+        let value = self.send("CSS.createStyleSheet", json!({"frameId":world.frame_id}))?;
+        self.validate_world(world)?;
+        value["styleSheetId"].as_str().map(str::to_owned)
+            .ok_or_else(|| CdpError::new("capture stylesheet unavailable"))
+    }
+
+    pub fn set_capture_stylesheet(&mut self, world: &IsolatedWorld, sheet: &str, text: &str) -> CdpResult<()> {
+        self.validate_world(world)?;
+        if text.len() > 65536 { return Err(CdpError::new("capture stylesheet exceeds bound")); }
+        self.send("CSS.setStyleSheetText", json!({"styleSheetId":sheet,"text":text}))?;
+        self.validate_world(world)
+    }
+
+    /// Main-document generated boxes from native layout, indexed in querySelectorAll order.
+    /// Do not infer pseudo geometry from its owner's rectangle.
+    pub fn capture_pseudo_geometry(&mut self, world: &IsolatedWorld, retained: &[Value]) -> CdpResult<Value> {
+        self.validate_world(world)?;
+        // Text-only generated boxes need no image geometry. Query candidates in
+        // the isolated world before the bounded native layout lookup.
+        let candidates = self.evaluate_value_in_world(world,
+            "[...document.querySelectorAll('*')].flatMap((el,index)=>['before','after'].filter(p=>{const s=getComputedStyle(el,'::'+p);return s.backgroundImage!=='none'||s.content.includes('url(')}).map(pseudo=>({index,pseudo})))")?;
+        let mut candidates = candidates.as_array().ok_or_else(|| CdpError::new("pseudo candidates unavailable"))?.clone();
+        // Suppression can remove a pseudo's only URL. Keep its identity eligible
+        // for a fresh native geometry lookup; never reuse its previous box.
+        for candidate in retained {
+            if !candidates.contains(candidate) { candidates.push(candidate.clone()); }
+        }
+        self.native_pseudo_boxes(world, &candidates)
+    }
+
+    /// Native layout boxes of the named generated boxes (`{index, pseudo}`,
+    /// `pseudo` without colons, `index` in querySelectorAll order): the bounds
+    /// of the border quad, transforms included, in viewport pixels. A generated
+    /// box with no layout box of its own reports `box: null`; one that is not
+    /// generated at all is not listed.
+    pub fn native_pseudo_boxes(&mut self, world: &IsolatedWorld, candidates: &[Value]) -> CdpResult<Value> {
+        self.validate_world(world)?;
+        if candidates.len()>256 {return Err(CdpError::new("capture pseudo image candidates exceed bound"));}
+        if candidates.is_empty() {return Ok(json!([]));}
+        let tree = self.send("DOM.getDocument", json!({"depth":-1}))?;
+        let mut stack = vec![(tree["root"].clone(), String::new())];
+        let mut index = 0usize;
+        let mut pseudos = Vec::new();
+        while let Some((node, selector)) = stack.pop() {
+            let owner = index;
+            if node["nodeType"] == 1 { index += 1; }
+            if index > 5000 { return Err(CdpError::new("capture DOM exceeds bound")); }
+            if let Some(items) = node["pseudoElements"].as_array() {
+                for pseudo in items {
+                    if !matches!(pseudo["pseudoType"].as_str(), Some("before" | "after" | "marker")) { continue; }
+                    if !candidates.iter().any(|c|c["index"].as_u64()==Some(owner as u64)&&c["pseudo"]==pseudo["pseudoType"]) {continue;}
+                    if pseudos.len() >= 256 { return Err(CdpError::new("capture pseudo elements exceed bound")); }
+                    let layout = self.send("DOM.getBoxModel", json!({"nodeId":pseudo["nodeId"]}));
+                    let bounds = layout.ok().and_then(|v| {
+                        let q = v["model"]["border"].as_array()?;
+                        if q.len()!=8 {return None;}
+                        let values: Option<Vec<f64>>=q.iter().map(Value::as_f64).collect();
+                        let values=values?;
+                        let xs=[values[0],values[2],values[4],values[6]];
+                        let ys=[values[1],values[3],values[5],values[7]];
+                        let x=xs.into_iter().fold(f64::INFINITY,f64::min);
+                        let y=ys.into_iter().fold(f64::INFINITY,f64::min);
+                        Some(json!({"x":x,"y":y,"w":xs.into_iter().fold(f64::NEG_INFINITY,f64::max)-x,"h":ys.into_iter().fold(f64::NEG_INFINITY,f64::max)-y}))
+                    });
+                    pseudos.push(json!({"index":owner,"pseudo":format!("::{}",pseudo["pseudoType"].as_str().unwrap()),"selector":selector,"backendNodeId":pseudo["backendNodeId"],"box":bounds}));
+                }
+            }
+            if let Some(children)=node["children"].as_array() {
+                let elements: Vec<_>=children.iter().filter(|n|n["nodeType"]==1).collect();
+                for (i,child) in elements.into_iter().enumerate().rev() {
+                    let path=if selector.is_empty(){":root".to_owned()}else{format!("{selector}>:nth-child({})",i+1)};
+                    stack.push((child.clone(),path));
+                }
+            }
+        }
+        self.validate_world(world)?;
+        Ok(json!(pseudos))
+    }
+
+    fn validate_world(&mut self, world: &IsolatedWorld) -> CdpResult<()> {
+        self.pump_events();
+        if self.session_id != world.session_id
+            || self.main_frame_id != world.frame_id
+            || self
+                .frames
+                .get(&world.frame_id)
+                .map(|f| f.loader_id.as_str())
+                != Some(world.loader_id.as_str())
+            || self.execution_contexts.get(&world.context_id) != Some(&world.unique_id)
+        {
+            return Err(CdpError::new(
+                "isolated capture context was destroyed or document changed",
+            ));
+        }
+        Ok(())
+    }
+
+    pub fn evaluate_value_in_world(
+        &mut self,
+        world: &IsolatedWorld,
+        expression: &str,
+    ) -> CdpResult<Value> {
+        self.validate_world(world)?;
+        let result = self.evaluate_with_context(expression, Some(&world.unique_id))?;
+        self.validate_world(world)?;
+        match result {
+            EvalOutcome::Value(v) => Ok(v),
+            EvalOutcome::Exception(message) => Err(CdpError::new(message)),
+        }
+    }
+
+    /// `page.evaluate(<expression string>)`: `Runtime.evaluate` with
+    /// `awaitPromise` + `returnByValue`, in the main world.
+    /// On an attached page it runs in the page's isolated world instead
+    /// ([`Browser::attach_page`]).
+    pub fn evaluate(&mut self, expression: &str) -> CdpResult<EvalOutcome> {
+        if let Some(world) = self.default_world.clone() {
+            self.validate_world(&world)?;
+            return self.evaluate_with_context(expression, Some(&world.unique_id));
+        }
+        self.evaluate_with_context(expression, None)
+    }
+
+    fn evaluate_with_context(
+        &mut self,
+        expression: &str,
+        unique_context: Option<&str>,
+    ) -> CdpResult<EvalOutcome> {
+        // The main world is the page's: run the expression with the
+        // built-ins the prelude stashed (`in_natives_scope`). An isolated
+        // world has its own untouched globals.
+        let scoped;
+        let expression = if unique_context.is_none() {
+            scoped = in_natives_scope(expression);
+            scoped.as_str()
+        } else {
+            expression
+        };
+        // An attached page keeps its own user-activation state: a gesture
+        // granted here would outlive the scan (autoplay, popups, fullscreen).
+        let mut params = json!({"expression":expression,"returnByValue":true,"awaitPromise":true,"userGesture":!self.attached});
+        if let Some(id) = unique_context {
+            params["uniqueContextId"] = json!(id);
+        }
+        let res = self.send("Runtime.evaluate", params);
+        let res = match res {
+            Ok(r) => r,
+            Err(e) => {
+                // ExecutionContext#rewriteError
+                if e.message.contains("Object reference chain is too long")
+                    || e.message.contains("Object couldn't be returned by value")
+                {
+                    return Ok(EvalOutcome::Value(Value::Null));
+                }
+                if e.message.ends_with("Cannot find context with specified id")
+                    || e.message.ends_with("Inspected target navigated or closed")
+                {
+                    return Err(CdpError::new(
+                        "Execution context was destroyed, most likely because of a navigation.",
+                    ));
+                }
+                return Err(e);
+            }
+        };
+        if let Some(details) = res.get("exceptionDetails") {
+            return Ok(EvalOutcome::Exception(client_error_message(details)));
+        }
+        let remote = res.get("result").cloned().unwrap_or(Value::Null);
+        Ok(EvalOutcome::Value(value_from_remote_object(&remote)))
+    }
+
+    /// `page.evaluate` that treats a page exception as an engine error, the
+    /// way `await page.evaluate(...)` throws in the JS.
+    pub fn evaluate_value(&mut self, expression: &str) -> CdpResult<Value> {
+        match self.evaluate(expression)? {
+            EvalOutcome::Value(v) => Ok(v),
+            EvalOutcome::Exception(message) => Err(CdpError::new(message)),
+        }
+    }
+
+    /// Preserve transparency when capturing isolated component paint.
+    pub fn set_transparent_background(&mut self) -> CdpResult<()> {
+        self.send("Emulation.setDefaultBackgroundColorOverride", json!({"color":{"r":0,"g":0,"b":0,"a":0}}))?;
+        Ok(())
+    }
+
+    /// Capture the current viewport without Chromium's beyond-viewport resize.
+    /// Use for observations that must not trigger responsive source selection.
+    pub fn screenshot_viewport(&mut self) -> CdpResult<String> {
+        let res = self.send(
+            "Page.captureScreenshot",
+            json!({
+                "format": "png", "optimizeForSpeed": false,
+                "fromSurface": true, "captureBeyondViewport": false,
+            }),
+        )?;
+        res.get("data")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| CdpError::new("viewport screenshot returned no PNG"))
+    }
+
+    /// `page.screenshot({ encoding: 'base64', clip, captureBeyondViewport: true })`.
+    /// Returns base64 PNG data.
+    pub fn screenshot_clip(
+        &mut self,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+    ) -> CdpResult<String> {
+        // Page.screenshot: roundRectangle(normalizeRectangle(clip)).
+        let (x, width) = if width < 0.0 {
+            (x + width, -width)
+        } else {
+            (x, width)
+        };
+        let (y, height) = if height < 0.0 {
+            (y + height, -height)
+        } else {
+            (y, height)
+        };
+        let round = |v: f64| impeccable_core::js::math_round(v);
+        let timeout = if self.attached { ATTACHED_SCREENSHOT_TIMEOUT } else { PROTOCOL_TIMEOUT };
+        let res = self.send_with_timeout(
+            "Page.captureScreenshot",
+            json!({
+                "format": "png",
+                "optimizeForSpeed": false,
+                "fromSurface": true,
+                "clip": { "x": round(x), "y": round(y), "width": round(width), "height": round(height), "scale": 1 },
+                // A beyond-viewport capture lays the page out at the size of
+                // the clip for the shot, which an attached app's window would
+                // show: it reads what is on screen instead.
+                "captureBeyondViewport": !self.attached,
+            }),
+            timeout,
+        )?;
+        Ok(res
+            .get("data")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string())
+    }
+
+    /// The main document's latest CDP `Network.Response` since the last
+    /// [`Page::goto`], or `None` when no document response was seen (a
+    /// `file://` load can have none).
+    pub fn main_document_response(&mut self) -> Option<Value> {
+        self.pump_events();
+        self.main_document_response.clone()
+    }
+
+    /// A JPEG of the given document region (`captureBeyondViewport`), base64.
+    pub fn screenshot_jpeg(
+        &mut self,
+        x: f64,
+        y: f64,
+        width: f64,
+        height: f64,
+        quality: u32,
+    ) -> CdpResult<String> {
+        let res = self.send(
+            "Page.captureScreenshot",
+            json!({
+                "format": "jpeg",
+                "quality": quality.min(100),
+                "fromSurface": true,
+                "clip": { "x": x, "y": y, "width": width.round(), "height": height.round(), "scale": 1 },
+                "captureBeyondViewport": !self.attached,
+            }),
+        )?;
+        Ok(res
+            .get("data")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string())
+    }
+
+    /// The visible viewport as it is painted now, base64 PNG. No clip and
+    /// nothing past the viewport, so a tile shows exactly what a visitor
+    /// scrolled to this position sees.
+    pub fn screenshot_viewport_png(&mut self) -> CdpResult<String> {
+        let res = self.send(
+            "Page.captureScreenshot",
+            json!({
+                "format": "png",
+                "optimizeForSpeed": true,
+                "fromSurface": true,
+                "captureBeyondViewport": false,
+            }),
+        )?;
+        Ok(res
+            .get("data")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string())
+    }
+
+    /// The visible viewport as base64 JPEG.
+    pub fn screenshot_viewport_jpeg(&mut self, quality: u32) -> CdpResult<String> {
+        let res = self.send(
+            "Page.captureScreenshot",
+            json!({
+                "format": "jpeg",
+                "quality": quality.min(100),
+                "fromSurface": true,
+                "captureBeyondViewport": false,
+            }),
+        )?;
+        Ok(res
+            .get("data")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string())
+    }
+
+    /// `Page.getLayoutMetrics().cssContentSize`: the document's scroll size in
+    /// CSS pixels, the region a beyond-viewport capture can paint.
+    pub fn content_size(&mut self) -> CdpResult<(f64, f64)> {
+        let res = self.send("Page.getLayoutMetrics", json!({}))?;
+        let size = res.get("cssContentSize").or_else(|| res.get("contentSize"));
+        let dim = |key: &str| {
+            size.and_then(|s| s.get(key))
+                .and_then(Value::as_f64)
+                .ok_or_else(|| CdpError::new("Page.getLayoutMetrics returned no content size"))
+        };
+        Ok((dim("width")?, dim("height")?))
+    }
+
+    /// The deduped `pageerror` messages so far, each with where it was thrown.
+    pub fn page_errors(&mut self) -> Vec<PageError> {
+        self.pump_events();
+        self.page_errors.clone()
+    }
+
+    /// `page.close()`: `Target.closeTarget`, errors swallowed like the JS
+    /// `page.close().catch(() => {})`. An attached page is detached from
+    /// instead, and stays open.
+    pub fn close(self) {
+        if self.attached {
+            let _ = self.browser.conn.send(
+                None,
+                "Target.detachFromTarget",
+                json!({ "sessionId": self.session_id }),
+                Duration::from_secs(10),
+            );
+        } else {
+            let target_id = self.target_id.clone();
+            let _ = self.browser.conn.send(
+                None,
+                "Target.closeTarget",
+                json!({ "targetId": target_id }),
+                Duration::from_secs(10),
+            );
+        }
+        // Interception (origin-scoped auth) dies with the page; a shared
+        // browser's next page must not inherit it.
+        if self
+            .browser
+            .conn
+            .auth
+            .as_ref()
+            .map(|a| a.session_id == self.session_id)
+            .unwrap_or(false)
+        {
+            self.browser.conn.auth = None;
+        }
+    }
+}
+
+/// puppeteer `valueFromPrimitiveRemoteObject` for `returnByValue` results.
+fn value_from_remote_object(remote: &Value) -> Value {
+    if let Some(unser) = remote.get("unserializableValue").and_then(Value::as_str) {
+        return match unser {
+            "-0" => json!(-0.0),
+            "NaN" | "Infinity" | "-Infinity" => Value::Null,
+            other => Value::String(other.to_string()),
+        };
+    }
+    remote.get("value").cloned().unwrap_or(Value::Null)
+}
+
+/// One uncaught page error: its message ([`page_error_message`]) and, when
+/// V8 recorded a script or a frame, where it was thrown.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PageError {
+    pub message: String,
+    /// `at <function>, <script url>:<line>:<column>` (1-based), or
+    /// `at <script url>:<line>:<column>` for an anonymous frame or a script
+    /// with no stack (a syntax error). A script with no URL reads
+    /// `<anonymous>` in the URL's place.
+    pub source: Option<String>,
+}
+
+/// Script URLs past this many characters are cut (a `data:` script, a URL
+/// carrying a long query), so the location never swamps the message.
+const PAGE_ERROR_URL_MAX: usize = 160;
+
+/// CDP's marker in front of an uncaught error (`exceptionDetails.text`), and
+/// the one it uses for an unhandled rejection.
+const UNCAUGHT: &str = "Uncaught";
+const UNCAUGHT_IN_PROMISE: &str = "Uncaught (in promise)";
+
+/// A message body past this many characters is cut.
+const PAGE_ERROR_MESSAGE_MAX: usize = 160;
+
+/// The message a page error reports, one shape whatever path the throw
+/// took, the way the console prints it: `Uncaught <Type>: <message>`, or
+/// `Uncaught (in promise) <Type>: <message>` for an unhandled rejection.
+///
+/// - An `Error` reads the first line of its description, which names the
+///   type (`TypeError: ...`, or the name a library gave it,
+///   `ChunkLoadError: ...`). A description that names none (a replaced
+///   `stack`) gets the class in front.
+/// - A thrown value that is not an `Error` (a plain object, a class
+///   instance, a rejected object) has no message of its own, so its class
+///   and the properties V8 previews stand in for one:
+///   `Uncaught Object {code: "E_CONFIG", message: "config missing"}`.
+/// - A primitive reads as `String(value)`: `Uncaught boom`.
+/// - A throw that arrives with no exception object (a script from another
+///   origin) keeps CDP's text, which already reads `Uncaught TypeError: ...`.
+///
+/// The body is its first line, trimmed and cut at 160 characters. A throw
+/// whose body is empty reports nothing, so this returns an empty string.
+///
+/// A production React invariant then reads as its message, the number kept
+/// ([`decode_react_invariant`]).
+pub fn page_error_message(details: &Value) -> String {
+    decode_react_invariant(&typed_page_error_message(details))
+}
+
+/// The common invariants a production React build throws by number, with the
+/// message React's error decoder prints for each (its leading sentences, where
+/// the rest is advice on how to fix it).
+const REACT_INVARIANTS: &[(u32, &str)] = &[
+    (31, "Objects are not valid as a React child."),
+    (130, "Element type is invalid: expected a string (for built-in components) or a class/function (for composite components)."),
+    (185, "Maximum update depth exceeded."),
+    (300, "Rendered fewer hooks than expected. This may be caused by an accidental early return statement."),
+    (301, "Too many re-renders. React limits the number of renders to prevent an infinite loop."),
+    (310, "Rendered more hooks than during the previous render."),
+    (321, "Invalid hook call. Hooks can only be called inside of the body of a function component."),
+    (418, "Hydration failed because the initial UI does not match what was rendered on the server."),
+    (419, "The server could not finish this Suspense boundary, likely due to an error during server rendering. Switched to client rendering."),
+    (421, "This Suspense boundary received an update before it finished hydrating."),
+    (422, "There was an error while hydrating this Suspense boundary. Switched to client rendering."),
+    (423, "There was an error while hydrating. Because the error happened outside of a Suspense boundary, the entire root will switch to client rendering."),
+    (425, "Text content does not match server-rendered HTML."),
+    (426, "A component suspended while responding to synchronous input."),
+];
+
+/// A production React build throws `Minified React error #418; visit <url>
+/// for the full message or use the non-minified dev environment for full
+/// errors and additional helpful warnings.`, which says nothing on its own.
+/// For a number in [`REACT_INVARIANTS`] the boilerplate after the number is
+/// replaced by the message: `Minified React error #418: Hydration failed
+/// because the initial UI does not match what was rendered on the server.`
+/// The message is added after the 160-character cut, so it is never cut. A
+/// number the table does not know, and any other text, stays as it was.
+pub fn decode_react_invariant(message: &str) -> String {
+    const MARK: &str = "Minified React error #";
+    let Some(at) = message.find(MARK) else {
+        return message.to_string();
+    };
+    let rest = &message[at + MARK.len()..];
+    let digits_len = rest.bytes().take_while(u8::is_ascii_digit).count();
+    let Ok(code) = rest[..digits_len].parse::<u32>() else {
+        return message.to_string();
+    };
+    let Some((_, text)) = REACT_INVARIANTS.iter().find(|(c, _)| *c == code) else {
+        return message.to_string();
+    };
+    let tail = &rest[digits_len..];
+    if !(tail.is_empty() || tail.starts_with("; visit ")) {
+        return message.to_string();
+    }
+    format!("{}: {text}", &message[..at + MARK.len() + digits_len])
+}
+
+/// [`page_error_message`] before a React invariant is decoded.
+fn typed_page_error_message(details: &Value) -> String {
+    let text = details.get("text").and_then(Value::as_str).unwrap_or("");
+    let Some(exception) = details.get("exception") else {
+        let first = first_line(text);
+        for marker in [UNCAUGHT_IN_PROMISE, UNCAUGHT] {
+            if let Some(rest) = first.strip_prefix(marker) {
+                if rest.is_empty() {
+                    return marker.to_string();
+                }
+                if rest.starts_with(' ') {
+                    return format!("{marker} {}", cap_message(&first_line(rest)));
+                }
+            }
+        }
+        return cap_message(&first);
+    };
+    let marker = if text.starts_with(UNCAUGHT_IN_PROMISE) {
+        UNCAUGHT_IN_PROMISE
+    } else {
+        UNCAUGHT
+    };
+    let body = cap_message(&first_line(&thrown_value_label(details, exception)));
+    if body.is_empty() {
+        return String::new();
+    }
+    format!("{marker} {body}")
+}
+
+/// The cut at [`PAGE_ERROR_MESSAGE_MAX`] characters, applied to the message
+/// after its type (`TypeError: `), so naming the type never costs the
+/// message any of what it showed before.
+fn cap_message(line: &str) -> String {
+    let cut = |s: &str| s.chars().take(PAGE_ERROR_MESSAGE_MAX).collect::<String>();
+    if names_a_type(line) {
+        let name_len = line
+            .chars()
+            .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '$')
+            .map(char::len_utf8)
+            .sum::<usize>();
+        if let Some(after_colon) = line[name_len..].strip_prefix(':') {
+            let message = after_colon.trim_start();
+            let prefix = &line[..line.len() - message.len()];
+            return format!("{prefix}{}", cut(message));
+        }
+    }
+    cut(line)
+}
+
+/// What two reports of one throw share: the message with the rejection
+/// marker read as a plain `Uncaught`. A throw that surfaces both
+/// synchronously and as an unhandled rejection (a consent manager's patched
+/// `document.createElement`, called from a script and from a promise) has one
+/// key. The source is not part of it.
+pub fn page_error_key(message: &str) -> std::borrow::Cow<'_, str> {
+    match message.strip_prefix(UNCAUGHT_IN_PROMISE) {
+        Some(rest) => std::borrow::Cow::Owned(format!("{UNCAUGHT}{rest}")),
+        None => std::borrow::Cow::Borrowed(message),
+    }
+}
+
+/// The first line, trimmed. [`cap_message`] makes the cut.
+fn first_line(s: &str) -> String {
+    let first = s.split('\n').next().unwrap_or("");
+    impeccable_core::js::trim(first).chars().collect()
+}
+
+/// The thrown value, typed: `TypeError: ...`, `Object {...}`, `boom`.
+fn thrown_value_label(details: &Value, exception: &Value) -> String {
+    let is_object = exception.get("type").and_then(Value::as_str) == Some("object");
+    let subtype = exception.get("subtype").and_then(Value::as_str);
+    if is_object && subtype == Some("error") {
+        let class = exception
+            .get("className")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let description = exception
+            .get("description")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let first = first_line(description);
+        return if first.is_empty() {
+            class.to_string()
+        } else if class.is_empty() || names_a_type(&first) {
+            first
+        } else {
+            format!("{class}: {first}")
+        };
+    }
+    if is_object && subtype.is_none() {
+        if let Some(rendered) = exception.get("preview").and_then(|p| render_preview(exception, p)) {
+            return rendered;
+        }
+    }
+    client_error_message(details)
+}
+
+/// Whether an error description's first line starts with the error's type,
+/// the way V8 writes `stack`: a name alone, or a name and a colon.
+fn names_a_type(line: &str) -> bool {
+    let name: String = line
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '$')
+        .collect();
+    let starts_like_a_name = name.chars().next().is_some_and(|c| !c.is_ascii_digit());
+    let rest = &line[name.len()..];
+    starts_like_a_name && (rest.is_empty() || rest.starts_with(':'))
+}
+
+/// `Class {name: value, ...}` from a CDP `ObjectPreview`.
+fn render_preview(exception: &Value, preview: &Value) -> Option<String> {
+    let properties = preview.get("properties")?.as_array()?;
+    let class = exception
+        .get("className")
+        .and_then(Value::as_str)
+        .filter(|c| !c.is_empty())
+        .unwrap_or("Object");
+    let mut parts: Vec<String> = properties
+        .iter()
+        .filter_map(|p| {
+            let name = p.get("name")?.as_str()?;
+            let kind = p.get("type").and_then(Value::as_str).unwrap_or("");
+            let raw = p.get("value").and_then(Value::as_str).unwrap_or("");
+            let value = match kind {
+                "string" => serde_json::to_string(raw).ok()?,
+                "undefined" => "undefined".to_string(),
+                _ if raw.is_empty() => kind.to_string(),
+                _ => raw.to_string(),
+            };
+            Some(format!("{name}: {value}"))
+        })
+        .collect();
+    if preview.get("overflow").and_then(Value::as_bool) == Some(true) {
+        parts.push("...".to_string());
+    }
+    Some(format!("{class} {{{}}}", parts.join(", ")))
+}
+
+/// V8's name for a script with no URL: code run through `eval` or
+/// `new Function`, or a script element given text instead of a `src`.
+const ANONYMOUS_SCRIPT: &str = "<anonymous>";
+
+/// Where a page error was thrown: the top stack frame when V8 recorded one
+/// with a script URL, else the script position the exception details carry
+/// (a syntax error has no stack), else the top frame in a script with no URL,
+/// named `<anonymous>` the way V8's own stack names it. `None` when there is
+/// neither a named script nor a frame.
+pub fn page_error_source(details: &Value) -> Option<String> {
+    let names_script = |v: &Value| v.get("url").and_then(Value::as_str).is_some_and(|u| !u.is_empty());
+    let top = details.pointer("/stackTrace/callFrames/0");
+    let (at, frame) = match top {
+        Some(f) if names_script(f) => (f, Some(f)),
+        _ if names_script(details) => (details, None),
+        Some(f) => (f, Some(f)),
+        None => return None,
+    };
+    let url = at
+        .get("url")
+        .and_then(Value::as_str)
+        .filter(|u| !u.is_empty())
+        .unwrap_or(ANONYMOUS_SCRIPT);
+    // CDP positions are 0-based; stack traces and editors count from 1.
+    let position = |key: &str| at.get(key).and_then(Value::as_f64).unwrap_or(0.0).max(0.0) as u64 + 1;
+    let url = if url.chars().count() > PAGE_ERROR_URL_MAX {
+        format!("{}...", url.chars().take(PAGE_ERROR_URL_MAX).collect::<String>())
+    } else {
+        url.to_string()
+    };
+    let location = format!("{url}:{}:{}", position("lineNumber"), position("columnNumber"));
+    let function = frame
+        .and_then(|f| f.get("functionName"))
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    Some(if function.is_empty() {
+        format!("at {location}")
+    } else {
+        format!("at {function}, {location}")
+    })
+}
+
+/// `String(err?.message || err)` over puppeteer's `createClientError` /
+/// `createEvaluationError`: the message for an error object, the stringified
+/// primitive otherwise.
+pub fn client_error_message(details: &Value) -> String {
+    let exception = details.get("exception");
+    let Some(exception) = exception else {
+        return details
+            .get("text")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string();
+    };
+    let etype = exception.get("type").and_then(Value::as_str).unwrap_or("");
+    let subtype = exception
+        .get("subtype")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let has_object_id = exception.get("objectId").is_some();
+    if (etype != "object" || subtype != "error") && !has_object_id {
+        // A thrown primitive: String(value).
+        if let Some(unser) = exception.get("unserializableValue").and_then(Value::as_str) {
+            return match unser {
+                "-0" => "0".to_string(),
+                other if other.ends_with('n') => other.trim_end_matches('n').to_string(),
+                other => other.to_string(),
+            };
+        }
+        return match exception.get("value") {
+            None => "undefined".to_string(),
+            Some(Value::Null) => "null".to_string(),
+            Some(Value::String(s)) => s.clone(),
+            Some(Value::Bool(b)) => b.to_string(),
+            Some(Value::Number(n)) => {
+                impeccable_core::js::number_to_string(n.as_f64().unwrap_or(f64::NAN))
+            }
+            Some(other) => other.to_string(),
+        };
+    }
+    // getErrorDetails
+    let description = exception
+        .get("description")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let mut lines: Vec<&str> = if exception.get("description").is_some() {
+        description.split("\n    at ").collect()
+    } else {
+        Vec::new()
+    };
+    let frames = details
+        .pointer("/stackTrace/callFrames")
+        .and_then(Value::as_array)
+        .map(|a| a.len())
+        .unwrap_or(0);
+    let size = frames.min(lines.len().saturating_sub(1));
+    if size > 0 {
+        let keep = lines.len() - size;
+        lines.truncate(keep);
+    }
+    let name = exception
+        .get("className")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let mut message = lines.join("\n");
+    if !name.is_empty() {
+        let prefix = format!("{name}: ");
+        if message.starts_with(&prefix) {
+            message = message[prefix.len()..].to_string();
+        }
+    }
+    message
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn error_message_extraction_matches_puppeteer() {
+        let details = json!({
+            "text": "Uncaught",
+            "exception": {
+                "type": "object", "subtype": "error", "className": "ReferenceError",
+                "description": "ReferenceError: foo is not defined\n    at <anonymous>:1:1",
+                "objectId": "1"
+            },
+            "stackTrace": { "callFrames": [{ "functionName": "", "url": "", "lineNumber": 0, "columnNumber": 0 }] }
+        });
+        assert_eq!(client_error_message(&details), "foo is not defined");
+        let primitive =
+            json!({ "text": "Uncaught", "exception": { "type": "string", "value": "boom" } });
+        assert_eq!(client_error_message(&primitive), "boom");
+        let none = json!({ "text": "Uncaught SyntaxError" });
+        assert_eq!(client_error_message(&none), "Uncaught SyntaxError");
+        let syntax = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "SyntaxError",
+                "description": "SyntaxError: Unexpected token '}'", "objectId": "2" }
+        });
+        assert_eq!(client_error_message(&syntax), "Unexpected token '}'");
+    }
+
+    #[test]
+    fn page_error_names_a_thrown_object_by_its_preview() {
+        // A plain object thrown from a named function (the shape adm.com's tag
+        // manager reported as `Uncaught [object Object]`).
+        let object = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "className": "Object", "description": "Object", "objectId": "1",
+                "preview": { "type": "object", "description": "Object", "overflow": false, "properties": [
+                    { "name": "code", "type": "string", "value": "E_CONFIG" },
+                    { "name": "message", "type": "string", "value": "config \"missing\"" }
+                ] } }
+        });
+        assert_eq!(page_error_message(&object), r#"Uncaught Object {code: "E_CONFIG", message: "config \"missing\""}"#);
+        let instance = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "className": "ApiError", "description": "ApiError", "objectId": "2",
+                "preview": { "type": "object", "description": "ApiError", "overflow": true, "properties": [
+                    { "name": "status", "type": "number", "value": "500" },
+                    { "name": "body", "type": "object", "value": "Object" },
+                    { "name": "cause", "type": "undefined" }
+                ] } }
+        });
+        assert_eq!(page_error_message(&instance), "Uncaught ApiError {status: 500, body: Object, cause: undefined, ...}");
+        // An Error names its type; a primitive reads as itself.
+        let error = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "Error", "objectId": "3",
+                "description": "Error: Minified React error #418; visit https://reactjs.org/docs/error-decoder.html?invariant=418\n    at t3 (https://x.test/a.js:1:24070)" },
+            "stackTrace": { "callFrames": [{ "functionName": "t3", "url": "https://x.test/a.js", "lineNumber": 0, "columnNumber": 24069 }] }
+        });
+        // A production React invariant reads as its message
+        // (`a_react_invariant_reads_as_its_message`).
+        assert_eq!(
+            page_error_message(&error),
+            "Uncaught Error: Minified React error #418: Hydration failed because the initial UI does not match what was rendered on the server."
+        );
+        assert_eq!(page_error_message(&json!({ "text": "Uncaught", "exception": { "type": "string", "value": "boom" } })), "Uncaught boom");
+        // A cross-origin throw arrives with no exception object to read.
+        assert_eq!(page_error_message(&json!({ "text": "Uncaught [object Object]" })), "Uncaught [object Object]");
+    }
+
+    #[test]
+    fn page_error_message_names_the_type_on_every_path() {
+        // The thrown-object path used to drop the type (`jQuery is not
+        // defined` on adm.com) while CDP's text kept it for a script from
+        // another origin (`Uncaught TypeError: ...` from OneTrust).
+        let reference = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "ReferenceError", "objectId": "1",
+                "description": "ReferenceError: jQuery is not defined\n    at https://www.adm.com/en-us/products-services/services/:4811:60" }
+        });
+        assert_eq!(page_error_message(&reference), "Uncaught ReferenceError: jQuery is not defined");
+        let rejected = json!({
+            "text": "Uncaught (in promise)",
+            "exception": { "type": "object", "subtype": "error", "className": "TypeError", "objectId": "2",
+                "description": "TypeError: Cannot read properties of undefined (reading 'ECID')\n    at <anonymous>:894:50" }
+        });
+        assert_eq!(
+            page_error_message(&rejected),
+            "Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'ECID')"
+        );
+        // The name a library gave its error is the type V8 prints.
+        let chunk = json!({
+            "text": "Uncaught (in promise)",
+            "exception": { "type": "object", "subtype": "error", "className": "Error", "objectId": "3",
+                "description": "ChunkLoadError: Loading chunk web-vitals failed.\n(error: https://www.att.com/x.js)\n    at __webpack_require__.f.j (https://www.att.com/chat/runtime.js:298:31)" }
+        });
+        assert_eq!(page_error_message(&chunk), "Uncaught (in promise) ChunkLoadError: Loading chunk web-vitals failed.");
+        // A description that names no type gets the class in front; an empty
+        // message is the type alone.
+        let replaced_stack = json!({ "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "Error", "objectId": "4", "description": "config went missing" } });
+        assert_eq!(page_error_message(&replaced_stack), "Uncaught Error: config went missing");
+        let bare = json!({ "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "AbortError", "objectId": "5", "description": "AbortError" } });
+        assert_eq!(page_error_message(&bare), "Uncaught AbortError");
+        // CDP's text for a throw from another origin is typed already.
+        let text_only = json!({ "text": "Uncaught (in promise) TypeError: Cannot redefine property: src\nmore" });
+        assert_eq!(page_error_message(&text_only), "Uncaught (in promise) TypeError: Cannot redefine property: src");
+        // The message after its type is cut at 160 characters, the cut base
+        // applied to the untyped message, so a long React invariant keeps
+        // everything it showed before.
+        let long = json!({ "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "Error", "objectId": "6",
+                "description": format!("Error: {}", "x".repeat(300)) } });
+        assert_eq!(page_error_message(&long), format!("Uncaught Error: {}", "x".repeat(160)));
+        let long_text = json!({ "text": format!("Uncaught (in promise) TypeError: {}", "y".repeat(300)) });
+        assert_eq!(page_error_message(&long_text), format!("Uncaught (in promise) TypeError: {}", "y".repeat(160)));
+        let long_object = json!({ "text": "Uncaught", "exception": { "type": "string", "value": "z".repeat(300) } });
+        assert_eq!(page_error_message(&long_object), format!("Uncaught {}", "z".repeat(160)));
+        // A throw with nothing to say reports nothing, as before.
+        assert_eq!(page_error_message(&json!({ "text": "Uncaught", "exception": { "type": "string", "value": "" } })), "");
+        assert!(names_a_type("TypeError: x") && names_a_type("AbortError") && names_a_type("$Err: y"));
+        assert!(!names_a_type("config went missing") && !names_a_type("404: gone") && !names_a_type(""));
+    }
+
+    #[test]
+    fn a_throw_reported_sync_and_in_promise_has_one_key() {
+        let sync = "Uncaught TypeError: Cannot redefine property: src";
+        let rejected = "Uncaught (in promise) TypeError: Cannot redefine property: src";
+        assert_eq!(page_error_key(rejected), sync);
+        assert_eq!(page_error_key(sync), page_error_key(rejected));
+        assert_ne!(page_error_key(sync), page_error_key("Uncaught TypeError: Cannot redefine property: href"));
+        assert_eq!(page_error_key("Uncaught boom"), "Uncaught boom");
+    }
+
+    #[test]
+    fn a_react_invariant_reads_as_its_message() {
+        // Both URL forms, after the cut: React 18's decoder page and React
+        // 19's errors page. The number stays; the boilerplate goes.
+        assert_eq!(
+            decode_react_invariant("Uncaught Error: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full"),
+            "Uncaught Error: Minified React error #423: There was an error while hydrating. Because the error happened outside of a Suspense boundary, the entire root will switch to client rendering."
+        );
+        assert_eq!(
+            decode_react_invariant("Uncaught Error: Minified React error #425; visit https://react.dev/errors/425 for the full message or use the non-minified dev environment for full errors and additional helpful warnings."),
+            "Uncaught Error: Minified React error #425: Text content does not match server-rendered HTML."
+        );
+        assert_eq!(
+            decode_react_invariant("Uncaught (in promise) Error: Minified React error #422"),
+            "Uncaught (in promise) Error: Minified React error #422: There was an error while hydrating this Suspense boundary. Switched to client rendering."
+        );
+        // The decoded message is added after the cut, so it is never cut.
+        let details = json!({
+            "text": "Uncaught",
+            "exception": { "type": "object", "subtype": "error", "className": "Error", "objectId": "1",
+                "description": "Error: Minified React error #423; visit https://reactjs.org/docs/error-decoder.html?invariant=423 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.\n    at x (https://x.test/a.js:1:2)" }
+        });
+        assert!(page_error_message(&details).ends_with("the entire root will switch to client rendering."));
+        // A number the table does not know, and text that is not an invariant,
+        // stay as they were.
+        for unchanged in [
+            "Uncaught Error: Minified React error #9999; visit https://react.dev/errors/9999 for the full message",
+            "Uncaught Error: Order #418 failed to sync",
+            "Uncaught Error: Minified React error #418 happened twice",
+            "Uncaught Error: Minified React error #",
+            "Uncaught boom",
+        ] {
+            assert_eq!(decode_react_invariant(unchanged), unchanged);
+        }
+        // Both reports of one invariant still share a key.
+        let sync = page_error_message(&json!({ "text": "Uncaught Error: Minified React error #418; visit https://react.dev/errors/418 for the full message" }));
+        let rejected = page_error_message(&json!({ "text": "Uncaught (in promise) Error: Minified React error #418; visit https://react.dev/errors/418 for the full message" }));
+        assert_eq!(page_error_key(&sync), page_error_key(&rejected));
+    }
+
+    #[test]
+    fn page_error_source_is_the_top_frame_or_the_script_position() {
+        let framed = json!({
+            "text": "Uncaught [object Object]", "url": "https://www.googletagmanager.com/gtm.js?id=GTM-X",
+            "lineNumber": 271, "columnNumber": 503,
+            "stackTrace": { "callFrames": [
+                { "functionName": "error", "url": "https://www.googletagmanager.com/gtm.js?id=GTM-X", "lineNumber": 271, "columnNumber": 503 },
+                { "functionName": "c.m.onerror", "url": "https://www.googletagmanager.com/gtm.js?id=GTM-X", "lineNumber": 280, "columnNumber": 160 }
+            ] }
+        });
+        assert_eq!(
+            page_error_source(&framed).as_deref(),
+            Some("at error, https://www.googletagmanager.com/gtm.js?id=GTM-X:272:504")
+        );
+        let anonymous = json!({
+            "stackTrace": { "callFrames": [{ "functionName": "", "url": "https://co-trip.jp/_next/static/chunks/fd9d.js", "lineNumber": 0, "columnNumber": 63838 }] }
+        });
+        assert_eq!(page_error_source(&anonymous).as_deref(), Some("at https://co-trip.jp/_next/static/chunks/fd9d.js:1:63839"));
+        // A syntax error has no stack, only the script position.
+        let syntax = json!({ "text": "Uncaught SyntaxError: Invalid or unexpected token", "url": "http://127.0.0.1/p.html", "lineNumber": 50, "columnNumber": 18 });
+        assert_eq!(page_error_source(&syntax).as_deref(), Some("at http://127.0.0.1/p.html:51:19"));
+        // A frame in a script with no URL (eval, `new Function`, an inline
+        // script given text) names V8's `<anonymous>` script, where it used to
+        // print no source at all (samsung.com `ECID`, heynoah.io `t.push`).
+        let evaluated = json!({ "text": "Uncaught", "stackTrace": { "callFrames": [{ "functionName": "f", "url": "", "lineNumber": 0, "columnNumber": 0 }] } });
+        assert_eq!(page_error_source(&evaluated).as_deref(), Some("at f, <anonymous>:1:1"));
+        let injected = json!({ "text": "Uncaught (in promise)", "url": "", "lineNumber": 893, "columnNumber": 49,
+            "stackTrace": { "callFrames": [{ "functionName": "", "url": "", "lineNumber": 893, "columnNumber": 49 }] } });
+        assert_eq!(page_error_source(&injected).as_deref(), Some("at <anonymous>:894:50"));
+        // A named script in the details still wins over an unnamed top frame.
+        let inline = json!({ "url": "https://www.cvs.com/", "lineNumber": 2804, "columnNumber": 42,
+            "stackTrace": { "callFrames": [{ "functionName": "g", "url": "", "lineNumber": 0, "columnNumber": 0 }] } });
+        assert_eq!(page_error_source(&inline).as_deref(), Some("at https://www.cvs.com/:2805:43"));
+        // Nothing named and no frame: no source.
+        assert_eq!(page_error_source(&json!({ "text": "Uncaught" })), None);
+        let long = format!("data:text/javascript,{}", "x".repeat(400));
+        let cut = page_error_source(&json!({ "url": long, "lineNumber": 0, "columnNumber": 0 })).unwrap();
+        assert!(cut.ends_with("...:1:1"), "{cut}");
+        assert_eq!(cut.chars().count(), "at ".len() + 160 + "...:1:1".len());
+    }
+
+    #[test]
+    fn concurrent_launches_with_identical_clock_ticks_reserve_distinct_profiles() {
+        let profiles = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..32)
+                .map(|_| scope.spawn(|| reserve_profile(&std::env::temp_dir(), 7).unwrap()))
+                .collect();
+            handles
+                .into_iter()
+                .map(|h| h.join().unwrap())
+                .collect::<Vec<_>>()
+        });
+        assert_eq!(
+            profiles
+                .iter()
+                .collect::<std::collections::HashSet<_>>()
+                .len(),
+            32
+        );
+        for path in profiles {
+            std::fs::remove_dir(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn default_args_shape() {
+        let args = default_chrome_args(&[], false);
+        assert_eq!(args[0], "--allow-pre-commit-input");
+        assert!(args.contains(&"--headless=new".to_string()));
+        assert!(args.contains(&"--hide-scrollbars".to_string()));
+        assert_eq!(args.last().unwrap(), "about:blank");
+        let with = default_chrome_args(&["--no-sandbox".to_string()], false);
+        assert_eq!(with.last().unwrap(), "--no-sandbox");
+        assert!(with.contains(&"about:blank".to_string()));
+    }
+
+    /// Chrome reads only the last `--disable-features`, so the bound-session
+    /// switch has to sit in the one list the launcher passes.
+    #[test]
+    fn bound_sessions_are_off_in_the_only_feature_list() {
+        let args = default_chrome_args(&[], false);
+        let lists: Vec<&String> = args
+            .iter()
+            .filter(|a| a.starts_with("--disable-features="))
+            .collect();
+        assert_eq!(lists.len(), 1);
+        let features = lists[0].trim_start_matches("--disable-features=");
+        assert!(features.split(',').any(|f| f == "DeviceBoundSessions"));
+    }
+
+    /// The installed browser for a page-level test, or `None` when there is
+    /// none (the test then passes without running).
+    fn test_browser() -> Option<Browser> {
+        let env: std::collections::HashMap<String, String> = std::env::vars().collect();
+        let exe = crate::discovery::find_browser(&env).ok()?;
+        Browser::launch(&exe, &[], false).ok()
+    }
+
+    /// A worker the page spawns while a command is in flight is held by
+    /// auto-attach until its attach event is answered. Handled as it arrives,
+    /// the worker runs and the command's promise settles; queued until the
+    /// reply, the two waited on each other for the protocol timeout.
+    #[test]
+    fn an_event_during_a_command_is_handled_before_the_reply() {
+        let Some(mut browser) = test_browser() else { return };
+        let mut page = browser.new_page().unwrap();
+        page.goto("about:blank", "load", Duration::from_secs(15)).unwrap();
+        let outcome = page
+            .evaluate_value(
+                r#"new Promise((resolve) => {
+  const worker = new Worker(URL.createObjectURL(new Blob(['postMessage(1)'], { type: 'text/javascript' })));
+  worker.onmessage = () => resolve('ran');
+  worker.onerror = (e) => resolve('error: ' + e.message);
+  setTimeout(() => resolve('held'), 5000);
+})"#,
+            )
+            .unwrap();
+        assert_eq!(outcome.as_str(), Some("ran"));
+        page.close();
+        browser.close();
+    }
+
+    /// A page that throws a new error every tick keeps its first
+    /// [`PAGE_ERROR_CAP`] and the scan keeps up with the rest.
+    #[test]
+    fn a_page_that_throws_without_end_keeps_its_first_errors() {
+        let Some(mut browser) = test_browser() else { return };
+        let mut page = browser.new_page().unwrap();
+        page.goto("about:blank", "load", Duration::from_secs(15)).unwrap();
+        page.evaluate_value(
+            r#"(() => {
+  let n = 0;
+  const tick = () => { for (let i = 0; i < 20; i++) Promise.reject(new Error('tick ' + (n++))); setTimeout(tick, 0); };
+  tick();
+  return true;
+})()"#,
+        )
+        .unwrap();
+        let started = Instant::now();
+        page.evaluate_value("new Promise((resolve) => setTimeout(() => resolve(true), 1000))").unwrap();
+        assert!(started.elapsed() < Duration::from_secs(20), "the flood starved the command: {:?}", started.elapsed());
+        let errors = page.page_errors();
+        assert!(!errors.is_empty());
+        assert!(errors.len() <= PAGE_ERROR_CAP, "{} errors kept", errors.len());
+        page.close();
+        browser.close();
+    }
+}
+
+/// `browser-bundle/05-natives.js`: binds the built-ins the page JS uses
+/// (`Map`, `Set`, `Array.from`, `JSON.stringify`, ...) from
+/// `window.__impeccableNatives` when that stash exists, else from the
+/// current globals.
+pub const NATIVES_JS: &str = include_str!("../../../browser-bundle/05-natives.js");
+
+/// The new-document script [`Page`] registers for every document, which runs
+/// before the page's own scripts: it builds the natives from the untouched
+/// globals and stashes them on `window.__impeccableNatives`, non-enumerable
+/// and read-only, so a page that declares its own global `Map` (work24.go.kr)
+/// or reassigns `Array.from` cannot reach the capture.
+pub fn natives_prelude_script() -> String {
+    format!(
+        "(function(){{\n{NATIVES_JS}\ntry {{ Reflect.defineProperty(window, '__impeccableNatives', {{ value: __impeccableNatives, enumerable: false, writable: false, configurable: false }}); }} catch (e) {{}}\n}})()"
+    )
+}
+
+/// The names `browser-bundle/05-natives.js` binds, in its order. A unit test
+/// keeps the two lists equal.
+pub const NATIVE_NAMES: &[&str] = &[
+    "Map", "Set", "WeakMap", "WeakSet", "Error", "URL", "Image", "ResizeObserver", "String",
+    "Boolean", "Array", "Object", "Number", "Promise", "JSON", "Math", "Reflect", "CSS",
+    "performance", "getComputedStyle", "matchMedia", "setTimeout", "clearTimeout",
+    "requestAnimationFrame", "parseFloat",
+];
+
+/// `expression` inside a block whose `const`s shadow the built-ins with the
+/// ones the new-document prelude stashed, so the engine's own page scripts
+/// (the scroll probe, the full-page screenshot, consent and overlay
+/// handling) build a native `Map` on a page that declared its own
+/// (work24.go.kr). Without a stash (a document loaded before the prelude was
+/// registered) the names read the page's globals as before.
+///
+/// A block's completion value is its last statement's, so an expression and
+/// a statement list ending in one both return what they did unwrapped. The
+/// prefix shares the expression's first line, so reported line numbers do
+/// not move, and the closing brace has its own line, so a trailing `//`
+/// comment cannot swallow it.
+pub fn in_natives_scope(expression: &str) -> String {
+    let mut out = String::with_capacity(expression.len() + 320);
+    out.push_str("{ const { ");
+    out.push_str(&NATIVE_NAMES.join(", "));
+    out.push_str(" } = (window.__impeccableNatives || window); ");
+    out.push_str(expression);
+    out.push_str("\n}");
+    out
+}
+
+/// The page-side half of [`Page::pin_clock`].
+pub fn pinned_clock_script(epoch_ms: f64) -> String {
+    format!(r#"(()=>{{const T={epoch},P=performance.now(),N=Date;const now=()=>Math.floor(T+performance.now()-P);
+const D=new Proxy(N,{{construct(t,a,nt){{return Reflect.construct(N,a.length?a:[now()],nt)}},apply(){{return new N(now()).toString()}},get(t,k,r){{return k==="now"?now:Reflect.get(t,k,r)}}}});
+Object.defineProperty(globalThis,"Date",{{value:D,writable:true,configurable:true,enumerable:false}});
+Object.defineProperty(N.prototype,"constructor",{{value:D,writable:true,configurable:true,enumerable:false}});
+const F=Intl.DateTimeFormat.prototype,g=Object.getOwnPropertyDescriptor(F,"format").get,p=F.formatToParts;
+Object.defineProperty(F,"format",{{configurable:true,get(){{const f=g.call(this);return d=>f(d===undefined?now():d)}}}});
+F.formatToParts=function(d){{return p.call(this,d===undefined?now():d)}};}})()"#, epoch = epoch_ms.floor() as i64)
+}
+
+#[cfg(test)]
+mod natives_tests {
+    use super::*;
+
+    #[test]
+    fn native_names_match_the_natives_file() {
+        let start = NATIVES_JS.rfind("const {").expect("05-natives.js ends with a destructure");
+        let end = start + NATIVES_JS[start..].find('}').expect("closing brace");
+        let names: Vec<&str> = NATIVES_JS[start + "const {".len()..end]
+            .split(',')
+            .map(str::trim)
+            .filter(|n| !n.is_empty())
+            .collect();
+        assert_eq!(names, NATIVE_NAMES, "browser-bundle/05-natives.js and NATIVE_NAMES differ");
+    }
+
+    #[test]
+    fn natives_scope_keeps_the_first_line_and_closes_after_a_comment() {
+        let scoped = in_natives_scope("(() => 1)() // trailing");
+        assert_eq!(scoped.lines().count(), 2);
+        assert!(scoped.lines().next().unwrap().ends_with("(() => 1)() // trailing"));
+        assert_eq!(scoped.lines().last(), Some("}"));
+    }
+}

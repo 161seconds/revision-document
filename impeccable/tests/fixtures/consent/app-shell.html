@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: an app shell under a OneTrust backdrop</title>
+  <style>
+    /* An app shell locks <body> itself (inline overflow: hidden) and scrolls
+       inside <main>. A OneTrust banner with its dark filter shows over it.
+       The banner and filter are hidden, and the body lock stays: it is the
+       site's, not the manager's. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; height: 100vh; }
+    main { box-sizing: border-box; height: 100vh; overflow-y: auto; padding: 40px; }
+    .tall { height: 2000px; }
+    .onetrust-pc-dark-filter { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; }
+    #onetrust-banner-sdk { position: fixed; left: 0; right: 0; bottom: 0; height: 120px; background: #fff; border-top: 1px solid #ccc; z-index: 1000; padding: 20px; }
+  </style>
+</head>
+<body style="overflow: hidden;">
+  <main><h1>App shell</h1><p>The body does not scroll; main does.</p><div class="tall"></div></main>
+  <div id="onetrust-consent-sdk">
+    <div class="onetrust-pc-dark-filter"></div>
+    <div id="onetrust-banner-sdk"><p id="onetrust-policy-text">We use cookies to measure visits.</p></div>
+  </div>
+</body>
+</html>

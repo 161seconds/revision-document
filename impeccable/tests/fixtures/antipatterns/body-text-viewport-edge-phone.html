@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Body text viewport edge at phone width: should flag vs should pass</title>
+  <style>
+    /* Fixture for body-text-viewport-edge at 390px, scanned with a 390x844
+       viewport. At 480px or less the gutter floor is 12px (16px above): a
+       consistent 12px gutter is a common mobile setting, and text 8px from
+       a phone's edge still reports.
+
+       The body hides sideways overflow, as centene.com's does, so the page
+       cannot scroll sideways: the list at the bottom runs past the right
+       edge and is cut off. That reports once, as the page's overflow, and
+       its items report no gutter. */
+    html { margin: 0; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; overflow-x: hidden; }
+    h2 { font: 600 14px/1 system-ui; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 16px 8px; color: #475569; }
+    p, li { margin: 0 0 16px; }
+    .gutter-8 { padding: 0 8px; }
+    .gutter-11 { padding: 0 11px; }
+    .gutter-12 { padding: 0 12px; }
+    .gutter-14 { padding: 0 14px; }
+    .gutter-24 { padding: 0 24px; }
+    .wide-list { width: 480px; margin: 0; padding: 0 0 0 24px; list-style-position: inside; }
+  </style>
+</head>
+<body>
+  <section data-col="flag">
+    <h2>Should flag</h2>
+    <p class="gutter-8 flag-phone-8">This paragraph keeps only 8px between its words and each side of a phone's window, under the 12px a phone gutter needs.</p>
+    <p class="gutter-11 flag-phone-11">This paragraph keeps 11px between its words and each side of the window, a pixel short of the phone gutter floor.</p>
+    <!-- A header that wraps a whole first screen, taller than the 844px
+         window (a Framer hero), is not a site header: its copy is measured. -->
+    <header style="min-height: 900px">
+      <p class="gutter-8 flag-header-first-screen">A testimonial inside a header that holds the whole first screen keeps only 8px from each side of the phone.</p>
+    </header>
+  </section>
+
+  <section data-col="pass">
+    <h2>Should pass</h2>
+    <p class="gutter-12 pass-phone-12">This paragraph keeps a consistent 12px gutter on both sides of a 390px window, the common mobile setting the phone floor allows.</p>
+    <p class="gutter-14 pass-phone-14">This paragraph keeps 14px on both sides of the window, over the 12px floor that applies at 480px and narrower.</p>
+    <p class="gutter-24 pass-phone-24">This paragraph keeps a roomy 24px gutter on both sides of the window, well inside the edges of the phone.</p>
+    <!-- The same copy in a site header, a bar across the top of the page. -->
+    <header>
+      <p class="gutter-8 pass-site-header">A line of copy inside a short site header keeps only 8px from each side of the phone.</p>
+    </header>
+  </section>
+
+  <section data-col="overflow">
+    <h2>Page overflow</h2>
+    <!-- A list set 480px wide on a 390px window whose body hides sideways
+         overflow: every item is cut off at the right edge. -->
+    <ul class="wide-list">
+      <li class="past-wide-item">The first item of a list laid out at a fixed desktop width, so every line of it runs past the right edge of the phone and is cut off.</li>
+      <li class="past-wide-item">The second item of the same list, cut off at the same edge, one more line a visitor cannot read the end of on this phone.</li>
+    </ul>
+  </section>
+
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

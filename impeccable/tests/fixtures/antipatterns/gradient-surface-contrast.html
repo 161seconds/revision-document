@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gradient, Tint and Opacity Surfaces: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for how low-contrast resolves the surface and the ink of a
+       piece of text:
+
+       - a gradient is read where the text sits inside the box that paints
+         it, both ends of a line included, and the snippet names that box
+         ("gradient on a.rim-label");
+       - one text colour on one gradient box is reported once, however many
+         links sit on it, but boxes that share a tag and a class (a row of
+         feature tiles) are separate surfaces;
+       - a gradient tile that paints under no glyph (an underline drawn as a
+         2px gradient, a radial glow that has faded out) is not a background;
+       - every translucent fill between the text and its surface is
+         composited, however faint;
+       - the text colour's own alpha and the opacity of the boxes between the
+         text and its surface are blended into the ink before it is scored
+         and printed.
+
+       The static HTML engine measures no boxes. It reads an underline tile
+       from the size and repeat of a `background` shorthand alone (its
+       cascade carries no `background-size` longhand), and it scores a
+       gradient at its worst stop, so it reports the four should-pass cases
+       marked "URL engine" as well. The URL behavior is pinned by
+       crates/browser/tests/gradient_surface.rs. Every case uses its own
+       text colour so a finding names the case, except the tiles, which
+       share one on purpose. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111111; background: #ffffff; }
+    .grid { display: grid; grid-template-columns: 560px 560px; gap: 40px; padding: 24px 20px; }
+    .col { width: 560px; }
+    .col h2 { font: 600 20px/1.2 system-ui, sans-serif; margin: 0 0 16px; color: #111111; }
+    .col h3 { font: 600 16px/1.3 system-ui, sans-serif; margin: 28px 0 8px; color: #111111; }
+
+    /* A 64px button whose light band is only its top 30%. */
+    .band-button {
+      display: block;
+      box-sizing: border-box;
+      width: 240px;
+      height: 64px;
+      padding: 0 16px;
+      font-size: 14px;
+      line-height: 20px;
+      text-decoration: none;
+      background-image: linear-gradient(#fde68a 0%, #fde68a 30%, #1e3a8a 50%, #1e3a8a 100%);
+    }
+    .rim-label { padding-top: 2px; color: #fffdf7; }
+    .deep-label { padding-top: 40px; color: #fffdf8; }
+
+    /* A gradient that is too light everywhere. */
+    .pale-panel { width: 320px; height: 48px; padding: 12px 16px; box-sizing: border-box; background: linear-gradient(90deg, #e5e7eb, #f3f4f6); }
+    .pale-panel-copy { color: #d1d5dc; font-size: 14px; }
+
+    /* Two links across one pale header: one text colour on one box. */
+    .pale-header { display: flex; align-items: center; gap: 200px; width: 480px; height: 40px; padding: 0 16px; box-sizing: border-box; background: linear-gradient(90deg, #f1f5f9, #e2e8f0); }
+    .pale-header a { color: #cbd5e0; font-size: 14px; line-height: 20px; text-decoration: none; }
+
+    /* Feature tiles that share a tag and a class, each on its own gradient,
+       with one white glyph colour. */
+    .tile-row { display: flex; gap: 16px; }
+    .feature-tile { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 12px; }
+    .feature-tile span { color: #fdfdfd; font-size: 24px; font-weight: 700; line-height: 32px; }
+    .tile-amber { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+    .tile-lime { background: linear-gradient(135deg, #a3e635, #84cc16); }
+    .tile-navy { background: linear-gradient(135deg, #1e3a8a, #172554); }
+
+    /* A banner black until 85% of its width, then to white. */
+    .edge-banner { width: 520px; padding: 8px 16px; box-sizing: border-box; background: linear-gradient(90deg, #000000 0%, #000000 85%, #ffffff 100%); }
+    .edge-banner-full { margin: 0; color: #e0e0e1; font-size: 14px; line-height: 20px; text-align: justify; text-align-last: justify; }
+    .edge-banner-short { margin: 0; color: #dfdfe0; font-size: 14px; line-height: 20px; }
+
+    /* A radial glow in the panel's top right corner, faded out long before
+       the pill in its bottom left. The panel paints no fill of its own, so
+       the glow is what the walk finds. */
+    .glow-panel {
+      position: relative;
+      width: 400px;
+      height: 200px;
+      background-image: radial-gradient(120px 80px at 90% 20%, rgba(59, 130, 246, 0.9) 0%, rgba(59, 130, 246, 0) 100%);
+    }
+    .glow-pill { position: absolute; left: 16px; top: 160px; width: 120px; height: 24px; font-size: 14px; line-height: 24px; color: #475569; }
+
+    /* Underlines drawn as gradient tiles. */
+    .underline-link {
+      display: inline-block;
+      width: 160px;
+      height: 31px;
+      font-size: 16px;
+      line-height: 28px;
+      text-decoration: none;
+      background-repeat: no-repeat;
+      background-position: 0 100%;
+    }
+    .underline-collapsed { color: #0f172a; background-image: linear-gradient(#0f172a, #0f172a); background-size: 0% 2px; }
+    .underline-full { color: #1e293b; background: linear-gradient(#1e293b, #1e293b) no-repeat 0 100% / 100% 2px; }
+    .fill-link { display: inline-block; width: 160px; height: 31px; font-size: 16px; line-height: 31px; text-decoration: none; color: #d4d4d8; background: linear-gradient(#e4e4e7, #e4e4e7); }
+
+    /* Faint tints. */
+    .tint-chip { display: inline-block; width: 140px; height: 32px; padding: 0 12px; box-sizing: border-box; font-size: 14px; line-height: 32px; border-radius: 16px; background: rgba(234, 88, 12, 0.1); color: #ea580d; }
+    .tint-chip-strong { display: inline-block; width: 140px; height: 32px; padding: 0 12px; box-sizing: border-box; font-size: 14px; line-height: 32px; border-radius: 16px; background: rgba(15, 23, 42, 0.08); color: #0f172b; }
+
+    /* Ink alpha and opacity. */
+    .faded-span { opacity: 0.5; color: #6b7280; font-size: 14px; }
+    .alpha-copy { color: rgba(17, 24, 39, 0.35); font-size: 14px; }
+    .faded-wrapper { opacity: 0.6; }
+    .faded-wrapper-copy { color: #4b5563; font-size: 14px; }
+    .nearly-opaque-span { opacity: 0.9; color: #111828; font-size: 14px; }
+    .alpha-strong-copy { color: rgba(17, 24, 39, 0.92); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main class="grid">
+    <section class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Label on the light band of its gradient</h3>
+      <a class="band-button rim-label" href="#rim">Light band label</a>
+
+      <h3>Copy on a gradient too light at every point</h3>
+      <div class="pale-panel"><span class="pale-panel-copy">Pale copy on a pale gradient</span></div>
+
+      <h3>Two links on one pale gradient header, reported once</h3>
+      <nav class="pale-header"><a href="#one">First link</a><a href="#two">Second link</a></nav>
+
+      <h3>Same-class tiles on different light gradients, each reported</h3>
+      <div class="tile-row">
+        <div class="feature-tile tile-amber"><span>A</span></div>
+        <div class="feature-tile tile-lime"><span>B</span></div>
+      </div>
+
+      <h3>Copy whose last word sits on the light end of a banner</h3>
+      <div class="edge-banner"><p class="edge-banner-full">Banner copy that runs across the whole banner to its light end</p></div>
+
+      <h3>Link filled by a covering gradient</h3>
+      <a class="fill-link" href="#fill">Filled link</a>
+
+      <h3>Label on a faint orange tint</h3>
+      <span class="tint-chip">Tinted chip label</span>
+
+      <h3>Span at half opacity</h3>
+      <p><span class="faded-span">Faded span copy</span></p>
+
+      <h3>Copy in a translucent ink</h3>
+      <p class="alpha-copy">Translucent ink copy</p>
+
+      <h3>Copy inside a faded wrapper</h3>
+      <div class="faded-wrapper"><p class="faded-wrapper-copy">Copy inside a faded wrapper</p></div>
+    </section>
+
+    <section class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Label on the dark band of its gradient (URL engine)</h3>
+      <a class="band-button deep-label" href="#deep">Dark band label</a>
+
+      <h3>Same-class tile on a dark gradient</h3>
+      <div class="tile-row">
+        <div class="feature-tile tile-navy"><span>C</span></div>
+      </div>
+
+      <h3>Short copy at the dark end of a banner (URL engine)</h3>
+      <div class="edge-banner"><p class="edge-banner-short">Short banner copy</p></div>
+
+      <h3>Pill far from a radial glow (URL engine)</h3>
+      <div class="glow-panel"><span class="glow-pill">Pill copy</span></div>
+
+      <h3>Link with a collapsed gradient underline (URL engine)</h3>
+      <a class="underline-link underline-collapsed" href="#collapsed">Collapsed underline</a>
+
+      <h3>Link with a full-width gradient underline</h3>
+      <a class="underline-link underline-full" href="#full">Full underline</a>
+
+      <h3>Dark label on a faint dark tint</h3>
+      <span class="tint-chip-strong">Dark chip label</span>
+
+      <h3>Span at nine tenths opacity</h3>
+      <p><span class="nearly-opaque-span">Nearly opaque span</span></p>
+
+      <h3>Copy in a nearly opaque ink</h3>
+      <p class="alpha-strong-copy">Nearly opaque ink copy</p>
+    </section>
+  </main>
+</body>
+</html>

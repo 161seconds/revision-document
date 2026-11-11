@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay hiding: a Lovable badge</title>
+  <style>
+    /* A Lovable-shaped "Edit with Lovable" badge (its ids, not its script),
+       as mialight.app carries it: `aside#lovable-badge`, a fixed pill at the
+       bottom right of the viewport. Under it sits a faint line of copy, a real
+       contrast failure; inside it, the badge's own small faint label. The URL
+       engine hides the badge before the rule pass. Pinned by
+       crates/browser/tests/overlay_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .faint { position: absolute; top: 760px; left: 1000px; width: 270px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    #lovable-badge { position: fixed; right: 12px; bottom: 12px; z-index: 1000000; display: flex; align-items: center;
+      width: 260px; height: 36px; padding: 0 8px; border-radius: 6px; background: #ffffff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); }
+    #lovable-badge-cta { display: flex; gap: 6px; color: #b5b5b5; font-size: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>A page under a builder badge</h1>
+  <p>The copy near the top of the page is readable and nothing covers it.</p>
+  <p class="faint" id="covered-copy">Faint copy the badge covers at load.</p>
+  <aside id="lovable-badge" role="complementary" aria-label="Edit with Lovable">
+    <a id="lovable-badge-cta" href="https://lovable.dev/" aria-label="Edit with Lovable"><span id="lovable-badge-text">Edit with Lovable today</span></a>
+    <button id="lovable-badge-close" type="button" aria-label="Dismiss" title="Dismiss">x</button>
+  </aside>
+</body>
+</html>

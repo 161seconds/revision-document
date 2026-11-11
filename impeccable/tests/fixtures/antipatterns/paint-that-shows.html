@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colour and effect tells measured on what paints</title>
+  <style>
+    /* URL engine. Each case is about paint a visitor sees at rest.
+       - ai-color-palette: a hover wipe drawn as two hard stops on a tile twice
+         the box's width shows one flat colour (jpmorganchase.com's buttons).
+         An element reports the palette once: its utility-class form defers
+         to the computed form, and its gradient forms defer to gradient-text
+         when the gradient is clipped to the text.
+       - gradient-text: a ramp at 6% alpha is a watermark (vestra.ai), and a
+         label in a closed menu is not painted.
+       - gpt-thin-border-wide-shadow: a near-black halo on a band that is
+         near-black under faint tints lands on nothing (uncoverroads.com).
+       - dark-glow: Tailwind's shadow-lg in a 0.2 purple lights nothing on a
+         black page (gameghost.manus.space). */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    main { display: grid; grid-template-columns: 600px 600px; gap: 40px; width: 1240px; margin: 0 auto; padding: 24px 0; }
+    .case { width: 560px; margin: 0 0 32px; }
+    .btn { display: inline-block; width: 167px; height: 44px; line-height: 44px; text-align: center; }
+    .wipe { background-image: linear-gradient(270deg, rgb(166, 215, 240) 50%, rgb(0, 0, 0) 0px); background-size: 203% 101%; background-position: 100% 50%; color: #000000; }
+    .cyan-ramp { background-image: linear-gradient(90deg, rgb(6, 182, 212), rgb(34, 211, 238)); color: #000000; }
+    .purple-ramp { background-image: linear-gradient(90deg, rgb(139, 92, 246), rgb(124, 58, 237)); color: #ffffff; }
+    .clip { display: inline-block; font-size: 40px; line-height: 48px; font-weight: 800; -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .clip-violet { background-image: linear-gradient(90deg, rgb(124, 58, 237), rgb(168, 85, 247)); }
+    .clip-watermark { background-image: linear-gradient(90deg, rgba(124, 58, 237, 0.06), rgba(236, 72, 153, 0.08)); }
+    .menu { height: 0; overflow: hidden; }
+    .night { background: #09090b; width: 560px; }
+    .aurora { background-color: transparent; background-image: linear-gradient(-45deg, rgb(9, 9, 11), rgba(249, 148, 31, 0.06), rgba(173, 92, 214, 0.04), rgba(249, 148, 31, 0.08), rgb(9, 9, 11)); padding: 24px; width: 512px; }
+    .light { background: #ffffff; padding: 24px; width: 512px; }
+    .row { display: flex; gap: 16px; }
+    .glass { width: 150px; height: 88px; padding: 12px; box-sizing: border-box; border: 1px solid rgba(38, 38, 43, 0.6); background-color: rgba(19, 19, 22, 0.7); border-radius: 12px; box-shadow: rgba(9, 9, 11, 0.5) 0px 8px 32px 0px; color: #e5e5e5; font-size: 13px; }
+    .paper { width: 150px; height: 88px; padding: 12px; box-sizing: border-box; border: 1px solid #cbd5e1; background-color: #ffffff; border-radius: 12px; box-shadow: rgba(15, 23, 42, 0.18) 0px 8px 32px 0px; font-size: 13px; }
+    .black { background: #000000; padding: 24px; width: 512px; }
+    .lg { display: inline-block; width: 208px; height: 36px; line-height: 36px; text-align: center; background: #1a1a2e; color: #ffffff; box-shadow: rgba(89, 22, 139, 0.2) 0px 10px 15px -3px, rgba(89, 22, 139, 0.2) 0px 4px 6px -4px; }
+    .neon { display: inline-block; width: 208px; height: 36px; line-height: 36px; text-align: center; background: #1a1a2e; color: #ffffff; box-shadow: rgba(168, 85, 247, 0.6) 0px 0px 24px 0px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag">
+      <div class="case"><span class="btn cyan-ramp" id="flag-cyan-ramp" data-expect="flag" data-case="Flag Cyan Ramp Button">Get started</span></div>
+      <div class="case"><span class="btn purple-ramp bg-gradient-to-r from-violet-500 to-purple-600" id="flag-purple-once" data-expect="flag" data-case="Flag Purple Ramp Once">Try it free</span></div>
+      <div class="case"><span class="clip clip-violet" id="flag-clipped-violet" data-expect="flag" data-case="Flag Gradient Text Once">Faster</span></div>
+      <div class="case light"><div class="row">
+        <div class="paper" id="flag-paper-card" data-expect="flag" data-case="Flag Halo On A Light Band">One</div>
+        <div class="paper">Two</div>
+        <div class="paper">Three</div>
+      </div></div>
+      <div class="case black"><span class="neon" id="flag-neon-glow" data-expect="flag" data-case="Flag Neon Glow">Join the waitlist</span></div>
+    </section>
+    <section aria-label="Should pass">
+      <div class="case"><span class="btn wipe" id="pass-hover-wipe" data-expect="pass" data-case="Pass Hard Stop Hover Wipe">Learn more</span></div>
+      <div class="case"><span class="clip clip-watermark" id="pass-watermark" data-expect="pass" data-case="Pass Gradient Watermark">Vestra</span></div>
+      <div class="case"><div class="menu"><span class="clip clip-violet" id="pass-closed-menu" data-expect="pass" data-case="Pass Gradient Label In A Closed Menu">Menu label</span></div></div>
+      <div class="case night"><div class="aurora"><div class="row">
+        <div class="glass" id="pass-glass-card" data-expect="pass" data-case="Pass Black Halo On A Black Band">One</div>
+        <div class="glass">Two</div>
+        <div class="glass">Three</div>
+      </div></div></div>
+      <div class="case black"><span class="lg" id="pass-shadow-lg" data-expect="pass" data-case="Pass Faint Purple Elevation">Enter the arena</span></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Em dash overuse, a pricing matrix</title>
+<!--
+  Should pass in a browser scan. A pricing matrix marks every feature a plan
+  lacks with a lone dash in its cell. A mark alone in a cell is not
+  punctuation in prose, and the page's prose uses two em dashes. The file scan
+  counts every dash in the text. em-dash-prose-with-matrix.html is the flag
+  twin.
+-->
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #111111; }
+  table { border-collapse: collapse; }
+  td, th { padding: 6px 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+</style>
+</head>
+<body>
+  <p>Track how AI answer engines cite your brand — and ship the briefs to climb.</p>
+  <p>Built for AI visibility as a discipline — in-house brand owners and teams.</p>
+  <table>
+    <thead><tr><th>Features</th><th>Starter</th><th>Growth</th><th>Scale</th><th>Enterprise</th></tr></thead>
+    <tbody>
+      <tr><td>25 prompts per month</td><td>✓</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Weekly report</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+      <tr><td>Competitor tracking</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>API access</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Custom prompts</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+      <tr><td>Team seats</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Dedicated success manager</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+      <tr><td>Single sign-on</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>

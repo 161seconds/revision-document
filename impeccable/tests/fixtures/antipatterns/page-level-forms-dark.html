@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page-Level Stylesheet Forms on a Dark Page: Should Flag vs Should Pass</title>
+  <style>
+    /* The dark twin of page-level-forms.html: the painted root is #0b0b0f,
+       so the stylesheet-text forms that claim a dark page have one.
+
+       Should flag, both engines: the status orb's glow, drawn on a
+       pseudo-element whose shadow no host computes, reported on body; the
+       halo over the dark hero, reported on body.
+
+       Should pass, both engines: a glow token and a halo token declared as
+       custom properties (`--orb-box-shadow`, `--hero-background-image`),
+       which paint nothing.
+
+       The URL behavior is pinned by
+       crates/browser/tests/page_level_forms.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #e5e7eb; background: #0b0b0f; }
+    .columns { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 32px; }
+    .column > h2 { font-size: 28px; margin: 0 0 16px; color: #f9fafb; }
+    .case { width: 560px; margin: 0 0 24px; padding: 16px; border: 1px solid #1f2937; }
+    .case > h3 { font-size: 20px; margin: 0 0 8px; color: #f3f4f6; }
+
+    /* PASS: tokens named after a shadow and a background image. */
+    :root { --orb-box-shadow: 0 0 18px rgba(236, 72, 153, 0.7); --hero-background-image: radial-gradient(circle at 50% 0%, #fdba74 0%, transparent 70%); }
+
+    /* FLAG: a glow on a pseudo-element. */
+    .status-orb { position: relative; width: 24px; height: 24px; }
+    .status-orb::after { content: ""; position: absolute; top: 0; left: 0; width: 24px; height: 24px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 18px rgba(34, 197, 94, 0.7); }
+
+    /* FLAG: a halo over the dark hero. */
+    .hero-halo { width: 528px; height: 240px; background: radial-gradient(circle at 50% 0%, #8fd8f2 0%, transparent 70%); }
+  </style>
+</head>
+<body>
+  <div class="columns">
+    <div class="column">
+      <h2>Should flag</h2>
+
+      <div class="case">
+        <h3>Status orb glowing through a pseudo-element</h3>
+        <div class="status-orb"></div>
+      </div>
+
+      <div class="case">
+        <h3>Halo over the dark hero</h3>
+        <div class="hero-halo"></div>
+      </div>
+    </div>
+
+    <div class="column">
+      <h2>Should pass</h2>
+
+      <div class="case">
+        <h3>Glow and halo declared only as tokens</h3>
+        <p>The root declares two tokens that nothing uses.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

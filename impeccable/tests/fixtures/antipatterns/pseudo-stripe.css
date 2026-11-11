@@ -1,0 +1,156 @@
+/*
+ * Pseudo-element stripe fixture for the regex engine (issue #394).
+ *
+ * The side-tab silhouette built as an absolutely-positioned ::before/::after
+ * bar instead of a border. scanCssTextForPseudoStripe already caught these on
+ * full HTML pages; this fixture pins the standalone-stylesheet path. The
+ * data-case attribute in each selector lands in the finding snippet, so the
+ * test can attribute every flag/pass case individually.
+ */
+
+:root {
+  --stripe-fixture-neutral: #e5e7eb;
+}
+
+/* The side accent is the tell on a rounded card, so each left or right flag
+   case rounds its host; the bottom-edge case needs no radius. A host no
+   radius rule names reads the whole file, so the square pass case squares
+   its host off. */
+.card[data-case="Inset Shorthand Left Edge"],
+.card[data-case="Longhand Left Edge"] {
+  border-radius: 12px;
+}
+.card[data-case="Full Height Right Edge"] {
+  border-radius: 0.75rem;
+}
+
+/* ── FLAG: the issue reproducer — inset shorthand pin + 4px chromatic bar ── */
+.card[data-case="Inset Shorthand Left Edge"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #7c3aed;
+}
+
+/* ── FLAG: longhand edge pins; unresolvable var() errs toward detection ── */
+.card[data-case="Longhand Left Edge"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: var(--accent);
+}
+
+/* ── FLAG: horizontal variant riding the bottom edge ── */
+.card[data-case="Bottom Edge"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: #f43f5e;
+}
+
+/* ── FLAG: height:100% full-height stripe on the right edge ── */
+.card[data-case="Full Height Right Edge"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 3px;
+  background: oklch(60% 0.2 300);
+}
+
+/* ── PASS: a chromatic stripe on a square host is the old callout rule ── */
+.card[data-case="Square Host Left Edge"] {
+  border-radius: 0;
+}
+.card[data-case="Square Host Left Edge"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #7c3aed;
+}
+
+/* ── PASS: rounded only along the stripe, square where it counts ── */
+.card[data-case="Rounded Under Stripe"] {
+  border-radius: 12px 0 0 12px;
+}
+.card[data-case="Rounded Under Stripe"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #7c3aed;
+}
+
+/* ── PASS: neutral gray divider is not an accent stripe ── */
+.card[data-case="Neutral Divider"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--stripe-fixture-neutral);
+}
+
+/* ── PASS: 24px is a panel, not a stripe ── */
+.card[data-case="Wide Panel"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 24px;
+  background: #7c3aed;
+}
+
+/* ── PASS: no position: absolute — not an overlay stripe ── */
+.card[data-case="Static Underline"]::before {
+  content: "";
+  width: 4px;
+  background: #7c3aed;
+}
+
+/* ── PASS: 1px hairline is a divider ── */
+.card[data-case="Hairline Divider"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background: #7c3aed;
+}
+
+/* ── PASS: hover-conditional underline is an affordance, not decoration ── */
+.link-row[data-case="Hover Underline"]:hover::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: #7c3aed;
+}
+
+/* ── PASS: pinned to one edge but not full-height — a badge, not a stripe ── */
+.card[data-case="Floating Badge"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 4px;
+  height: 12px;
+  background: #7c3aed;
+}
+
+/* ── PASS: commented-out CSS is not a live rule ──
+.card[data-case="Commented Out Stripe"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #7c3aed;
+}
+*/

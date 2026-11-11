@@ -1,0 +1,1 @@
+{ "name": "oracle-live-astro", "private": true, "type": "module", "dependencies": { "astro": "^7.1.0" } }

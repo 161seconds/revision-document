@@ -1,0 +1,798 @@
+{
+ "schemaVersion": 7,
+ "catalogVersion": "fixture-1",
+ "qualityBar": {
+  "principle": "Fixture quality bar: every concept must name a world whose look immediately yields a palette and material vocabulary, a type voice, component roles, and one signature state change for deterministic seed testing.",
+  "rejectIf": [
+   "Fixture gate one: the form names a generic software container instead of a visual world.",
+   "Fixture gate two: the form is a single prop with no system behind it.",
+   "Fixture gate three: the form is abstract mood with no graspable grammar.",
+   "Fixture gate four: the form duplicates an existing entry at system level.",
+   "Fixture gate five: the form cannot span navigation, dense, and quiet surfaces."
+  ],
+  "reviewAxes": [
+   "Fixture axis one: audience identification.",
+   "Fixture axis two: product clarity.",
+   "Fixture axis three: system leverage.",
+   "Fixture axis four: use of the medium.",
+   "Fixture axis five: translation honesty.",
+   "Fixture axis six: breadth across surfaces.",
+   "Fixture axis seven: render safety.",
+   "Fixture axis eight: cultural resonance."
+  ]
+ },
+ "wells": [
+  {
+   "id": "fixture-print",
+   "label": "fixture-print",
+   "tier": "graphic",
+   "description": "Fixture well for graphic tier testing with deterministic entries and stable content hashes."
+  },
+  {
+   "id": "fixture-canon",
+   "label": "fixture-canon",
+   "tier": "graphic",
+   "description": "Fixture well for graphic tier testing with deterministic entries and stable content hashes."
+  },
+  {
+   "id": "fixture-instruments",
+   "label": "fixture-instruments",
+   "tier": "interaction",
+   "description": "Fixture well for interaction tier testing with deterministic entries and stable content hashes."
+  },
+  {
+   "id": "fixture-material",
+   "label": "fixture-material",
+   "tier": "atmosphere",
+   "description": "Fixture well for atmosphere tier testing with deterministic entries and stable content hashes."
+  },
+  {
+   "id": "fixture-performed",
+   "label": "fixture-performed",
+   "tier": "atmosphere",
+   "description": "Fixture well for atmosphere tier testing with deterministic entries and stable content hashes."
+  }
+ ],
+ "families": [
+  {
+   "id": "fixture-print-family",
+   "label": "fixture-print-family",
+   "well": "fixture-print",
+   "description": "Fixture family for graphic tier testing with enough approved entries for re-roll chains.",
+   "concepts": [
+    {
+     "id": "fixture-print-family-poster-wall",
+     "form": "a poster wall of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of poster wall craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 1",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 1",
+      "Topology/navigation: move between the whole field and one consequential detail along route 1",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 1",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 1"
+     ],
+     "spark": "The poster wall wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-ticket-ledger",
+     "form": "a ticket ledger of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of ticket ledger craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 2",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 2",
+      "Topology/navigation: move between the whole field and one consequential detail along route 2",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 2",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 2"
+     ],
+     "spark": "The ticket ledger wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-stamp-folio",
+     "form": "a stamp folio of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of stamp folio craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 3",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 3",
+      "Topology/navigation: move between the whole field and one consequential detail along route 3",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 3",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 3"
+     ],
+     "spark": "The stamp folio wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-banner-press",
+     "form": "a banner press of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of banner press craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 4",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 4",
+      "Topology/navigation: move between the whole field and one consequential detail along route 4",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 4",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 4"
+     ],
+     "spark": "The banner press wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-label-archive",
+     "form": "a label archive of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of label archive craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 5",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 5",
+      "Topology/navigation: move between the whole field and one consequential detail along route 5",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 5",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 5"
+     ],
+     "spark": "The label archive wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-broadsheet-rack",
+     "form": "a broadsheet rack of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of broadsheet rack craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 6",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 6",
+      "Topology/navigation: move between the whole field and one consequential detail along route 6",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 6",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 6"
+     ],
+     "spark": "The broadsheet rack wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-print-family-sleeve-library",
+     "form": "a sleeve library of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of sleeve library craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 7",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 7",
+      "Topology/navigation: move between the whole field and one consequential detail along route 7",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 7",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 7"
+     ],
+     "spark": "The sleeve library wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    }
+   ]
+  },
+  {
+   "id": "fixture-canon-family",
+   "label": "fixture-canon-family",
+   "well": "fixture-canon",
+   "description": "Fixture family for graphic tier testing with enough approved entries for re-roll chains.",
+   "concepts": [
+    {
+     "id": "fixture-canon-family-placard-row",
+     "form": "a placard row of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of placard row craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 8",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 8",
+      "Topology/navigation: move between the whole field and one consequential detail along route 8",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 8",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 8"
+     ],
+     "spark": "The placard row wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-card-index",
+     "form": "a card index of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of card index craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 9",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 9",
+      "Topology/navigation: move between the whole field and one consequential detail along route 9",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 9",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 9"
+     ],
+     "spark": "The card index wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-crest-register",
+     "form": "a crest register of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of crest register craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 10",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 10",
+      "Topology/navigation: move between the whole field and one consequential detail along route 10",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 10",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 10"
+     ],
+     "spark": "The crest register wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-folio-stand",
+     "form": "a folio stand of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of folio stand craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 11",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 11",
+      "Topology/navigation: move between the whole field and one consequential detail along route 11",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 11",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 11"
+     ],
+     "spark": "The folio stand wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-plate-cabinet",
+     "form": "a plate cabinet of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of plate cabinet craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 12",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 12",
+      "Topology/navigation: move between the whole field and one consequential detail along route 12",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 12",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 12"
+     ],
+     "spark": "The plate cabinet wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-proof-drawer",
+     "form": "a proof drawer of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of proof drawer craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 13",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 13",
+      "Topology/navigation: move between the whole field and one consequential detail along route 13",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 13",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 13"
+     ],
+     "spark": "The proof drawer wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-canon-family-jacket-shelf",
+     "form": "a jacket shelf of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of jacket shelf craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 14",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 14",
+      "Topology/navigation: move between the whole field and one consequential detail along route 14",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 14",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 14"
+     ],
+     "spark": "The jacket shelf wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    }
+   ]
+  },
+  {
+   "id": "fixture-instruments-family",
+   "label": "fixture-instruments-family",
+   "well": "fixture-instruments",
+   "description": "Fixture family for interaction tier testing with enough approved entries for re-roll chains.",
+   "concepts": [
+    {
+     "id": "fixture-instruments-family-signal-tower",
+     "form": "a signal tower of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of signal tower craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 15",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 15",
+      "Topology/navigation: move between the whole field and one consequential detail along route 15",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 15",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 15"
+     ],
+     "spark": "The signal tower wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-gauge-bench",
+     "form": "a gauge bench of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of gauge bench craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 16",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 16",
+      "Topology/navigation: move between the whole field and one consequential detail along route 16",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 16",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 16"
+     ],
+     "spark": "The gauge bench wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-relay-desk",
+     "form": "a relay desk of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of relay desk craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 17",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 17",
+      "Topology/navigation: move between the whole field and one consequential detail along route 17",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 17",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 17"
+     ],
+     "spark": "The relay desk wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-meter-row",
+     "form": "a meter row of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of meter row craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 18",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 18",
+      "Topology/navigation: move between the whole field and one consequential detail along route 18",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 18",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 18"
+     ],
+     "spark": "The meter row wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-dial-cabinet",
+     "form": "a dial cabinet of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of dial cabinet craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 19",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 19",
+      "Topology/navigation: move between the whole field and one consequential detail along route 19",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 19",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 19"
+     ],
+     "spark": "The dial cabinet wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-switch-field",
+     "form": "a switch field of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of switch field craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 20",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 20",
+      "Topology/navigation: move between the whole field and one consequential detail along route 20",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 20",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 20"
+     ],
+     "spark": "The switch field wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-instruments-family-lamp-board",
+     "form": "a lamp board of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of lamp board craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 21",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 21",
+      "Topology/navigation: move between the whole field and one consequential detail along route 21",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 21",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 21"
+     ],
+     "spark": "The lamp board wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    }
+   ]
+  },
+  {
+   "id": "fixture-material-family",
+   "label": "fixture-material-family",
+   "well": "fixture-material",
+   "description": "Fixture family for atmosphere tier testing with enough approved entries for re-roll chains.",
+   "concepts": [
+    {
+     "id": "fixture-material-family-tide-hall",
+     "form": "a tide hall of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of tide hall craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 22",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 22",
+      "Topology/navigation: move between the whole field and one consequential detail along route 22",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 22",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 22"
+     ],
+     "spark": "The tide hall wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-cloud-loft",
+     "form": "a cloud loft of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of cloud loft craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 23",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 23",
+      "Topology/navigation: move between the whole field and one consequential detail along route 23",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 23",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 23"
+     ],
+     "spark": "The cloud loft wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-ember-court",
+     "form": "a ember court of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of ember court craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 24",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 24",
+      "Topology/navigation: move between the whole field and one consequential detail along route 24",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 24",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 24"
+     ],
+     "spark": "The ember court wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-frost-arcade",
+     "form": "a frost arcade of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of frost arcade craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 25",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 25",
+      "Topology/navigation: move between the whole field and one consequential detail along route 25",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 25",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 25"
+     ],
+     "spark": "The frost arcade wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-reed-basin",
+     "form": "a reed basin of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of reed basin craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 26",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 26",
+      "Topology/navigation: move between the whole field and one consequential detail along route 26",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 26",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 26"
+     ],
+     "spark": "The reed basin wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-dusk-quarry",
+     "form": "a dusk quarry of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of dusk quarry craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 27",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 27",
+      "Topology/navigation: move between the whole field and one consequential detail along route 27",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 27",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 27"
+     ],
+     "spark": "The dusk quarry wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-material-family-moss-theatre",
+     "form": "a moss theatre of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of moss theatre craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 28",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 28",
+      "Topology/navigation: move between the whole field and one consequential detail along route 28",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 28",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 28"
+     ],
+     "spark": "The moss theatre wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    }
+   ]
+  },
+  {
+   "id": "fixture-performed-family",
+   "label": "fixture-performed-family",
+   "well": "fixture-performed",
+   "description": "Fixture family for atmosphere tier testing with enough approved entries for re-roll chains.",
+   "concepts": [
+    {
+     "id": "fixture-performed-family-salt-terrace",
+     "form": "a salt terrace of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of salt terrace craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 29",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 29",
+      "Topology/navigation: move between the whole field and one consequential detail along route 29",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 29",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 29"
+     ],
+     "spark": "The salt terrace wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-rain-atrium",
+     "form": "a rain atrium of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of rain atrium craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 30",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 30",
+      "Topology/navigation: move between the whole field and one consequential detail along route 30",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 30",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 30"
+     ],
+     "spark": "The rain atrium wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-pine-gallery",
+     "form": "a pine gallery of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of pine gallery craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 31",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 31",
+      "Topology/navigation: move between the whole field and one consequential detail along route 31",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 31",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 31"
+     ],
+     "spark": "The pine gallery wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-wind-rotunda",
+     "form": "a wind rotunda of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of wind rotunda craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 32",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 32",
+      "Topology/navigation: move between the whole field and one consequential detail along route 32",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 32",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 32"
+     ],
+     "spark": "The wind rotunda wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-ash-pavilion",
+     "form": "a ash pavilion of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of ash pavilion craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 33",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 33",
+      "Topology/navigation: move between the whole field and one consequential detail along route 33",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 33",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 33"
+     ],
+     "spark": "The ash pavilion wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-dawn-causeway",
+     "form": "a dawn causeway of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of dawn causeway craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "world",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 34",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 34",
+      "Topology/navigation: move between the whole field and one consequential detail along route 34",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 34",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 34"
+     ],
+     "spark": "The dawn causeway wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    },
+    {
+     "id": "fixture-performed-family-kelp-arcade",
+     "form": "a kelp arcade of the fixture canon, where ranked plates, shutters, and registers stage attention across one continuous working field",
+     "lineage": "Fixture lineage of kelp arcade craft, publishing, and display convention",
+     "tags": [
+      "ranked",
+      "field",
+      "register"
+     ],
+     "strength": "dual",
+     "system": [
+      "Palette/material: ink-dark ground, unbleached paper field, and one saturated signal color reserved for the active decision in zone 35",
+      "Type/composition: compact grotesk labels over generous editorial serif, ranked on a strict modular grid of order 35",
+      "Topology/navigation: move between the whole field and one consequential detail along route 35",
+      "Controls/state: reveal, compare, and preserve every meaningful authored state in register 35",
+      "Responsive/motion: recompose the spatial law while retaining orientation across breakpoint 35"
+     ],
+     "spark": "The kelp arcade wakes as its plates roll over one by one, every register finding its rank while a single saturated signal tracks the decision you have not made yet.",
+     "webLeverage": "CSS grid plate choreography with a keyboard-readable register index and scroll-driven rank reveal"
+    }
+   ]
+  }
+ ]
+}

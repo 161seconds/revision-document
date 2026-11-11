@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a OneTrust-shaped banner</title>
+  <style>
+    /* A OneTrust-shaped banner (its ids and classes, not its script) fixed
+       over the foot of the viewport. Under it sit a faint line of copy and a
+       CTA, both real contrast failures a visitor meets once they dismiss the
+       banner; inside it, the banner's own faint policy text. The URL engine
+       hides the banner before the rule pass, so the page copy and CTA report
+       and the policy text does not. With --no-consent-hiding the banner stays:
+       the covered copy and CTA are not scored and the policy text is. Pinned
+       by crates/browser/tests/consent_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .lead { max-width: 720px; }
+    .faint { position: absolute; top: 700px; left: 80px; width: 520px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .cta { position: absolute; top: 740px; left: 80px; display: inline-block; padding: 8px 16px; border-radius: 6px;
+      background: #ff7145; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none; }
+    #onetrust-banner-sdk { position: fixed; left: 0; right: 0; bottom: 0; height: 170px; padding: 24px 40px;
+      background: #ffffff; border-top: 1px solid #d0d7de; box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12); z-index: 2147483645; }
+    #onetrust-policy-text { margin: 0 0 12px; max-width: 760px; font-size: 14px; color: #b0b0b0; }
+    #onetrust-accept-btn-handler { padding: 8px 16px; border: 0; border-radius: 4px; background: #1f2937; color: #fff; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>A page under a OneTrust banner</h1>
+  <p class="lead">The copy near the top of the page is readable and nothing covers it. A visitor reads it with the banner up,
+    and reads the rest of the page once they have answered it.</p>
+  <p class="faint" id="covered-copy">Faint copy the consent banner covers at load.</p>
+  <a href="#" class="cta" id="covered-cta">Start free trial</a>
+
+  <div id="onetrust-consent-sdk">
+    <div class="onetrust-pc-dark-filter ot-hide ot-fade-in" style="display: none;"></div>
+    <div id="onetrust-banner-sdk" class="otFlat bottom" role="region" aria-label="Cookie banner">
+      <div id="onetrust-policy">
+        <p id="onetrust-policy-text">We use cookies to measure visits and to improve the site. You can change your choices at any time.</p>
+      </div>
+      <button id="onetrust-accept-btn-handler" type="button">Accept all</button>
+    </div>
+  </div>
+</body>
+</html>

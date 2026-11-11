@@ -1,0 +1,107 @@
+{
+  "name": "impeccable",
+  "version": "4.8.2",
+  "author": "Paul Bakaus",
+  "description": "Design skills, commands, and anti-pattern detection for AI coding agents",
+  "keywords": [
+    "design",
+    "frontend",
+    "ux",
+    "skills",
+    "ai",
+    "anti-patterns",
+    "lint",
+    "accessibility",
+    "css",
+    "html",
+    "detection",
+    "ci-cd"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://impeccable.style",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pbakaus/impeccable.git"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=22.18.0",
+      "onFail": "warn"
+    }
+  },
+  "type": "module",
+  "bin": {
+    "impeccable": "cli/bin/cli.js"
+  },
+  "files": [
+    "cli/bin/",
+    "skill/scripts/engine-checksums.txt",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build:skills": "bun run scripts/build.js --skip-root-sync",
+    "build:skills:release": "bun run scripts/build.js",
+    "build": "bun run build:skills && mkdir -p build/_data && rm -rf build/_data/dist && cp -R dist build/_data/dist",
+    "build:release": "bun run build:skills:release && mkdir -p build/_data && rm -rf build/_data/dist && cp -R dist build/_data/dist",
+    "build:extension": "node scripts/build-extension.js",
+    "package:vscode": "bun run build:skills && cd dist/vscode && bunx --package @vscode/vsce@3.9.2 vsce package --no-dependencies",
+    "fetch:engine": "node scripts/fetch-engine.mjs",
+    "clean": "rm -rf dist build",
+    "rebuild": "bun run clean && bun run build",
+    "rebuild:release": "bun run clean && bun run build:release",
+    "test": "node scripts/run-tests.mjs default",
+    "test:core": "node scripts/run-tests.mjs core",
+    "test:oracle": "node scripts/run-tests.mjs oracle",
+    "test:detector": "node scripts/run-tests.mjs detector",
+    "test:framework": "node scripts/run-tests.mjs framework",
+    "test:live": "node scripts/run-tests.mjs live",
+    "test:cleanup": "node scripts/run-tests.mjs --cleanup",
+    "test:cli-remote-e2e": "node scripts/run-tests.mjs cli-remote-e2e",
+    "test:plugin-e2e": "node scripts/run-tests.mjs plugin-e2e",
+    "test:live-e2e": "node scripts/run-tests.mjs live-e2e",
+    "test:live-e2e-accept-cleanup": "node scripts/run-tests.mjs live-e2e-accept-cleanup",
+    "test:new-work-e2e": "node scripts/run-tests.mjs new-work-e2e",
+    "test:live-e2e-agent": "node scripts/run-tests.mjs live-e2e-agent",
+    "test:skill-behavior": "node scripts/run-tests.mjs skill-behavior",
+    "test:skill-activation": "node scripts/run-tests.mjs skill-activation",
+    "test:skill-workflow": "node scripts/run-tests.mjs skill-workflow",
+    "test:live-svelte-adapter-deepseek": "node scripts/run-tests.mjs live-svelte-adapter-deepseek",
+    "test:rust-changed": "node scripts/test-rust-changed.mjs",
+    "smoke:hooks": "node scripts/smoke-provider-hooks.mjs",
+    "audit": "bun audit --audit-level=moderate",
+    "prepack": "cp README.md README.repo.md && cp README.npm.md README.md",
+    "postpack": "cp README.repo.md README.md && rm README.repo.md",
+    "release:skill": "node scripts/release.mjs skill",
+    "release:cli": "node scripts/release.mjs cli",
+    "release:ext": "node scripts/release.mjs extension",
+    "release:engine": "node scripts/release.mjs engine",
+    "release:platform-packages": "node scripts/publish-platform-packages.mjs",
+    "check:engine-release": "node scripts/check-engine-release.mjs",
+    "build:component-review": "bun scripts/build-component-review.mjs"
+  },
+  "optionalDependencies": {
+    "@impeccable/cli-darwin-arm64": "0.1.22",
+    "@impeccable/cli-darwin-x64": "0.1.22",
+    "@impeccable/cli-linux-x64": "0.1.22",
+    "@impeccable/cli-linux-arm64": "0.1.22",
+    "@impeccable/cli-windows-x64": "0.1.22"
+  },
+  "devDependencies": {
+    "@ai-sdk/anthropic": "^4.0.7",
+    "@ai-sdk/google": "^4.0.8",
+    "@ai-sdk/openai": "^4.0.7",
+    "@anthropic-ai/claude-agent-sdk": "^0.3.165",
+    "@anthropic-ai/sdk": "^1.2.0",
+    "@babel/parser": "^8.0.4",
+    "ai": "^7.0.14",
+    "archiver": "^8.0.0",
+    "playwright": "^1.59.1",
+    "puppeteer": "^25.1.0",
+    "svelte": "^5",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: the site's own modal beside a consent layer</title>
+  <style>
+    /* A page with its own newsletter modal open, which locks <body> with an
+       inline overflow: hidden, under a Cookiebot-shaped dialog and underlay.
+       Hiding the consent layer leaves the site's lock alone. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .section { height: 900px; }
+    #CybotCookiebotDialogBodyUnderlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 2147483630; }
+    #CybotCookiebotDialog { position: fixed; top: 200px; left: 50%; width: 640px; margin-left: -320px; height: 200px;
+      padding: 28px; background: #ffffff; z-index: 2147483631; }
+    .newsletter { position: fixed; bottom: 40px; right: 40px; width: 320px; padding: 24px; background: #fff; border: 1px solid #ddd; z-index: 10; }
+  </style>
+</head>
+<body style="overflow: hidden">
+  <h1>A page with its own modal open</h1>
+  <div class="section"><p>The first section of a page with plenty of its own copy, so it is a page and not a wall.</p></div>
+  <div class="section"><p>The second section.</p></div>
+  <div class="newsletter" role="dialog" aria-modal="true" aria-label="Newsletter"><p>Get the weekly letter.</p><button type="button">Subscribe</button></div>
+  <div id="CybotCookiebotDialogBodyUnderlay"></div>
+  <div id="CybotCookiebotDialog" role="dialog"><p>This website uses cookies to personalise content and to analyse our traffic.</p><button type="button">Allow all</button></div>
+</body>
+</html>

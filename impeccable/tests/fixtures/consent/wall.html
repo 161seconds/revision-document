@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a page that is only a consent wall</title>
+  <style>
+    /* A page whose only readable text is a OneTrust-shaped consent dialog.
+       Hiding it would leave an empty page to report clean, so the validity
+       gate refuses it as a consent wall. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f3f4f6; }
+    #onetrust-pc-sdk { position: fixed; top: 80px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }
+  </style>
+</head>
+<body>
+  <div id="onetrust-consent-sdk">
+    <div id="onetrust-pc-sdk" role="dialog" aria-label="Privacy preferences">
+      <h2>Your privacy choices</h2>
+      <p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising, to measure the performance of content and advertising, and to develop and improve our products. You can accept all of these purposes, reject them, or choose which ones you allow. Your choices apply to this site only and you can change them at any time from the privacy link in the footer.</p>
+      <button type="button">Accept all</button> <button type="button">Reject all</button> <button type="button">Manage choices</button>
+    </div>
+  </div>
+</body>
+</html>

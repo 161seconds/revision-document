@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a late banner on a root hidden inline</title>
+  <style>
+    /* A page with copy of its own and Usercentrics' root in the DOM at load,
+       its own inline display: block !important outranking the hide rule, so
+       the first pass hides it inline. The banner renders on the first scroll;
+       the hide pass after the sweep still names it. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; min-height: 3000px; color: #111; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Opening hours</h1>
+  <p>The studio is open Tuesday to Saturday from ten until six, and by appointment on Mondays.</p>
+  <div id="usercentrics-root" style="display: block !important"></div>
+  <script>
+    window.addEventListener('scroll', () => {
+      const root = document.getElementById('usercentrics-root');
+      if (root.shadowRoot) return;
+      root.attachShadow({ mode: 'open' }).innerHTML =
+        '<style>.bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 24px; background: #fff; }</style>'
+        + '<div class="bar" role="region" aria-label="Privacy settings"><p>We use cookies and similar technologies to provide this website and to measure how it is used.</p></div>';
+    }, { passive: true });
+  </script>
+</body>
+</html>

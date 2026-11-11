@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-page screenshot, rows rendered on scroll: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for lists that render only the rows near the scroll position
+       (a virtualized feed). The document is about 6,100px tall, but at
+       scroll 0 only the first rows exist, so a beyond-viewport capture
+       paints a tall blank band where the rest would be. The full-page
+       screenshot notices the band and captures in viewport steps instead
+       (crates/browser/src/fullpage.rs), which scrolls the rows into being.
+
+       Rows in the should-flag list are faint grey, rows in the should-pass
+       list are dark ink. The static HTML engine runs no script and sees
+       empty lists. The URL behavior is pinned by crates/browser/tests/
+       fullpage_screenshot.rs. */
+    body { margin: 0; background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; width: 860px; padding: 24px 20px; }
+    .col { width: 420px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    .list { position: relative; width: 420px; height: 6000px; }
+    .row { position: absolute; left: 0; width: 420px; height: 60px; margin: 0; font-size: 18px; line-height: 60px; }
+    .row.faint { color: #c4c4c4; }
+    .row.ink { color: #222222; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag: faint rows rendered on scroll</h2>
+      <div class="list" id="flag-virtual-list" data-row-class="faint"></div>
+    </div>
+    <div class="col">
+      <h2>Should pass: ink rows rendered on scroll</h2>
+      <div class="list" id="pass-virtual-list" data-row-class="ink"></div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const ROW = 60;
+      const ROWS = 100;
+      const lists = Array.from(document.querySelectorAll('.list'));
+      function render() {
+        for (const list of lists) {
+          const top = list.getBoundingClientRect().top + window.scrollY;
+          const from = Math.max(0, Math.floor((window.scrollY - top) / ROW) - 2);
+          const to = Math.min(ROWS, Math.ceil((window.scrollY + window.innerHeight - top) / ROW) + 2);
+          const rows = [];
+          for (let i = from; i < to; i++) {
+            const row = document.createElement('p');
+            row.className = 'row ' + list.dataset.rowClass;
+            row.style.top = (i * ROW) + 'px';
+            row.textContent = 'Row ' + (i + 1) + ' of the feed, painted once it is scrolled to.';
+            rows.push(row);
+          }
+          list.replaceChildren(...rows);
+        }
+      }
+      window.addEventListener('scroll', render, { passive: true });
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Color Palette: purple headings in the brand hue</title>
+  <style>
+    /* URL engine. A purple heading whose hue the page also paints on its
+       nav bar, its logo or a large solid surface is the brand colour, not
+       the AI palette (te.eg, whose #5c2d91 section headings sit under a
+       #5c2d91 nav bar). The gradient on the same page still reports: purple
+       that shows up only in headings and gradients is the tell.
+       The companion page ai-color-palette-brand-hue-headings-only.html has
+       the same headings with no brand surface, and they report. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1c1c24; margin: 0; }
+    .topbar { display: block; width: 1280px; height: 50px; background-color: #5c2d91; color: #ffffff; }
+    .topbar a { display: inline-block; padding: 14px 16px; color: #ffffff; font-size: 14px; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 1200px; margin: 0 auto; padding: 24px 0; }
+    .col > h2.label { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin: 0 0 16px; }
+    .section-header { font-size: 28px; line-height: 36px; margin: 0 0 12px; color: #5c2d91; }
+    .tile-header { font-size: 24px; line-height: 32px; margin: 0 0 12px; color: #6a35a6; }
+    .promo-ramp {
+      display: block; width: 480px; height: 160px; border-radius: 12px;
+      background-image: linear-gradient(135deg, rgb(133, 38, 254) 0%, rgb(192, 88, 243) 100%);
+    }
+    p { font-size: 16px; line-height: 24px; margin: 0 0 16px; }
+  </style>
+</head>
+<body>
+  <nav class="topbar" aria-label="Primary">
+    <a href="#">Personal</a><a href="#">Business</a><a href="#">Investors</a>
+  </nav>
+  <main>
+    <section class="col" aria-label="Should flag">
+      <h2 class="label">Should flag</h2>
+      <!-- A gradient in the brand hue is still the palette tell. -->
+      <div class="promo-ramp" data-expect="flag" data-case="Flag Purple Gradient"></div>
+    </section>
+    <section class="col" aria-label="Should pass">
+      <h2 class="label">Should pass</h2>
+      <h1 class="section-header" data-expect="pass" data-case="Pass Brand Hue Heading">Featured services</h1>
+      <p>The heading wears the nav bar's #5c2d91.</p>
+      <h2 class="tile-header" data-expect="pass" data-case="Pass Nearby Brand Hue">Support and help</h2>
+      <p>A lighter step of the same purple, a few degrees of hue away.</p>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "SvelteKit (kit.csp.directives)",
+  "config": {
+    "files": ["src/app.html"],
+    "insertBefore": "</body>",
+    "commentSyntax": "html"
+  },
+  "sourceFiles": ["svelte.config.js", "src/app.html", "src/routes/+page.svelte"],
+  "generatedFiles": [],
+  "wrapCases": [
+    {
+      "name": "wraps hero title in route source",
+      "args": { "classes": "hero-title", "tag": "h1" },
+      "expectedFile": "node_modules/.impeccable-live/wraptest0/manifest.json",
+      "expectedSourceFile": "src/routes/+page.svelte",
+      "expectedPreviewMode": "svelte-component"
+    }
+  ],
+  "csp": {
+    "shape": "append-arrays",
+    "signals": ["svelte.config.js:kit.csp.directives"],
+    "patchTarget": "svelte.config.js",
+    "expectedAfter": "expected-after-patch.js"
+  }
+}

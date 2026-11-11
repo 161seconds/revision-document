@@ -1,0 +1,175 @@
+name: release-engine
+# Builds the engine binary for every supported target and publishes them, with
+# sha256 sidecars, as the GitHub Release `engine-v<X>` on this repo. That
+# release is what the launcher (skill/scripts/impeccable), the npm shim
+# (cli/bin/cli.js), `impeccable install`, and `bun run fetch:engine` download.
+#
+# Trigger: `bun run release:engine` (scripts/release.mjs) verifies
+# ENGINE_VERSION, the npm platform-package pins, and a clean tree, then
+# pushes the tag. Third-party actions are pinned to commit SHAs so a
+# moved tag cannot swap the code this workflow runs.
+#
+# Manual run (workflow_dispatch, no inputs): a build-only rehearsal. It runs the
+# build matrix and smoke checks on the chosen ref and uploads run-scoped
+# artifacts. Signing and publication run only on a tag push, so a manual run
+# never reaches the windows-signing environment, its OIDC identity or
+# contents: write.
+on:
+  push:
+    tags: ['engine-v*']
+  workflow_dispatch:
+# Same-run artifact transfers use ACTIONS_RUNTIME_TOKEN, not GITHUB_TOKEN;
+# they do not require actions: read/write. Keep downloads scoped to this run.
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-15,       target: aarch64-apple-darwin,       short: darwin-arm64 }
+          # No Intel runner: GitHub retired macos-13 (and macos-14 on 2 Nov 2026). Apple's toolchain builds
+          # x86_64 on an arm64 host natively once the target is installed.
+          - { os: macos-15,       target: x86_64-apple-darwin,        short: darwin-x64 }
+          - { os: namespace-profile-impeccable, target: x86_64-unknown-linux-musl,  short: linux-x64 }
+          - { os: namespace-profile-impeccable, target: aarch64-unknown-linux-musl, short: linux-arm64, cross: true }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc,     short: windows-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the tag and Cargo.toml match ENGINE_VERSION
+        shell: bash
+        run: |
+          set -e
+          version="$(tr -d '[:space:]' < ENGINE_VERSION)"
+          # A manual build-only run has a branch ref, not a tag: skip only this comparison.
+          if [ "${GITHUB_EVENT_NAME:-push}" != workflow_dispatch ]; then
+            [ "$GITHUB_REF_NAME" = "engine-v$version" ] || { echo "tag $GITHUB_REF_NAME != engine-v$version"; exit 1; }
+          fi
+          # The binary reports the workspace version, and the launchers skip a
+          # sibling engine that reports anything but ENGINE_VERSION. Checked here
+          # as well as in the smoke step because that one cannot run the cross target.
+          cargo_version="$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\([^"]*\)".*/\1/p' Cargo.toml)"
+          [ "$cargo_version" = "$version" ] || { echo "Cargo.toml workspace version '$cargo_version' != ENGINE_VERSION $version"; exit 1; }
+      # rust-toolchain.toml names the channel; `rustup show` installs it.
+      # Never override the toolchain here.
+      - name: Install the pinned toolchain
+        shell: bash
+        run: rustup show && rustup target add ${{ matrix.target }}
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - if: matrix.cross
+        run: cargo install cross --locked
+      - name: Build
+        shell: bash
+        run: ${{ matrix.cross && 'cross' || 'cargo' }} build --release -p impeccable --target ${{ matrix.target }}
+      - name: Smoke the binary
+        if: ${{ !matrix.cross }}
+        shell: bash
+        run: |
+          set -e
+          want="impeccable-engine $(tr -d '[:space:]' < ENGINE_VERSION)"
+          got="$(target/${{ matrix.target }}/release/impeccable${{ runner.os == 'Windows' && '.exe' || '' }} engine-probe)"
+          [ "$got" = "$want" ] || { echo "engine-probe printed '$got', want '$want'"; exit 1; }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          # Keep unsigned Windows output outside the publish job's pattern.
+          name: ${{ matrix.short == 'windows-x64' && 'unsigned-windows-x64' || format('impeccable-{0}', matrix.short) }}
+          path: target/${{ matrix.target }}/release/impeccable${{ runner.os == 'Windows' && '.exe' || '' }}
+          if-no-files-found: error
+  sign-windows:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/engine-v')
+    runs-on: windows-latest
+    timeout-minutes: 15
+    environment: windows-signing
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # A fresh runner signs only this run's engine. It does not check out or
+      # execute repository code with the Azure identity available.
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned-windows-x64
+          path: unsigned
+      - name: Azure login (OIDC)
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Sign Windows engine
+        uses: azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2
+        with:
+          endpoint: https://eus.codesigning.azure.net/
+          signing-account-name: impeccable-signing
+          certificate-profile-name: impeccable-windows
+          files: ${{ github.workspace }}\unsigned\impeccable.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          description: Impeccable engine
+          description-url: https://impeccable.style
+          exclude-environment-credential: true
+          # Only the preceding OIDC Azure CLI login is used. Other credential
+          # types are excluded by this pinned action's defaults.
+          exclude-azure-cli-credential: false
+          cache-dependencies: false
+      - name: Verify signed engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $signature = Get-AuthenticodeSignature -LiteralPath 'unsigned/impeccable.exe'
+          if ($signature.Status -ne 'Valid') {
+            throw "Invalid Windows signature: $($signature.Status) — $($signature.StatusMessage)"
+          }
+          $publisher = $signature.SignerCertificate.GetNameInfo([System.Security.Cryptography.X509Certificates.X509NameType]::SimpleName, $false)
+          if ($publisher -cne 'Renaissance Geek, Inc.') {
+            throw "Unexpected Windows publisher: $publisher"
+          }
+          if ($null -eq $signature.TimeStamperCertificate) {
+            throw 'The Windows signature has no timestamp.'
+          }
+          Write-Output "Verified publisher: $publisher; certificate: $($signature.SignerCertificate.Thumbprint)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: impeccable-windows-x64
+          path: unsigned/impeccable.exe
+          if-no-files-found: error
+  publish:
+    needs: [build, sign-windows]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/engine-v')
+    runs-on: namespace-profile-impeccable
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: impeccable-*
+          path: artifacts
+      - name: Lay out release assets with checksums
+        run: |
+          set -e
+          mkdir -p out
+          for d in artifacts/impeccable-*; do
+            short=$(basename "$d" | sed 's/^impeccable-//')
+            f=$(ls "$d" | head -1)
+            case "$short" in windows-*) dest="out/impeccable-$short.exe" ;; *) dest="out/impeccable-$short" ;; esac
+            cp "$d/$f" "$dest"
+            (cd out && sha256sum "$(basename "$dest")" > "$(basename "$dest").sha256")
+          done
+          ls -la out
+      - name: Publish the GitHub Release
+        env: { GH_TOKEN: "${{ github.token }}" }
+        # With asset files, `gh release create` makes a draft, uploads every
+        # asset, then publishes, and deletes the draft if any step fails, so a
+        # release is never public with assets missing. Immutable releases need
+        # that order: assets and the tag freeze at publish. A re-run against a
+        # published release fails at create on purpose: there is nothing to top up.
+        run: |
+          set -e
+          tag="${GITHUB_REF_NAME}"
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" --title "impeccable engine $tag" \
+            --notes "Prebuilt impeccable engine binaries ($tag). The launcher, the npm shim and impeccable install download these on first run. Docs: https://impeccable.style" out/*

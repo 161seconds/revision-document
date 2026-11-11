@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a web-component page under a banner</title>
+  <style>
+    /* A page whose own text lives in an open shadow root, under a
+       light-DOM OneTrust dialog that holds all of body.innerText. The
+       shadow text is the page's, so it is scanned, not refused as a consent
+       wall, and the root's display: contents wrapper is looked through.
+       Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #fff; }
+    #onetrust-pc-sdk { position: fixed; top: 80px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }
+  </style>
+</head>
+<body>
+  <x-app></x-app>
+  <div id="onetrust-consent-sdk">
+    <div id="onetrust-pc-sdk" role="dialog" aria-label="Privacy preferences">
+      <h2>Your privacy choices</h2>
+      <p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising and to measure its performance.</p>
+    </div>
+  </div>
+  <script>
+    const root = document.querySelector('x-app').attachShadow({ mode: 'open' });
+    root.innerHTML = '<div style="display:contents"><main style="display:block;padding:24px"><h1>Field notes</h1><p>The ferry leaves the harbour at seven, crosses the strait in a little under two hours and reaches the island before the morning market closes. Most visitors walk from the pier to the old town, stop at the bakery by the church and take the coast path north towards the lighthouse.</p></main></div>';
+  </script>
+</body>
+</html>

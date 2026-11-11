@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pseudo-element side stripe fixture</title>
+<style>
+  :root {
+    --ok: oklch(0.78 0.145 155);
+    --line: rgba(0, 0, 0, 0.08);
+  }
+
+  /* FLAG: classic ::before accent stripe — absolute, full height, left edge,
+     chromatic background resolved through a custom property. */
+  .card-stripe { position: relative; border-radius: 12px; }
+  .card-stripe::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5px;
+    background: var(--ok);
+  }
+
+  /* FLAG: right-edge variant using inset shorthand + literal color, on a
+     rounded card. */
+  .row-stripe { position: relative; border-radius: 12px; }
+  .row-stripe::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 4px;
+    background-color: #3b82f6;
+  }
+
+  /* PASS: the same chromatic stripe on a square host is the old callout rule,
+     not the rounded-card tell. */
+  .note-stripe { position: relative; }
+  .note-stripe::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: #0f766e;
+  }
+
+  /* PASS: rounded only along the stripe, so square where it counts. */
+  .tab-stripe { position: relative; border-radius: 12px 0 0 12px; }
+  .tab-stripe::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 7px;
+    background: #b91c1c;
+  }
+
+  /* PASS: 1px neutral hairline divider (below width threshold + neutral). */
+  .col + .col::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--line);
+  }
+
+  /* PASS: neutral 4px rail (timeline spine) — chromatic gate rejects it. */
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: rgb(210, 210, 214);
+  }
+
+  /* PASS: blockquote decoration is exempt in prose contexts. */
+  blockquote::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: #d97706;
+  }
+
+  /* PASS: toggle knob — offset from the edge, not a stripe. */
+  .switch::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: 2px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #3b82f6;
+  }
+
+  /* PASS: wide decorative panel, not a stripe. */
+  .panel::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 40px;
+    background: #3b82f6;
+  }
+
+  /* PASS: horizontal underline accent (not full height, not edge-anchored
+     vertically). */
+  .heading::after {
+    content: "";
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 6px; height: 3px;
+    background: #3b82f6;
+  }
+</style>
+</head>
+<body>
+  <div class="card-stripe">Card with pseudo stripe</div>
+  <div class="row-stripe">Row with right stripe</div>
+  <div class="note-stripe">Square note with a left rule</div>
+  <div class="tab-stripe">Rounded only under the stripe</div>
+  <div class="col">One</div><div class="col">Two</div>
+  <div class="timeline">Timeline</div>
+  <blockquote>Quoted text</blockquote>
+  <span class="switch"></span>
+  <div class="panel">Panel</div>
+  <h2 class="heading">Heading</h2>
+</body>
+</html>

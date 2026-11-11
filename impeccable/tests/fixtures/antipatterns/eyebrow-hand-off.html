@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eyebrow hand-off: dated meta lines and small-caps kickers</title>
+  <style>
+    /* Both engines. The hero eyebrow's 0.08em tracking floor reaches the
+       common setting of a blog's date line (0.1em at 12px is 1.2px), so under
+       the fixed 1.6px floor a line that is, or holds, a <time>, or that names
+       a year, is the post's meta and not an eyebrow (copperhead.sh). The
+       kicker rule hands a label to the hero rule only where the hero rule
+       reports it: a small-caps kicker, which the hero rule does not read as
+       caps, stays a kicker. */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    main { display: grid; grid-template-columns: 600px 600px; gap: 40px; width: 1240px; margin: 0 auto; padding: 24px 0; }
+    .hero { width: 600px; height: 320px; margin: 0 0 40px; }
+    .hero h1 { font-size: 56px; line-height: 64px; margin: 12px 0 0; }
+    .caps { display: block; height: 16px; font-size: 12px; line-height: 16px; letter-spacing: 0.1em; text-transform: uppercase; color: #555555; margin: 0; }
+    .small-caps { display: block; height: 18px; font-size: 13px; line-height: 18px; letter-spacing: 0.1em; font-variant: small-caps; color: #3056a0; margin: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag">
+      <div class="hero">
+        <p class="small-caps" id="flag-small-caps-kicker" data-expect="flag" data-case="Flag Small Caps Kicker Over A Display H1">new in version four</p>
+        <h1>The workspace that thinks with you</h1>
+      </div>
+      <div class="hero">
+        <p class="caps" id="flag-tracked-eyebrow" data-expect="flag" data-case="Flag Tracked Caps Eyebrow Without A Date">Now in public beta</p>
+        <h1>Everything you need to ship a release</h1>
+      </div>
+    </section>
+    <section aria-label="Should pass">
+      <div class="hero">
+        <p class="caps" id="pass-dated-meta" data-expect="pass" data-case="Pass Dated Meta Line Over A Post Title">Engineering / 2 September 2026</p>
+        <h1>How we rebuilt the scheduler in a weekend</h1>
+      </div>
+      <div class="hero">
+        <time class="caps" id="pass-time-meta" datetime="2026-09-02" data-expect="pass" data-case="Pass Time Element Over A Post Title">Sep 2</time>
+        <h1>Notes on shipping a design system</h1>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

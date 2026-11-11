@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow, a tab list beside stacked panels</title>
+<!--
+  Should pass. An opening section lays a vertical tab list beside a stack of
+  panels, one open and the rest collapsed into the same grid cell. A tab list
+  is short by design, and a collapsed panel paints nothing in its flow, so
+  neither is a sibling column the open panel overflows.
+  first-viewport-column-overflow.html keeps the flag case.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+  .accordion { display: grid; grid-template-columns: 30% 70%; padding: 40px; }
+  .tabs { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 24px; }
+  .item { grid-column: 2; grid-row: 1; }
+  .panel { height: 1400px; background: #f3f3f3; padding: 16px; }
+  .collapsed .panel { display: none; }
+</style>
+</head>
+<body>
+  <section class="accordion">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true">Networking</button>
+      <button role="tab">Security</button>
+      <button role="tab">Collaboration</button>
+    </div>
+    <div class="item">
+      <h3 hidden>Networking</h3>
+      <div class="panel" role="tabpanel"><p>Networking products, with a long gallery.</p></div>
+    </div>
+    <div class="item collapsed">
+      <h3 hidden>Security</h3>
+      <div class="panel" role="tabpanel"><p>Security products.</p></div>
+    </div>
+    <div class="item collapsed">
+      <h3 hidden>Collaboration</h3>
+      <div class="panel" role="tabpanel"><p>Collaboration products.</p></div>
+    </div>
+  </section>
+</body>
+</html>

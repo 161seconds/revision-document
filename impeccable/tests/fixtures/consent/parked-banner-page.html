@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: closed dialogs parked offscreen and clipped away</title>
+  <style>
+    /* A page with a few words of its own and two closed consent dialogs
+       whose text outweighs it: a OneTrust preference center a fixed layer
+       parks far above the viewport, and a TrustArc bar inside a fixed
+       wrapper collapsed to no height, which clips it away. Neither paints,
+       so neither is showing, and the page is scanned rather than refused as
+       a consent wall. Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; background: #fff; color: #111; }
+    #onetrust-pc-sdk { position: fixed; top: -3000px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }
+    .bar-wrap { position: fixed; left: 0; right: 0; bottom: 0; height: 0; overflow: hidden; }
+    #consent_blackbar { padding: 24px; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Hours</h1>
+  <div id="onetrust-consent-sdk">
+    <div id="onetrust-pc-sdk" role="dialog" aria-label="Privacy preferences">
+      <h2>Your privacy choices</h2>
+      <p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising, to measure the performance of content and advertising, and to develop and improve our products.</p>
+    </div>
+  </div>
+  <div class="bar-wrap">
+    <div id="consent_blackbar">
+      <p>This site uses cookies and related technologies for site operation, analytics and third-party advertising. You may choose to consent to our use of these technologies, or manage your own preferences.</p>
+    </div>
+  </div>
+</body>
+</html>

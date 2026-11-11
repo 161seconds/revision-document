@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Body text viewport edge, display text in a generic box</title>
+  <!--
+    observations-42 row 6 (fanniemae.com), scanned at 390x844, where the
+    gutter floor is 12px. Text written straight into a generic box (a div, a
+    section, an article) is body copy when it is set under 24px and a
+    heading in a generic box from 24px up: fanniemae.com sets its section
+    titles as 28px `div.corp-h2`. Every case but the last keeps 10px from
+    each side of the window. The flag section holds copy at 16, 18, 20 and
+    23px; the pass section holds titles at 24, 28, 32 and 40px, and 16px
+    copy that keeps a 16px gutter.
+  -->
+  <style>
+    html { margin: 0; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; width: 390px; color: #111111; background: #ffffff; }
+    h2 { font: 600 14px/20px system-ui, sans-serif; margin: 24px 16px 8px; color: #334155; }
+    .edge { width: 390px; box-sizing: border-box; padding: 0 10px; margin: 0 0 24px; }
+    .roomy { padding: 0 16px; }
+    .copy-18 { font-size: 18px; line-height: 28px; }
+    .copy-20 { font-size: 20px; line-height: 30px; }
+    .copy-23 { font-size: 23px; line-height: 32px; }
+    .title-24 { font-size: 24px; line-height: 32px; }
+    .title-28 { font-size: 28px; line-height: 36px; }
+    .title-32 { font-size: 32px; line-height: 40px; display: flow-root; }
+    .title-40 { font-size: 40px; line-height: 48px; }
+  </style>
+</head>
+<body>
+  <section data-col="flag">
+    <h2>Should flag</h2>
+    <div class="edge flag-body-copy">Our mission is to make housing work for people who rent and people who own.</div>
+    <div class="edge flag-copy-18 copy-18">We buy loans from lenders so they can lend again to the next family in line.</div>
+    <article class="edge flag-lead-20 copy-20">A lead paragraph set a little larger is still copy a visitor reads to the end.</article>
+    <div class="edge flag-copy-23 copy-23">One pixel under display size, this is still measured as running copy.</div>
+  </section>
+
+  <section data-col="pass">
+    <h2>Should pass</h2>
+    <div class="edge pass-display-title title-28">Our mission is to make housing work for everyone.</div>
+    <div class="edge pass-title-24 title-24">A section title set at exactly twenty-four pixels.</div>
+    <div class="edge pass-title-flow-root title-32">A flow-root box holding a title at thirty-two pixels.</div>
+    <article class="edge pass-hero-line title-40">An opening line written straight into an article.</article>
+    <div class="edge pass-copy-with-gutter roomy">Copy in a generic box that keeps sixteen pixels from each side of the window.</div>
+  </section>
+</body>
+</html>

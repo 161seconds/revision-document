@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>all-caps-body fixture</title>
+<style>
+  /* Explicit pixel dimensions because the static engine does no layout. */
+  body { font-family: system-ui, sans-serif; font-size: 16px; }
+  .col { display: inline-block; width: 480px; vertical-align: top; }
+
+  /* --- should-flag styles --- */
+  .caps-paragraph { text-transform: uppercase; font-size: 15px; line-height: 24px; width: 440px; }
+  .caps-blurb     { text-transform: uppercase; font-size: 14px; line-height: 22px; width: 440px; }
+  .caps-warranty  { text-transform: uppercase; font-size: 12px; line-height: 18px; width: 440px; }
+
+  /* --- should-pass styles --- */
+  .cta-link       { text-transform: uppercase; font-size: 12px; line-height: 18px; letter-spacing: 0.08em; }
+  .kicker         { text-transform: uppercase; font-size: 11px; line-height: 16px; letter-spacing: 0.2em; }
+  .narrow-kicker  { text-transform: uppercase; font-size: 11px; line-height: 16px; width: 120px; }
+  .bar-label      { text-transform: uppercase; font-size: 13px; line-height: 20px; width: 440px; }
+  .field-label    { text-transform: uppercase; font-size: 12px; line-height: 18px; width: 240px; }
+  .copyright      { text-transform: uppercase; font-size: 12px; line-height: 18px; letter-spacing: 0.2em; }
+  .sentence-case  { font-size: 15px; line-height: 24px; width: 440px; }
+</style>
+</head>
+<body>
+
+<!-- ================= SHOULD FLAG (uppercase runs read as sentences) ================= -->
+<div class="col" id="should-flag">
+  <h2>Should flag</h2>
+
+  <!-- a full paragraph of reading matter set in capitals -->
+  <p class="caps-paragraph">Flag Caps Paragraph: every plan includes unlimited seats, priority support and a full audit trail, so your team never waits on a procurement cycle to get started.</p>
+
+  <!-- a multi-sentence product blurb in capitals -->
+  <div class="caps-blurb">Flag Caps Blurb: we route each call to the nearest region. Latency stays under one hundred milliseconds even when traffic triples overnight.</div>
+
+  <!-- legal warranty text in capitals: long enough to be read, not a label -->
+  <p class="caps-warranty">Flag Caps Warranty: the seller disclaims all implied warranties of merchantability and fitness for a particular purpose to the fullest extent permitted by law.</p>
+</div>
+
+<!-- ================= SHOULD PASS (short uppercase runs, a convention) ================= -->
+<div class="col" id="should-pass">
+  <h2>Should pass</h2>
+
+  <!-- a one-line card CTA that runs long only because the article title does -->
+  <a class="cta-link" href="/blog/scaling">Pass Cta Link How Teams Scale Sales</a>
+
+  <!-- a section kicker with wide tracking, one line -->
+  <p class="kicker">Pass Kicker On-Prem Data Residency</p>
+
+  <!-- the same kind of kicker in a column too narrow to hold it on one line:
+       a label is a label at every width, so wrapping changes nothing -->
+  <p class="narrow-kicker">Pass Narrow Kicker Data Residency And Regional Routing</p>
+
+  <!-- a panel header bar: its own label is short, the length is in the badge,
+       and neither run is a sentence -->
+  <div class="bar-label">Pass Bar Label Audit Trail Complete <span>Immutable Log Of Every Configuration Change Your Team Makes</span></div>
+
+  <!-- a form control whose length sits in the options it wraps, none of which
+       renders beside the label -->
+  <label class="field-label">Pass Field Label What Are You Asking For
+    <select>
+      <option>Take my picture off the site but keep citing my work</option>
+      <option>Take me out of the creator catalogue altogether</option>
+    </select>
+  </label>
+
+  <!-- a footer copyright line: legal furniture, one line -->
+  <footer>
+    <p class="copyright">Pass Copyright 2026 Example Inc All Rights Reserved</p>
+  </footer>
+
+  <!-- the same reading matter in sentence case -->
+  <p class="sentence-case">Pass Sentence Case: every plan includes unlimited seats, priority support and a full audit trail, so your team never waits on procurement.</p>
+</div>
+
+</body>
+</html>

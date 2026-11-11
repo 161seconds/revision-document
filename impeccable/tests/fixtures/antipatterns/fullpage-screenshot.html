@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-page screenshot, tall document: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the URL engine's full-page screenshot (the evidence a
+       reviewer checks a finding against, crates/browser/src/fullpage.rs).
+       The finding sits at the foot of a document about 4,600px tall, so
+       the screenshot has to paint to the bottom for its crop to show it.
+
+       Geometry the browser test reads: the grid is 900px wide, so a 390px
+       viewport overflows to the right and the should-pass column (x 480 to
+       900) sits past the viewport edge. With the screenshot cut at 1,500px
+       the should-flag copy lies past the cut and gets its own viewport
+       shot instead.
+
+       The static HTML engine measures no boxes and reports the faint copy
+       too. The URL behavior is pinned by crates/browser/tests/
+       fullpage_screenshot.rs. */
+    body { margin: 0; background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; width: 860px; padding: 24px 20px; }
+    .col { width: 420px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    /* Striped, so no row of the spacer reads as one flat colour. */
+    .spacer { width: 420px; height: 4200px; background: repeating-linear-gradient(45deg, #dfe6ee 0 12px, #c3cfdc 12px 24px); }
+    .foot { width: 420px; height: 120px; margin: 24px 0 0; }
+    .faint { margin: 0; width: 420px; font-size: 18px; color: #c4c4c4; }
+    .ink { margin: 0; width: 420px; font-size: 18px; color: #222222; }
+    .marker { width: 420px; height: 60px; margin: 12px 0 0; background: #0a7d3b; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag: faint copy at the foot of a tall page</h2>
+      <div class="spacer"></div>
+      <div class="foot">
+        <p class="faint" id="flag-foot-copy">Faint grey copy on white, far below the fold.</p>
+        <div class="marker"></div>
+      </div>
+    </div>
+    <div class="col">
+      <h2>Should pass: ink copy at the foot of a tall page</h2>
+      <div class="spacer"></div>
+      <div class="foot">
+        <p class="ink" id="pass-foot-copy">Dark ink on white, far below the fold.</p>
+        <div class="marker"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-page screenshot, fixed scroll frame: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for pages a smooth-scroll library scrolls: the document is
+       locked to one viewport and a fixed, viewport-sized frame that hides
+       its overflow carries the whole page, moved by script. A
+       beyond-viewport capture paints the first viewport and nothing below.
+       The full-page screenshot scrolls the frame and stitches
+       (crates/browser/src/fullpage.rs); hiding fixed chrome on later tiles
+       must not hide the frame itself.
+
+       The static HTML engine reports the faint copy as well. The URL
+       behavior is pinned by crates/browser/tests/fullpage_screenshot.rs. */
+    html, body { height: 100%; margin: 0; overflow: hidden; }
+    body { background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; }
+    .frame { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; width: 860px; padding: 24px 20px; }
+    .col { width: 420px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    .spacer { width: 420px; height: 3400px; background: repeating-linear-gradient(45deg, #dfe6ee 0 12px, #c3cfdc 12px 24px); }
+    .foot { width: 420px; height: 120px; margin: 24px 0 0; }
+    .faint { margin: 0; width: 420px; font-size: 18px; color: #c4c4c4; }
+    .ink { margin: 0; width: 420px; font-size: 18px; color: #222222; }
+    .marker { width: 420px; height: 60px; margin: 12px 0 0; background: #0a7d3b; }
+  </style>
+</head>
+<body>
+  <div class="frame" id="page-frame">
+    <div class="grid">
+      <div class="col">
+        <h2>Should flag: faint copy at the foot of a scroll frame</h2>
+        <div class="spacer"></div>
+        <div class="foot">
+          <p class="faint" id="flag-frame-foot-copy">Faint grey copy at the foot of a script-scrolled frame.</p>
+          <div class="marker"></div>
+        </div>
+      </div>
+      <div class="col">
+        <h2>Should pass: ink at the foot of a scroll frame</h2>
+        <div class="spacer"></div>
+        <div class="foot">
+          <p class="ink" id="pass-frame-foot-copy">Dark ink at the foot of a script-scrolled frame.</p>
+          <div class="marker"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const frame = document.getElementById('page-frame');
+      window.addEventListener('wheel', (event) => {
+        frame.scrollTop += event.deltaY;
+        event.preventDefault();
+      }, { passive: false });
+    })();
+  </script>
+</body>
+</html>

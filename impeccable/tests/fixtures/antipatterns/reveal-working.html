@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Working reveal-on-scroll fixture (browser-only pass case)</title>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
+    section { margin: 0 0 480px; }
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.4s ease-out, transform 0.4s ease-out; }
+    .reveal.in-view { opacity: 1; transform: none; }
+    .menu { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Visible hero headline stays readable</h1>
+    <p>Identical markup to the broken fixture, but the script parses and runs, so every
+    reveal section becomes visible once the detector's reveal sweep scrolls it into view.
+    Nothing on this page may produce a script-error or content-hidden finding.</p>
+
+    <!-- Legitimately hidden UI: excluded from the measurement entirely -->
+    <nav class="menu">
+      <a href="#one">A menu that only opens on demand</a>
+      <a href="#two">Another menu entry with text</a>
+    </nav>
+    <div hidden>Hidden attribute content that never counts against the page.</div>
+    <div aria-hidden="true">Decorative aria-hidden copy that also stays out of the denominator.</div>
+    <template><p>Template content never renders and never counts.</p></template>
+
+    <section class="reveal" id="one">
+      <h2>First revealed section</h2>
+      <p>This block starts at opacity zero, exactly like a broken page would, but its
+      IntersectionObserver is alive. During the sweep it gains the in-view class and
+      transitions to full opacity, so the post-sweep measurement sees it as visible.</p>
+    </section>
+    <section class="reveal" id="two">
+      <h2>Second revealed section</h2>
+      <p>More reveal-on-scroll copy that carries a meaningful share of the page's
+      character count. If the sweep or the exclusion rules regress, this fixture is the
+      page that starts producing a false content-hidden-at-rest finding.</p>
+    </section>
+    <section class="reveal">
+      <h2>Third revealed section</h2>
+      <p>The smooth scroll-behavior on the root element is deliberate: the sweep must
+      use instant scrolling or it never actually reaches these sections before it
+      measures, which was the first false-positive mode found while calibrating.</p>
+    </section>
+  </main>
+
+  <script>
+    const sections = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) { entry.target.classList.add('in-view'); io.unobserve(entry.target); }
+      }
+    }, { threshold: 0.1 });
+    sections.forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>

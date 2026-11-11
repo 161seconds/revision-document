@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>undersized-ui-text fixture</title>
+<style>
+  /* Explicit pixel dimensions because jsdom does no layout. */
+  body { font-family: system-ui, sans-serif; font-size: 16px; }
+  .col { display: inline-block; width: 480px; vertical-align: top; }
+
+  /* --- should-flag styles --- */
+  .nav-link      { font-size: 8px; }
+  .category      { font-size: 8px; }
+  .meta          { font-size: 9px; }
+  .btn-small     { font-size: 10px; width: 120px; height: 24px; }
+  .cell-small    { font-size: 9px; }
+  .caps-label    { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .footer-link   { font-size: 8px; }
+  .edge-link     { font-size: 10.9px; }                         /* 0.1px under the 11px floor */
+  .edge-legal    { font-size: 9.9px; }                          /* 0.1px under the 10px smallprint floor */
+  .card-credit   { font-size: 10.5px; }                         /* smallprint class inside a card-wide link */
+
+  /* --- should-pass styles --- */
+  .legal         { font-size: 10px; line-height: 1.5; }         /* non-interactive footer smallprint at 10px */
+  .sr-only       { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); font-size: 4px; }
+  .sup-marker    { font-size: 8px; }
+  .sub-marker    { font-size: 8px; }
+  .em-parent     { font-size: 20px; }
+  .em-child      { font-size: 0.6em; }                          /* resolves to 12px, above the floor */
+  .mock-terminal { width: 400px; }
+  .term-line     { font-size: 9px; }                            /* legitimately small code/terminal text */
+  .normal-link   { font-size: 12px; }                           /* at the floor, allowed */
+  .fluid-link    { font-size: 10.9688px; }                      /* fluid 12px design size, 0.03px under 11px */
+  .fluid-legal   { font-size: 9.95px; }                         /* 0.05px under the 10px smallprint floor */
+</style>
+</head>
+<body>
+
+<!-- ================= SHOULD FLAG (functional/UI text below the 11px floor) ================= -->
+<div class="col" id="should-flag">
+  <h2>Should flag</h2>
+
+  <!-- interactive: nav link at 8px -->
+  <nav aria-label="primary">
+    <a href="/docs" class="nav-link">Flag Nav Link</a>
+  </nav>
+
+  <!-- non-interactive furniture: category label at 8px -->
+  <span class="category">Flag Category</span>
+
+  <!-- non-interactive furniture: meta row at 9px -->
+  <span class="meta">Flag Meta Row</span>
+
+  <!-- interactive: button label at 10px -->
+  <button type="button" class="btn-small">Flag Button</button>
+
+  <!-- structural furniture: table cell at 9px -->
+  <table>
+    <tbody>
+      <tr><td class="cell-small">Flag Table Cell</td></tr>
+    </tbody>
+  </table>
+
+  <!-- decorative letterspaced uppercase micro-label at 10px: STILL functional, not exempt -->
+  <span class="caps-label">Flag Caps Label</span>
+
+  <!-- interactive text in a footer stays on the 11px floor: footer link at 8px -->
+  <footer>
+    <a href="/privacy" class="footer-link">Flag Footer Link</a>
+  </footer>
+
+  <!-- 0.1px under the 11px floor: the tolerance stops short of this -->
+  <a href="/listings" class="edge-link">Flag Edge Link</a>
+
+  <!-- 0.1px under the 10px smallprint floor: the same tolerance, the same edge -->
+  <footer>
+    <p class="edge-legal">Flag Edge Legal copyright 2026 all rights reserved in every market</p>
+  </footer>
+
+  <!-- a smallprint class inside a link around the whole card keeps the
+       interactive 11px floor (taste call r3-07, kept) -->
+  <a href="/story/42" class="story-card"><div class="image-copyright card-credit">Flag Photo Credit</div></a>
+</div>
+
+<!-- ================= SHOULD PASS ================= -->
+<div class="col" id="should-pass">
+  <h2>Should pass</h2>
+
+  <!-- non-interactive legal fine print in a footer at 10px: floor drops to 10px for smallprint -->
+  <footer>
+    <p class="legal">Pass Legal Fine Print copyright 2026 all rights reserved across this jurisdiction</p>
+  </footer>
+
+  <!-- visually-hidden / screen-reader text: never rendered, exempt -->
+  <span class="sr-only">Pass Sr Only</span>
+
+  <!-- sup / sub markers are exempt by tag -->
+  <p>Reference<sup class="sup-marker">Pass Sup Marker</sup> and water<sub class="sub-marker">Pass Sub Marker</sub></p>
+
+  <!-- em-sized text relative to a large parent computes to 12px, above the floor -->
+  <div class="em-parent"><span class="em-child">Pass Em Sized</span></div>
+
+  <!-- code / terminal mock: legitimately small, exempt -->
+  <div class="mock-terminal">
+    <span class="term-line">Pass Terminal Line</span>
+  </div>
+
+  <!-- functional text exactly at the 12px floor is allowed -->
+  <a href="/home" class="normal-link">Pass Normal Link</a>
+
+  <!-- fluid type 0.03px under the 11px floor: inside the 0.1px tolerance -->
+  <a href="/buy" class="fluid-link">Pass Fluid Link</a>
+
+  <!-- fluid smallprint 0.05px under the 10px floor: inside the tolerance -->
+  <footer>
+    <p class="fluid-legal">Pass Fluid Legal copyright 2026 all rights reserved in every market</p>
+  </footer>
+</div>
+
+</body>
+</html>

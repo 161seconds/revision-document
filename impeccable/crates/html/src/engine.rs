@@ -1,0 +1,625 @@
+//! Port of `cli/engine/engines/static-html/detect-html.mjs#detectHtml`: the
+//! whole static engine run for one HTML file, in the exact JS finding order
+//! (element rules in `STATIC_ELEMENT_RULES` order, design-system findings,
+//! then the page-level checks for full pages), then inline ignores.
+//!
+//! Two pieces the JS reaches into other engines for are exposed as hooks on
+//! [`DetectHtmlOptions`] instead of being duplicated here:
+//! `runTextContentAnalyzers` (regex engine) and the design-system trio
+//! (`checkSourceDesignSystem`, `collectStaticDesignSystemFindings`,
+//! `mergeDesignSystemFindings`). The `detect` crate wires them.
+
+use crate::adapters::{
+    check_element_borders, check_element_broken_image, check_element_clipped_overflow,
+    check_element_colors, check_element_glow, check_element_gpt_border_shadow,
+    check_element_hero_eyebrow, check_element_hover_contrast, check_element_icon_tile,
+    check_element_italic_serif, check_element_motion, check_element_oversized_h1,
+    check_element_radial_spotlight, check_element_stripe_child,
+    check_kicker_above_heading_from_doc, check_numbered_section_labels_from_doc,
+    scoped_ignore_active,
+};
+use crate::background::{
+    resolve_background, resolve_border_radius_scalar_px, resolve_side_accent_corners, sv,
+};
+use crate::cascade::{build_static_style_map, collect_static_css_text};
+use crate::dom::{StaticDocument, StaticElement};
+use crate::page::{
+    check_cream_palette, check_page_layout, check_repeated_container_text_from_doc,
+    check_static_page_typography,
+};
+use crate::profile::{self, Meta, ProfileSink};
+use crate::quality::{check_element_quality, check_page_quality_from_doc, pf0};
+use impeccable_core::checks::css_scan::{side_stripe_index, CssHostIndex};
+use impeccable_core::checks::html_patterns::{check_html_patterns, HtmlPatternCorpora};
+use impeccable_core::checks::row_stripe::scan_css_text_for_row_stripe;
+use impeccable_core::checks::rules::{is_rounded_away_from_side, RuleHit, SafeTagTextSeen};
+use impeccable_core::findings::{try_finding, Finding};
+use impeccable_core::inline_ignores::apply_inline_ignores;
+use impeccable_core::page::is_full_page;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use std::path::Path;
+
+/// The design-system pieces of `detectHtml` (`design-system.mjs`), supplied
+/// by the orchestrating crate when a project design system is loaded.
+pub trait DesignSystemHook {
+    /// JS `checkSourceDesignSystem(html, filePath, { designSystem })`.
+    fn check_source(&self, html: &str, file_path: &str) -> Vec<Finding>;
+    /// JS `collectStaticDesignSystemFindings(document, window, filePath, designSystem)`.
+    fn collect_static(&self, doc: &StaticDocument, file_path: &str) -> Vec<Finding>;
+    /// JS `mergeDesignSystemFindings(staticDesignFindings, sourceDesignFindings)`.
+    fn merge(&self, static_findings: Vec<Finding>, source_findings: Vec<Finding>) -> Vec<Finding>;
+    /// Drop the findings of checks the design system switches off (the
+    /// purple forms of ai-color-palette when DESIGN.md declares a purple).
+    /// Runs over every built-in finding, before a rule pack and inline
+    /// ignores.
+    fn drop_switched_off(&self, _findings: &mut Vec<Finding>) {}
+}
+
+/// JS `runTextContentAnalyzers(html, filePath, options)` from the regex
+/// engine: em-dash overuse, marketing buzzwords, aphoristic cadence.
+pub type TextContentAnalyzers<'a> = &'a dyn Fn(&str, &str) -> Vec<Finding>;
+
+/// The static engine's half of a rule pack (`impeccable_core::rule_pack`):
+/// rules written against the parsed page. The [`StaticDocument`] model is
+/// this crate's, so this hook cannot live on the engine-wide `RulePack`
+/// trait; a pack implements both and hands the same value to both fields of
+/// [`DetectHtmlOptions`].
+///
+/// Findings come back as full [`Finding`] values, built with
+/// `impeccable_core::findings::finding_for(row, file_path, snippet, line)` so
+/// they carry the pack's own registry metadata.
+pub trait StaticRulePack: Send + Sync + std::fmt::Debug {
+    /// Runs once per HTML file, after every built-in pass and before inline
+    /// ignores.
+    fn check_document(&self, doc: &StaticDocument, file_path: &str) -> Vec<Finding>;
+}
+
+/// The `options` object `detectHtml` reads.
+#[derive(Default, Clone, Copy)]
+pub struct DetectHtmlOptions<'a> {
+    /// JS `options.inlineIgnores === false` disables the whole-file
+    /// `impeccable-disable` waivers; anything else applies them.
+    pub inline_ignores_disabled: bool,
+    /// JS `options.designSystem` (present only when a DESIGN.md loaded).
+    pub design_system: Option<&'a dyn DesignSystemHook>,
+    /// The regex engine's text-content analyzers; `None` skips them.
+    pub text_content_analyzers: Option<TextContentAnalyzers<'a>>,
+    /// JS `options.profile`.
+    pub profile: Option<&'a dyn ProfileSink>,
+    /// Sink for the JS `process.stderr.write` notices (unreadable linked
+    /// stylesheets); `None` drops them.
+    pub warn: Option<&'a dyn Fn(&str)>,
+    /// Whether `detector.ignoreFiles` waives a linked stylesheet (given its
+    /// resolved path). It is still read for the cascade but leaves the
+    /// page-level pattern scan; `None` keeps every linked sheet in.
+    pub ignored_linked_stylesheet: Option<&'a dyn Fn(&str) -> bool>,
+    /// A rule pack's static-document hook: rules over the parsed page.
+    pub static_rule_pack: Option<&'static dyn StaticRulePack>,
+    /// The same pack's engine-wide text hook. An HTML file gets **one** pack
+    /// pass: `static_rule_pack` when it is set, otherwise this one over the
+    /// raw HTML source (which is how a text-only pack still covers `.html`
+    /// files, the way the built-in text-content analyzers do). A pack that
+    /// implements both therefore never reports twice for the same file.
+    pub rule_pack: Option<&'static dyn impeccable_core::rule_pack::RulePack>,
+}
+
+/// Errors of the static engine.
+#[derive(Debug, thiserror::Error)]
+pub enum HtmlEngineError {
+    #[error("cannot read {path}: {source}")]
+    Read {
+        path: String,
+        #[source]
+        source: std::io::Error,
+    },
+}
+
+/// The per-element rules of `STATIC_ELEMENT_RULES`, in table order.
+const STATIC_ELEMENT_RULES: &[(&str, &str)] = &[
+    ("border-rules", "*"),
+    ("color-rules", "*"),
+    ("hover-color-rules", "*"),
+    ("dark-glow", "*"),
+    ("hard-offset-shadow", "*"),
+    ("motion-rules", "*"),
+    ("icon-tile-stack", "h1,h2,h3,h4,h5,h6"),
+    ("stripe-child", "div,span"),
+    ("italic-serif-display", "h1,h2"),
+    ("hero-eyebrow-chip", "h1"),
+    ("broken-image", "img"),
+    ("quality-rules", "*"),
+    ("oversized-h1", "h1"),
+    ("clipped-overflow-container", "*"),
+    ("gpt-thin-border-wide-shadow", "*"),
+    ("radial-spotlight-glow", "*"),
+];
+
+fn run_rule(
+    rule_id: &str,
+    el: &StaticElement<'_>,
+    tag: &str,
+    color_seen: &mut SafeTagTextSeen,
+) -> Vec<RuleHit> {
+    let style = el.style();
+    match rule_id {
+        "border-rules" => {
+            let radius = resolve_border_radius_scalar_px(style, pf0(sv(style, "width")));
+            check_element_borders(tag, style, radius, el)
+        }
+        "color-rules" => check_element_colors(el, style, tag, None, color_seen),
+        "hover-color-rules" => check_element_hover_contrast(el, style, tag),
+        "dark-glow" => {
+            let base = el.parent_element().unwrap_or(*el);
+            check_element_glow(style, resolve_background(&base, None))
+        }
+        "hard-offset-shadow" => crate::adapters::check_element_hard_offset_shadow(el),
+        "motion-rules" => check_element_motion(tag, style),
+        "icon-tile-stack" => check_element_icon_tile(el, tag),
+        "stripe-child" => check_element_stripe_child(el, style),
+        "italic-serif-display" => check_element_italic_serif(el, style, tag),
+        "hero-eyebrow-chip" => check_element_hero_eyebrow(el, style, tag),
+        "broken-image" => check_element_broken_image(el),
+        "quality-rules" => check_element_quality(el, style, tag),
+        "oversized-h1" => check_element_oversized_h1(el, tag),
+        "clipped-overflow-container" => check_element_clipped_overflow(el, style),
+        "gpt-thin-border-wide-shadow" => check_element_gpt_border_shadow(el, style),
+        "radial-spotlight-glow" => check_element_radial_spotlight(el, style),
+        _ => Vec::new(),
+    }
+}
+
+static PSEUDO_STRIP_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"::?[a-zA-Z-]+(\([^)]*\))?").expect("PSEUDO_STRIP_RE"));
+
+fn read_source(file_path: &Path) -> Result<String, HtmlEngineError> {
+    let bytes = std::fs::read(file_path).map_err(|source| HtmlEngineError::Read {
+        path: file_path.to_string_lossy().into_owned(),
+        source,
+    })?;
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+/// JS `detectHtml(filePath, options)`: read the file and scan it.
+pub fn detect_html(
+    file_path: &Path,
+    options: &DetectHtmlOptions<'_>,
+) -> Result<Vec<Finding>, HtmlEngineError> {
+    let file_str = file_path.to_string_lossy().into_owned();
+    let html = profile::step(
+        options.profile,
+        Meta::new("setup", "read-html", &file_str),
+        || read_source(file_path),
+    )?;
+    Ok(detect_html_source(&html, file_path, options))
+}
+
+/// `detectHtml` for HTML already in memory. `file_path` names the file in
+/// findings and resolves linked stylesheets (its parent directory).
+pub fn detect_html_source(
+    html: &str,
+    file_path: &Path,
+    options: &DetectHtmlOptions<'_>,
+) -> Vec<Finding> {
+    let profile = options.profile;
+    let file_str = file_path.to_string_lossy().into_owned();
+    let fp = file_str.as_str();
+    // JS loads htmlparser2 / css-select / css-tree / domutils here (and falls
+    // back to the regex engine with a DEGRADED notice when they are missing);
+    // the port links them in, so the step is only kept for the profile shape.
+    profile::step(
+        profile,
+        Meta::new("setup", "import-static-parser", fp),
+        || (),
+    );
+    // JS `path.dirname(path.resolve(filePath))`.
+    let resolved = if file_path.is_absolute() {
+        file_path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .map(|cwd| cwd.join(file_path))
+            .unwrap_or_else(|_| file_path.to_path_buf())
+    };
+    let file_dir = resolved
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| resolved.clone());
+
+    let mut doc = profile::step(
+        profile,
+        Meta::new("parse-html", "parse-document", fp),
+        || StaticDocument::parse(html),
+    );
+    let (css_text, pattern_css_text) = collect_static_css_text(
+        &doc,
+        &file_dir,
+        profile,
+        fp,
+        options.warn,
+        options.ignored_linked_stylesheet,
+    );
+    build_static_style_map(&mut doc, css_text.as_str(), profile, fp);
+    // A stylesheet the engine could not read may round any card it never saw
+    // a radius for; the side-accent gate keeps those findings.
+    if crate::cascade::has_unread_stylesheet(&doc, &file_dir) {
+        doc.set_unread_stylesheet();
+    }
+    let doc = doc;
+
+    let mut findings: Vec<Finding> = Vec::new();
+    let mk = |id: &str, snippet: &str| try_finding(id, fp, snippet, 0.0);
+
+    for (rule_id, selector) in STATIC_ELEMENT_RULES {
+        let elements = doc.query_selector_all(selector);
+        // One document, one set of already-reported SAFE_TAGS text colours.
+        let mut color_seen = SafeTagTextSeen::default();
+        // Each low-contrast finding this rule pushed, with its element's
+        // handle, for the count below.
+        let mut pair_findings: Vec<(usize, u64)> = Vec::new();
+        for el in &elements {
+            let tag = el.tag_lower();
+            let hits = profile::findings(
+                profile,
+                Meta::new("element", rule_id, fp),
+                |h: &RuleHit| h.id.as_str(),
+                || run_rule(rule_id, el, &tag, &mut color_seen),
+            );
+            for h in hits {
+                if scoped_ignore_active(el, &h.id) {
+                    continue;
+                }
+                // A bounce by name whose keyframes the stylesheet shows and
+                // that only pulse (a loader dot scaling from nothing to its
+                // size and back) neither moves nor overshoots.
+                if h.id == "bounce-easing"
+                    && h.snippet.strip_prefix("animation: ").is_some_and(|names| {
+                        impeccable_core::checks::css_scan::bounce_names_only_pulse(names, |name| {
+                            impeccable_core::checks::css_scan::css_keyframes_only_pulse(&css_text, name)
+                        })
+                    })
+                {
+                    continue;
+                }
+                if let Some(mut f) = mk(&h.id, &h.snippet) {
+                    // A hit's own severity (a contrast ratio just under its
+                    // bar) overrides the registry's.
+                    if let Some(sev) = h.severity.filter(|s| !s.is_empty()) {
+                        f.severity = sev;
+                        impeccable_core::findings::derive_advisory_flag(&mut f);
+                    }
+                    if f.antipattern == "low-contrast" {
+                        pair_findings.push((findings.len(), crate::adapters::element_handle(el)));
+                    }
+                    findings.push(f);
+                }
+            }
+        }
+        if !pair_findings.is_empty() {
+            count_colour_pairs(&mut findings, &pair_findings, color_seen.take_copies(), &elements);
+        }
+    }
+
+    if let Some(ds) = options.design_system {
+        let source_design = profile::findings(
+            profile,
+            Meta::new("source", "design-system", fp),
+            |f: &Finding| f.antipattern.as_str(),
+            || ds.check_source(html, fp),
+        );
+        let static_design = profile::findings(
+            profile,
+            Meta::new("page", "design-system", fp),
+            |f: &Finding| f.antipattern.as_str(),
+            || ds.collect_static(&doc, fp),
+        );
+        findings.extend(ds.merge(static_design, source_design));
+    }
+
+    if is_full_page(html) {
+        let page = |rule_id: &str, f: &dyn Fn() -> Vec<RuleHit>| -> Vec<RuleHit> {
+            profile::findings(
+                profile,
+                Meta::new("page", rule_id, fp),
+                |h: &RuleHit| h.id.as_str(),
+                f,
+            )
+        };
+        let flat_type_severity = crate::page::flat_type_hierarchy_severity_for_doc(&doc);
+        for h in page("typography-rules", &|| check_static_page_typography(&doc)) {
+            if let Some(mut f) = mk(&h.id, &h.snippet) {
+                if h.id == "flat-type-hierarchy" {
+                    if let Some(sev) = flat_type_severity {
+                        f.severity = sev.to_string();
+                        impeccable_core::findings::derive_advisory_flag(&mut f);
+                    }
+                }
+                findings.push(f);
+            }
+        }
+        let mut push_hits = |hits: Vec<RuleHit>| {
+            for h in hits {
+                if let Some(mut f) = mk(&h.id, &h.snippet) {
+                    // A page check's own severity (an inner card in a
+                    // mockup) overrides the registry's.
+                    if let Some(sev) = h.severity.filter(|s| !s.is_empty()) {
+                        f.severity = sev;
+                        impeccable_core::findings::derive_advisory_flag(&mut f);
+                    }
+                    findings.push(f);
+                }
+            }
+        };
+        push_hits(page("kicker-above-heading", &|| {
+            check_kicker_above_heading_from_doc(&doc)
+        }));
+        push_hits(page("numbered-section-labels", &|| {
+            check_numbered_section_labels_from_doc(&doc)
+        }));
+        push_hits(page("repeated-container-text", &|| {
+            check_repeated_container_text_from_doc(&doc)
+        }));
+        push_hits(page("layout-rules", &|| check_page_layout(&doc)));
+        push_hits(page("cream-palette", &|| check_cream_palette(&doc)));
+        push_hits(page("skipped-heading", &|| {
+            check_page_quality_from_doc(&doc)
+        }));
+
+        // Scoped corpora for the pattern checks: cssText already carries the
+        // <style> blocks and linked local stylesheets; style/class attributes
+        // come from the parsed document.
+        let mut style_attr_parts: Vec<String> = Vec::new();
+        let mut class_attr_parts: Vec<String> = Vec::new();
+        for el in doc.query_selector_all("*") {
+            if let Some(s) = el.get_attribute("style").filter(|s| !s.is_empty()) {
+                style_attr_parts.push(format!("style=\"{}\"", s));
+            }
+            if let Some(c) = el.get_attribute("class").filter(|c| !c.is_empty()) {
+                class_attr_parts.push(c.to_string());
+            }
+        }
+        let mut style_parts = vec![pattern_css_text];
+        style_parts.extend(style_attr_parts);
+        let corpora = HtmlPatternCorpora {
+            style_text: style_parts.join("\n"),
+            class_text: class_attr_parts.join("\n"),
+        };
+        let pattern_hits = profile::findings(
+            profile,
+            Meta::new("page", "html-patterns", fp),
+            |f: &impeccable_core::checks::css_scan::PatternFinding| f.id.as_str(),
+            || {
+                check_html_patterns(html, Some(&corpora))
+                    .into_iter()
+                    .filter(|item| item.id != "bounce-easing")
+                    .collect()
+            },
+        );
+        // The style text's rule blocks, read once for every stripe no element
+        // on the page matches.
+        let host_index = once_cell::unsync::OnceCell::new();
+        for f in pattern_hits {
+            let mut hosts = Vec::new();
+            if let Some(selector) = f.selector.as_deref() {
+                let stripped = PSEUDO_STRIP_RE.replace_all(selector, "");
+                let stripped = impeccable_core::js::trim(&stripped);
+                let matches = match doc.compile(stripped) {
+                    Ok(_) => Some(doc.query_selector_all(stripped)),
+                    Err(_) => None,
+                };
+                if let Some(matches) = matches {
+                    if !matches.is_empty()
+                        && matches.iter().all(|el| scoped_ignore_active(el, &f.id))
+                    {
+                        continue;
+                    }
+                    hosts = matches;
+                }
+            }
+            // A stripe on any edge from the style-text scans reports only
+            // on a card rounded away from it: read off the cascade for the
+            // elements the rule paints, else off the host rule's own
+            // declarations when no element on the page matches.
+            if let Some(side) = side_stripe_index(&f) {
+                let rounded = if hosts.is_empty() {
+                    host_index
+                        .get_or_init(|| CssHostIndex::new(&corpora.style_text))
+                        .side_stripe_on_rounded_host(&f)
+                } else {
+                    hosts.iter().any(|el| {
+                        let style = el.style();
+                        let corners =
+                            resolve_side_accent_corners(el, style, pf0(sv(style, "width")));
+                        is_rounded_away_from_side(corners.as_ref(), side)
+                    })
+                };
+                if !rounded {
+                    continue;
+                }
+            }
+            if let Some(mut item) = mk(&f.id, &f.snippet) {
+                if let Some(sev) = f.severity.as_ref() {
+                    item.severity = sev.clone();
+                }
+                impeccable_core::findings::derive_advisory_flag(&mut item);
+                findings.push(item);
+            }
+        }
+
+        // A side stripe on a status row or cell, which the card scans above
+        // skip: it reports when the page has a row or cell it paints.
+        let row_hits = profile::findings(
+            profile,
+            Meta::new("page", "row-stripe", fp),
+            |f: &impeccable_core::checks::css_scan::PatternFinding| f.id.as_str(),
+            || scan_css_text_for_row_stripe(&corpora.style_text, None),
+        );
+        for f in row_hits {
+            let Some(selector) = f.selector.as_deref() else { continue };
+            // The selector as written when the engine reads it, so a
+            // `:not()` keeps excluding; stripped of what it cannot read
+            // otherwise.
+            let stripped = PSEUDO_STRIP_RE.replace_all(selector, "");
+            let query = if doc.compile(selector).is_ok() {
+                selector
+            } else {
+                impeccable_core::js::trim(&stripped)
+            };
+            if doc.compile(query).is_err() {
+                continue;
+            }
+            // A row by class only that may be rounded (another rule's
+            // radius, or one the engine cannot see) is a card, and the card
+            // scans above report it: a table or ARIA row or cell is a row
+            // whatever its corners.
+            let hosts: Vec<_> = doc
+                .query_selector_all(query)
+                .into_iter()
+                .filter(|el| {
+                    let tag = el.tag_lower();
+                    let role = el.get_attribute("role").unwrap_or("").to_ascii_lowercase();
+                    if matches!(tag.as_str(), "tr" | "td" | "th")
+                        || matches!(role.as_str(), "row" | "cell" | "gridcell" | "rowheader")
+                    {
+                        return true;
+                    }
+                    let style = el.style();
+                    resolve_side_accent_corners(el, style, pf0(sv(style, "width"))).is_some_and(|c| {
+                        [c.top_left, c.top_right, c.bottom_right, c.bottom_left].iter().all(|r| *r <= 0.0)
+                    })
+                })
+                .collect();
+            if hosts.is_empty() || hosts.iter().all(|el| scoped_ignore_active(el, &f.id)) {
+                continue;
+            }
+            if let Some(item) = mk(&f.id, &f.snippet) {
+                findings.push(item);
+            }
+        }
+
+        if let Some(analyzers) = options.text_content_analyzers {
+            let text_findings = profile::findings(
+                profile,
+                Meta::new("page", "text-content", fp),
+                |f: &Finding| f.antipattern.as_str(),
+                || analyzers(html, fp),
+            );
+            for f in text_findings {
+                if let Some(item) = mk(&f.antipattern, &f.snippet) {
+                    findings.push(item);
+                }
+            }
+        }
+    }
+
+    if let Some(ds) = options.design_system {
+        ds.drop_switched_off(&mut findings);
+    }
+
+    // A rule pack sees the page after every built-in pass (element rules, the
+    // design-system merge, the page-level checks) and before inline ignores:
+    // appending keeps built-in output byte-identical when no pack is
+    // installed, and pack findings are waivable like built-in ones.
+    if let Some(pack) = options.static_rule_pack {
+        let pack_findings = profile::findings(
+            profile,
+            Meta::new("page", "rule-pack", fp),
+            |f: &Finding| f.antipattern.as_str(),
+            || pack.check_document(&doc, fp),
+        );
+        findings.extend(pack_findings);
+    } else if let Some(pack) = options.rule_pack {
+        let ext = impeccable_detect::detect_text::ext_from_file_path(fp);
+        let pack_findings = profile::findings(
+            profile,
+            Meta::new("source", "rule-pack", fp),
+            |f: &Finding| f.antipattern.as_str(),
+            || pack.check_text(html, fp, &ext),
+        );
+        findings.extend(pack_findings);
+    }
+
+    if options.inline_ignores_disabled {
+        findings
+    } else {
+        apply_inline_ignores(findings, Some(html))
+    }
+}
+
+/// One `low-contrast` finding per colour pair (taste call r14-t2): the
+/// findings `pair_findings` names (index into `findings`, element handle)
+/// that share a snippet and a severity collapse onto the first, which says
+/// how many more elements wear the pair. The copies the SAFE_TAGS dedupe
+/// dropped (`copies`, as `(owner, copy)`) count for the element that
+/// claimed their pair, except a copy an inline ignore waives.
+fn count_colour_pairs(
+    findings: &mut Vec<Finding>,
+    pair_findings: &[(usize, u64)],
+    copies: Vec<(u64, u64)>,
+    elements: &[StaticElement<'_>],
+) {
+    use std::collections::{HashMap, HashSet};
+    let mut copies_of: HashMap<u64, usize> = HashMap::new();
+    if !copies.is_empty() {
+        let by_handle: HashMap<u64, &StaticElement<'_>> =
+            elements.iter().map(|e| (crate::adapters::element_handle(e), e)).collect();
+        let mut seen: HashSet<(u64, u64)> = HashSet::new();
+        for (owner, copy) in copies {
+            if !seen.insert((owner, copy)) {
+                continue;
+            }
+            if by_handle.get(&copy).is_some_and(|e| scoped_ignore_active(e, "low-contrast")) {
+                continue;
+            }
+            *copies_of.entry(owner).or_default() += 1;
+        }
+    }
+    let mut first_of_element: HashSet<u64> = HashSet::new();
+    let mut groups: Vec<(usize, usize)> = Vec::new();
+    let mut index: HashMap<(String, String), usize> = HashMap::new();
+    let mut drop: HashSet<usize> = HashSet::new();
+    for &(i, owner) in pair_findings {
+        let f = &findings[i];
+        let mut weight = 1;
+        if first_of_element.insert(owner) {
+            weight += copies_of.get(&owner).copied().unwrap_or(0);
+        }
+        match index.get(&(f.snippet.clone(), f.severity.clone())) {
+            Some(&g) => {
+                groups[g].1 += weight;
+                drop.insert(i);
+            }
+            None => {
+                index.insert((f.snippet.clone(), f.severity.clone()), groups.len());
+                groups.push((i, weight));
+            }
+        }
+    }
+    for (i, total) in groups {
+        if total > 1 {
+            let f = &mut findings[i];
+            f.snippet = impeccable_core::checks::rules::with_more_count(&f.snippet, total - 1);
+        }
+    }
+    if !drop.is_empty() {
+        let mut i = 0;
+        findings.retain(|_| {
+            let keep = !drop.contains(&i);
+            i += 1;
+            keep
+        });
+    }
+}
+
+/// The selectors css-select would refuse that a scan of `html` hits (for the
+/// parity report; not part of the JS API).
+pub fn unsupported_selectors(html: &str, file_path: &Path) -> Vec<String> {
+    let file_str = file_path.to_string_lossy().into_owned();
+    let file_dir = file_path
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_default();
+    let mut doc = StaticDocument::parse(html);
+    let (css_text, _) = collect_static_css_text(&doc, &file_dir, None, &file_str, None, None);
+    build_static_style_map(&mut doc, &css_text, None, &file_str);
+    doc.unsupported_selectors()
+}

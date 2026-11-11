@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Script error twins fixture (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>One throw, one report</h1>
+    <p>A consent manager patches the way the page creates elements, and the patch
+    throws. The page calls it from a script and again from a promise, so the browser
+    reports the same throw twice: once as it happened and once as an unhandled
+    rejection. The detector reports it once, as it first arrived.</p>
+  </main>
+
+  <script>
+    // Should flag once: one function throws synchronously (the last line of
+    // this script) and again inside a promise. The finding reads
+    // `Uncaught TypeError: Cannot redefine property: href (at redefineHref, <url>)`
+    // with no `Uncaught (in promise)` twin.
+    function redefineHref() {
+      const el = {};
+      Object.defineProperty(el, 'href', { value: 1 });
+      Object.defineProperty(el, 'href', { value: 2 });
+    }
+    Promise.resolve().then(redefineHref);
+    // Should pass: a rejection handled in the same task reports nothing.
+    Promise.reject(new Error('handled rejection')).catch(() => {});
+    // Should flag once: the same pair from a script on another origin, where
+    // the browser hands over only its text. The URL engine's browser test
+    // serves it from `localhost` while this page is on 127.0.0.1; opened any
+    // other way, it never loads and reports nothing.
+    // Should flag: a different rejection after that pair reports on its own,
+    // and it only fits under the three-error cap when the twin is merged.
+    if (location.hostname === '127.0.0.1' && location.port) {
+      const vendor = document.createElement('script');
+      vendor.src = 'http://localhost:' + location.port + '/vendor/redefine-src.js';
+      vendor.onload = () => { Promise.reject(new RangeError('storage quota exceeded')); };
+      document.head.appendChild(vendor);
+    }
+    redefineHref();
+  </script>
+</body>
+</html>

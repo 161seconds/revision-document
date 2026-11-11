@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Side accent producers fixture</title>
+  <style>
+    /* side-tab reports a left or right accent only on a card rounded away
+       from the stripe. The static engine draws that accent three ways (a
+       border, an absolute ::before/::after bar, an inset box-shadow), and
+       all three answer the same visual the same way. Every case carries a
+       unique stripe width so each finding attributes to one case. */
+    body { margin: 0; padding: 40px; background: #f8fafc; color: #1f2933; font-family: Georgia, serif; }
+    .columns { display: grid; grid-template-columns: 360px 360px; gap: 40px; }
+    .case { width: 320px; min-height: 120px; padding: 16px 20px; margin: 0 0 24px; background: #ffffff; }
+    h2 { font-size: 20px; margin: 0 0 16px; }
+    h3 { font-size: 16px; margin: 0 0 8px; }
+    p { font-size: 15px; margin: 0; }
+
+    /* should flag */
+    .flag-border-rounded { border-left: 3px solid #0f766e; border-radius: 12px; }
+    .flag-pseudo-rounded { position: relative; border-radius: 12px; }
+    .flag-pseudo-rounded::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 5px;
+      background: #0f766e;
+    }
+    .flag-inset-rounded { box-shadow: inset 6px 0 0 #0f766e; border-radius: 12px; }
+    .flag-inset-right-rounded { box-shadow: inset -8px 0 0 #b45309; border-radius: 12px 0 0 12px; }
+    /* The radius comes from a custom property; each corner reads its own
+       position once the value resolves. */
+    .flag-var-rounded-away { --r: 0 12px 12px 0; border-left: 7px solid #0f766e; border-radius: var(--r); }
+    /* The radius comes from a second class on the same element: the cascade
+       sees it even though the stripe rule never names it. */
+    .card-shell { border-radius: 12px; }
+    .flag-pseudo-shell { position: relative; }
+    .flag-pseudo-shell::after {
+      content: "";
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 9px;
+      background: #b45309;
+    }
+
+    /* should pass */
+    .pass-border-square { border-left: 4px solid #0f766e; }
+    .pass-pseudo-square { position: relative; }
+    .pass-pseudo-square::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: #0f766e;
+    }
+    .pass-inset-square { box-shadow: inset 4px 0 0 #0f766e; }
+    /* `rounded-lg rounded-r-none`: the longhands after the shorthand square
+       off the two corners away from the stripe. */
+    .pass-longhand-override {
+      border-left: 10px solid #b45309;
+      border-radius: 12px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    /* 0.3em on 12px text is 3.6px: under the rounded-card threshold. */
+    .pass-em-radius { font-size: 12px; border-left: 11px solid #7c3aed; border-radius: 0.3em; }
+    .pass-var-under-stripe { --r: 12px 0 0 12px; border-left: 4px solid #7c3aed; border-radius: var(--r); }
+    .pass-pseudo-under-stripe { position: relative; border-radius: 12px 0 0 12px; }
+    .pass-pseudo-under-stripe::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 12px;
+      background: #7c3aed;
+    }
+  </style>
+</head>
+<body>
+  <main class="columns">
+    <section>
+      <h2>Should flag</h2>
+      <div class="case flag-border-rounded"><h3>Border on a rounded card</h3><p>A 3px left border on 12px corners.</p></div>
+      <div class="case flag-pseudo-rounded"><h3>Pseudo bar on a rounded card</h3><p>A 5px ::before bar on 12px corners.</p></div>
+      <div class="case flag-inset-rounded"><h3>Inset shadow on a rounded card</h3><p>A 6px inset left shadow on 12px corners.</p></div>
+      <div class="case flag-inset-right-rounded"><h3>Inset right shadow rounded away</h3><p>An 8px inset right shadow; the left corners are round.</p></div>
+      <div class="case flag-var-rounded-away"><h3>Radius from a custom property</h3><p>A 7px left border; the custom property rounds the right corners.</p></div>
+      <div class="case card-shell flag-pseudo-shell"><h3>Pseudo bar rounded by another class</h3><p>A 9px ::after bar; the radius lives on the shell class.</p></div>
+    </section>
+    <section>
+      <h2>Should pass</h2>
+      <div class="case pass-border-square"><h3>Border on a square box</h3><p>A 4px left border with no radius.</p></div>
+      <div class="case pass-pseudo-square"><h3>Pseudo bar on a square box</h3><p>A 4px ::before bar with no radius.</p></div>
+      <div class="case pass-inset-square"><h3>Inset shadow on a square box</h3><p>A 4px inset left shadow with no radius.</p></div>
+      <div class="case pass-longhand-override"><h3>Squared off away from the stripe</h3><p>The far corners are set back to 0 after the shorthand.</p></div>
+      <div class="case pass-em-radius"><h3>Radius in em on small text</h3><p>0.3em of 12px is under 4px.</p></div>
+      <div class="case pass-var-under-stripe"><h3>Custom property rounds under the stripe</h3><p>Only the corners along the border are round.</p></div>
+      <div class="case pass-pseudo-under-stripe"><h3>Pseudo bar rounded under the stripe</h3><p>Only the corners along the bar are round.</p></div>
+    </section>
+  </main>
+</body>
+</html>

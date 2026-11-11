@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link And Span Text Contrast — Should Flag vs Should Pass</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1f2937; margin: 0; padding: 24px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col h2 { font-size: 24px; margin: 0 0 16px; color: #1f2937; }
+    .col h3 { font-size: 18px; margin: 20px 0 6px; color: #1f2937; }
+    .row { width: 320px; padding: 8px 0; }
+    table { border-collapse: collapse; width: 320px; }
+    td { padding: 8px; font-size: 14px; }
+    ul.nav { list-style: none; margin: 0; padding: 0; width: 320px; }
+    address { font-style: normal; width: 320px; }
+
+    /* Should flag: each case gets its own colour so the finding names it. */
+    .flag-accent-link { color: #f37b2e; font-size: 14px; text-decoration: none; }
+    .flag-footer-note { color: #8a8a8a; font-size: 13px; }
+    .flag-chip { background: #fff7ed; padding: 4px 12px; text-decoration: none; display: inline-block; }
+    .flag-chip-label { color: #ea580c; font-size: 14px; font-weight: 500; }
+    .flag-nav-item { color: #9b9b9b; font-size: 14px; padding: 6px 0; }
+    .flag-cell { color: #8d99a6; font-size: 14px; }
+    .flag-ghost-button { background: transparent; border: 0; color: #7c8494; font-size: 14px; padding: 8px 0; }
+    .flag-field-label { color: #949494; font-size: 14px; }
+    .flag-muted-copy { color: #999999; font-size: 14px; }
+    .flag-repeated-link { color: #888888; font-size: 14px; text-decoration: none; }
+    .flag-desktop-only { color: #8e8e8e; font-size: 14px; text-decoration: none; }
+    /* The static cascade descends every `@media` block, so this rule wins
+       here whatever the viewport. A reader on a desktop sees the link, and
+       the contrast pass has to keep seeing it too. */
+    @media (max-width: 900px) { .flag-desktop-only-row { display: none; } }
+    /* An opaque card on a hero photo is the surface its link is read on. */
+    .flag-hero { position: relative; width: 320px; height: 160px; }
+    .flag-hero-photo { position: absolute; left: 0; top: 0; width: 320px; height: 160px; display: block; }
+    .flag-hero-card { position: absolute; left: 24px; top: 32px; width: 240px; padding: 16px; background: #ffffff; }
+    .flag-card-link { color: #939393; font-size: 14px; }
+    /* A solid section with a small tiled texture is still a solid surface. */
+    .flag-textured { width: 288px; padding: 16px; background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%23f7f7f7'/%3E%3C/svg%3E"); }
+    .flag-textured-link { color: #969696; font-size: 14px; }
+    /* Any author `display` beats the UA's `[hidden] { display: none }`. */
+    .flag-revealed-panel { display: block; }
+    .flag-revealed-copy { color: #8c8c8c; font-size: 14px; }
+    .flag-map-link { color: #919191; font-size: 14px; }
+
+    /* Should pass: this column carries no contrast finding. The two
+       gradient-clipped cases do report `gradient-text`, which is that rule's
+       verdict on them, and nothing else does. */
+    .pass-strong-link { color: #0b4fbc; font-size: 14px; }
+    .pass-large-link { color: #838383; font-size: 26px; text-decoration: none; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); color: #b1b1b1; font-size: 14px; }
+    .pass-icon-glyph { color: #b2b2b2; font-size: 14px; }
+    .pass-empty-link { color: #b3b3b3; font-size: 14px; display: inline-block; width: 24px; height: 24px; }
+    .pass-emoji { color: #b4b4b4; font-size: 14px; }
+    .pass-disabled-button { background: transparent; border: 0; color: #b6b6b6; font-size: 14px; padding: 8px 0; }
+    /* Non-rendered markup. The static tree carries all of it and a browser
+       paints none of it, at any viewport, so a contrast verdict here is a
+       false positive only the static engine can produce. */
+    .pass-template-link { color: #b7b7b7; font-size: 14px; }
+    .pass-hidden-attr-link { color: #b8b8b8; font-size: 14px; }
+    .pass-until-found-link { color: #b9b9b9; font-size: 14px; }
+    .pass-noscript-link { color: #bababa; font-size: 14px; }
+    .pass-details-link { color: #bbbbbb; font-size: 14px; }
+    .pass-deep-template-link { color: #bcbcbc; font-size: 14px; }
+    /* A parent clips a gradient to the text and fills the glyphs with
+       nothing, so what a reader sees is the gradient. The runs inside carry
+       a declared colour that is painted nowhere. */
+    .pass-wordsplit { background-image: linear-gradient(90deg, #fde68a, #fbcfe8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #fdfdfd; font-size: 18px; display: inline-block; }
+    .pass-gradlink { background-image: linear-gradient(90deg, #b45309, #be123c); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #d1d5db; font-size: 15px; display: inline-block; }
+    /* Icons beside the text: an external-link mark on the link itself, an
+       arrow bullet on its list item. Neither is a picture under the words. */
+    .flag-icon-link { color: #979797; font-size: 14px; padding-right: 18px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M0 0h10v10' fill='%23999999'/%3E%3C/svg%3E") no-repeat right center; }
+    ul.flag-arrows { list-style: none; margin: 0; padding: 0; width: 320px; }
+    ul.flag-arrows li { padding-left: 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 0l8 4-8 4z' fill='%23333333'/%3E%3C/svg%3E") no-repeat 0 50%; }
+    .flag-bullet-link { color: #989898; font-size: 14px; }
+    /* Photos laid under the text in the shapes a hero is written in. A browser
+       reads the layers; the static engine reads the stretched, out-of-flow
+       photo beside the content. */
+    .pass-hero { position: relative; width: 320px; height: 120px; }
+    .pass-hero-content { position: relative; padding: 48px 16px; }
+    .pass-stretched-photo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .pass-z-under { position: relative; z-index: 0; }
+    .pass-z-under .pass-hero-content { position: static; }
+    .pass-z-under .pass-stretched-photo { z-index: -1; }
+    .pass-z-over-content { position: relative; z-index: 1; }
+    .pass-pseudo-hero::before { content: ""; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23112233'/%3E%3C/svg%3E") center / cover no-repeat; }
+    .pass-wrapper-photo-link { color: #f08a3c; font-size: 14px; }
+    .pass-later-photo-link { color: #f08b3d; font-size: 14px; }
+    .pass-raised-content-link { color: #f08c3e; font-size: 14px; }
+    .pass-pseudo-photo-link { color: #f08d3f; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Accent link on white</h3>
+      <div class="row"><a class="flag-accent-link" href="/more">Read more about the service</a></div>
+
+      <h3>Footer imprint span</h3>
+      <address><span class="flag-footer-note">Kerkstraat 12, 1421 AB Uithoorn</span></address>
+
+      <h3>Badge label inside a filled anchor</h3>
+      <div class="row"><a class="flag-chip" href="/backers"><span class="flag-chip-label">Backed by our investors</span></a></div>
+
+      <h3>List item with its own text</h3>
+      <ul class="nav"><li class="flag-nav-item">Pricing and plans</li></ul>
+
+      <h3>Table cell</h3>
+      <table><tr><td class="flag-cell">Order shipped on Tuesday</td></tr></table>
+
+      <h3>Ghost button with no fill</h3>
+      <div class="row"><button class="flag-ghost-button" type="button">Dismiss this notice</button></div>
+
+      <h3>Form label</h3>
+      <div class="row"><label class="flag-field-label" for="email">Work email address</label></div>
+
+      <!-- One finding, on the paragraph. The run inside it inherits the same
+           colour on the same surface and stays silent. -->
+      <h3>Paragraph reported once, not again on its run</h3>
+      <p class="flag-muted-copy">Muted paragraph copy <span>with an inherited run inside it</span></p>
+
+      <!-- One finding for the whole nav. Eight links, one washed-out colour,
+           and the first link is the one that carries the report. -->
+      <h3>Eight links in one colour, reported once</h3>
+      <ul class="nav">
+        <li><a class="flag-repeated-link" href="/a">Overview</a></li>
+        <li><a class="flag-repeated-link" href="/b">Pricing</a></li>
+        <li><a class="flag-repeated-link" href="/c">Customers</a></li>
+        <li><a class="flag-repeated-link" href="/d">Changelog</a></li>
+        <li><a class="flag-repeated-link" href="/e">Careers</a></li>
+        <li><a class="flag-repeated-link" href="/f">Support</a></li>
+        <li><a class="flag-repeated-link" href="/g">Security</a></li>
+        <li><a class="flag-repeated-link" href="/h">Contact</a></li>
+      </ul>
+
+      <!-- A desktop-only row that a `max-width` query collapses on phones.
+           The static cascade has no viewport, so it reads the query's
+           `display: none` as the winning value; the reader on a desktop sees
+           the link, and it is scored. -->
+      <h3>Row a media query hides on narrow viewports</h3>
+      <div class="row flag-desktop-only-row"><a class="flag-desktop-only" href="/desktop">Open the desktop dashboard</a></div>
+
+      <!-- The photo paints under the card, and the card under the link. The
+           card is the surface, so the link is scored on its white. -->
+      <h3>Link on a white card over a hero photo</h3>
+      <div class="flag-hero"><img class="flag-hero-photo" alt="" width="320" height="160" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23223344'/%3E%3C/svg%3E"><div class="flag-hero-card"><a class="flag-card-link" href="/story">Read the full story</a></div></div>
+
+      <h3>Link on a white section with a faint texture tile</h3>
+      <div class="flag-textured"><a class="flag-textured-link" href="/textured">Browse the collection</a></div>
+
+      <!-- `hidden`, but author CSS sets `display: block`, and the author rule
+           wins. A browser renders the paragraph. -->
+      <h3>Paragraph in a [hidden] panel author CSS reveals</h3>
+      <div class="row flag-revealed-panel" hidden><p class="flag-revealed-copy">Revealed panel copy in a muted grey</p></div>
+
+      <!-- A `<map>` is an inline box and its flow content renders. -->
+      <h3>Link inside a &lt;map&gt;</h3>
+      <div class="row"><map name="site-map"><a class="flag-map-link" href="/sitemap">Browse the site map</a></map></div>
+
+      <h3>Link with its own external-link icon</h3>
+      <div class="row"><a class="flag-icon-link" href="https://example.com/docs">Read the external docs</a></div>
+
+      <h3>Link in a list item with an arrow bullet image</h3>
+      <ul class="flag-arrows"><li><a class="flag-bullet-link" href="/guides">Browse the guides</a></li></ul>
+    </div>
+
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Link in a readable blue</h3>
+      <div class="row"><a class="pass-strong-link" href="/docs">Read the documentation</a></div>
+
+      <!-- 3.8:1 at 26px clears the 3:1 large-text threshold; the same colour
+           at body size would not clear 4.5:1. -->
+      <h3>Large link above the large-text threshold</h3>
+      <div class="row"><a class="pass-large-link" href="/plans">Compare the plans</a></div>
+
+      <h3>Screen-reader-only text</h3>
+      <div class="row"><a href="/cart">Cart<span class="sr-only">Opens the shopping cart</span></a></div>
+
+      <h3>Icon glyph with no reading load</h3>
+      <div class="row"><span class="pass-icon-glyph">&#8594;</span></div>
+
+      <h3>Link with no text of its own</h3>
+      <div class="row"><a class="pass-empty-link" href="/profile"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#1f2937"></circle></svg></a></div>
+
+      <h3>Emoji-only span</h3>
+      <div class="row"><span class="pass-emoji">&#127881;</span></div>
+
+      <h3>Disabled control</h3>
+      <div class="row"><button class="pass-disabled-button" type="button" disabled>Generate the report</button></div>
+
+      <!-- The parser hands template content back as ordinary descendants of
+           the template element, so the element walk sees this link. A browser
+           never lays it out until something clones it. -->
+      <h3>Link inside a &lt;template&gt;</h3>
+      <template id="card-template">
+        <div class="row"><a class="pass-template-link" href="/unmounted">Read the unmounted card</a></div>
+      </template>
+
+      <!-- `hidden` is display:none in every browser's UA stylesheet, which
+           the static cascade does not carry, so the walk reads the attribute. -->
+      <h3>Link inside a [hidden] subtree</h3>
+      <div class="row" hidden><a class="pass-hidden-attr-link" href="/closed">Open the closed panel</a></div>
+
+      <!-- `until-found` is laid out with content-visibility: hidden until
+           find-in-page reveals it, so a browser measures a zero-size rect
+           here and reports nothing. -->
+      <h3>Link inside a [hidden=until-found] subtree</h3>
+      <div class="row" hidden="until-found"><a class="pass-until-found-link" href="/findable">Open the findable panel</a></div>
+
+      <h3>Link inside a &lt;noscript&gt;</h3>
+      <noscript><div class="row"><a class="pass-noscript-link" href="/plain">Continue without scripting</a></div></noscript>
+
+      <!-- Closed, so everything but the summary is slotted out of sight. -->
+      <h3>Link inside a closed &lt;details&gt;</h3>
+      <div class="row"><details><summary>More options</summary><a class="pass-details-link" href="/options">Open the advanced options</a></details></div>
+
+      <!-- The template is fourteen levels above the link. A markup fact holds
+           however far up it is written. -->
+      <h3>Link deep inside a &lt;template&gt;</h3>
+      <template id="deep-template"><div><div><div><div><div><div><div><div><div><div><div><div><div><a class="pass-deep-template-link" href="/deep">Read the deeply nested card</a></div></div></div></div></div></div></div></div></div></div></div></div></div></template>
+
+      <!-- The parent clips the gradient to the words; each word is a span.
+           The spans' own colour is painted nowhere. -->
+      <h3>Gradient caption split into word spans</h3>
+      <p class="pass-wordsplit"><span>Split</span> <span>word</span> <span>gradient</span> <span>caption</span></p>
+
+      <h3>Gradient link whose words sit in a span</h3>
+      <p><a class="pass-gradlink" href="/learn"><span>Learn more about it</span></a></p>
+
+      <!-- The orange is scored against a photograph, not the page's white, so
+           this path stays quiet and leaves it to the visual pass. -->
+      <h3>Link over a photo inside zero-height wrappers</h3>
+      <div class="pass-hero"><div class="pass-media"><div class="pass-frame"><img class="pass-stretched-photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23112233'/%3E%3C/svg%3E"></div></div><div class="pass-hero-content"><a class="pass-wrapper-photo-link" href="/wrapped">See the wrapped hero</a></div></div>
+
+      <h3>Link over a later photo at z-index -1</h3>
+      <div class="pass-hero pass-z-under"><div class="pass-hero-content"><a class="pass-later-photo-link" href="/later">See the later hero</a></div><img class="pass-stretched-photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23112233'/%3E%3C/svg%3E"></div>
+
+      <h3>Link in raised content over a later photo</h3>
+      <div class="pass-hero"><div class="pass-hero-content pass-z-over-content"><a class="pass-raised-content-link" href="/raised">See the raised hero</a></div><img class="pass-stretched-photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect width='10' height='10' fill='%23112233'/%3E%3C/svg%3E"></div>
+
+      <h3>Link over a photo drawn by ::before</h3>
+      <div class="pass-hero pass-pseudo-hero"><div class="pass-hero-content"><a class="pass-pseudo-photo-link" href="/pseudo">See the pseudo hero</a></div></div>
+    </div>
+
+  </div>
+</body>
+</html>

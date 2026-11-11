@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Label collectors: chips with icons, em tracking, page-wide articles</title>
+  <style>
+    /* URL engine. The label rules read the element that holds a label's
+       text: a chip that puts an icon beside its text span is read through
+       the span (redoubt.agency's flag chip, uncoverroads.com's status dot).
+       The hero eyebrow's tracked-caps floor is 0.08em as well as 1.6px, so
+       Tailwind's tracking-widest at 12px (1.2px) counts. An <article> taller
+       than two viewports holds the page, not a card (outreign.io). */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    main { display: grid; grid-template-columns: 600px 600px; gap: 40px; width: 1240px; margin: 0 auto; padding: 24px 0; }
+    .hero { width: 600px; height: 360px; margin: 0 0 40px; }
+    .hero h1 { font-size: 56px; line-height: 64px; margin: 12px 0 0; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; border: 1px solid #d8deea; border-radius: 6px; font-size: 18px; letter-spacing: normal; }
+    .chip svg { width: 14px; height: 14px; }
+    .chip span { font-size: 12px; line-height: 16px; letter-spacing: 1.2px; text-transform: uppercase; color: #3056a0; }
+    .mono { display: inline-block; height: 28px; padding: 4px 12px; font-size: 12px; line-height: 20px; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid #d8deea; border-radius: 6px; }
+    .plain { display: block; font-size: 12px; line-height: 16px; letter-spacing: 0.02em; text-transform: uppercase; }
+    .pair { display: inline-flex; gap: 8px; height: 28px; }
+    .pair span { font-size: 12px; line-height: 16px; letter-spacing: 2.4px; text-transform: uppercase; }
+    .section { width: 600px; margin: 0 0 40px; }
+    .section h2 { font-size: 40px; line-height: 48px; margin: 8px 0 0; }
+    .kicker-chip { display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; border-radius: 999px; background: #eef2fb; }
+    .kicker-chip i { display: block; width: 6px; height: 6px; border-radius: 3px; background: #3056a0; }
+    .kicker-chip span { font-size: 12px; line-height: 16px; letter-spacing: 2.4px; text-transform: uppercase; }
+    .page-frame { display: block; width: 600px; height: 2400px; }
+    .step { width: 600px; height: 120px; margin: 0 0 24px; }
+    .step p { font-family: ui-monospace, monospace; font-size: 12px; line-height: 16px; margin: 0; color: #824de6; }
+    .step h3 { font-size: 24px; line-height: 32px; margin: 4px 0 0; }
+    .card { display: block; width: 280px; height: 200px; padding: 16px; border: 1px solid #d8deea; margin: 0 0 24px; }
+    .card p { font-family: ui-monospace, monospace; font-size: 12px; line-height: 16px; margin: 0; }
+    .card h3 { font-size: 24px; line-height: 32px; margin: 4px 0 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag">
+      <div class="hero">
+        <div class="chip" id="flag-icon-chip" data-expect="flag" data-case="Flag Eyebrow Chip Beside An Icon"><svg viewBox="0 0 14 14" aria-hidden="true"><rect width="14" height="14" fill="#b22234"></rect></svg><span>U.S.-Based Independent Broker</span></div>
+        <h1>We shop, you drive</h1>
+      </div>
+      <div class="hero">
+        <div class="mono" id="flag-widest-chip" data-expect="flag" data-case="Flag Eyebrow At Tracking Widest">Utah-based commercial insurance agency</div>
+        <h1>Commercial insurance that moves</h1>
+      </div>
+      <div class="section">
+        <div class="kicker-chip" id="flag-kicker-chip" data-expect="flag" data-case="Flag Kicker Chip Beside A Dot"><i></i><span>On the roadmap</span></div>
+        <h2>What we are building next</h2>
+      </div>
+      <article class="page-frame">
+        <div class="step"><p id="flag-step-1" data-expect="flag" data-case="Flag Numbered Label In A Page Article">01</p><h3>Say who you want</h3></div>
+        <div class="step"><p>02</p><h3>See who is worth the email</h3></div>
+        <div class="step"><p>03</p><h3>Send something they answer</h3></div>
+      </article>
+    </section>
+    <section aria-label="Should pass">
+      <div class="hero">
+        <div class="plain" id="pass-loose-label" data-expect="pass" data-case="Pass Eyebrow Under The Em Floor">Plainly set company label</div>
+        <h1>A plain label over a hero</h1>
+      </div>
+      <div class="hero">
+        <div class="pair" id="pass-two-texts" data-expect="pass" data-case="Pass Wrapper Of Two Labels"><span>North</span><span>South</span></div>
+        <h1>Two labels in one wrapper</h1>
+      </div>
+      <article class="card">
+        <p id="pass-card-label" data-expect="pass" data-case="Pass Numbered Label In A Card">01</p>
+        <h3>A card that numbers itself</h3>
+      </article>
+      <article class="card">
+        <p>02</p>
+        <h3>A second numbered card</h3>
+      </article>
+      <article class="card">
+        <p>03</p>
+        <h3>A third numbered card</h3>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

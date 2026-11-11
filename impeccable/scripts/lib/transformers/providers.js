@@ -1,0 +1,235 @@
+/**
+ * Provider configurations for the transformer factory.
+ *
+ * Each config specifies:
+ * - provider: key into PROVIDER_PLACEHOLDERS (e.g. 'claude-code')
+ * - configDir: dot-directory name (e.g. '.claude')
+ * - displayName: human-readable name for log output (e.g. 'Claude Code')
+ * - providerTags: markdown block tags kept for this target (e.g. <codex>...</codex>)
+ * - frontmatterFields: which optional fields to emit beyond name + description
+ * - bodyTransform: optional function (body, skill) => transformed body
+ * - descriptionKey: optional skill property used as the frontmatter description
+ *   instead of the shared one (falls back to it when empty)
+ */
+export const PROVIDERS = {
+  cursor: {
+    provider: 'cursor',
+    providerTags: ['cursor'],
+    configDir: '.cursor',
+    displayName: 'Cursor',
+    frontmatterFields: ['license', 'compatibility', 'metadata'],
+    // Cursor subagents: `.cursor/agents/<name>.md` at repo level,
+    // `~/.cursor/agents/` at user level. Project agents take precedence over
+    // user ones, so installs simply overwrite on update.
+    agentFormat: 'cursor-md',
+    emitHooks: 'cursor',
+    // Cursor reads `.cursor/hooks.json`, not `.cursor/hooks/hooks.json`.
+    hooksManifestRel: 'hooks.json',
+  },
+  'claude-code': {
+    provider: 'claude-code',
+    providerTags: ['claude-code', 'claude'],
+    configDir: '.claude',
+    displayName: 'Claude Code',
+    // Claude Code caps its skill listing (1% of the context window in characters) and lists
+    // a skill that doesn't fit as its bare name, so it gets the short description
+    // (SKILL.src.md `claude-code-description`; tests/skill-behavior/README.md).
+    descriptionKey: 'claudeCodeDescription',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata'],
+    // allowed-tools omitted: Claude Code blocks skill activation in non-interactive
+    // sessions when the field is present (issue #736). Other providers keep it.
+    agentFormat: 'claude-md',
+    emitHooks: 'claude',
+    // Project-local Claude Code hooks live in `.claude/settings.json`.
+    hooksManifestRel: 'settings.json',
+  },
+  gemini: {
+    provider: 'gemini',
+    providerTags: ['gemini'],
+    configDir: '.gemini',
+    displayName: 'Gemini',
+    frontmatterFields: [],
+    emitHooks: 'gemini',
+    hooksManifestRel: 'settings.json',
+  },
+  dsh: {
+    provider: 'dsh',
+    providerTags: ['dsh'],
+    configDir: '.dsh',
+    displayName: 'DeepSeek Harness',
+    // DeepSeek Harness reads the Agent Skills spec subset (`name`,
+    // `description`, `license`, `compatibility`, `metadata`) plus
+    // `user-invocable` and `disable-model-invocation`; unknown keys are
+    // silently ignored. No hook surface (hooks are in-process plugins, not
+    // on-disk manifests) and no native subagent file format, so no
+    // emitHooks / agentFormat. Global skills live at ~/.dsh/skills
+    // ($DSH_HOME/skills when set), matching the engine's home override.
+    frontmatterFields: ['user-invocable', 'license', 'compatibility', 'metadata'],
+  },
+  codex: {
+    provider: 'codex',
+    providerTags: ['codex'],
+    configDir: '.codex',
+    displayName: 'Codex',
+    frontmatterFields: [],
+    // Codex's validator rejects unknown top-level keys. Version remains
+    // available to Impeccable's updater under the spec-defined metadata map.
+    versionInMetadata: true,
+    writeOpenAIMetadata: true,
+    // No agentFormat: the Codex subagent ships nested inside the skill's own
+    // agents/ folder (see CODEX_SKILL_PROVIDERS in factory.js), which Codex
+    // auto-discovers on install. No top-level .codex/agents/ sidecar is emitted.
+    emitHooks: 'codex',
+    // Codex discovers project-local hooks at `.codex/hooks.json`.
+    hooksManifestRel: 'hooks.json',
+  },
+  agents: {
+    provider: 'agents',
+    providerTags: ['agents', 'codex'],
+    configDir: '.agents',
+    displayName: 'Codex Repo Skills',
+    placeholderProvider: 'codex',
+    frontmatterFields: [],
+    versionInMetadata: true,
+    writeOpenAIMetadata: true,
+  },
+  github: {
+    provider: 'github',
+    providerTags: ['github'],
+    configDir: '.github',
+    displayName: 'GitHub Copilot',
+    placeholderProvider: 'agents',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata'],
+    // Copilot custom agents: `.github/agents/<name>.agent.md` at repo level,
+    // `~/.copilot/agents/` at user level (the CLI installer handles placement).
+    // The degraded/ fallbacks still ship for Copilot surfaces where the model
+    // fails to delegate; the .agent.md files are the real subagent path.
+    agentFormat: 'copilot-agent-md',
+    emitHooks: 'github',
+    // GitHub Copilot discovers repo-level hooks under `.github/hooks/*.json`.
+    hooksManifestRel: 'hooks/impeccable.json',
+  },
+  kiro: {
+    provider: 'kiro',
+    providerTags: ['kiro'],
+    configDir: '.kiro',
+    displayName: 'Kiro',
+    frontmatterFields: ['license', 'compatibility', 'metadata'],
+  },
+  opencode: {
+    provider: 'opencode',
+    providerTags: ['opencode'],
+    configDir: '.opencode',
+    displayName: 'OpenCode',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  pi: {
+    provider: 'pi',
+    providerTags: ['pi'],
+    configDir: '.pi',
+    displayName: 'Pi',
+    frontmatterFields: ['license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  omp: {
+    provider: 'omp',
+    providerTags: ['omp'],
+    configDir: '.omp',
+    displayName: 'Oh My Pi',
+    frontmatterFields: ['license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  qoder: {
+    provider: 'qoder',
+    providerTags: ['qoder'],
+    configDir: '.qoder',
+    displayName: 'Qoder',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  'trae-cn': {
+    provider: 'trae-cn',
+    providerTags: ['trae-cn', 'trae'],
+    configDir: '.trae-cn',
+    displayName: 'Trae China',
+    placeholderProvider: 'trae',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata'],
+  },
+  trae: {
+    provider: 'trae',
+    providerTags: ['trae'],
+    configDir: '.trae',
+    displayName: 'Trae',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata'],
+  },
+  'rovo-dev': {
+    provider: 'rovo-dev',
+    providerTags: ['rovo-dev'],
+    configDir: '.rovodev',
+    displayName: 'Rovo Dev',
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  vibe: {
+    provider: 'vibe',
+    providerTags: ['vibe'],
+    configDir: '.vibe',
+    displayName: 'Mistral Vibe',
+    frontmatterFields: ['user-invocable', 'license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  veto: {
+    provider: 'veto',
+    providerTags: ['veto'],
+    configDir: '.veto',
+    displayName: 'Veto',
+    frontmatterFields: ['license', 'compatibility', 'metadata'],
+  },
+  grok: {
+    provider: 'grok',
+    providerTags: ['grok'],
+    configDir: '.grok',
+    displayName: 'Grok Build',
+    // Grok's skill frontmatter matches the Agent Skills spec plus Claude-style
+    // extensions (user-invocable, argument-hint, allowed-tools, model, effort).
+    // See https://docs.x.ai/build/features/skills-plugins-marketplaces and
+    // ~/.grok/docs/user-guide/08-skills.md.
+    frontmatterFields: ['user-invocable', 'argument-hint', 'license', 'compatibility', 'metadata', 'allowed-tools'],
+    // Project/user agents are markdown with YAML frontmatter (Claude-compatible).
+    agentFormat: 'claude-md',
+    emitHooks: 'grok',
+    // Grok discovers project hooks from `.grok/hooks/*.json` (not a single
+    // settings.json). Claude tool-name matchers alias to Grok tools.
+    hooksManifestRel: 'hooks/impeccable.json',
+  },
+  antigravity: {
+    provider: 'antigravity',
+    providerTags: ['antigravity'],
+    configDir: '.agent',
+    displayName: 'Antigravity',
+    frontmatterFields: ['license', 'compatibility', 'metadata', 'allowed-tools'],
+  },
+  hermes: {
+    provider: 'hermes',
+    providerTags: ['hermes'],
+    configDir: '.hermes',
+    displayName: 'Hermes Agent',
+    // Hermes ships the Agent Skills spec as-is. The optional fields below
+    // (license, compatibility, metadata) are spec-defined; harness-specific
+    // extensions (user-invocable, argument-hint, allowed-tools) are NOT
+    // recognized by the Hermes skill loader and would be silently ignored.
+    // The design hook ships as a Python plugin (skill/hermes-plugin/) under
+    // .hermes/plugins/, since Hermes hooks are in-process plugin callbacks.
+    frontmatterFields: ['license', 'compatibility', 'metadata'],
+    pluginPayload: { source: 'hermes-plugin', dest: 'plugins/impeccable-design-hook' },
+  },
+  devin: {
+    provider: 'devin',
+    providerTags: ['devin'],
+    configDir: '.devin',
+    displayName: 'Devin',
+    // Devin (web, CLI, Desktop) reads name, description, argument-hint, triggers,
+    // model, subagent, agent, permissions, allowed-tools. user-invocable is
+    // omitted: triggers already defaults to user and model. allowed-tools is
+    // omitted: the CLI docs call it an auto-approve list, the web docs a
+    // restriction, and our Claude-syntax entries match no Devin tool. The CLI
+    // has hooks (.devin/hooks.v1.json) and subagent profiles (.devin/agents/,
+    // Devin tool names), neither targeted yet: no emitHooks, no agentFormat.
+    frontmatterFields: ['argument-hint', 'license', 'compatibility', 'metadata'],
+  },
+};

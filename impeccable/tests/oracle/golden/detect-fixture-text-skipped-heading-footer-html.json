@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "\n<REPO>/tests/fixtures/antipatterns/skipped-heading-footer.html\n  [skipped-heading] <h2> \"Should flag\" followed by <h4> \"Jet fuel grades\" (missing h3)\n    → Heading levels should not skip (e.g. h1 then h3 with no h2). Screen readers use heading hierarchy for navigation. Skipping levels breaks the document outline.\n  [skipped-heading] <h4> \"Company\" followed by <h6> \"Legal small print\" (missing h5)\n    → Heading levels should not skip (e.g. h1 then h3 with no h2). Screen readers use heading hierarchy for navigation. Skipping levels breaks the document outline.\n\n2 anti-patterns found.\n",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}

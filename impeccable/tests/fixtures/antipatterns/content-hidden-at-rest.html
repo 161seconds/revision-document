@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Content hidden at rest (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #ffffff; font-size: 16px; line-height: 1.6; }
+    header { width: 1120px; margin: 0 auto; padding: 24px 0; position: relative; }
+    main { width: 1120px; margin: 0 auto; display: flex; gap: 48px; }
+    .column { width: 536px; }
+    h1 { font-size: 36px; line-height: 1.2; }
+    h2 { font-size: 24px; line-height: 1.3; }
+    h3 { font-size: 18px; line-height: 1.4; }
+    p { width: 500px; }
+
+    /* Closed interface: laid out, kept invisible until its trigger opens it. */
+    nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; }
+    nav li { position: relative; }
+    .flyout { position: absolute; top: 32px; left: 0; width: 320px; visibility: hidden; opacity: 0; }
+    .offcanvas { position: fixed; top: 0; left: 0; width: 280px; height: 600px; transform: translateX(-280px); visibility: hidden; }
+    .panels { position: relative; height: 96px; }
+    [role="tabpanel"] { position: absolute; top: 0; left: 0; width: 500px; }
+    [role="tabpanel"].unselected { visibility: hidden; }
+    .sp-tab-content { visibility: hidden; height: 0; overflow: hidden; }
+    .sp-tab-content.is-current { visibility: visible; height: auto; }
+    .answer { opacity: 0; height: 0; overflow: hidden; }
+    [role="dialog"] { position: fixed; top: 120px; left: 400px; width: 480px; height: 240px; opacity: 0; pointer-events: none; }
+    .whole-menu { position: fixed; top: 0; left: 100%; width: 390px; height: 600px; opacity: 0; }
+    .megamenu { position: absolute; top: -400px; left: 0; width: 1075px; height: 300px; opacity: 0; }
+    /* A reveal whose script never ran: the sections stay where they were staged. */
+    .stalled { opacity: 0; transform: translateY(16px); transition: opacity 0.4s ease-out; }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- PASS: flyouts inside the site nav, hidden until hover -->
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#shoes">Shoes</a>
+          <div class="flyout">Running shoes, trail shoes, court shoes, slides and sandals, kids' shoes, wide sizes, last season's colours, the full size guide and the care guide for knit uppers.</div>
+        </li>
+        <li><a href="#clothing">Clothing</a>
+          <div class="flyout">Jackets and shells, base layers, shorts and tights, socks, caps and headbands, rain gear, reflective gear for dark mornings and the fit guide for every cut.</div>
+        </li>
+      </ul>
+    </nav>
+    <!-- PASS: an inert mega-menu parked above the page -->
+    <section class="megamenu" inert>Our company, our people, our history since 1912, where we operate, how we are governed, the annual report, the sustainability report and the newsroom archive.</section>
+  </header>
+
+  <!-- PASS: an off-canvas drawer that slides in from the left -->
+  <div class="offcanvas offcanvas-start" id="sidebar">Register an account, sign in, saved items, order history, delivery addresses, payment methods, newsletter settings, gift cards and store finder.</div>
+
+  <!-- PASS: a whole-site menu parked right of the viewport, with nothing but its position to name it -->
+  <div class="whole-menu">All sections, latest news, politics, economy, markets, sport, culture, weather, photo desk, video desk and the reader service pages.</div>
+
+  <!-- PASS: a dialog that is not open -->
+  <div role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h3 id="dialog-title">Leave this page?</h3>
+    <p>You are about to open a partner site. Its terms, privacy notice and security practices are its own, and what you enter there is not covered by ours.</p>
+  </div>
+
+  <main>
+    <section class="column">
+      <h1>Hidden share counts reveals, not closed menus</h1>
+      <p>The left column holds three sections staged for a scroll reveal that never runs.
+      Their text is the hidden share. The right column and the header hold closed
+      interface, which is left out of both the hidden text and the page total.</p>
+      <h2>Should flag: reveals that never ran</h2>
+      <!-- FLAG: counted as hidden -->
+      <div class="stalled" id="stalled-one">
+        <h3>Hours of work, done in minutes</h3>
+        <p>This paragraph is staged at opacity 0 and waits for an observer that the page never
+        starts. A visitor scrolls past a blank band where the product's main claim should be.</p>
+      </div>
+      <div class="stalled" id="stalled-two">
+        <h3>Built for teams that ship weekly</h3>
+        <p>A second staged block with the same fault. Nothing marks it as a menu, a drawer, a
+        dialog or a panel, so it is content, and content a visitor never sees is the finding.</p>
+      </div>
+      <div class="stalled" id="stalled-three">
+        <h3>Pricing that follows your usage</h3>
+        <p>A third staged block. Together the three carry more than a third of the text the
+        page shows or was meant to show, which is the share the rule reports.</p>
+      </div>
+      <!-- FLAG: the tab panel its tab marks selected, hidden because its reveal failed -->
+      <div role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="panel-plans">Plans</button>
+      </div>
+      <div class="panels">
+        <div role="tabpanel" id="panel-plans" class="unselected">The selected plans panel never showed its prices.</div>
+      </div>
+    </section>
+    <section class="column">
+      <h2>Should pass: closed interface, left out</h2>
+      <!-- PASS: the two tab panels that are not selected, by role -->
+      <div role="tablist">
+        <button role="tab" aria-selected="true" aria-controls="panel-news">News</button>
+        <button role="tab" aria-selected="false" aria-controls="panel-ranking">Ranking</button>
+        <button role="tab" aria-selected="false" aria-controls="panel-video">Video</button>
+      </div>
+      <div class="panels">
+        <div role="tabpanel" id="panel-news">The selected panel shows: this week's tour news in two short lines.</div>
+        <div role="tabpanel" id="panel-ranking" class="unselected">Money ranking after round eleven, the season points table, the scoring average table and the driving distance table for every player.</div>
+        <div role="tabpanel" id="panel-video" class="unselected">Highlights from the final round, the winner's interview, the hole-by-hole flyover and the archive of every broadcast this season.</div>
+      </div>
+      <!-- PASS: tab panels known only by their class -->
+      <div class="sp-tab-content sp-tab-content-1 is-current">The current panel of a class-only tab set shows its two lines.</div>
+      <div class="sp-tab-content sp-tab-content-2">Tournament pickup, the pairing sheet, the course guide, the ticket desk and the shuttle timetable for the weekend rounds.</div>
+      <!-- PASS: accordion sections whose buttons say collapsed -->
+      <h3><button id="q1" aria-expanded="false" aria-controls="a1">How do I change my delivery address?</button></h3>
+      <div id="a1" aria-labelledby="q1"><div class="answer">Open your order before it ships, choose the address line, pick a saved address or enter a new one, and confirm with your password.</div></div>
+      <h3><button id="q2" aria-expanded="false" aria-controls="a2">Can I return a gift?</button></h3>
+      <div id="a2" aria-labelledby="q2"><div class="answer">Yes, within thirty days with the gift receipt. The refund goes to a gift card in your name, not to the buyer's payment method.</div></div>
+      <!-- PASS: an accordion that names no aria-controls: the answer follows its collapsed button -->
+      <button aria-expanded="false">Where is my invoice?</button>
+      <div class="answer">Under Orders, open the order and choose Documents. The invoice is a PDF, issued when the parcel leaves the warehouse and not before.</div>
+    </section>
+  </main>
+</body>
+</html>

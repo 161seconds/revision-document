@@ -1,0 +1,19 @@
+{
+  "name": "SvelteKit",
+  "config": {
+    "files": ["src/app.html"],
+    "insertBefore": "</body>",
+    "commentSyntax": "html"
+  },
+  "sourceFiles": ["src/app.html", "src/routes/+page.svelte"],
+  "generatedFiles": [],
+  "wrapCases": [
+    {
+      "name": "wraps hero title in route source",
+      "args": { "classes": "hero-title", "tag": "h1" },
+      "expectedFile": "node_modules/.impeccable-live/wraptest0/manifest.json",
+      "expectedSourceFile": "src/routes/+page.svelte",
+      "expectedPreviewMode": "svelte-component"
+    }
+  ]
+}

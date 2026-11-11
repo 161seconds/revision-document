@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a fixed banner a transformed ancestor holds</title>
+  <style>
+    /* A OneTrust bar set position: fixed inside a transformed wrapper far
+       below the first viewport. The transform makes the wrapper the bar's
+       containing block, so the bar scrolls with the page and a visitor
+       reaches it: it is showing, not parked past the viewport, and the scan
+       hides it. Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .holder { position: absolute; top: 1500px; left: 0; right: 0; height: 200px; transform: translateZ(0); }
+    #onetrust-banner-sdk { position: fixed; left: 0; right: 0; top: 0; padding: 20px; background: #fff; border-top: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Opening hours</h1>
+  <p>The studio is open Tuesday to Saturday from ten until six, and by appointment on Mondays.</p>
+  <div class="holder">
+    <div id="onetrust-consent-sdk">
+      <div id="onetrust-banner-sdk">
+        <p>By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation and analyze site usage.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

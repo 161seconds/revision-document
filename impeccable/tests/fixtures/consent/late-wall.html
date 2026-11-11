@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a consent wall that arrives after load</title>
+  <style>
+    /* An empty page whose OneTrust-shaped dialog arrives after the load-time
+       validity check. Hiding it would leave nothing to read, so the late
+       hide pass checks for a wall again and the page is refused. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f3f4f6; }
+    #onetrust-pc-sdk { position: fixed; top: 80px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }
+  </style>
+</head>
+<body>
+  <script>
+    setTimeout(() => {
+      const sdk = document.createElement('div');
+      sdk.id = 'onetrust-consent-sdk';
+      sdk.innerHTML = '<div id="onetrust-pc-sdk" role="dialog" aria-label="Privacy preferences"><h2>Your privacy choices</h2>'
+        + '<p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising, to measure the performance of content and advertising, and to develop and improve our products.</p>'
+        + '<button type="button">Accept all</button> <button type="button">Reject all</button></div>';
+      document.body.appendChild(sdk);
+    }, 300);
+  </script>
+</body>
+</html>

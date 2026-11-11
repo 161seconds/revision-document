@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Covered text: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the layers the contrast walk never reads, answered by the
+       URL engine's hit-test stacks (crates/core/src/browser/text_layers.rs),
+       and for text-occlusion answers the capture disagrees with.
+
+       low-contrast. The walk reads the element's ancestors, so two kinds of
+       layer are invisible to it. A layer above the text hides it at capture:
+       a fixed cookie banner over a line of copy, a photo avatar laid over an
+       SVG initial. There is nothing to score. Paint under the text that is
+       nobody's ancestor makes the verdict about the wrong surface: a photo, a
+       dark gradient layer, an SVG circle, all laid under the text while the
+       walk lands on the page white. No verdict is printed there; a candidate
+       of the pixel pass is still measured by it. A photo laid over a section's
+       own fill sets the verdict aside too, and so does a CTA under the banner.
+       Part of a run under a layer, a detached panel in the colour the walk
+       named, a faint wash, and texture over a section's own fill (a dot grid
+       in 24px cells, a grain tile at 0.2) keep their verdict, and a link
+       colour covered once reports on its first uncovered copy.
+
+       text-occlusion. The engine captures the page, then asks the live page
+       what is at each probe point. A carousel that advances in between
+       answers with the next slide's card, which wears this caption's own
+       card classes. #pass-advancing-caption stands in for that: its track
+       advances the first time the page is asked, so every answer describes
+       the advanced layout. #flag-covered-caption, a caption under a real
+       sticker, still reports.
+
+       Every hit-test case sits inside a 1280x800 viewport, the only place a
+       point can be asked. The static HTML engine runs no hit tests, measures
+       no boxes and runs no script, so it scores the should-pass copy against
+       the page white as well. The URL behavior is pinned by
+       crates/browser/tests/covered_text.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    h1 { font: 600 18px/1.2 system-ui; margin: 0; padding: 16px 20px 0; color: #111; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 12px 20px; }
+    .col { position: relative; width: 600px; }
+    .col h2 { font: 600 15px/1.2 system-ui; margin: 0 0 8px; color: #111; }
+    .case { position: relative; margin: 0 0 14px; }
+
+    .faint { margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .pale { margin: 0; font-size: 14px; line-height: 28px; color: #f0f0f0; }
+    .muted-link { font-size: 15px; color: #9a9a9a; }
+
+    /* A second line under an opaque strip. */
+    .half-cover { position: absolute; left: 0; top: 28px; width: 420px; height: 40px; background: #e2e8f0; }
+    /* Detached layers laid under the copy. */
+    .layer { position: absolute; inset: 0; }
+    .layer-white { background: #ffffff; }
+    .layer-wash { background: rgba(0, 0, 0, 0.03); }
+    .layer-dark { background: linear-gradient(#0f172a, #1e293b); }
+    /* Texture over a section's own fill, which stays the surface. */
+    .dark-section { background: #0f172a; }
+    .dot-grid { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 24px 24px; }
+    .zinc-section { background: #18181b; }
+    .grain { opacity: 0.2; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='1' height='1' fill='%23fff'/%3E%3C/svg%3E"); }
+    .slate { margin: 0; font-size: 14px; line-height: 28px; color: #475569; }
+    .zinc { margin: 0; font-size: 14px; line-height: 28px; color: #52525b; }
+    /* A hero photo over a section's own light fill. */
+    .light-section { background: #f6f7f8; }
+    .hero-title { margin: 0; font: 600 22px/1.3 system-ui; color: #ffffff; }
+    .photo { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .layer-content { position: relative; padding: 14px 16px; }
+    /* A sticker laid over a link. */
+    .sticker { position: absolute; left: 0; top: 0; width: 260px; height: 24px; background: #334155; }
+
+    /* The avatar and the circle initials. */
+    .avatar { position: relative; z-index: 0; width: 25px; height: 25px; }
+    .avatar svg { position: absolute; inset: 0; z-index: -1; }
+    .avatar img { display: block; width: 25px; height: 25px; border-radius: 50%; }
+    .initial { color: #ffffff; }
+
+    /* Slides of cards: a caption on the left of each card, nothing on its right. */
+    .slides { position: relative; width: 600px; height: 104px; overflow: hidden; }
+    .slides-track { display: flex; gap: 10px; }
+    .card { flex: none; width: 290px; height: 100px; padding: 14px; background: #ffffff; border: 1px solid #d0d7de; }
+    .caption { width: 130px; margin: 0; font-size: 14px; line-height: 20px; color: #111; }
+    .sticker-card { position: absolute; left: 10px; top: 10px; width: 150px; height: 50px; background: #1f2937; }
+
+    /* The fixed banner over the right half of the viewport's foot. */
+    .consent { position: fixed; left: 640px; bottom: 0; width: 640px; height: 150px; padding: 16px;
+      background: rgba(255, 255, 255, 0.95); border-top: 1px solid #d0d7de; color: #111; font-size: 14px; }
+    .banner-copy { position: absolute; top: 700px; left: 680px; width: 400px; }
+    .cta { display: inline-block; padding: 8px 16px; border-radius: 6px; background: #ff7145; color: #ffffff;
+      font-size: 15px; font-weight: 500; text-decoration: none; }
+    .banner-cta { position: absolute; top: 742px; left: 680px; }
+  </style>
+</head>
+<body>
+  <h1>Covered text</h1>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+
+      <div class="case">
+        <p class="faint" id="flag-visible-copy">Faint copy with nothing laid over it.</p>
+      </div>
+
+      <div class="case">
+        <p class="faint" id="flag-half-covered-copy">The first line is read over the page.<br>The second line sits under a strip.</p>
+        <div class="half-cover"></div>
+      </div>
+
+      <div class="case">
+        <div class="layer layer-white"></div>
+        <div class="layer-content">
+          <p class="faint" id="flag-white-panel-copy">Faint copy over a white panel the walk never read.</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="layer layer-wash"></div>
+        <div class="layer-content">
+          <p class="faint" id="flag-wash-copy">Faint copy over a three percent wash.</p>
+        </div>
+      </div>
+
+      <div class="case dark-section">
+        <div class="layer dot-grid"></div>
+        <div class="layer-content">
+          <p class="slate" id="flag-dot-grid-copy">Slate copy over a dot grid on its section's own fill.</p>
+        </div>
+      </div>
+
+      <div class="case zinc-section">
+        <div class="layer grain"></div>
+        <div class="layer-content">
+          <p class="zinc" id="flag-grain-copy">Zinc copy over a grain texture at twenty percent.</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="slides">
+          <div class="slides-track">
+            <div class="card"><p class="caption" id="flag-covered-caption">Issue fifty is out</p></div>
+            <div class="card"><p class="caption">Ten inns to revisit</p></div>
+          </div>
+          <div class="sticker-card"></div>
+        </div>
+      </div>
+
+      <div class="case">
+        <a href="#" class="muted-link" id="pass-covered-link">A link under a sticker</a>
+        <div class="sticker"></div>
+      </div>
+      <div class="case">
+        <a href="#" class="muted-link" id="flag-uncovered-link">The same colour, uncovered</a>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>Should pass</h2>
+
+      <div class="case">
+        <div class="avatar">
+          <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='25' height='25'%3E%3Crect width='25' height='25' fill='%23705040'/%3E%3C/svg%3E">
+          <svg width="25" height="25" viewBox="0 0 25 25"><g class="initial"><text id="pass-avatar-initial" x="12.5" y="19" text-anchor="middle" font-size="18" fill="currentColor">M</text></g></svg>
+        </div>
+      </div>
+
+      <div class="case">
+        <img class="photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='64'%3E%3Crect width='600' height='64' fill='%23203040'/%3E%3C/svg%3E">
+        <div class="layer-content">
+          <p class="pale" id="pass-photo-copy">Pale copy over a photo laid beside it.</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="layer layer-dark"></div>
+        <div class="layer-content">
+          <p class="pale" id="pass-dark-layer-copy">Pale copy over a dark gradient layer.</p>
+        </div>
+      </div>
+
+      <div class="case">
+        <svg width="25" height="25" viewBox="0 0 25 25"><circle cx="12.5" cy="12.5" r="12.5" fill="#1e3a5f"></circle><g class="initial"><text id="pass-circle-initial" x="12.5" y="19" text-anchor="middle" font-size="18" fill="currentColor">M</text></g></svg>
+      </div>
+
+      <div class="case light-section">
+        <img class="photo" alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='64'%3E%3Crect width='600' height='64' fill='%23304050'/%3E%3C/svg%3E">
+        <div class="layer-content">
+          <h3 class="hero-title" id="pass-hero-photo-title">Homes sold with care</h3>
+        </div>
+      </div>
+
+      <div class="case">
+        <div class="slides">
+          <div class="slides-track" id="advancing-track">
+            <div class="card"><p class="caption" id="pass-advancing-caption">Issue fifty is out</p></div>
+            <div class="card"><p class="caption">Ten inns to revisit</p></div>
+            <div class="card"><p class="caption">A weekend in Kyoto</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="faint banner-copy" id="pass-banner-copy">Faint copy under the consent banner.</p>
+  <a href="#" class="cta banner-cta" id="pass-covered-cta">Start free trial</a>
+  <div class="consent">We use cookies to count visits. You can change this at any time.</div>
+
+  <script>
+    // The track advances the first time the page is asked what is at a point,
+    // the way a carousel on a timer moves between the engine's capture and its
+    // hit tests. The second card's empty right half then lies under the first
+    // caption's captured box.
+    (function () {
+      const track = document.getElementById('advancing-track');
+      let advanced = false;
+      const advance = () => {
+        if (advanced) return;
+        advanced = true;
+        track.style.transform = 'translateX(-438px)';
+      };
+      const one = document.elementFromPoint.bind(document);
+      const all = document.elementsFromPoint.bind(document);
+      document.elementFromPoint = function (x, y) { advance(); return one(x, y); };
+      document.elementsFromPoint = function (x, y) { advance(); return all(x, y); };
+    })();
+  </script>
+</body>
+</html>

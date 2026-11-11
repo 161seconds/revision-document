@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Side-Tab with CSS Named Colors (purple/rebeccapurple/crimson/teal)</title>
+  <style>
+    /* Two-column fixture: left col = should-flag, right col = should-pass.
+       Regression for issue #359: `border-left: 4px solid purple` in a .html
+       file never fired side-tab because the static cascade's shorthand color
+       extraction only recognized 9 named colors — every other spec name
+       (purple, rebeccapurple, crimson, teal, ...) was dropped from the
+       shorthand, leaving the side at the default black, which reads as
+       neutral and silently skips the check. The same declaration in a .css
+       file was flagged by the regex engine, so the two engines disagreed. */
+
+    :root {
+      --accent: orange; /* named color behind a var() — must resolve and flag */
+    }
+
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 24px; background: #fafafa; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1120px; margin: 0 auto; }
+    .col h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .case { padding: 12px 16px; margin-bottom: 16px; }
+    .case h3 { font-size: 14px; margin: 0 0 4px; }
+    .case p { font-size: 13px; margin: 0; color: #64748b; }
+
+    /* ── FLAG cases: colored side-tab borders using CSS named colors ── */
+
+    /* 1: the exact reproducer from issue #359 — named purple in a <style>
+          rule with background + padding + radius */
+    #flag-named-purple {
+      width: 400px;
+      background: #f6f6f6;
+      padding: 16px;
+      border-left: 4px solid purple;
+      border-radius: 8px;
+    }
+
+    /* 2: rebeccapurple — a longer name that contains another color name
+          ("purple") as a substring; must match whole-token. Width 5px so the
+          finding snippet is unique to this case. */
+    #flag-named-rebecca {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 5px solid rebeccapurple;
+    }
+
+    /* 3: horizontal band on a square box: a rule, not a card's accent (r6-t2) */
+    #pass-named-crimson-top {
+      width: 400px;
+      background: #ffffff;
+      border-top: 4px solid crimson;
+    }
+
+    /* 4: named teal, 3px, rounded only away from the stripe — the bare
+          w >= 3 arm, whose snippet carries no radius */
+    #flag-named-teal {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 0 6px 6px 0;
+      border-left: 3px solid teal;
+    }
+
+    /* 5: named color behind a var() in the shorthand. Width 6px so the
+          finding snippet is unique to this case. */
+    #flag-named-var {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 6px solid var(--accent);
+    }
+
+    /* ── PASS cases: neutral named colors and non-side-tab shapes ── */
+
+    /* 1: dimgray — chromatic-looking name, neutral value; must NOT fire */
+    #pass-named-dimgray {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 4px solid dimgray;
+    }
+
+    /* 2: gainsboro — light neutral named color */
+    #pass-named-gainsboro {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 3px solid gainsboro;
+    }
+
+    /* 3: named black side border — neutral, not a colored stripe */
+    #pass-named-black {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 4px solid black;
+    }
+
+    /* 4: 1px named purple — too thin to qualify */
+    #pass-named-thin {
+      width: 400px;
+      background: #ffffff;
+      border-radius: 4px;
+      border-left: 1px solid purple;
+    }
+
+    /* 5: uniform named purple border on all four sides — not a side-tab */
+    #pass-named-allsides {
+      width: 400px;
+      background: #ffffff;
+      border: 3px solid purple;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+      <div class="case" id="flag-named-purple"><h3>named purple</h3><p>border-left 4px solid purple + radius</p></div>
+      <div class="case" id="flag-named-rebecca"><h3>rebeccapurple</h3><p>border-left 4px + radius</p></div>
+      <div class="case" id="flag-named-teal"><h3>named teal</h3><p>border-left 3px, rounded away from the stripe</p></div>
+      <div class="case" id="flag-named-var"><h3>var() to named</h3><p>border-left 4px solid var(--accent)</p></div>
+      <div class="case" style="width: 400px; background: #ffffff; border-radius: 0 6px 6px 0; border-left: 7px solid purple">
+        <h3>inline named purple</h3><p>style attribute, issue #359 case (a); width 7px keeps the snippet unique</p>
+      </div>
+    </div>
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+      <div class="case" id="pass-named-crimson-top"><h3>crimson top band</h3><p>border-top 4px on a square box</p></div>
+      <div class="case" id="pass-named-dimgray"><h3>dimgray</h3><p>neutral named color</p></div>
+      <div class="case" id="pass-named-gainsboro"><h3>gainsboro</h3><p>light neutral named color</p></div>
+      <div class="case" id="pass-named-black"><h3>named black</h3><p>neutral side border</p></div>
+      <div class="case" id="pass-named-thin"><h3>1px purple</h3><p>too thin to qualify</p></div>
+      <div class="case" id="pass-named-allsides"><h3>uniform purple</h3><p>all four sides, not a stripe</p></div>
+    </div>
+  </div>
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

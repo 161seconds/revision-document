@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flat Type Hierarchy: weight does not separate the roles</title>
+  <style>
+    /* The ramp of flat-type-hierarchy-weight.html with headings at 500 over
+       400 body text (co-trip.jp's listing pages): one weight step is not
+       enough to separate the roles, so the flat ramp keeps reporting at the
+       rule's own severity. */
+    body { margin: 0; padding: 24px; background: #ffffff; color: #172033; font-family: Palatino, Georgia, serif; }
+    main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; max-width: 1120px; margin: 0 auto; }
+    h1, h2, h3 { font-weight: 500; margin: 0 0 8px; }
+    h1 { font-size: 16px; }
+    h2 { font-size: 16px; }
+    h3 { font-size: 14px; }
+    p, li { font-size: 14px; font-weight: 400; margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Listing">
+      <h1 data-expect="flag" data-case="Flag Medium Listing Title">Running shoes</h1>
+      <h2>Filters</h2>
+      <ul>
+        <li>Brand</li>
+        <li>Size</li>
+        <li>Colour</li>
+        <li>Price</li>
+      </ul>
+      <h3>Men's trail runner</h3>
+      <p>Grippy outsole, 290 g.</p>
+      <h3>Women's road shoe</h3>
+      <p>Light foam midsole, 240 g.</p>
+    </section>
+    <section aria-label="Service">
+      <h2>Delivery</h2>
+      <p>Free delivery from 29 euros.</p>
+      <p>Returns within 30 days.</p>
+      <h3>Customer service</h3>
+      <p>Open every day until 22:00.</p>
+      <p>Chat or call.</p>
+    </section>
+  </main>
+</body>
+</html>

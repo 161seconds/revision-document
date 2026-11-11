@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a wall drawn in a frame</title>
+  <style>
+    /* A page that is only a Sourcepoint-shaped message, drawn in an iframe
+       whose text the page cannot read. The frame counts as the manager's
+       content, so the page is refused as a consent wall. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f3f4f6; }
+    #sp_message_container_1234 { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #sp_message_container_1234 iframe { width: 640px; height: 400px; border: 0; background: #fff; }
+  </style>
+</head>
+<body>
+  <div id="sp_message_container_1234">
+    <iframe title="Privacy message" srcdoc="&lt;p&gt;We and our partners use cookies to personalise content and ads.&lt;/p&gt;&lt;button&gt;Accept&lt;/button&gt;"></iframe>
+  </div>
+</body>
+</html>

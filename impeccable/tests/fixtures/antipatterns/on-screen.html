@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On screen: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for what the text rules score of copies only partly on screen
+       (corpus observations-25, issues 4, 14 and 20).
+
+       - A copy with less than a quarter of its text width inside a clip that
+         parks copies (a box narrower than the page, a scroller, a box around
+         a transformed track), or before the start of the page, is not painted
+         for the text rules: a date on a slide parked past its track with a
+         sliver in view, a date parked past the page's left edge with 4px on
+         the page, a word 20px into a 100vw clip around a moving track.
+         A copy with more of it showing still reports, and so does a line a
+         box truncates with an ellipsis, which shows the start of its text.
+       - A wrapper as wide as the viewport that only hides overflow is the
+         page shell: text it cuts is a layout bug a visitor sees and still
+         reports however little of it shows (a non-wrapping row's second
+         column with 60 of 280px in view, a desktop column 6,400px wide).
+       - A 0x0 box keeps the overflow test: a map pin's nowrap label that
+         overflows its 0x0 anchor reports tiny-text, and a 0x0 notice that
+         hides its overflow reports nothing.
+       - The page's one report of a colour pair goes to a copy whose text
+         shows across its whole width: a word part way past a carousel clip
+         claims the pair only until a copy wholly in view wears it.
+       - heading-rhythm counts only headings a visitor sees: a crowded heading
+         on a slide parked past its track is neither reported nor counted
+         toward the page's two-heading minimum.
+
+       The static HTML engine has no layout, so it reports every date and the
+       sliver word, the colour pair once for its first copy (#pass-cut-copy),
+       the truncated label, the 0x0 notice's tiny-text, a
+       clipped-overflow-container advisory for each word clip, and none of
+       the heading-rhythm cases. The URL behavior is pinned by
+       crates/browser/tests/on_screen.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/24px system-ui, sans-serif; margin: 0; color: #111; background: #fff; width: 1200px; }
+    h1 { font: 600 28px/1.2 system-ui; margin: 0; padding: 16px 20px; }
+    .label { margin: 0 20px 6px; font: 600 14px/20px system-ui; color: #111; }
+    .row { position: relative; height: 60px; margin: 0 0 24px; }
+
+    .date { font-size: 14px; line-height: 20px; color: #a58d82; white-space: nowrap; }
+    .date-clip { position: absolute; left: 240px; top: 0; width: 600px; height: 60px; overflow: hidden; }
+    .date-track { display: flex; width: 900px; transform: translateX(-82px); }
+    .date-slide { flex: 0 0 300px; height: 60px; padding: 16px; }
+    .edge-date { position: absolute; top: 20px; width: 70px; }
+
+    .word { display: inline-block; font-size: 20px; line-height: 40px; color: #8a8f98; white-space: nowrap; }
+    .word-clip { position: absolute; left: 240px; top: 0; width: 300px; height: 40px; overflow: hidden; }
+    .word-track { position: absolute; top: 0; white-space: nowrap; }
+    /* Monospace, so the sliver is a sliver whatever font a platform maps the
+       family to: 18 characters at 20px run 198px (Consolas) to 217px (Menlo,
+       DejaVu Sans Mono), and the track parks all but 8 to 27px of them. In a
+       proportional face the word ran 170px on macOS and 210px on Linux, a
+       third of it in view there. */
+    .sliver-word { display: inline-block; font: 20px/40px monospace; color: #b0a3a8; white-space: nowrap; }
+
+    .truncate { position: absolute; left: 20px; top: 0; width: 150px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .trunc-word { font-size: 16px; color: #9a8f7f; }
+    .zero-box { position: absolute; left: 400px; top: 20px; width: 0; height: 0; overflow: hidden; font-size: 10px; color: #444444; }
+    .pin { position: absolute; left: 700px; top: 20px; width: 0; height: 0; white-space: nowrap; font-size: 10px; color: #444444; }
+
+    .shell { position: relative; width: 100vw; overflow: hidden; margin: 0 0 24px; }
+    .shell-row { display: flex; width: max-content; }
+    .shell-gap { flex: 0 0 1220px; height: 40px; }
+    .shell-col { flex: 0 0 280px; margin: 0; color: #979ba1; }
+    .shell-desktop { width: 6400px; margin: 0; padding-left: 20px; font-size: 32px; line-height: 44px; color: #aaa6a2; }
+    .shell-track { display: flex; width: max-content; transform: translateX(-20px); }
+    .shell-slide { flex: 0 0 1280px; height: 40px; white-space: nowrap; }
+    .shell-word { font-size: 20px; line-height: 40px; color: #a4a09c; }
+
+    .rhythm { width: 560px; margin: 0 20px; font-family: Georgia, serif; }
+    .case { border-top: 1px solid #d8d2c8; padding-top: 24px; margin-bottom: 48px; }
+    .case p, .case h2 { margin: 0; }
+    .case h2 { font-size: 28px; line-height: 36px; margin-bottom: 40px; }
+    .blk { height: 48px; overflow: hidden; }
+    .rhythm-clip { width: 560px; overflow: hidden; }
+    .rhythm-track { display: flex; width: 1120px; transform: translateX(-560px); }
+    .rhythm-slide { flex: 0 0 560px; }
+  </style>
+</head>
+<body>
+  <h1>On screen</h1>
+
+  <p class="label">Dates on a carousel track: the first slide parks its date with a 6px sliver in view</p>
+  <div class="row">
+    <div class="date-clip">
+      <div class="date-track">
+        <div class="date-slide"><div id="pass-parked-date" class="date">2026.08.13</div></div>
+        <div class="date-slide"><div id="flag-slide-date" class="date">2026.08.12</div></div>
+        <div class="date-slide"><div id="flag-cut-date" class="date">2026.08.27</div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="label">Dates parked past the page's left edge</p>
+  <div class="row">
+    <div id="pass-edge-sliver" class="date edge-date" style="left: -66px;">2026.08.09</div>
+    <div id="flag-edge-half" class="date edge-date" style="left: -30px;">2026.08.20</div>
+  </div>
+
+  <p class="label">One colour pair: a word part way past its clip, then the same pair wholly in view</p>
+  <div class="row">
+    <div class="word-clip">
+      <div class="word-track" style="left: -60px;"><span id="pass-cut-copy" class="word">Journal entries</span></div>
+    </div>
+  </div>
+  <div class="row">
+    <span id="flag-whole-copy" class="word" style="margin-left: 20px;">Journal entries</span>
+  </div>
+
+  <p class="label">A word with a sliver inside its clip</p>
+  <div class="row">
+    <div class="word-clip">
+      <div class="word-track" style="left: -190px;"><span id="pass-sliver-copy" class="sliver-word">Archive of seasons</span></div>
+    </div>
+  </div>
+
+  <p class="label">A label its box truncates with an ellipsis, a consent notice collapsed to 0x0, and a map pin's label on a 0x0 anchor</p>
+  <div class="row">
+    <div class="truncate"><span id="flag-truncated-copy" class="trunc-word">A very long label that runs far past its narrow box, holding a whole sentence of words the box cuts off and ends in an ellipsis</span></div>
+    <div id="pass-zero-box" class="zero-box">Collapsed consent notice text that runs on past its box</div>
+    <span id="flag-zero-anchor" class="pin">Harbour office, open 9 to 5</span>
+  </div>
+
+  <p class="label">A page shell cuts a non-wrapping row's second column with 60 of 280px in view</p>
+  <div class="shell">
+    <div class="shell-row">
+      <div class="shell-gap"></div>
+      <p id="flag-shell-cut" class="shell-col">The second column of a row that never wraps, starting near the right edge of the window and cut off by the page wrapper.</p>
+    </div>
+  </div>
+
+  <p class="label">A page shell cuts a desktop column 6,400px wide</p>
+  <div class="shell">
+    <p id="flag-shell-desktop" class="shell-desktop">A paragraph from a fixed desktop column six thousand four hundred pixels wide, so only the start of each very long line shows in the window and the rest is cut off by the page wrapper that hides overflow, which a visitor sees as text that stops mid-sentence at the right edge of the screen every single time, however they resize the window or scroll the page, because nothing brings the rest of the words into view and the wrapper throws them away at the edge of the screen for good.</p>
+  </div>
+
+  <p class="label">A 100vw clip around a moving track parks a word with 20px in view</p>
+  <div class="shell">
+    <div class="shell-track">
+      <div class="shell-slide"></div>
+      <div class="shell-slide"><span id="pass-shell-track-sliver" class="shell-word">Autumn collection notes</span></div>
+    </div>
+  </div>
+
+  <main class="rhythm">
+    <section class="case">
+      <p class="blk">A closing paragraph of the previous block of content, sitting directly above the crowded heading with no gap at all.</p>
+      <h2>Flag Crowded Page One</h2>
+      <p class="blk">The content this heading introduces sits forty pixels away while the previous block touches the heading.</p>
+    </section>
+
+    <div class="rhythm-clip">
+      <div class="rhythm-track">
+        <section class="case rhythm-slide">
+          <p class="blk">A closing paragraph on a slide parked past the track's left edge, above a heading nobody sees at rest.</p>
+          <h2>Pass Parked Slide</h2>
+          <p class="blk">The content under the parked heading, forty pixels away, on the slide the track has moved out of view.</p>
+        </section>
+        <section class="case rhythm-slide">
+          <p class="blk">A closing paragraph on the slide in view, again flush against the heading that follows it in the flow.</p>
+          <h2>Flag Crowded Slide Two</h2>
+          <p class="blk">Second crowded case on screen. Two headings a visitor sees violate the principle, and the rule fires.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

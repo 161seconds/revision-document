@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Full-page screenshot, right-to-left overflow: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the URL engine's full-page screenshot origin
+       (crates/browser/src/fullpage.rs). The body is right to left, the way
+       agora.co.il sets it, so the document scrolls from the right and a
+       grid wider than the viewport overflows to the left, at negative
+       document x. A beyond-viewport capture starts at the left edge of
+       that overflow, so the image's x 0 is document x -(scroll width -
+       viewport width), and the screenshot records that origin.
+
+       Geometry the browser test reads at a 390px viewport: the grid is
+       900px wide, so the should-flag column (document x -50 to 370) starts
+       510px into the image and the should-pass column (x -510 to -90) at
+       image x 0. The marker under each copy is a different colour, so a
+       crop placed at the rect's x without the origin lands on the wrong
+       column's marker. At 1280px nothing overflows and the origin is 0.
+
+       The static HTML engine measures no boxes and reports the faint copy
+       too. The URL behavior is pinned by crates/browser/tests/
+       fullpage_screenshot.rs. */
+    body { margin: 0; background: #ffffff; color: #111111; font: 16px/1.5 Arial, sans-serif; direction: rtl; }
+    .grid { display: grid; grid-template-columns: 420px 420px; gap: 40px; width: 860px; padding: 24px 20px; }
+    .col { width: 420px; }
+    .col h2 { margin: 0 0 16px; font: 600 16px/1.2 Arial, sans-serif; color: #111111; }
+    .faint { margin: 0; width: 420px; font-size: 18px; color: #c4c4c4; }
+    .ink { margin: 0; width: 420px; font-size: 18px; color: #222222; }
+    .marker { width: 420px; height: 60px; margin: 12px 0 0; }
+    .marker-flag { background: #0a7d3b; }
+    .marker-pass { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag: faint copy in the first right-to-left column</h2>
+      <p class="faint" id="flag-rtl-copy">Faint grey copy on white, inside the viewport.</p>
+      <div class="marker marker-flag"></div>
+    </div>
+    <div class="col">
+      <h2>Should pass: ink copy in the overflow past the left edge</h2>
+      <p class="ink" id="pass-rtl-copy">Dark ink on white, past the viewport's left edge.</p>
+      <div class="marker marker-pass"></div>
+    </div>
+  </div>
+</body>
+</html>

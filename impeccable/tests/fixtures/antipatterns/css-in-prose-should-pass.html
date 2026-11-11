@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!--
+  Regression fixture: CSS-property patterns appearing in prose, code samples,
+  and comments are documentation ABOUT css, not styling. The page-level
+  pattern checks must scan only real style carriers (<style> blocks, style=""
+  attribute values, linked stylesheets, class="" attribute values), never
+  rendered text. Live false positive that motivated this fixture: the
+  impeccable.style changelog line
+    "<code>background-clip: text</code> gradients stop tripping contrast"
+  tripped gradient-text on the raw-source scan, and the purple hex codes in
+  its rule documentation shared the same exposure via ai-color-palette.
+
+  Every case in this file SHOULD PASS: nothing here styles the page with the
+  documented patterns.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Docs about CSS anti-patterns</title>
+<style>
+  body { font-family: Georgia, 'Iowan Old Style', serif; margin: 0; padding: 32px 24px 40px; color: #1f2933; background: #fdfcf9; }
+  h1 { font-size: 34px; margin: 0 0 12px; }
+  h2 { font-size: 20px; margin: 28px 0 8px; }
+  p { font-size: 16px; max-width: 640px; }
+  pre { background: #f1efe9; padding: 16px; overflow-x: auto; font-size: 13px; }
+  code { font-family: 'SF Mono', ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>Changelog</h1>
+
+<!-- SHOULD PASS (gradient-text): the exact changelog shape — inline <code>
+     naming the property with "gradient" prose within the context window. -->
+<h2>Detector</h2>
+<p><code>background-clip: text</code> gradients stop tripping the contrast rules when the glyph fill is transparent.</p>
+
+<!-- SHOULD PASS (gradient-text + ai-color-palette): a <pre> CSS sample
+     documenting the pattern, purple hexes and all. -->
+<h2>What the rule catches</h2>
+<pre><code>.hero-title {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: #7c3aed;
+}</code></pre>
+
+<!-- SHOULD PASS (gradient-text, Tailwind form): prose naming the utility
+     classes without applying them. -->
+<p>The Tailwind form pairs bg-clip-text with bg-gradient-to-r on one element; the two utilities together are the tell.</p>
+
+<!-- SHOULD PASS (gradient-text): an HTML comment carrying the pattern.
+     background-clip: text; with a linear-gradient(90deg, #7c3aed, #a855f7)
+     fill is the construction the rule looks for. -->
+
+<!-- SHOULD PASS (pulsing-dot): a <pre> sample of the decorative live dot. -->
+<h2>Pulsing dots</h2>
+<pre><code>.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}</code></pre>
+
+<!-- SHOULD PASS (side-tab): a <pre> sample of the pseudo-element stripe. -->
+<h2>Side stripes</h2>
+<pre><code>.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: #3b82f6;
+}</code></pre>
+
+</body>
+</html>

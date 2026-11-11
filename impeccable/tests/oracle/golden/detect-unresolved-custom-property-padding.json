@@ -1,0 +1,7 @@
+{
+  "stdout": "[]\n",
+  "stderr": "impeccable detect: could not read linked stylesheet brand/tokens.css (resolved to <WS>/brand/tokens.css); color and custom-property rules will be incomplete\n",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

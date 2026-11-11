@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a shadow-root consent wall under a display: contents wrapper</title>
+  <style>
+    /* shadow-wall.html with the dialog under a `display: contents` wrapper
+       in the shadow root: the wrapper has no box of its own, and the text
+       under it still counts toward the wall.
+       Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div id="usercentrics-root"></div>
+  <script>
+    document.getElementById('usercentrics-root').attachShadow({ mode: 'open' }).innerHTML =
+      '<style>.box { position: fixed; top: 80px; left: 50%; width: 640px; margin-left: -320px; padding: 32px; background: #fff; }</style>'
+      + '<div style="display: contents"><div class="box" role="dialog" aria-label="Privacy settings"><h2>Privacy settings</h2>'
+      + '<p>We use cookies and similar technologies to provide this website, to measure how it is used and to show you personalised content and advertising. You can accept all of these purposes, reject them, or choose which ones you allow in the settings.</p>'
+      + '<button type="button">Accept all</button> <button type="button">Deny</button></div></div>';
+  </script>
+</body>
+</html>

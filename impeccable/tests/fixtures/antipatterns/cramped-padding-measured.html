@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cramped padding, the box the text sits in</title>
+  <!--
+    observations-42 row 5. Each pass case is a box whose edge the text does
+    not crowd once the right box is measured: a fixed-height line box whose
+    second line wraps out below it, an inline highlight, a panel laid on a
+    gradient of its own colour, a card laid on a photo, and a small bar whose
+    10px label keeps a quarter of its size clear. The flag column keeps the
+    twins that do crowd an edge. Browser engine only: the static engine has
+    no layout.
+  -->
+  <style>
+    body { font-family: system-ui, sans-serif; background: #ffffff; padding: 24px; margin: 0; color: #0f172a; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .case { margin-bottom: 18px; }
+    .case-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 8px; font-style: italic; }
+
+    .band { width: 420px; margin: 0; background: #404040; color: #ffffff; font-size: 14px; padding: 0 16px; }
+    .band.wrapped { height: 66px; line-height: 66px; }
+    .band.tight { height: 34px; line-height: 20px; }
+    .essay { width: 520px; margin: 0; font-size: 22px; line-height: 40px; }
+    .essay mark { background: #fde68a; padding: 0; }
+
+    .row { display: flex; width: 520px; padding: 20px 0; background-image: linear-gradient(to right, transparent 120px, #f3f3f3 120px); }
+    .row.other { background-image: linear-gradient(to right, transparent 120px, #dbeafe 120px); }
+    .row .lead { width: 120px; flex: none; }
+    .row .panel { flex: 1; background: #f3f3f3; display: flex; }
+    .row .panel p { margin: 0; padding: 12px 0 12px 16px; width: 100%; text-align: right; font-size: 16px; line-height: 24px; }
+
+    .frame { position: relative; width: 360px; height: 240px; }
+    .frame .photo { position: absolute; inset: 0; }
+    .frame .photo img { width: 360px; height: 240px; display: inline; }
+    .frame .content { position: relative; padding: 60px 40px; }
+    .teaser { background: #e20074; color: #ffffff; width: 240px; }
+    .teaser h3 { margin: 0; padding: 0; font-size: 24px; line-height: 30px; }
+
+    .chrome { background: #1e1e1e; padding: 12px; width: 420px; }
+    .bar { display: flex; align-items: center; height: 17px; padding: 0 8px; background: #ffffff; border-radius: 2px; font-size: 10px; }
+    .bar span { display: block; line-height: 15px; color: #555555; }
+    .bar.thin { height: 12px; }
+    .bar.thin span { line-height: 12px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+      <div class="case">
+        <span class="case-label">a 34px band whose one line sits at its top on a 20px line box</span>
+        <p class="flag-tight-band band tight">Copyright 2026 Example Broadcasting. All rights reserved.</p>
+      </div>
+      <div class="case">
+        <span class="case-label">a panel laid on a gradient of another colour: its edge shows, and the text runs into its right side</span>
+        <div class="row other"><div class="lead"></div><div class="flag-gradient-other panel"><p>Credit risk transfer</p></div></div>
+      </div>
+      <div class="case">
+        <span class="case-label">the magenta card on the white page, its heading on the card's top and left edges</span>
+        <div class="frame"><div class="content"><div class="flag-plain-card teaser"><h3>Das ultimative Upgrade.</h3></div></div></div>
+      </div>
+      <div class="case">
+        <span class="case-label">a 12px bar whose 10px label keeps 1px clear of its edges</span>
+        <div class="chrome"><span class="flag-thin-bar bar thin"><span>Search or type a URL</span></span></div>
+      </div>
+    </div>
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+      <div class="case">
+        <span class="case-label">a 66px line box whose second line wraps out below it (nexttv.com.tw): the box holds the first line, centred</span>
+        <p class="pass-wrapped-band band wrapped">Copyright 2026 Example Broadcasting.<br>All rights reserved.</p>
+      </div>
+      <div class="case">
+        <span class="case-label">a highlighter run inside a paragraph (s-1.vercel.app): an inline fill hugs its glyphs by design</span>
+        <p class="essay">Trust is what <mark class="pass-mark">compounds when nothing else does,<br>and it is the moat</mark> a company keeps.</p>
+      </div>
+      <div class="case">
+        <span class="case-label">a grey panel on a row whose gradient paints the same grey past 120px (freddiemac.com)</span>
+        <div class="row"><div class="lead"></div><div class="pass-gradient-same panel"><p>Credit risk transfer</p></div></div>
+      </div>
+      <div class="case">
+        <span class="case-label">the magenta card laid on a magenta photo by an earlier, positioned layer (telekom.de)</span>
+        <div class="frame"><div class="photo"><picture><img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4xFACAAMeAVeytHnbAAAAAElFTkSuQmCC"></picture></div><div class="content"><div class="pass-photo-card teaser"><h3>Das ultimative Upgrade.</h3></div></div></div>
+      </div>
+      <div class="case">
+        <span class="case-label">a 17px mock URL bar whose 10px label keeps 3 to 4px clear (maritime.sh keeps 3px in 16px)</span>
+        <div class="chrome"><span class="pass-url-bar bar"><span>Search or type a URL</span></span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

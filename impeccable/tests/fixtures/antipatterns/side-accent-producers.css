@@ -1,0 +1,161 @@
+/*
+ * Side accents through every text-engine producer of side-tab. A left or
+ * right accent drops only on a box known to be square: the rules tied to it
+ * square it off, or nothing in the stylesheet can round it. The flag cases
+ * round other selectors in this file, so every square case squares itself
+ * off. Every case carries a unique stripe width so each finding attributes
+ * to one case.
+ */
+
+/* ── FLAG: border shorthand on a rounded card ── */
+.flag-border-rounded {
+  border-radius: 12px;
+  border-left: 3px solid #0f766e;
+}
+
+/* ── FLAG: border width longhand on a rounded card ── */
+.flag-width-rounded {
+  border-radius: 12px;
+  border-left-width: 5px;
+  border-left-color: #0f766e;
+}
+
+/* ── FLAG: logical border on a rounded card ── */
+.flag-logical-rounded {
+  border-radius: 12px;
+  border-inline-start: 6px solid #0f766e;
+}
+
+/* ── FLAG: absolute ::before bar on a rounded card ── */
+.flag-pseudo-rounded {
+  position: relative;
+  border-radius: 12px;
+}
+.flag-pseudo-rounded::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background: #0f766e;
+}
+
+/* ── FLAG: inset box-shadow on a rounded card ── */
+.flag-inset-rounded {
+  border-radius: 12px;
+  box-shadow: inset 8px 0 0 #0f766e;
+}
+
+/* ── FLAG: hover-revealed ::after bar on a rounded card ── */
+.flag-hover-rounded {
+  position: relative;
+  border-radius: 12px;
+}
+.flag-hover-rounded:hover::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: #0f766e;
+}
+
+/* ── PASS: border shorthand on a square box ── */
+.pass-border-square {
+  border-radius: 0;
+  border-left: 4px solid #0f766e;
+}
+
+/* ── PASS: border width longhand on a square box ── */
+.pass-width-square {
+  border-radius: 0;
+  border-left-width: 9px;
+  border-left-color: #0f766e;
+}
+
+/* ── PASS: logical border on a square box ── */
+.pass-logical-square {
+  border-radius: 0;
+  border-inline-start: 10px solid #0f766e;
+}
+
+/* ── PASS: absolute ::before bar on a square box ── */
+.pass-pseudo-square {
+  position: relative;
+  border-radius: 0;
+}
+.pass-pseudo-square::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #0f766e;
+}
+
+/* ── PASS: inset box-shadow on a square box ── */
+.pass-inset-square {
+  border-radius: 0;
+  box-shadow: inset 4px 0 0 #0f766e;
+}
+
+/* ── PASS: rounded, then squared off away from the stripe ── */
+.pass-longhand-override {
+  border-left: 11px solid #b45309;
+  border-radius: 12px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* ── FLAG: the card's radius in its own rule, the accent in the same selector ── */
+.flag-flat-same {
+  border-radius: 12px;
+}
+.flag-flat-same {
+  border-left: 13px solid #0f766e;
+}
+
+/* ── FLAG: the accent in a compound rule for the rounded card ── */
+.flag-flat-compound {
+  border-radius: 12px;
+}
+.flag-flat-compound.is-active {
+  border-left: 14px solid #0f766e;
+}
+
+/* ── FLAG: the radius in a grouped rule ── */
+.flag-grouped-panel,
+.flag-grouped-widget {
+  border-radius: 10px;
+}
+.flag-grouped-widget {
+  border-right: 15px solid #0f766e;
+}
+
+/* ── FLAG: a radius the reader cannot resolve ── */
+.flag-var-radius {
+  border-radius: var(--card-radius);
+}
+.flag-var-radius.is-active {
+  border-left: 16px solid #0f766e;
+}
+
+/* ── FLAG: a radius on another class the element may carry ── */
+.flag-separate {
+  border-radius: 12px;
+}
+.flag-separate-accent {
+  border-left: 17px solid #0f766e;
+}
+.flag-separate-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: #0f766e;
+}

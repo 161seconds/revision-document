@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flush Against Border; Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the flush-against-border rule.
+
+       The rule is more general than its name suggests: it fires when a
+       container has any visible boundary (border, outline, OR a
+       non-transparent background) AND zero inline padding on the
+       bounded side, AND text-bearing children land flush against that
+       boundary.
+
+       Distinct from cramped-padding (which fires when an element has
+       its OWN direct text and the padding/font-size ratio is wrong).
+       Here the container has NO direct text; only children; so
+       cramped-padding gives it a pass.
+
+       Several pass cases below are cleared by measuring where the glyphs
+       actually land, which takes layout. A URL scan, where the rule does its
+       real work, reports the flag column and nothing else. A file scan has no
+       layout and still reports five of the pass cases: pass-table-wrap,
+       pass-tall-script, pass-segmented, pass-tooltip-underline and
+       pass-marquee-shell. That list is pinned by name in
+       crates/html/tests/static_flush.rs, so it can shrink but not grow
+       unnoticed. */
+
+    body { font-family: system-ui, sans-serif; background: #fafafa; padding: 24px; margin: 0; color: #0f172a; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1400px; margin: 0 auto; }
+    .col h2 { font-size: 22px; font-weight: 700; margin: 0 0 16px; color: #0f172a; line-height: 1.2; }
+    .col h3 { font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin: 28px 0 10px; color: #64748b; }
+    .case { margin-bottom: 14px; }
+    .case-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 8px; font-style: italic; max-width: 60ch; }
+
+    /* ────────────────────────────────────────────────────────────
+       SHOULD FLAG
+       ──────────────────────────────────────────────────────────── */
+
+    /* ── FLAG: the /live-mode-frameworks bug; border + zero side-padding ── */
+    .flag-frameworks {
+      padding: 28px 0 0;
+      background: #fffbe6;
+      border: 1px solid #d4a017;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .flag-frameworks-label {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #8b6914;
+    }
+    .flag-frameworks-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .flag-frameworks-list li {
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      padding: 6px 12px;
+      background: #fef3c7;
+      border: 1px solid #d4a017;
+      border-radius: 4px;
+      color: #78350f;
+    }
+
+    /* ── FLAG: child text flush against the four borders of a card ── */
+    .flag-card-borders {
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .flag-card-borders h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .flag-card-borders p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── FLAG: non-transparent background, zero padding ── */
+    .flag-bg-only {
+      padding: 0;
+      background: #fde68a;
+      border-radius: 6px;
+      border: 0;
+    }
+    .flag-bg-only h4 { margin: 0; font-size: 14px; color: #78350f; }
+    .flag-bg-only p { margin: 4px 0 0; font-size: 13px; color: #78350f; }
+
+    /* ── FLAG: outline (no border), zero padding ── */
+    .flag-outline-only {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      outline: 2px solid #94a3b8;
+      outline-offset: 0;
+    }
+    .flag-outline-only h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .flag-outline-only p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── FLAG: border-left + zero left-padding, other sides fine ── */
+    .flag-asym-leftflush {
+      padding: 12px 16px 12px 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+    .flag-asym-leftflush h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .flag-asym-leftflush p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── FLAG: fixed-height bordered field a wrapped label overruns ── */
+    .flag-overrun-field {
+      width: 220px;
+      height: 28px;
+      padding: 0;
+      border: 1px solid #94a3b8;
+      border-radius: 4px;
+      background: white;
+    }
+    .flag-overrun-field .field-label {
+      display: block;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      line-height: 16px;
+      color: #0f172a;
+    }
+
+    /* ────────────────────────────────────────────────────────────
+       SHOULD PASS
+       ──────────────────────────────────────────────────────────── */
+
+    /* ── PASS: the inset lives on a grandchild, not on the direct child ── */
+    .pass-accordion-row {
+      padding: 0 24px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .pass-accordion-row h4 { margin: 0; font-size: 15px; font-weight: 500; }
+    .pass-accordion-row button {
+      display: flex;
+      width: 100%;
+      padding: 20px 0;
+      background: transparent;
+      border: 0;
+      font-size: 15px;
+      line-height: 22px;
+      color: #0f172a;
+      text-align: left;
+    }
+
+    /* ── PASS: a scroll wrapper whose table cells carry the padding ── */
+    .pass-table-wrap {
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow-x: auto;
+      width: 360px;
+    }
+    .pass-table-wrap table { border-collapse: collapse; width: 100%; }
+    .pass-table-wrap th, .pass-table-wrap td { padding: 10px 16px; font-size: 13px; text-align: left; }
+
+    /* ── PASS: the only text at the edge is a screen-reader heading ── */
+    .pass-sr-panel {
+      padding: 0 16px 16px;
+      background: white;
+      border: 1px solid #93c5fd;
+      border-radius: 8px;
+      width: 360px;
+    }
+    .pass-sr-panel .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .pass-sr-panel ul { list-style: none; margin: 0; padding: 16px 0 0; }
+    .pass-sr-panel li { font-size: 13px; line-height: 20px; }
+
+    /* ── PASS: a collapsed panel whose text is clipped away ── */
+    .pass-collapsed-row {
+      padding: 18px 20px 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      width: 360px;
+    }
+    .pass-collapsed-row h4 { margin: 0 0 18px; font-size: 15px; }
+    .pass-collapsed-row .answer { max-height: 0; overflow: hidden; }
+    .pass-collapsed-row .answer p { margin: 0; font-size: 13px; line-height: 20px; }
+
+    /* ── PASS: a text rect that runs past the box painting it ──
+       The measured text rect is a font-metric box, so a line box tighter
+       than the font's ascent and descent pushes it outside the paragraph's
+       own 12px border box; Devanagari and Thai marks do the same to an
+       ordinary paragraph. The 6px spacer below keeps the glyphs clear of the
+       rule the panel draws. */
+    .pass-tall-script {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid #cbd5e1;
+      width: 360px;
+    }
+    .pass-tall-script .body { padding: 0; margin: 0; }
+    .pass-tall-script .body p { margin: 0; font-size: 17px; line-height: 12px; }
+    .pass-tall-script .body .spacer { height: 6px; }
+
+    /* ── PASS: a dashed border-bottom on an inline span is an underline ── */
+    .pass-tooltip-underline { border-bottom: 1px dashed rgba(0, 0, 0, 0.25); padding: 0; cursor: help; }
+
+    /* ── PASS: a full-height child centres its label inside the pill ── */
+    .pass-segmented {
+      display: flex;
+      height: 40px;
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      width: 360px;
+    }
+    .pass-segmented button {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      padding: 0 18px;
+      background: transparent;
+      border: 0;
+      font-size: 14px;
+      line-height: 20px;
+      color: #0f172a;
+    }
+
+    /* ── PASS: no boundary at all (no bg, no border, no outline) ── */
+    .pass-no-boundary {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      outline: 0;
+    }
+    .pass-no-boundary-label {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+    .pass-no-boundary-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .pass-no-boundary-list li {
+      font-size: 13px;
+      padding: 6px 12px;
+      background: #f5f5f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+
+    /* ── PASS: top-only border, no left/right border, padding-top fine ── */
+    .pass-top-rule {
+      padding: 24px 0 0;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid #cbd5e1;
+    }
+    .pass-top-rule-label {
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: 10px;
+    }
+    .pass-top-rule-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .pass-top-rule-list li {
+      font-size: 13px;
+      padding: 6px 12px;
+      background: #f5f5f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+
+    /* ── PASS: bordered card with comfortable inset on all sides ── */
+    .pass-bordered-padded {
+      padding: 18px 20px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .pass-bordered-padded h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .pass-bordered-padded p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── PASS: background card with comfortable inset ── */
+    .pass-bg-padded {
+      padding: 14px 18px;
+      background: #fde68a;
+      border-radius: 6px;
+      border: 0;
+    }
+    .pass-bg-padded h4 { margin: 0; font-size: 14px; color: #78350f; }
+    .pass-bg-padded p { margin: 4px 0 0; font-size: 13px; color: #78350f; }
+
+    /* ── PASS: outline with comfortable inset ── */
+    .pass-outline-padded {
+      padding: 14px 18px;
+      outline: 2px solid #94a3b8;
+      outline-offset: 0;
+      border: 0;
+      background: transparent;
+    }
+    .pass-outline-padded h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .pass-outline-padded p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── PASS: image-only container, no text means no flush issue ── */
+    .pass-image-only {
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      width: 200px;
+      overflow: hidden;
+    }
+    .pass-image-only .placeholder-img {
+      width: 100%;
+      height: 80px;
+      background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+    }
+
+    /* ── PASS: parent has zero padding, but child margins create the visible inset ── */
+    .pass-margin-inset {
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .pass-margin-inset h4 { margin: 16px 18px 4px; font-size: 14px; color: #0f172a; }
+    .pass-margin-inset p { margin: 0 18px 16px; font-size: 13px; color: #475569; }
+
+    /* ── PASS: an inner shell, not the parent, owns the inset spacing ── */
+    .pass-inner-shell {
+      padding: 0;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+    }
+    .pass-inner-shell .inner-shell {
+      margin: 18px;
+    }
+    .pass-inner-shell h4 { margin: 0 0 4px; font-size: 14px; color: #0f172a; }
+    .pass-inner-shell p { margin: 0; font-size: 13px; color: #475569; }
+
+    /* ── PASS: same background as parent, so the child draws no visible boundary ── */
+    .pass-same-bg-parent {
+      padding: 16px;
+      background: #eef2f7;
+      border-radius: 8px;
+    }
+    .pass-same-bg-child {
+      padding: 0;
+      background: #eef2f7;
+      border: 0;
+      border-radius: 8px;
+    }
+    .pass-same-bg-child h4 { margin: 0; font-size: 14px; color: #0f172a; }
+    .pass-same-bg-child p { margin: 4px 0 0; font-size: 13px; color: #475569; }
+
+    /* ── PASS: full-bleed marquee/surface, not a text card missing padding ── */
+    .pass-marquee-shell {
+      padding: 0;
+      background: #172033;
+      color: white;
+      overflow: hidden;
+      border: 0;
+    }
+    .pass-marquee-track {
+      display: flex;
+      gap: 12px;
+      width: max-content;
+    }
+    .pass-marquee-card {
+      width: 220px;
+      padding: 14px;
+      background: #23304a;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    .pass-marquee-card p { margin: 0; font-size: 13px; }
+
+    /* ── PASS: outer scene owns background; inner text surface owns padding ── */
+    .pass-inner-text-surface {
+      padding: 0;
+      background: #0f172a;
+      color: white;
+      overflow: hidden;
+      border: 0;
+    }
+    .pass-inner-text-surface-window {
+      display: grid;
+      gap: 6px;
+      min-height: 92px;
+      padding: 14px;
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    .pass-inner-text-surface-window p { margin: 0; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <!-- ════════════════════════════════════════════════════════════
+         LEFT COLUMN: should flag
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Border + zero side-padding</h3>
+      <div class="case">
+        <span class="case-label">section: full border, padding 28px 0 0; label and pills touch the left/right border lines.</span>
+        <section class="flag-frameworks">
+          <span class="flag-frameworks-label">Supported dev servers</span>
+          <ul class="flag-frameworks-list">
+            <li>Vite</li>
+            <li>Next.js</li>
+            <li>SvelteKit</li>
+            <li>Astro</li>
+          </ul>
+        </section>
+      </div>
+
+      <h3>All sides flush against a border</h3>
+      <div class="case">
+        <span class="case-label">card: 1px border on all sides, padding 0; heading and body touch every side.</span>
+        <div class="flag-card-borders">
+          <h4>Card flush against the borders</h4>
+          <p>Body copy sits flush against every visible border line.</p>
+        </div>
+      </div>
+
+      <h3>Background color, zero padding</h3>
+      <div class="case">
+        <span class="case-label">no border, but a non-transparent bg; text flush against the bg's edge counts too.</span>
+        <div class="flag-bg-only">
+          <h4>Title flush against the bg edge</h4>
+          <p>Body copy with zero padding around a colored fill.</p>
+        </div>
+      </div>
+
+      <h3>Outline (not border), zero padding</h3>
+      <div class="case">
+        <span class="case-label">outline draws outside the box; content at the box edge sits next to the outline.</span>
+        <div class="flag-outline-only">
+          <h4>Title flush against the outline</h4>
+          <p>The outline counts as a visible boundary too.</p>
+        </div>
+      </div>
+
+      <h3>Wrapped label overruns a fixed-height field</h3>
+      <div class="case">
+        <span class="case-label">220x28px bordered field: the 11px label wraps to two 16px lines, so both run into the border.</span>
+        <div class="flag-overrun-field">
+          <span class="field-label">project-identifier-for-the-current-workspace</span>
+        </div>
+      </div>
+
+      <h3>Left-side flush, other sides fine</h3>
+      <div class="case">
+        <span class="case-label">card: padding 12px 16px 12px 0; text touches the left border, other sides are inset.</span>
+        <div class="flag-asym-leftflush">
+          <h4>Title flush only on the left</h4>
+          <p>Padding-left zero with a full border.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════
+         RIGHT COLUMN: should pass
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Inset from a grandchild</h3>
+      <div class="case">
+        <span class="case-label">accordion row: the wrapper has no vertical padding, the button two levels down carries 20px.</span>
+        <div class="pass-accordion-row">
+          <h4><button type="button">What does the free plan include?</button></h4>
+        </div>
+      </div>
+
+      <h3>Table cells carry the inset</h3>
+      <div class="case">
+        <span class="case-label">360px scroll wrapper with a border; every cell has 10px/16px padding, so no text reaches the edge.</span>
+        <div class="pass-table-wrap">
+          <table>
+            <tr><th>Plan</th><th>Seats</th></tr>
+            <tr><td>Starter</td><td>Three</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <h3>Screen-reader heading at the edge</h3>
+      <div class="case">
+        <span class="case-label">360px panel: the only child at the box origin is a visually hidden heading, which paints nothing.</span>
+        <div class="pass-sr-panel">
+          <h4 class="sr-only">Main services</h4>
+          <ul>
+            <li>Mail and calendar</li>
+            <li>Weather and travel</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Collapsed panel clipped away</h3>
+      <div class="case">
+        <span class="case-label">360px FAQ row: the answer sits in a max-height 0 panel, so its text never reaches the screen.</span>
+        <div class="pass-collapsed-row">
+          <h4>Which games does it work with?</h4>
+          <div class="answer"><p>Any game with a public leaderboard.</p></div>
+        </div>
+      </div>
+
+      <h3>Tall script, metric box past its own border box</h3>
+      <div class="case">
+        <span class="case-label">360px panel with a bottom rule, 17px Devanagari on a 12px line box: the measured text rect runs past the paragraph's own box, while the glyphs stay 7px above the rule.</span>
+        <div class="pass-tall-script">
+          <div class="body">
+            <p>एक पूरी कहानी यहाँ पढ़ें और आज की सुर्खियाँ देखें</p>
+            <div class="spacer"></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Dashed underline on an inline span</h3>
+      <div class="case">
+        <span class="case-label">a tooltip trigger's border-bottom is an underline; text sitting on it is the point of it.</span>
+        <p>You get <span class="pass-tooltip-underline"><span>1,000</span> <span>page scrapes</span></span> every month.</p>
+      </div>
+
+      <h3>Full-height child, centred label</h3>
+      <div class="case">
+        <span class="case-label">360x40px bordered pill: the buttons fill its height, but their 14px labels stay 10px inside.</span>
+        <div class="pass-segmented">
+          <button type="button">Nearby</button>
+          <button type="button">All regions</button>
+        </div>
+      </div>
+
+      <h3>No boundary at all</h3>
+      <div class="case">
+        <span class="case-label">no bg, no border, no outline; zero padding is fine.</span>
+        <section class="pass-no-boundary">
+          <span class="pass-no-boundary-label">Supported dev servers</span>
+          <ul class="pass-no-boundary-list">
+            <li>Vite</li>
+            <li>Next.js</li>
+            <li>SvelteKit</li>
+          </ul>
+        </section>
+      </div>
+
+      <h3>Top-only border, no side borders</h3>
+      <div class="case">
+        <span class="case-label">border-top only, padding-top 24px; no left/right border to be flush against.</span>
+        <section class="pass-top-rule">
+          <span class="pass-top-rule-label">Supported dev servers</span>
+          <ul class="pass-top-rule-list">
+            <li>Vite</li>
+            <li>Next.js</li>
+            <li>SvelteKit</li>
+          </ul>
+        </section>
+      </div>
+
+      <h3>Bordered card with proper inset</h3>
+      <div class="case">
+        <span class="case-label">card: 1px border + padding 18px 20px; comfortable inset on every side.</span>
+        <div class="pass-bordered-padded">
+          <h4>Card with proper inset</h4>
+          <p>Body copy sits comfortably away from the borders.</p>
+        </div>
+      </div>
+
+      <h3>Background card with proper inset</h3>
+      <div class="case">
+        <span class="case-label">non-transparent bg + padding 14px 18px; content has room to breathe.</span>
+        <div class="pass-bg-padded">
+          <h4>Title with inset on bg</h4>
+          <p>Body copy is comfortably inset from the bg edge.</p>
+        </div>
+      </div>
+
+      <h3>Outline with proper inset</h3>
+      <div class="case">
+        <span class="case-label">outline + padding 14px 18px; content is comfortably inside.</span>
+        <div class="pass-outline-padded">
+          <h4>Title with inset and outline</h4>
+          <p>Outline boundary with proper inset works.</p>
+        </div>
+      </div>
+
+      <h3>Image-only container, no text</h3>
+      <div class="case">
+        <span class="case-label">card: padding 0, border all sides; no text means nothing can be flush.</span>
+        <div class="pass-image-only">
+          <div class="placeholder-img"></div>
+        </div>
+      </div>
+
+      <h3>Child margins provide the inset</h3>
+      <div class="case">
+        <span class="case-label">card: parent padding 0, but text children have margins that create visible inset.</span>
+        <div class="pass-margin-inset">
+          <h4>Title inset by child margin</h4>
+          <p>Body copy is not visually flush even though the parent has zero padding.</p>
+        </div>
+      </div>
+
+      <h3>Inner shell provides the inset</h3>
+      <div class="case">
+        <span class="case-label">card: parent padding 0, but an inner shell is offset from every edge.</span>
+        <div class="pass-inner-shell">
+          <div class="inner-shell">
+            <h4>Title inset by inner shell</h4>
+            <p>The direct child creates the breathing room.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Same background as parent</h3>
+      <div class="case">
+        <span class="case-label">child padding 0, but it has the same background as the parent, so no child boundary is visible.</span>
+        <div class="pass-same-bg-parent">
+          <div class="pass-same-bg-child">
+            <h4>Same-surface visual shell</h4>
+            <p>The text belongs to the parent surface, not to a distinct zero-padding card.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Full-bleed marquee shell</h3>
+      <div class="case">
+        <span class="case-label">marquee shell clips animated cards intentionally; the cards, not the shell, own text padding.</span>
+        <section class="pass-marquee-shell">
+          <div class="pass-marquee-track">
+            <article class="pass-marquee-card"><p>Quote card with its own comfortable padding.</p></article>
+            <article class="pass-marquee-card"><p>Another moving card, also padded inside.</p></article>
+          </div>
+        </section>
+      </div>
+
+      <h3>Inner text surface</h3>
+      <div class="case">
+        <span class="case-label">outer shell has a scene background; the inner window owns the actual text padding.</span>
+        <div class="pass-inner-text-surface">
+          <div class="pass-inner-text-surface-window">
+            <p>Build step running</p>
+            <p>Detector output belongs to the mock window.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/detect-antipatterns-browser.js"></script>
+</body>
+</html>

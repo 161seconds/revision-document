@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a short page under a shadow-root banner</title>
+  <style>
+    /* A short page with a paragraph of its own under a Usercentrics-shaped
+       banner rendered in a shadow root. The banner's text is counted in the
+       page's total too, so the page's own copy is outside it and the page is
+       scanned, not refused. Pinned by crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Opening hours</h1>
+  <p>The studio is open Tuesday to Saturday from ten until six, and by appointment on Mondays.</p>
+  <div id="usercentrics-root"></div>
+  <script>
+    document.getElementById('usercentrics-root').attachShadow({ mode: 'open' }).innerHTML =
+      '<style>.bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 24px; background: #fff; }</style>'
+      + '<div class="bar" role="region" aria-label="Privacy settings">'
+      + '<p>We use cookies and similar technologies to provide this website, to measure how it is used and to show you personalised content and advertising. You can accept all of these purposes, reject them, or choose which ones you allow in the settings.</p></div>';
+  </script>
+</body>
+</html>

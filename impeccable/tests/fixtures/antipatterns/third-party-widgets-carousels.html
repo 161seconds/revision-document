@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Third-party widgets: Slick, SuperSlide, react-fast-marquee, Kaltura</title>
+  <style>
+    /* URL engine. Findings on a known vendor's markup name the vendor and
+       keep their severity. Slick owns its list, track and slide wrappers
+       (not the site's slide content) and the whole dot list it writes;
+       SuperSlide owns its tempWrap; react-fast-marquee and Kaltura's player
+       own everything under their containers. Slick's list and SuperSlide's
+       tempWrap are carousel windows, so clipped-overflow-container does not
+       report the slide parked past them at all (round7-never-painted), and
+       there is nothing to tag. */
+    body { margin: 0; font-family: system-ui, sans-serif; font-size: 16px; line-height: 24px; background: #ffffff; color: #1c1c24; }
+    main { display: grid; grid-template-columns: 560px 560px; gap: 40px; width: 1160px; margin: 0 auto; padding: 24px 0; }
+    .case { width: 520px; margin: 0 0 32px; }
+    .slick-list { width: 480px; height: 120px; overflow: hidden; position: relative; }
+    .slick-track { width: 480px; height: 120px; }
+    .slide-caption { position: absolute; top: 90px; left: 500px; width: 200px; height: 24px; margin: 0; }
+    .slick-dots { display: flex; gap: 8px; list-style: none; margin: 8px 0 0; padding: 0; }
+    .slick-dots button { width: 40px; height: 20px; border: 0; background: #888888; color: #333333; font-size: 12px; }
+    .tempWrap { width: 480px; height: 60px; overflow: hidden; position: relative; }
+    .tempWrap span { position: absolute; left: 520px; top: 0; width: 200px; height: 24px; }
+    .rfm-marquee-container { display: flex; width: 480px; height: 24px; overflow: hidden; }
+    .rfm-child span { color: #f87171; font-size: 14px; }
+    .playkit-video-area { width: 480px; height: 270px; background: #000000; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .own-button { width: 120px; height: 20px; border: 0; background: #888888; color: #333333; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section aria-label="Should flag, tagged">
+      <div class="case slick-slider slick-initialized">
+        <div class="slick-list draggable" id="pass-slick-list" data-expect="pass" data-case="Pass Slick List Carousel Window">
+          <div class="slick-track"><div class="slick-slide slick-active"><p class="slide-caption">Caption parked past the list</p></div></div>
+        </div>
+        <ul class="slick-dots"><li id="slick-slide00"><button type="button" id="flag-slick-dot" data-expect="flag" data-case="Flag Slick Dot Tagged">1</button></li></ul>
+      </div>
+      <div class="case"><div class="tempWrap" id="pass-superslide-wrap" data-expect="pass" data-case="Pass SuperSlide Wrap Carousel Window"><span>Notice parked past the wrap</span></div></div>
+      <div class="case"><div class="rfm-marquee-container "><div class="rfm-marquee"><div class="rfm-child"><span id="flag-marquee-quote" data-expect="flag" data-case="Flag Marquee Quote Tagged">PETR4 -1.2%</span></div></div></div></div>
+      <div class="case"><div class="kaltura-player"><div class="playkit-video-area" id="flag-kaltura-area" data-expect="flag" data-case="Flag Kaltura Area Tagged"></div></div></div>
+    </section>
+    <section aria-label="Should flag, not tagged">
+      <div class="case"><button type="button" class="own-button" id="flag-own-button" data-expect="flag" data-case="Flag Site Button Untagged">Next slide</button></div>
+    </section>
+  </main>
+</body>
+</html>

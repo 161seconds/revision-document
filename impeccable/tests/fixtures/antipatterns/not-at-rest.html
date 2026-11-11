@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Not at rest: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for images and text that are not at rest (round 8, branch 2):
+       buried-raster, the wrapper form of cramped-padding, the keyframe form
+       of dark-glow, and the content-hidden-at-rest measure.
+
+       Every should-pass case carries the measurement of a should-flag twin
+       and differs only in whether it is at rest, or in whose text it is:
+
+       - an image held at opacity 0 under a class the page is seen swapping
+         on other images to fade them in, and an image with a fade running
+         on it, against an image held faint and an image at 0 whose class
+         the page swaps nowhere;
+       - text 2px from a bordered card's edge inside a block waiting at
+         opacity 0 for its reveal, text a block has carried 30px past the
+         edge, and the label of a badge pinned to the card's corner, against
+         the same text shown, at rest, in flow;
+       - a glow in a step of @keyframes that no element runs, or that only
+         an element at display: none runs, against one a painted element
+         runs;
+       - text a view() timeline holds at opacity 0 below the fold, and the
+         answers a closed FAQ row parks under its clipped box, against a
+         section whose reveal never ran.
+
+       The hidden-text measure is one share for the page: the finding names
+       the stalled section's characters alone, of a total that counts the
+       scroll-held text as shown and leaves the parked answers out.
+
+       The static HTML engine measures no boxes, reads no running animations
+       and does not measure hidden text, so it reports what it can see in
+       both columns. The URL behaviour is pinned by
+       crates/browser/tests/not_at_rest.rs. */
+
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 16px 20px; }
+    .col { position: relative; width: 600px; }
+    .col-label { font: 600 16px/20px system-ui; margin: 0 0 8px; }
+    .case-label { font: 600 13px/17px system-ui; margin: 0 0 6px; color: #333; }
+    .case { position: relative; width: 600px; margin: 24px 0 0; }
+
+    /* buried-raster */
+    .raster { display: block; width: 400px; height: 200px; }
+    .thumbs .thumb { opacity: 0; }
+    .thumbs .thumb-shown { opacity: 1; transition: opacity 0.3s cubic-bezier(0.39, 0.76, 0.51, 0.56); }
+    .cover-waiting { opacity: 0; }
+    .fading { opacity: 0; transition: opacity 900s linear; }
+
+    /* cramped-padding, wrapper form. The card has no padding of its own;
+       the copy is inset by a grandchild, so no direct child insulates it. */
+    .card { width: 560px; border: 1px solid #8a8a8a; padding: 0; }
+    .card section { margin: 0; padding: 0; }
+    .card .pad { padding: 24px 32px; }
+    .card p { margin: 0; width: 400px; font-size: 16px; line-height: 24px; }
+    .shift-30 { transform: translateX(-30px); }
+    .shift-64 { transform: translateX(-64px); }
+    .waiting { opacity: 0; }
+    .promo { position: relative; width: 392px; height: 86px; background: #84bc34; }
+    .promo .body { height: 86px; }
+    .promo .head { padding: 12px 16px 16px; }
+    .promo .badge + .head { padding-top: 32px; }
+    .promo .title { margin: 0; font: 600 18px/24px system-ui; color: #10240a; }
+    .promo .label { display: block; height: 20px; padding: 0 16px; font: 600 12px/20px system-ui; color: #10240a; }
+    .promo .badge { position: absolute; top: 0; right: 0; height: 20px; padding: 0 16px; background: #fbfdff; font: 600 12px/20px system-ui; color: #10240a; }
+
+    /* dark-glow, keyframe form. Paused at its first frame, so the element
+       computes no shadow and only the stylesheet names the glow. */
+    @keyframes flag-breathe { 50% { box-shadow: 0 0 14px rgba(255, 0, 200, 0.5); } }
+    @keyframes pass-breathe { 50% { box-shadow: 0 0 14px rgba(0, 200, 255, 0.5); } }
+    @keyframes pass-hidden-breathe { 50% { box-shadow: 0 0 14px rgba(125, 255, 0, 0.5); } }
+    .pulse { display: block; width: 160px; height: 44px; border-radius: 8px; background: #1d2330; }
+    .flag-pulse { animation: flag-breathe 3s ease-in-out infinite paused; }
+    .pass-pulse { animation: pass-breathe 3s ease-in-out infinite paused; }
+    .pass-hidden-pulse { display: none; animation: pass-hidden-breathe 3s ease-in-out infinite paused; }
+
+    /* content-hidden-at-rest */
+    .stalled { width: 560px; opacity: 0; }
+    .stalled p, .scrub p, .faq p { margin: 0; width: 520px; }
+    @keyframes scrub-rise { from { opacity: 0; transform: translateY(56px); } to { opacity: 1; transform: none; } }
+    .scrub > * { animation: scrub-rise linear both; animation-timeline: view(); animation-range: entry 0% cover 30%; }
+    .faq-row { position: relative; width: 560px; height: 76px; overflow: hidden; border-bottom: 1px solid #d0d0d0; }
+    .faq-row .question { margin: 0; padding: 24px 0; font: 600 18px/28px system-ui; }
+    .faq-row .answer { position: absolute; top: 127px; left: 0; width: 560px; opacity: 0; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2 class="col-label">Should flag</h2>
+
+      <div class="case">
+        <h3 class="case-label">Image held faint</h3>
+        <img class="raster texture" id="flag-buried" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Texture held faint" width="400" height="200" style="opacity: 0.05">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Image at zero, class swapped nowhere</h3>
+        <img class="raster cover cover-waiting" id="flag-buried-alone" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Cover nothing reveals" width="400" height="200">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Shown text two pixels from the rule</h3>
+        <div class="card" id="flag-card-shifted">
+          <section><div class="pad"><div class="shift-30"><p>Shown copy that a transform has carried to the card's left rule.</p></div></div></section>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">In-flow label at the top edge</h3>
+        <div class="promo" id="flag-card-label">
+          <div class="body">
+            <span class="label">50 % saving</span>
+            <div class="head"><p class="title">Allnet Flat 40 GB</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Keyframe glow a painted button runs</h3>
+        <a class="pulse flag-pulse" id="flag-pulse" href="#cart" aria-label="Cart"></a>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Section whose reveal never ran</h3>
+        <div class="stalled" id="flag-stalled"><p>This section was meant to fade in when its reveal script ran, and the script never did. It holds the product story, the three reasons a team would choose the plan, the note about how billing works across seats, and the closing line that asks the reader to start a trial. None of it is closed interface and nothing on the page opens it: it sits in the flow of the page at opacity zero, takes up its full height, and a visitor scrolls past a blank band where all of this copy should have been. A reveal that never ran hides content for every visitor, which is the failure this measure exists to report, and it keeps reporting it here.</p></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2 class="col-label">Should pass</h2>
+
+      <div class="case thumbs">
+        <h3 class="case-label">Images waiting for a class swap</h3>
+        <img class="raster thumb thumb-shown" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="First revealed thumbnail" width="400" height="200">
+        <img class="raster thumb thumb-shown" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Second revealed thumbnail" width="400" height="200">
+        <img class="raster thumb thumb-waiting" id="pass-thumb-waiting" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Thumbnail the queue has not reached" width="400" height="200">
+        <img class="raster thumb thumb-waiting" id="pass-thumb-waiting-too" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Thumbnail further down the queue" width="400" height="200">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Image with a fade running</h3>
+        <img class="raster fading" id="pass-thumb-fading" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGOoiLLBihgGUgIA4YgyodbouWIAAAAASUVORK5CYII=" alt="Thumbnail part way through its fade" width="400" height="200">
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Block waiting at zero for its reveal</h3>
+        <div class="card" id="pass-card-waiting">
+          <section><div class="pad"><div class="shift-30 waiting"><p>Hidden copy that waits 30px left of where it will rest.</p></div></div></section>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Text carried past the rule</h3>
+        <div class="card" id="pass-card-past-edge">
+          <section><div class="pad"><div class="shift-64"><p>Copy a transform has carried 32px out of its card.</p></div></div></section>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Badge pinned to the corner</h3>
+        <div class="promo" id="pass-card-badge">
+          <div class="body">
+            <span class="badge">46 % saving</span>
+            <div class="head"><p class="title">Allnet Flat 10 GB</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Keyframe glow only a hidden button runs</h3>
+        <a class="pulse pass-hidden-pulse" id="pass-hidden-pulse" href="#cart" aria-label="Cart"></a>
+        <p style="margin: 0; width: 400px">The pass-pulse class is on no element.</p>
+      </div>
+
+      <div class="case">
+        <h3 class="case-label">Closed rows with parked answers</h3>
+        <div class="faq">
+          <div class="faq-row" id="pass-faq-one"><p class="question">Can I host it myself?</p><div class="answer"><p>Yes. Self-hosting is available on every plan, with the same features as the hosted product.</p></div></div>
+          <div class="faq-row" id="pass-faq-two"><p class="question">How does billing work?</p><div class="answer"><p>Billing is per seat and per month, and you can change the number of seats at any time.</p></div></div>
+        </div>
+      </div>
+
+      <div class="case" style="margin-top: 900px">
+        <h3 class="case-label">Blocks a view timeline brings in</h3>
+        <div class="scrub" id="pass-scrub">
+          <p>The first block rises into view as the reader scrolls down to it, driven by a view timeline.</p>
+          <p>The second block follows a few percent later, and so reads as a cascade down the page.</p>
+          <p>The third block completes the row, and all three are fully shown once they are on screen.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Start the long fade once the page has painted its first frame, so the
+    // capture reads a transition running on the image.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        document.getElementById('pass-thumb-fading').style.opacity = '1';
+      });
+    });
+  </script>
+</body>
+</html>

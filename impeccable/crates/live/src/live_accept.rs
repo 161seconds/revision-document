@@ -1,0 +1,1973 @@
+//! JS: live-accept.mjs -> `impeccable live-accept` / `accept`. Deterministic
+//! accept/discard of variant sessions: HTML/JSX wrapper carbonize, the
+//! Svelte component inline path, receipts, source locks, buffer scrub.
+
+use crate::inject::resolve_source_traits;
+use crate::paths::{live_dir, safe_session_id};
+use crate::pending_edits::{read_buffer, write_buffer};
+use crate::roots::enter_live_root;
+use crate::source_lock::with_source_lock;
+use crate::source_search::{find_source_file, is_generated_file, resolve_live_template_extensions};
+use crate::svelte_component::{
+    find_svelte_component_manifest, inline_svelte_component_accept, remove_svelte_component_session,
+};
+use crate::util::{eprintln, iso_now, json_compact, json_pretty, jsp, println, safe_read, Env};
+use crate::wrap_common::{arg_val, leading_ws, min_leading_spaces, slice_chars};
+use impeccable_common::Io;
+use impeccable_core::js::{trim, trim_start, WS};
+use once_cell::sync::Lazy;
+use regex::Regex;
+use serde_json::{json, Map, Value};
+
+const ACCEPT_LOCK_WAIT_MS: f64 = 1000.0;
+
+const HELP: &str = "Usage: impeccable live-accept [options]
+
+Deterministic accept/discard for live variant sessions.
+
+Modes:
+  --discard          Remove variants, restore original
+  --variant N        Accept variant N, discard the rest
+
+Required:
+  --id SESSION_ID    Session ID of the variant wrapper
+
+Options:
+  --page-url URL     Current browser page URL; scopes staged copy-edit cleanup
+  --bake             Bake a knob-free HTML/JSX accept mechanically (rules to the
+                     owning stylesheet, wrapper unwrapped) instead of leaving
+                     the carbonize block; opt-in, never the default
+  --no-bake          Never bake; always leave the carbonize block
+  --defer-source-write
+                     Deprecated compatibility flag. Svelte component accepts
+                     now write the real source immediately.
+
+Output (JSON):
+  { handled, file, carbonize, baked?, css?, bakeSkipped? }";
+
+/// What a bake needs beyond the file: where to look for the stylesheet and
+/// which session to name in it.
+struct BakeRequest {
+    cwd: String,
+    session_id: String,
+    /// The element descriptor the overlay journaled with the session's
+    /// generate event: the anchor it saw and how many elements matched it.
+    element: Option<Map<String, Value>>,
+}
+
+/// The `element` of the session's journaled generate event, if any.
+fn journaled_element(cwd: &str, env: &Env, id: &str) -> Option<Map<String, Value>> {
+    let state = crate::session::create_live_session_store(cwd, env, Some(id)).read_state(id, true).ok()?;
+    let journal = safe_read(&state.journal_path)?;
+    journal
+        .lines()
+        .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+        .find_map(|entry| {
+            let event = entry.get("event")?;
+            if event.get("type").and_then(Value::as_str) != Some("generate") {
+                return None;
+            }
+            event.get("element").and_then(Value::as_object).cloned()
+        })
+}
+
+/// The two ways an HTML/JSX accept can end.
+enum AcceptOutcome {
+    /// The carbonize block is in source (or nothing was needed).
+    Carbonized {
+        carbonize: bool,
+        original: String,
+        bake_skipped: Option<String>,
+    },
+    /// The variant is permanent: rules appended to `css_file` (None: the
+    /// page's own `<style>` block), wrapper gone.
+    Baked {
+        original: String,
+        css_file: Option<String>,
+        rules: usize,
+        anchor: String,
+    },
+}
+
+pub fn run(args: &[String], io: &mut Io) -> i32 {
+    let mut argv: Vec<String> = args.to_vec();
+    if let Err(code) = enter_live_root(&mut argv, io) {
+        return code;
+    }
+    accept_cli(&argv, io)
+}
+
+fn nonempty(v: Option<String>) -> Option<String> {
+    v.filter(|s| !s.is_empty())
+}
+
+/// JS: operationFailure(err, extra)
+fn operation_failure(message: &str, extra: &[(&str, Value)]) -> Value {
+    let mut m = Map::new();
+    m.insert("handled".into(), Value::Bool(false));
+    m.insert("mode".into(), Value::String("error".into()));
+    m.insert("error".into(), Value::String(message.to_string()));
+    for (k, v) in extra {
+        m.insert(k.to_string(), v.clone());
+    }
+    Value::Object(m)
+}
+
+/// JS: markPreviewFailure(result)
+fn mark_preview_failure(result: Value) -> Value {
+    if let Value::Object(mut m) = result {
+        let unhandled = m.get("handled") == Some(&Value::Bool(false));
+        let no_mode = m
+            .get("mode")
+            .map(|v| !crate::inject::detect_utils::truthy(v))
+            .unwrap_or(true);
+        let preview = m
+            .get("previewMode")
+            .map(crate::inject::detect_utils::truthy)
+            .unwrap_or(false);
+        if unhandled && no_mode && preview {
+            m.insert("mode".into(), Value::String("error".into()));
+        }
+        Value::Object(m)
+    } else {
+        result
+    }
+}
+
+fn accept_receipt_path(cwd: &str, env: &Env, id: &str) -> String {
+    jsp::join(&[
+        &live_dir(cwd, env),
+        "accept-receipts",
+        &format!("{}.json", id),
+    ])
+}
+
+fn read_accept_receipt(cwd: &str, env: &Env, id: &str) -> Option<Value> {
+    let text = safe_read(&accept_receipt_path(cwd, env, id))?;
+    serde_json::from_str(&text).ok()
+}
+
+fn write_accept_receipt(
+    cwd: &str,
+    env: &Env,
+    id: &str,
+    operation: &str,
+    variant_id: Option<&str>,
+    result: &Value,
+) {
+    let file = accept_receipt_path(cwd, env, id);
+    if let Some(parent) = std::path::Path::new(&file).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    let mut m = Map::new();
+    m.insert("id".into(), Value::String(id.to_string()));
+    m.insert("operation".into(), Value::String(operation.to_string()));
+    m.insert(
+        "variantId".into(),
+        variant_id
+            .map(|v| Value::String(v.to_string()))
+            .unwrap_or(Value::Null),
+    );
+    m.insert("result".into(), result.clone());
+    m.insert("completedAt".into(), Value::String(iso_now()));
+    let tmp = format!(
+        "{}.{}.{}.tmp",
+        file,
+        std::process::id(),
+        crate::util::now_ms() as i64
+    );
+    if std::fs::write(&tmp, format!("{}\n", json_pretty(&Value::Object(m)))).is_ok() {
+        let _ = std::fs::rename(&tmp, &file);
+    }
+}
+
+fn accept_cli(args: &[String], io: &mut Io) -> i32 {
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        println(io, HELP);
+        return 0;
+    }
+    let cwd = io.cwd.to_string_lossy().into_owned();
+    let env = io.env.clone();
+
+    let id = nonempty(arg_val(args, "--id"));
+    let variant_num = nonempty(arg_val(args, "--variant"));
+    let param_values_raw = nonempty(arg_val(args, "--param-values"));
+    let page_url = nonempty(arg_val(args, "--page-url"));
+    let is_discard = args.iter().any(|a| a == "--discard");
+    let bake_flag = args.iter().any(|a| a == "--bake");
+    let no_bake = args.iter().any(|a| a == "--no-bake");
+
+    let Some(id) = id else {
+        eprintln(io, "Missing --id");
+        return 1;
+    };
+    if safe_session_id(&id).is_err() {
+        eprintln(io, "Invalid --id");
+        return 1;
+    }
+    if !is_discard && variant_num.is_none() {
+        eprintln(io, "Need --discard or --variant N");
+        return 1;
+    }
+    if !is_discard {
+        let v = variant_num.as_deref().unwrap_or("");
+        let ok = !v.is_empty() && v.len() <= 3 && v.bytes().all(|b| b.is_ascii_digit());
+        if !ok {
+            eprintln(io, "Invalid --variant");
+            return 1;
+        }
+    }
+    let variant_num = variant_num.unwrap_or_default();
+
+    let requested_operation = if is_discard { "discard" } else { "accept" };
+    if let Some(prior) = read_accept_receipt(&cwd, &env, &id) {
+        let prior_op = prior
+            .get("operation")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let prior_variant = prior.get("variantId").cloned().unwrap_or(Value::Null);
+        let same = prior_op == requested_operation
+            && (is_discard || crate::accept_css::js_string(&prior_variant) == variant_num);
+        let out = if same {
+            let mut m = match prior.get("result") {
+                Some(Value::Object(o)) => o.clone(),
+                _ => Map::new(),
+            };
+            m.insert("handled".into(), Value::Bool(true));
+            m.insert("alreadyApplied".into(), Value::Bool(true));
+            Value::Object(m)
+        } else {
+            json!({
+                "handled": false,
+                "mode": "error",
+                "error": "accept_receipt_conflict",
+                "priorOperation": prior.get("operation").cloned().unwrap_or(Value::Null),
+                "priorVariantId": prior_variant,
+            })
+        };
+        println(io, &json_compact(&out));
+        return 0;
+    }
+
+    let emit_result = |io: &mut Io, raw: Value| {
+        let result = mark_preview_failure(raw);
+        if result.get("handled") != Some(&Value::Bool(false)) {
+            write_accept_receipt(
+                &cwd,
+                &env,
+                &id,
+                requested_operation,
+                if is_discard {
+                    None
+                } else {
+                    Some(variant_num.as_str())
+                },
+                &result,
+            );
+        }
+        println(io, &json_compact(&result));
+    };
+
+    let param_values: Option<Map<String, Value>> =
+        param_values_raw
+            .as_deref()
+            .and_then(|raw| match serde_json::from_str::<Value>(raw) {
+                Ok(Value::Object(o)) => Some(o),
+                _ => None,
+            });
+
+    let found = find_session_file(&id, &cwd);
+    let svelte_manifest = if found.is_some() {
+        None
+    } else {
+        match find_svelte_component_manifest(&id, &cwd) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln(io, &format!("Error: {}", e));
+                return 1;
+            }
+        }
+    };
+
+    if found.is_none() && svelte_manifest.is_none() {
+        println(
+            io,
+            &json_compact(
+                &json!({ "handled": false, "error": format!("Session markers not found for id: {}", id) }),
+            ),
+        );
+        return 0;
+    }
+
+    if let Some(manifest) = svelte_manifest {
+        let source_file = manifest.get("sourceFile").cloned().unwrap_or(Value::Null);
+        let component_dir = manifest.get("componentDir").cloned().unwrap_or(Value::Null);
+        let mut context: Vec<(&str, Value)> = vec![("file", source_file.clone())];
+        if is_discard {
+            context.push(("carbonize", Value::Bool(false)));
+        } else {
+            context.push(("sourceFile", source_file.clone()));
+        }
+        context.push(("previewMode", Value::String("svelte-component".into())));
+        context.push(("componentDir", component_dir));
+
+        let sf_str = crate::accept_css::js_string(&source_file);
+        let lock_file = jsp::resolve(&cwd, &[&sf_str]);
+        let owner = format!("{}:{}", requested_operation, id);
+        let locked = with_source_lock(&lock_file, &owner, &cwd, &env, ACCEPT_LOCK_WAIT_MS, || {
+            if is_discard {
+                remove_svelte_component_session(&id, &cwd);
+                let mut m = Map::new();
+                m.insert("handled".into(), Value::Bool(true));
+                for (k, v) in &context {
+                    m.insert(k.to_string(), v.clone());
+                }
+                Ok(Value::Object(m))
+            } else {
+                inline_svelte_component_accept(&manifest, &variant_num, param_values.as_ref(), &cwd)
+            }
+        });
+        let mut result = match locked {
+            Ok(Ok(v)) => v,
+            Ok(Err(msg)) => operation_failure(&msg, &context),
+            Err(lock) => operation_failure(&lock.message, &context),
+        };
+        if let Value::Object(m) = &mut result {
+            if m.get("carbonize")
+                .map(crate::inject::detect_utils::truthy)
+                .unwrap_or(false)
+            {
+                let file = m
+                    .get("file")
+                    .map(crate::accept_css::js_string)
+                    .unwrap_or_default();
+                m.insert(
+                    "todo".into(),
+                    Value::String(format!(
+                        "REQUIRED before next poll: carbonize cleanup in {}. See reference/live.md \"Required after accept\".",
+                        file
+                    )),
+                );
+            }
+            let handled = m.get("handled") != Some(&Value::Bool(false));
+            m.insert("handled".into(), Value::Bool(handled));
+            // `{ handled, ...result }`: handled stays first (it already is).
+        }
+        emit_result(io, result);
+        return 0;
+    }
+
+    let (target_file, content, lines) = found.unwrap();
+    let rel_file = jsp::relative("/", &cwd, &target_file);
+    let preview_block = find_marker_block(&id, &lines);
+    let source_shadow = preview_block.is_some() && read_source_shadow_preview_meta(&content, &id);
+    if source_shadow {
+        println(
+            io,
+            &json_compact(&json!({
+                "handled": false,
+                "error": "source_shadow_preview_deprecated",
+                "hint": "Svelte live mode now uses svelte-component injection. Re-wrap the element and regenerate variants.",
+            })),
+        );
+        return 0;
+    }
+    if is_generated_file(&target_file, &cwd) {
+        println(
+            io,
+            &json_compact(&json!({
+                "handled": false,
+                "mode": "fallback",
+                "file": rel_file,
+                "hint": "Session is in a generated file. Persist the accepted variant in source; do not rely on this script.",
+            })),
+        );
+        return 0;
+    }
+
+    if is_discard {
+        let owner = format!("discard:{}", id);
+        let locked = with_source_lock(
+            &target_file,
+            &owner,
+            &cwd,
+            &env,
+            ACCEPT_LOCK_WAIT_MS,
+            || {
+                let lines: Vec<String> = safe_read(&target_file)
+                    .unwrap_or_default()
+                    .split('\n')
+                    .map(String::from)
+                    .collect();
+                handle_discard_unlocked(&id, &lines, &target_file)
+            },
+        );
+        match locked {
+            Err(lock) => {
+                emit_result(
+                    io,
+                    operation_failure(&lock.message, &[("file", Value::String(rel_file))]),
+                );
+            }
+            Ok(result) => {
+                let mut m = Map::new();
+                m.insert("handled".into(), Value::Bool(true));
+                m.insert("file".into(), Value::String(rel_file));
+                m.insert("carbonize".into(), Value::Bool(false));
+                match result {
+                    Ok(()) => {}
+                    Err(err) => {
+                        m.insert("handled".into(), Value::Bool(false));
+                        m.insert("error".into(), Value::String(err));
+                    }
+                }
+                emit_result(io, Value::Object(m));
+            }
+        }
+    } else {
+        // Only --bake asks for the mechanical bake. Every session, the
+        // generate lane's included, keeps the carbonize block by default:
+        // the agent integrates the accepted variant the way live.md says,
+        // which is what makes the result read as designed rather than
+        // appended.
+        let bake = if !no_bake && bake_flag {
+            Some(BakeRequest { cwd: cwd.clone(), session_id: id.clone(), element: journaled_element(&cwd, &env, &id) })
+        } else {
+            None
+        };
+        let owner = format!("accept:{}", id);
+        let locked = with_source_lock(
+            &target_file,
+            &owner,
+            &cwd,
+            &env,
+            ACCEPT_LOCK_WAIT_MS,
+            || {
+                let lines: Vec<String> = safe_read(&target_file)
+                    .unwrap_or_default()
+                    .split('\n')
+                    .map(String::from)
+                    .collect();
+                handle_accept_unlocked(
+                    &id,
+                    &variant_num,
+                    &lines,
+                    &target_file,
+                    param_values.as_ref(),
+                    bake.as_ref(),
+                )
+            },
+        );
+        match locked {
+            Err(lock) => {
+                emit_result(
+                    io,
+                    operation_failure(&lock.message, &[("file", Value::String(rel_file))]),
+                );
+            }
+            Ok(Err(err)) => {
+                // JS: `{ handled: true, file, ...result }` with result.handled false.
+                let mut m = Map::new();
+                m.insert("handled".into(), Value::Bool(false));
+                m.insert("file".into(), Value::String(rel_file));
+                m.insert("error".into(), Value::String(err));
+                emit_result(io, Value::Object(m));
+            }
+            Ok(Ok(outcome)) => {
+                let mut m = Map::new();
+                m.insert("handled".into(), Value::Bool(true));
+                m.insert("file".into(), Value::String(rel_file.clone()));
+                let accepted_original_text = match outcome {
+                    AcceptOutcome::Carbonized { carbonize, original, bake_skipped } => {
+                        m.insert("carbonize".into(), Value::Bool(carbonize));
+                        if carbonize {
+                            m.insert(
+                                "todo".into(),
+                                Value::String(format!(
+                                    "REQUIRED before next poll: carbonize cleanup in {}. See reference/live.md \"Required after accept\".",
+                                    rel_file
+                                )),
+                            );
+                        }
+                        if let Some(why) = bake_skipped {
+                            m.insert("bakeSkipped".into(), Value::String(why));
+                        }
+                        original
+                    }
+                    AcceptOutcome::Baked { original, css_file, rules, anchor } => {
+                        m.insert("carbonize".into(), Value::Bool(false));
+                        m.insert("baked".into(), Value::Bool(true));
+                        m.insert("variant".into(), Value::String(variant_num.clone()));
+                        m.insert(
+                            "css".into(),
+                            json!({
+                                "file": css_file.as_deref().map(|f| jsp::to_posix(&jsp::relative("/", &cwd, f))),
+                                "rules": rules,
+                                "anchor": anchor,
+                            }),
+                        );
+                        let (clean, findings, _) = crate::accept_verify::verify_accepted_file(&target_file);
+                        m.insert("verify".into(), json!({ "clean": clean, "findings": findings }));
+                        original
+                    }
+                };
+                scrub_manual_edits_against_original_block(
+                    &accepted_original_text,
+                    &cwd,
+                    &env,
+                    page_url.as_deref(),
+                );
+                emit_result(io, Value::Object(m));
+            }
+        }
+    }
+    0
+}
+
+// ---------------------------------------------------------------------------
+// Buffer scrub
+// ---------------------------------------------------------------------------
+
+static TAG_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"<[^>]*>").unwrap());
+static JSX_COMMENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?s)\{/\*.*?\*/\}").unwrap());
+static HTML_COMMENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?s)<!--.*?-->").unwrap());
+static WS_RUN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(&format!("{}+", WS)).unwrap());
+
+fn normalize_manual_edit_text(text: &str) -> String {
+    trim(&WS_RUN_RE.replace_all(text, " ")).to_string()
+}
+
+fn manual_edit_text_segments(source: &str) -> Vec<String> {
+    let a = TAG_RE.replace_all(source, "\n");
+    let b = JSX_COMMENT_RE.replace_all(&a, "\n");
+    let c = HTML_COMMENT_RE.replace_all(&b, "\n");
+    c.split('\n')
+        .map(normalize_manual_edit_text)
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+fn original_block_has_exact_manual_text(block: &str, text: &str) -> bool {
+    let needle = normalize_manual_edit_text(text);
+    if needle.is_empty() {
+        return false;
+    }
+    manual_edit_text_segments(block)
+        .iter()
+        .any(|s| *s == needle)
+}
+
+fn manual_edit_op_appears_in_block(op: &Value, block: &str) -> bool {
+    [op.get("newText"), op.get("originalText")]
+        .iter()
+        .filter_map(|v| v.and_then(|x| x.as_str()))
+        .filter(|s| !s.is_empty())
+        .any(|s| original_block_has_exact_manual_text(block, s))
+}
+
+/// JS: scrubManualEditsAgainstOriginalBlock(originalBlockText, cwd, pageUrl)
+fn scrub_manual_edits_against_original_block(
+    block: &str,
+    cwd: &str,
+    env: &Env,
+    page_url: Option<&str>,
+) {
+    if block.is_empty() {
+        return;
+    }
+    let Some(page_url) = page_url else { return };
+    let mut entries = read_buffer(cwd, env);
+    if entries.is_empty() {
+        return;
+    }
+    let mut mutated = false;
+    for entry in entries.iter_mut() {
+        if entry.get("pageUrl").and_then(|v| v.as_str()) != Some(page_url) {
+            continue;
+        }
+        let ops: Vec<Value> = match entry.get("ops") {
+            Some(Value::Array(a)) => a.clone(),
+            _ => Vec::new(),
+        };
+        let before = ops.len();
+        let kept: Vec<Value> = ops
+            .into_iter()
+            .filter(|op| !manual_edit_op_appears_in_block(op, block))
+            .collect();
+        if kept.len() != before {
+            mutated = true;
+        }
+        if let Value::Object(o) = entry {
+            o.insert("ops".into(), Value::Array(kept));
+        }
+    }
+    let entries: Vec<Value> = entries
+        .into_iter()
+        .filter(|e| matches!(e.get("ops"), Some(Value::Array(a)) if !a.is_empty()))
+        .collect();
+    if mutated {
+        write_buffer(cwd, env, &entries);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Discard / Accept
+// ---------------------------------------------------------------------------
+
+struct MarkerBlock {
+    start: usize,
+    end: usize,
+}
+
+/// JS: findMarkerBlock(id, lines)
+fn find_marker_block(id: &str, lines: &[String]) -> Option<MarkerBlock> {
+    let start_pattern = format!("impeccable-variants-start {}", id);
+    let end_pattern = format!("impeccable-variants-end {}", id);
+    let mut start: Option<usize> = None;
+    let mut end: Option<usize> = None;
+    for (i, line) in lines.iter().enumerate() {
+        if start.is_none() && line.contains(&start_pattern) {
+            start = Some(i);
+        }
+        if line.contains(&end_pattern) {
+            end = Some(i);
+            break;
+        }
+    }
+    match (start, end) {
+        (Some(s), Some(e)) => Some(MarkerBlock { start: s, end: e }),
+        _ => None,
+    }
+}
+
+fn is_jsx_file(path: &str) -> bool {
+    let ext = jsp::extname(path).to_lowercase();
+    ext == ".jsx" || ext == ".tsx"
+}
+
+fn comment_syntax_for(path: &str) -> (&'static str, &'static str) {
+    if is_jsx_file(path) {
+        ("{/*", "*/}")
+    } else {
+        ("<!--", "-->")
+    }
+}
+
+/// JS: handleDiscardUnlocked → Ok(()) or Err(error)
+fn handle_discard_unlocked(id: &str, lines: &[String], target_file: &str) -> Result<(), String> {
+    let Some(block) = find_marker_block(id, lines) else {
+        return Err("Markers not found".to_string());
+    };
+    let is_jsx = is_jsx_file(target_file);
+    let (rs, re) = expand_replace_range(&block, lines, is_jsx, id);
+    let original = original_or_refuse(id, lines, &block, rs, re)
+        .ok_or_else(|| format!("{} Source not modified; replace the wrapper with the original element by hand.", ORIGINAL_MISSING))?;
+    let indent = leading_ws(&lines[rs]);
+    let restored = deindent_content(&original, &indent);
+    let mut new_lines: Vec<String> = Vec::new();
+    new_lines.extend_from_slice(&lines[..rs]);
+    new_lines.extend(restored);
+    new_lines.extend_from_slice(&lines[(re + 1).min(lines.len())..]);
+    let _ = std::fs::write(target_file, new_lines.join("\n"));
+    Ok(())
+}
+
+/// The opening `<style>` tag of a carbonize block in `target_file` and its
+/// matching close: the file type's own `styleTag` with the session id filled
+/// in, and the close that pairs with it (`</component>` on `.vue`).
+///
+/// On `.astro` that tag carries `is:inline`, exactly like the variants block
+/// it replaces. A bare `<style>` there is a different thing: Astro compiles
+/// it into a `?astro&type=style&index=N` module, which renumbers the page's
+/// own style modules for as long as the block exists and removes one again
+/// when the cleanup deletes it. Astro's dev server answers the reload of
+/// that vanished index with a 500 (7.3.6 and later) or serves the wrong
+/// block's CSS under the surviving index (7.3.5 and earlier).
+fn carbonize_style_tags(target_file: &str, id: &str) -> (String, &'static str) {
+    let traits = resolve_source_traits(target_file);
+    (traits.style_tag.replace("SESSION_ID", id), traits.style_close)
+}
+
+/// JS: buildCarbonizeReplacement({...})
+///
+/// `style_open` / `style_close` are the tags around the carbonize block's CSS.
+/// They are the same pair the variants block was authored with for this file
+/// type (`carbonize_style_tags`), so accept never changes how the framework's
+/// compiler treats the block.
+fn build_carbonize_replacement(
+    indent: &str,
+    cs: (&str, &str),
+    is_jsx: bool,
+    style_open: &str,
+    style_close: &str,
+    id: &str,
+    variant_num: &str,
+    css: Option<&[String]>,
+    param_values: Option<&Map<String, Value>>,
+    restored: &[String],
+) -> Vec<String> {
+    let mut lines: Vec<String> = Vec::new();
+    let Some(css) = css else {
+        lines.extend_from_slice(restored);
+        return lines;
+    };
+    let (co, cc) = cs;
+    let variant_style_attr = if is_jsx {
+        "style={{ display: 'contents' }}"
+    } else {
+        "style=\"display: contents\""
+    };
+    let push_body = |lines: &mut Vec<String>, body_indent: &str| {
+        let body_restored = reindent_content(restored, indent, &format!("{}  ", body_indent));
+        lines.push(format!(
+            "{}{} impeccable-carbonize-start {} {}",
+            body_indent, co, id, cc
+        ));
+        lines.push(format!(
+            "{}{}{}",
+            body_indent,
+            style_open,
+            if is_jsx { "{`" } else { "" }
+        ));
+        for css_line in css {
+            lines.push(format!("{}{}", body_indent, trim_start(css_line)));
+        }
+        lines.push(format!(
+            "{}{}",
+            body_indent,
+            if is_jsx { "`}</style>" } else { style_close }
+        ));
+        if let Some(pv) = param_values {
+            if !pv.is_empty() {
+                lines.push(format!(
+                    "{}{} impeccable-param-values {}: {} {}",
+                    body_indent,
+                    co,
+                    id,
+                    json_compact(&Value::Object(pv.clone())),
+                    cc
+                ));
+            }
+        }
+        lines.push(format!(
+            "{}{} impeccable-carbonize-end {} {}",
+            body_indent, co, id, cc
+        ));
+        lines.push(format!(
+            "{}<div data-impeccable-variant=\"{}\" {}>",
+            body_indent, variant_num, variant_style_attr
+        ));
+        lines.extend(body_restored);
+        lines.push(format!("{}</div>", body_indent));
+    };
+    if is_jsx {
+        lines.push(format!(
+            "{}<div data-impeccable-carbonize=\"{}\" style={{{{ display: \"contents\" }}}}>",
+            indent, id
+        ));
+        push_body(&mut lines, &format!("{}  ", indent));
+        lines.push(format!("{}</div>", indent));
+    } else {
+        push_body(&mut lines, indent);
+    }
+    lines
+}
+
+/// JS: reindentContent(contentLines, fromIndent, toIndent)
+fn reindent_content(content: &[String], from_indent: &str, to_indent: &str) -> Vec<String> {
+    content
+        .iter()
+        .map(|line| {
+            if trim(line).is_empty() {
+                return String::new();
+            }
+            if let Some(rest) = line.strip_prefix(from_indent) {
+                return format!("{}{}", to_indent, rest);
+            }
+            format!("{}{}", to_indent, trim_start(line))
+        })
+        .collect()
+}
+
+/// JS: handleAcceptUnlocked → the outcome, or Err(error). With `bake`, a
+/// knob-free variant is made permanent here (see `bake.rs`); when that is
+/// not mechanical the carbonize block is left as before, with the reason.
+fn handle_accept_unlocked(
+    id: &str,
+    variant_num: &str,
+    lines: &[String],
+    target_file: &str,
+    param_values: Option<&Map<String, Value>>,
+    bake: Option<&BakeRequest>,
+) -> Result<AcceptOutcome, String> {
+    let Some(block) = find_marker_block(id, lines) else {
+        return Err("Markers not found".to_string());
+    };
+    let cs = comment_syntax_for(target_file);
+    let is_jsx = cs.0 == "{/*";
+    let (rs, re) = expand_replace_range(&block, lines, is_jsx, id);
+    let indent = leading_ws(&lines[rs]);
+    let (style_open, style_close) = carbonize_style_tags(target_file, id);
+    let Some(variant_content) = extract_variant(lines, &block, variant_num) else {
+        return Err(format!("Variant {} not found", variant_num));
+    };
+    // Accept writes the chosen variant, not the original; the original only
+    // tells the manual-edit buffer which edits the accept replaced. A wrapper
+    // without the slot therefore accepts normally (only discard needs it).
+    let original_content = extract_original(lines, &block).unwrap_or_default();
+    let css_content = extract_css(lines, &block, id);
+    let variant_text = variant_content.join("\n");
+    let has_helper_attrs = variant_text.contains("data-impeccable-variant");
+    let needs_carbonize = css_content.is_some() || has_helper_attrs;
+    let restored = deindent_content(&variant_content, &indent);
+    let mut bake_skipped: Option<String> = None;
+    if let Some(req) = bake {
+        let mut unwrapped: Vec<String> = Vec::new();
+        unwrapped.extend_from_slice(&lines[..rs]);
+        unwrapped.extend(restored.iter().cloned());
+        unwrapped.extend_from_slice(&lines[(re + 1).min(lines.len())..]);
+        let source_after = unwrapped.join("\n");
+        let planned = crate::bake::plan(
+            &req.cwd,
+            target_file,
+            is_jsx,
+            variant_num,
+            css_content.as_deref(),
+            &restored,
+            param_values,
+            req.element.as_ref(),
+            &source_after,
+        );
+        match planned {
+            Ok(plan) => match crate::bake::apply(&plan, &req.session_id, variant_num, target_file, &source_after) {
+                Ok(_) => {
+                    return Ok(AcceptOutcome::Baked {
+                        original: original_content.join("\n"),
+                        css_file: plan.css_file.clone(),
+                        rules: plan.rules,
+                        anchor: plan.anchor.clone(),
+                    });
+                }
+                Err(e) => bake_skipped = Some(e),
+            },
+            Err(e) => bake_skipped = Some(e),
+        }
+    }
+    let replacement = build_carbonize_replacement(
+        &indent,
+        cs,
+        is_jsx,
+        &style_open,
+        style_close,
+        id,
+        variant_num,
+        css_content.as_deref(),
+        param_values,
+        &restored,
+    );
+    let mut new_lines: Vec<String> = Vec::new();
+    new_lines.extend_from_slice(&lines[..rs]);
+    new_lines.extend(replacement);
+    new_lines.extend_from_slice(&lines[(re + 1).min(lines.len())..]);
+    let _ = std::fs::write(target_file, new_lines.join("\n"));
+    Ok(AcceptOutcome::Carbonized {
+        carbonize: needs_carbonize,
+        original: original_content.join("\n"),
+        bake_skipped,
+    })
+}
+
+/// JS: readSourceShadowPreviewMeta(content, id) → whether the wrapper carries
+/// `data-impeccable-preview="source-shadow"` (the only bit accept acts on).
+fn read_source_shadow_preview_meta(content: &str, id: &str) -> bool {
+    // /<[^>]+data-impeccable-variants=(["'])ID\1[^>]*>/
+    let chars: Vec<char> = content.chars().collect();
+    let needle: Vec<char> = "data-impeccable-variants=".chars().collect();
+    let mut i = 0;
+    let mut tag: Option<String> = None;
+    while i + needle.len() <= chars.len() {
+        if chars[i..i + needle.len()] == needle[..] {
+            let q_at = i + needle.len();
+            let idc: Vec<char> = id.chars().collect();
+            if let Some(&q) = chars.get(q_at) {
+                if (q == '"' || q == '\'')
+                    && q_at + 1 + idc.len() < chars.len()
+                    && chars[q_at + 1..q_at + 1 + idc.len()] == idc[..]
+                    && chars[q_at + 1 + idc.len()] == q
+                {
+                    // Walk back to the nearest `<` with no `>` between; forward to `>`.
+                    let mut s = i;
+                    let mut ok = false;
+                    while s > 0 {
+                        s -= 1;
+                        if chars[s] == '>' {
+                            break;
+                        }
+                        if chars[s] == '<' {
+                            ok = s + 1 < i;
+                            break;
+                        }
+                    }
+                    if ok {
+                        let mut e = q_at + 2 + idc.len();
+                        while e < chars.len() && chars[e] != '>' {
+                            e += 1;
+                        }
+                        if e < chars.len() {
+                            tag = Some(chars[s..=e].iter().collect());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        i += 1;
+    }
+    let Some(tag) = tag else { return false };
+    let preview = read_html_attr(&tag, "data-impeccable-preview");
+    if preview.as_deref() != Some("source-shadow") {
+        return false;
+    }
+    let source_file = read_html_attr(&tag, "data-impeccable-source-file");
+    let start = read_html_attr(&tag, "data-impeccable-source-start")
+        .map(|s| impeccable_core::js::string_to_number(&s))
+        .unwrap_or(0.0);
+    let end = read_html_attr(&tag, "data-impeccable-source-end")
+        .map(|s| impeccable_core::js::string_to_number(&s))
+        .unwrap_or(0.0);
+    let sf_ok = source_file.map(|s| !s.is_empty()).unwrap_or(false);
+    sf_ok && start.is_finite() && end.is_finite()
+}
+
+/// JS: readHtmlAttr(tag, name): `/\s<name>\s*=\s*(["'])(.*?)\1/`
+fn read_html_attr(tag: &str, name: &str) -> Option<String> {
+    let chars: Vec<char> = tag.chars().collect();
+    let needle: Vec<char> = name.chars().collect();
+    let mut i = 0;
+    while i + 1 + needle.len() <= chars.len() {
+        if impeccable_core::js::is_js_whitespace(chars[i])
+            && chars[i + 1..i + 1 + needle.len()] == needle[..]
+        {
+            let mut j = i + 1 + needle.len();
+            while j < chars.len() && impeccable_core::js::is_js_whitespace(chars[j]) {
+                j += 1;
+            }
+            if j < chars.len() && chars[j] == '=' {
+                j += 1;
+                while j < chars.len() && impeccable_core::js::is_js_whitespace(chars[j]) {
+                    j += 1;
+                }
+                if let Some((content, _)) = crate::accept_css::quoted_lazy(&chars, j, &|_, _| true)
+                {
+                    return Some(decode_html_attr(&content));
+                }
+            }
+        }
+        i += 1;
+    }
+    None
+}
+
+fn decode_html_attr(value: &str) -> String {
+    value
+        .replace("&quot;", "\"")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&amp;", "&")
+}
+
+/// JS: isVariantEndMarkerLine(line, id): `impeccable-variants-end\s+ID(?:\s|--|\*/|$)`
+fn is_variant_end_marker_line(line: &str, id: &str) -> bool {
+    let re = Regex::new(&format!(
+        r"impeccable-variants-end{ws}+{id}(?:{ws}|--|\*/|$)",
+        ws = WS,
+        id = regex::escape(id)
+    ))
+    .unwrap();
+    re.is_match(line)
+}
+
+/// JS: hasVariantWrapperAttr(line, id)
+fn has_variant_wrapper_attr(line: &str, id: &str) -> bool {
+    let e = regex::escape(id);
+    let re = Regex::new(&format!(
+        r#"data-impeccable-variants{ws}*={ws}*(?:"{id}"|'{id}'|\{{["']{id}["']\}})"#,
+        ws = WS,
+        id = e
+    ))
+    .unwrap();
+    re.is_match(line)
+}
+
+static DIV_OPEN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"<div(?-u:\b)").unwrap());
+static DIV_TAG_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(&format!(r"<div(?-u:\b)[^>]*?(/?)>|</div{}*>", WS)).unwrap());
+
+/// JS: expandReplaceRange(block, lines, isJsx) → (start, end)
+fn expand_replace_range(
+    block: &MarkerBlock,
+    lines: &[String],
+    is_jsx: bool,
+    id: &str,
+) -> (usize, usize) {
+    if !is_jsx {
+        return (block.start, block.end);
+    }
+    let mut start = block.start;
+    let mut end = block.end;
+    let mut i = block.start as i64 - 1;
+    while i >= 0 {
+        let iu = i as usize;
+        if is_variant_end_marker_line(&lines[iu], id) {
+            break;
+        }
+        if has_variant_wrapper_attr(&lines[iu], id) {
+            let mut opener = iu;
+            while opener > 0
+                && !DIV_OPEN_RE.is_match(&lines[opener])
+                && !is_variant_end_marker_line(&lines[opener], id)
+            {
+                opener -= 1;
+            }
+            if DIV_OPEN_RE.is_match(&lines[opener]) {
+                start = opener;
+            }
+            break;
+        }
+        i -= 1;
+    }
+    let joined = lines[start..].join("\n");
+    let mut depth: i64 = 0;
+    for m in DIV_TAG_RE.captures_iter(&joined) {
+        let whole = m.get(0).unwrap();
+        let is_close = whole.as_str().starts_with("</");
+        let is_self_close = !is_close && m.get(1).map(|g| g.as_str() == "/").unwrap_or(false);
+        if is_close {
+            depth -= 1;
+        } else if !is_self_close {
+            depth += 1;
+        }
+        if depth <= 0 {
+            let lines_before = joined[..whole.end()].matches('\n').count();
+            let candidate_end = start + lines_before;
+            if candidate_end >= end {
+                end = candidate_end;
+                break;
+            }
+        }
+    }
+    (start, end)
+}
+
+/// The variants block's preview style element: `<style>`, or
+/// `<component is="style">` on `.vue` (`SourceTraits::style_tag`). Every
+/// opener also requires `data-impeccable-css` inside the tag: `<component>`
+/// is also Vue's dynamic component, so the name alone would match the user's
+/// own markup.
+const STYLE_EL: &str = "(?:style|component)";
+static STYLE_FULL_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(r"(?s)<{STYLE_EL}(?-u:\b)[^>]*data-impeccable-css[^>]*>.*?</{STYLE_EL}{WS}*>")).unwrap()
+});
+static STYLE_SELF_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(r"<{STYLE_EL}(?-u:\b)[^>]*data-impeccable-css[^>]*/{WS}*>")).unwrap()
+});
+// No closing `>`: the opening tag may continue on the next line.
+static STYLE_OPEN_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(&format!(r"<{STYLE_EL}(?-u:\b)[^>]*data-impeccable-css")).unwrap());
+static STYLE_CLOSE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(&format!(r"</{STYLE_EL}{WS}*>")).unwrap());
+static STYLE_SAME_LINE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(r"(?s)<{STYLE_EL}(?-u:\b)[^>]*data-impeccable-css[^>]*>(.*?)</{STYLE_EL}{WS}*>")).unwrap()
+});
+
+/// JS: stripStyleAndJoin(lines, block)
+fn strip_style_and_join(lines: &[String], block: &MarkerBlock) -> String {
+    let mut out: Vec<String> = Vec::new();
+    let mut in_style = false;
+    for line in &lines[block.start..=block.end.min(lines.len() - 1)] {
+        if !in_style {
+            let a = STYLE_FULL_RE.replace_all(line, "");
+            let mut l = STYLE_SELF_RE.replace_all(&a, "").into_owned();
+            if let Some(m) = STYLE_OPEN_RE.find(&l) {
+                l = l[..m.start()].to_string();
+                in_style = true;
+            }
+            out.push(l);
+        } else if let Some(m) = STYLE_CLOSE_RE.find(line) {
+            in_style = false;
+            let rest = &line[m.start()..];
+            out.push(STYLE_CLOSE_RE.replacen(rest, 1, "").into_owned());
+        }
+    }
+    out.join("\n")
+}
+
+// The opener must not end in `/`: a self-closing JSX `<style ... />` has no
+// text to blank, and pairing it with a later `</style>` would hide a slot.
+static PLAIN_STYLE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(&format!(r"(?s)<style(?:(?-u:\b)[^>]*[^/>])?>.*?</style{WS}*>")).unwrap());
+
+/// JS: extractInnerByAttr(text, attrMatch) with `attrMatch` a literal.
+///
+/// The user's own `<style>` elements are blanked (same byte length) before
+/// tags are counted, so CSS text such as `content: "</div>"` cannot close a
+/// slot early; the returned slice still comes from `text`.
+fn extract_inner_by_attr(text: &str, attr: &str) -> Option<String> {
+    let mut masked = text.as_bytes().to_vec();
+    for m in PLAIN_STYLE_RE.find_iter(text) {
+        masked[m.start()..m.end()].fill(b' ');
+    }
+    let masked = String::from_utf8(masked).ok()?;
+    // /<([A-Za-z][A-Za-z0-9]*)\b[^>]*ATTR[^>]*>/
+    let opener_re = Regex::new(&format!(
+        r"<([A-Za-z][A-Za-z0-9]*)(?-u:\b)[^>]*{}[^>]*>",
+        regex::escape(attr)
+    ))
+    .ok()?;
+    let m = opener_re.captures(&masked)?;
+    let tag_name = m[1].to_string();
+    let whole = m.get(0).unwrap();
+    let inner_start = whole.end();
+    let tag_re = Regex::new(&format!(
+        r"<(?:/)?{}(?-u:\b)[^>]*>",
+        regex::escape(&tag_name)
+    ))
+    .ok()?;
+    let self_close_re = Regex::new(&format!(r"/{}*>$", WS)).unwrap();
+    let mut depth = 1i64;
+    for t in tag_re.find_iter(&masked[inner_start..]) {
+        let s = t.as_str();
+        let is_close = s.starts_with("</");
+        let is_self_close = !is_close && self_close_re.is_match(s);
+        if is_close {
+            depth -= 1;
+            if depth == 0 {
+                return Some(text[inner_start..inner_start + t.start()].to_string());
+            }
+        } else if !is_self_close {
+            depth += 1;
+        }
+    }
+    None
+}
+
+/// Drop leading and trailing blank lines while keeping a single empty line
+/// when the inner text is only whitespace.
+fn trim_surrounding_blank_lines(lines: Vec<String>) -> Vec<String> {
+    let mut start = 0usize;
+    let mut end = lines.len();
+    while end - start > 1 && trim(&lines[start]).is_empty() {
+        start += 1;
+    }
+    while end - start > 1 && trim(&lines[end - 1]).is_empty() {
+        end -= 1;
+    }
+    lines[start..end].to_vec()
+}
+
+/// JS: extractOriginal(lines, block), with the missing slot kept apart from
+/// an empty one: `None` when the block has no `data-impeccable-variant="original"`
+/// element at all.
+fn extract_original(lines: &[String], block: &MarkerBlock) -> Option<Vec<String>> {
+    let text = strip_style_and_join(lines, block);
+    extract_inner_by_attr(&text, "data-impeccable-variant=\"original\"")
+        .map(|inner| trim_surrounding_blank_lines(inner.split('\n').map(String::from).collect()))
+}
+
+const ORIGINAL_MISSING: &str = "Original not found: the variants wrapper has no data-impeccable-variant=\"original\" slot, so the element it replaced cannot be restored from it.";
+
+static INSERT_MODE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(&format!(r#"data-impeccable-mode{ws}*={ws}*(?:"insert"|'insert')"#, ws = WS)).unwrap()
+});
+
+/// The original slot's content for discard, or `None` (refuse, write nothing)
+/// when a wrapper that replaced an element has none (#875): restoring "nothing" there
+/// deletes the element while reporting success. An insert wrapper
+/// (`data-impeccable-mode="insert"`) replaced nothing and legitimately has no
+/// slot, so it restores to nothing.
+fn original_or_refuse(
+    id: &str,
+    lines: &[String],
+    block: &MarkerBlock,
+    rs: usize,
+    re: usize,
+) -> Option<Vec<String>> {
+    if let Some(original) = extract_original(lines, block) {
+        return Some(original);
+    }
+    // Only this session's own wrapper tag counts, read whole even when a
+    // formatter split its attributes over several lines: a nested insert, or
+    // CSS that names the attribute, must not exempt a replace wrapper.
+    let end = re.min(lines.len().saturating_sub(1));
+    let text = lines[rs..=end].join("\n");
+    wrapper_open_tag(&text, id)
+        .is_some_and(|tag| INSERT_MODE_RE.is_match(tag))
+        .then(Vec::new)
+}
+
+/// The whole opening tag that carries `data-impeccable-variants="<id>"`,
+/// from its `<` to its `>`, across line breaks.
+fn wrapper_open_tag<'a>(text: &'a str, id: &str) -> Option<&'a str> {
+    let e = regex::escape(id);
+    let re = Regex::new(&format!(
+        r#"data-impeccable-variants{ws}*={ws}*(?:"{id}"|'{id}'|\{{["']{id}["']\}})"#,
+        ws = WS,
+        id = e
+    ))
+    .ok()?;
+    let m = re.find(text)?;
+    let start = text[..m.start()].rfind('<')?;
+    let end = m.end() + text[m.end()..].find('>')?;
+    Some(&text[start..=end])
+}
+
+/// JS: extractVariant(lines, block, variantNum)
+fn extract_variant(
+    lines: &[String],
+    block: &MarkerBlock,
+    variant_num: &str,
+) -> Option<Vec<String>> {
+    let text = strip_style_and_join(lines, block);
+    let inner = extract_inner_by_attr(
+        &text,
+        &format!("data-impeccable-variant=\"{}\"", variant_num),
+    )?;
+    let result = trim_surrounding_blank_lines(inner.split('\n').map(String::from).collect());
+    if result.is_empty() {
+        None
+    } else {
+        Some(result)
+    }
+}
+
+/// JS: extractCss(lines, block, id)
+fn extract_css(lines: &[String], block: &MarkerBlock, id: &str) -> Option<Vec<String>> {
+    let style_attr = format!("data-impeccable-css=\"{}\"", id);
+    let mut in_style = false;
+    let mut content: Vec<String> = Vec::new();
+    for line in &lines[block.start..=block.end.min(lines.len() - 1)] {
+        if !in_style && line.contains(&style_attr) {
+            if STYLE_SELF_RE.is_match(line) {
+                return None;
+            }
+            if let Some(c) = STYLE_SAME_LINE_RE.captures(line) {
+                let inner = strip_jsx_template_wrap(&c[1]);
+                return if inner.is_empty() {
+                    None
+                } else {
+                    Some(inner.split('\n').map(String::from).collect())
+                };
+            }
+            in_style = true;
+            continue;
+        }
+        if in_style {
+            if STYLE_CLOSE_RE.is_match(line) {
+                break;
+            }
+            content.push(line.clone());
+        }
+    }
+    if content.is_empty() {
+        return None;
+    }
+    strip_jsx_template_lines(&content)
+}
+
+/// JS: stripJsxTemplateLines(content)
+fn strip_jsx_template_lines(content: &[String]) -> Option<Vec<String>> {
+    let mut out: Vec<String> = content.to_vec();
+    while out.first().map(|l| trim(l).is_empty()).unwrap_or(false) {
+        out.remove(0);
+    }
+    while out.last().map(|l| trim(l).is_empty()).unwrap_or(false) {
+        out.pop();
+    }
+    if out.is_empty() {
+        return None;
+    }
+    let first_trim = trim_start(&out[0]).to_string();
+    if first_trim == "{`" {
+        out.remove(0);
+    } else if first_trim.starts_with("{`") {
+        let idx = out[0].find("{`").unwrap();
+        out[0] = format!("{}{}", &out[0][..idx], &out[0][idx + 2..]);
+        if trim(&out[0]).is_empty() {
+            out.remove(0);
+        }
+    }
+    if out.is_empty() {
+        return None;
+    }
+    let last_idx = out.len() - 1;
+    let last_trim = out[last_idx]
+        .trim_end_matches(impeccable_core::js::is_js_whitespace)
+        .to_string();
+    if last_trim == "`}" {
+        out.pop();
+    } else if last_trim.ends_with("`}") {
+        let text = out[last_idx].clone();
+        let idx = text.rfind("`}").unwrap();
+        out[last_idx] = format!("{}{}", &text[..idx], &text[idx + 2..]);
+        if trim(&out[last_idx]).is_empty() {
+            out.pop();
+        }
+    }
+    if out.is_empty() {
+        None
+    } else {
+        Some(out)
+    }
+}
+
+fn strip_jsx_template_wrap(text: &str) -> String {
+    let lines: Vec<String> = text.split('\n').map(String::from).collect();
+    match strip_jsx_template_lines(&lines) {
+        Some(v) => v.join("\n"),
+        None => String::new(),
+    }
+}
+
+/// JS: deindentContent(contentLines, baseIndent)
+fn deindent_content(content: &[String], base_indent: &str) -> Vec<String> {
+    let min_indent = min_leading_spaces(content);
+    content
+        .iter()
+        .map(|line| {
+            if trim(line).is_empty() {
+                String::new()
+            } else {
+                format!("{}{}", base_indent, slice_chars(line, min_indent))
+            }
+        })
+        .collect()
+}
+
+/// JS: findSessionFile(id, cwd) → (file, content, lines)
+fn find_session_file(id: &str, cwd: &str) -> Option<(String, String, Vec<String>)> {
+    let skip: [&str; 5] = ["node_modules", ".git", ".impeccable", "dist", "build"];
+    let extensions = resolve_live_template_extensions(cwd);
+    let file = find_source_file(
+        &format!("impeccable-variants-start {}", id),
+        cwd,
+        &extensions,
+        &skip,
+        &|_| true,
+    )?;
+    let content = safe_read(&file)?;
+    let lines: Vec<String> = content.split('\n').map(String::from).collect();
+    Some((file, content, lines))
+}
+
+#[cfg(test)]
+mod discard_tests {
+    use super::*;
+
+    #[test]
+    fn discard_restores_the_original_without_blank_lines_around_it() {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let dir = std::env::temp_dir().join(format!(
+            "impeccable-discard-{}-{nanos}",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("Login.tsx");
+        let src = [
+            "      </div>",
+            "      <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"3\" style={{ display: \"contents\" }}>",
+            "        {/* impeccable-variants-start ab12cd34 */}",
+            "        <style data-impeccable-css=\"ab12cd34\">{`",
+            "          @scope ([data-impeccable-variant=\"1\"]) { :scope > .x { color: red; } }",
+            "        `}</style>",
+            "        {/* Original */}",
+            "        <div data-impeccable-variant=\"original\">",
+            "          <Bar title=\"Log in\" />",
+            "        </div>",
+            "        {/* Variants: insert below this line */}",
+            "        <div data-impeccable-variant=\"1\">",
+            "          <Bar title=\"Log in\" />",
+            "        </div>",
+            "        {/* impeccable-variants-end ab12cd34 */}",
+            "      </div>",
+            "    </AuthPage>",
+        ];
+        let lines: Vec<String> = src.iter().map(|s| s.to_string()).collect();
+        let path = file.to_string_lossy().into_owned();
+        std::fs::write(&file, lines.join("\n")).unwrap();
+        handle_discard_unlocked("ab12cd34", &lines, &path).unwrap();
+        let out = std::fs::read_to_string(&file).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            out,
+            "      </div>\n      <Bar title=\"Log in\" />\n    </AuthPage>"
+        );
+    }
+}
+
+#[cfg(test)]
+mod original_slot_tests {
+    use super::*;
+
+    fn scratch(name: &str, src: &[&str]) -> (std::path::PathBuf, String, Vec<String>) {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let dir = std::env::temp_dir().join(format!(
+            "impeccable-original-slot-{}-{nanos}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join(name);
+        let lines: Vec<String> = src.iter().map(|s| s.to_string()).collect();
+        std::fs::write(&file, lines.join("\n")).unwrap();
+        let path = file.to_string_lossy().into_owned();
+        (dir, path, lines)
+    }
+
+    // The hand-written fallback scaffold live.md used to show: no original slot.
+    const NO_ORIGINAL: &[&str] = &[
+        "<main>",
+        "  <!-- impeccable-variants-start ab12cd34 -->",
+        "  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"1\" style=\"display: contents\">",
+        "    <div data-impeccable-variant=\"1\">",
+        "      <h1 class=\"hero\">Bolder</h1>",
+        "    </div>",
+        "  </div>",
+        "  <!-- impeccable-variants-end ab12cd34 -->",
+        "</main>",
+    ];
+
+    #[test]
+    fn discard_without_an_original_slot_refuses_and_writes_nothing() {
+        let (dir, path, lines) = scratch("index.html", NO_ORIGINAL);
+        let err = handle_discard_unlocked("ab12cd34", &lines, &path).unwrap_err();
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(err.starts_with("Original not found"), "{err}");
+        assert!(err.contains("Source not modified"), "{err}");
+        assert_eq!(out, NO_ORIGINAL.join("\n"), "the wrapper stays exactly as it was");
+    }
+
+    #[test]
+    fn accept_without_an_original_slot_still_accepts_the_variant() {
+        let (dir, path, lines) = scratch("index.html", NO_ORIGINAL);
+        let result = handle_accept_unlocked("ab12cd34", "1", &lines, &path, None, None);
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(out.contains("<h1 class=\"hero\">Bolder</h1>"), "{out}");
+        assert!(!out.contains("impeccable-variants-start"), "{out}");
+    }
+
+    #[test]
+    fn an_empty_original_slot_still_restores_to_empty() {
+        let src = [
+            "<main>",
+            "  <!-- impeccable-variants-start ab12cd34 -->",
+            "  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"1\" style=\"display: contents\">",
+            "    <div data-impeccable-variant=\"original\"></div>",
+            "    <div data-impeccable-variant=\"1\"><p>New</p></div>",
+            "  </div>",
+            "  <!-- impeccable-variants-end ab12cd34 -->",
+            "</main>",
+        ];
+        let (dir, path, lines) = scratch("index.html", &src);
+        handle_discard_unlocked("ab12cd34", &lines, &path).unwrap();
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(!out.contains("impeccable-variants"), "{out}");
+    }
+
+    #[test]
+    fn only_the_session_wrapper_tag_can_mark_an_insert() {
+        // A nested insert session and CSS naming the attribute both sit inside
+        // this replace wrapper; neither may exempt it from the refusal.
+        let src = [
+            "<main>",
+            "  <!-- impeccable-variants-start ab12cd34 -->",
+            "  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"1\" style=\"display: contents\">",
+            "    <style data-impeccable-css=\"ab12cd34\">[data-impeccable-mode=\"insert\"] { outline: 0; }</style>",
+            "    <div data-impeccable-variant=\"1\">",
+            "      <div data-impeccable-variants=\"ef56ab78\" data-impeccable-mode=\"insert\" data-impeccable-variant-count=\"1\"></div>",
+            "    </div>",
+            "  </div>",
+            "  <!-- impeccable-variants-end ab12cd34 -->",
+            "</main>",
+        ];
+        let (dir, path, lines) = scratch("index.html", &src);
+        let err = handle_discard_unlocked("ab12cd34", &lines, &path).unwrap_err();
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(err.starts_with("Original not found"), "{err}");
+        assert_eq!(out, src.join("\n"));
+    }
+
+    #[test]
+    fn an_insert_wrapper_split_over_lines_still_discards() {
+        let src = [
+            "<main>",
+            "  <!-- impeccable-variants-start ab12cd34 -->",
+            "  <div",
+            "    data-impeccable-variants=\"ab12cd34\"",
+            "    data-impeccable-mode=\"insert\"",
+            "    data-impeccable-variant-count=\"1\"",
+            "    style=\"display: contents\"",
+            "  >",
+            "    <div data-impeccable-variant=\"1\"><p>New</p></div>",
+            "  </div>",
+            "  <!-- impeccable-variants-end ab12cd34 -->",
+            "</main>",
+        ];
+        let (dir, path, lines) = scratch("index.html", &src);
+        handle_discard_unlocked("ab12cd34", &lines, &path).unwrap();
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(out, "<main>\n</main>");
+    }
+
+    #[test]
+    fn an_insert_wrapper_has_no_original_and_discards_to_nothing() {
+        let src = [
+            "<main>",
+            "  <!-- impeccable-variants-start ab12cd34 -->",
+            "  <div data-impeccable-variants=\"ab12cd34\" data-impeccable-mode=\"insert\" data-impeccable-variant-count=\"1\" style=\"display: contents\">",
+            "    <div data-impeccable-variant=\"1\"><p>New</p></div>",
+            "  </div>",
+            "  <!-- impeccable-variants-end ab12cd34 -->",
+            "</main>",
+        ];
+        let (dir, path, lines) = scratch("index.html", &src);
+        handle_discard_unlocked("ab12cd34", &lines, &path).unwrap();
+        let out = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(out, "<main>\n</main>");
+    }
+}
+
+#[cfg(test)]
+mod carbonize_tests {
+    use super::*;
+
+    fn wrapped(style_open: &str) -> Vec<String> {
+        let style_close = if style_open.trim_start().starts_with("<component") {
+            "      </component>"
+        } else {
+            "      </style>"
+        };
+        [
+            "  <main>",
+            "    <!-- impeccable-variants-start ab12cd34 -->",
+            "    <div data-impeccable-variants=\"ab12cd34\" data-impeccable-variant-count=\"2\" style=\"display: contents\">",
+            "      <!-- Original -->",
+            "      <div data-impeccable-variant=\"original\">",
+            "        <h1 class=\"hero-title\">Title</h1>",
+            "      </div>",
+            "      <!-- Variants: insert below this line -->",
+            style_open,
+            "        [data-impeccable-variant=\"1\"] > h1 { font-weight: 300; }",
+            "        [data-impeccable-variant=\"2\"] > h1 { font-weight: 900; }",
+            style_close,
+            "      <div data-impeccable-variant=\"1\">",
+            "        <h1 class=\"hero-title\">Title</h1>",
+            "      </div>",
+            "      <div data-impeccable-variant=\"2\" style=\"display: none\">",
+            "        <h1 class=\"hero-title\">Title</h1>",
+            "      </div>",
+            "    </div>",
+            "    <!-- impeccable-variants-end ab12cd34 -->",
+            "  </main>",
+            "",
+            "<style>",
+            "  .hero-title { font-size: 2rem; }",
+            "</style>",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
+    }
+
+    fn carbonize(file_name: &str, style_open: &str) -> String {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let dir = std::env::temp_dir().join(format!("impeccable-carbonize-{}-{nanos}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join(file_name);
+        let lines = wrapped(style_open);
+        std::fs::write(&file, lines.join("\n")).unwrap();
+        let outcome = handle_accept_unlocked("ab12cd34", "2", &lines, &file.to_string_lossy(), None, None);
+        let out = std::fs::read_to_string(&file).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert!(
+            matches!(outcome, Ok(AcceptOutcome::Carbonized { carbonize: true, .. })),
+            "accept did not carbonize: {out}"
+        );
+        out
+    }
+
+    /// Every `<style ...>` opening tag in `source`, in order.
+    fn style_tags(source: &str) -> Vec<&str> {
+        source
+            .lines()
+            .map(str::trim)
+            .filter(|l| l.starts_with("<style"))
+            .collect()
+    }
+
+    /// Astro compiles a bare `<style>` into a style module and numbers the
+    /// modules in source order. The variants block is `is:inline`, so the
+    /// carbonize block has to be too: otherwise accept puts a compiled block
+    /// in front of the page's own and the cleanup takes it away again, and
+    /// the dev server fails the reload of the index that vanished.
+    #[test]
+    fn an_astro_carbonize_block_keeps_the_style_tag_inline() {
+        let out = carbonize("index.astro", "      <style is:inline data-impeccable-css=\"ab12cd34\">");
+        assert_eq!(
+            style_tags(&out),
+            vec!["<style is:inline data-impeccable-css=\"ab12cd34\">", "<style>"],
+            "{out}"
+        );
+        assert!(out.contains("<!-- impeccable-carbonize-start ab12cd34 -->"), "{out}");
+    }
+
+    /// The tag comes from the file type, not from what the agent wrote: an
+    /// Astro variants block authored without `is:inline` still carbonizes
+    /// into the inline form.
+    #[test]
+    fn an_astro_carbonize_block_is_inline_whatever_the_variants_tag_was() {
+        let out = carbonize("index.astro", "      <style data-impeccable-css=\"ab12cd34\">");
+        assert_eq!(
+            style_tags(&out),
+            vec!["<style is:inline data-impeccable-css=\"ab12cd34\">", "<style>"],
+            "{out}"
+        );
+    }
+
+    #[test]
+    fn an_html_carbonize_block_keeps_the_plain_style_tag() {
+        let out = carbonize("index.html", "      <style data-impeccable-css=\"ab12cd34\">");
+        assert_eq!(
+            style_tags(&out),
+            vec!["<style data-impeccable-css=\"ab12cd34\">", "<style>"],
+            "{out}"
+        );
+    }
+
+    /// Vue drops a `<style>` element inside `<template>`, so a `.vue`
+    /// carbonize block is `<component is="style">`, closed by `</component>`.
+    #[test]
+    fn a_vue_carbonize_block_uses_the_component_tag() {
+        let out = carbonize(
+            "Hero.vue",
+            "      <component is=\"style\" data-impeccable-css=\"ab12cd34\">",
+        );
+        let lines: Vec<&str> = out.lines().map(str::trim).collect();
+        let open = lines
+            .iter()
+            .position(|l| *l == "<component is=\"style\" data-impeccable-css=\"ab12cd34\">")
+            .unwrap_or_else(|| panic!("no component open tag: {out}"));
+        assert_eq!(lines[open + 1], "[data-impeccable-variant=\"1\"] > h1 { font-weight: 300; }", "{out}");
+        assert_eq!(lines[open + 3], "</component>", "{out}");
+        assert_eq!(style_tags(&out), vec!["<style>"], "{out}");
+        assert_eq!(out.matches("</style>").count(), 1, "{out}");
+    }
+
+    #[test]
+    fn css_is_extracted_from_a_component_style_block_up_to_its_close() {
+        let lines: Vec<String> = [
+            "<div data-impeccable-variants=\"ab12cd34\">",
+            "  <component is=\"style\" data-impeccable-css=\"ab12cd34\">",
+            "    .a { color: red; }",
+            "  </component>",
+            "  <p>after</p>",
+            "</div>",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let block = MarkerBlock { start: 0, end: lines.len() - 1 };
+        assert_eq!(
+            extract_css(&lines, &block, "ab12cd34"),
+            Some(vec!["    .a { color: red; }".to_string()])
+        );
+        let one_line = vec![
+            "<component is=\"style\" data-impeccable-css=\"ab12cd34\">.a { color: red; }</component>".to_string(),
+        ];
+        let block = MarkerBlock { start: 0, end: 0 };
+        assert_eq!(
+            extract_css(&one_line, &block, "ab12cd34"),
+            Some(vec![".a { color: red; }".to_string()])
+        );
+    }
+
+    /// A user's own `<style>` inside a slot is kept, and its CSS text is not
+    /// read as markup when the slot's closing tag is found.
+    #[test]
+    fn a_users_own_style_in_a_slot_is_kept_and_not_counted_as_tags() {
+        let lines: Vec<String> = [
+            "<div data-impeccable-variants=\"ab12cd34\">",
+            "  <div data-impeccable-variant=\"original\">",
+            "    <style>.x::after { content: \"</div>\"; }</style>",
+            "    <p>kept</p>",
+            "  </div>",
+            "</div>",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let block = MarkerBlock { start: 0, end: lines.len() - 1 };
+        assert_eq!(
+            extract_original(&lines, &block).expect("original slot"),
+            vec![
+                "    <style>.x::after { content: \"</div>\"; }</style>".to_string(),
+                "    <p>kept</p>".to_string(),
+            ]
+        );
+    }
+
+    /// A self-closing JSX `<style />` has no text to blank and must not pair
+    /// with the next slot's `</style>`.
+    #[test]
+    fn a_self_closing_style_does_not_mask_the_next_slot() {
+        let lines: Vec<String> = [
+            "<div data-impeccable-variants=\"ab12cd34\">",
+            "  <div data-impeccable-variant=\"original\">",
+            "    <style dangerouslySetInnerHTML={{ __html: css }} />",
+            "  </div>",
+            "  <div data-impeccable-variant=\"1\">",
+            "    <style>{`.x { color: red; }`}</style>",
+            "  </div>",
+            "</div>",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let block = MarkerBlock { start: 0, end: lines.len() - 1 };
+        assert_eq!(
+            extract_original(&lines, &block).expect("original slot"),
+            vec!["    <style dangerouslySetInnerHTML={{ __html: css }} />".to_string()]
+        );
+        assert_eq!(
+            extract_variant(&lines, &block, "1").expect("variant 1"),
+            vec!["    <style>{`.x { color: red; }`}</style>".to_string()]
+        );
+    }
+
+    /// `<component>` is also Vue's dynamic component. Only the preview element
+    /// (the one carrying `data-impeccable-css`) is plumbing; the user's own
+    /// `<component :is>` lines, self-closing or paired, must survive.
+    #[test]
+    fn vue_dynamic_components_are_not_mistaken_for_the_preview_style() {
+        let lines: Vec<String> = [
+            "<div data-impeccable-variants=\"ab12cd34\">",
+            "  <div data-impeccable-variant=\"original\">",
+            "    <component :is=\"Icon\" class=\"x\" />",
+            "  </div>",
+            "  <component is=\"style\" data-impeccable-css=\"ab12cd34\">",
+            "    .secret { color: red; }",
+            "  </component>",
+            "  <div data-impeccable-variant=\"1\">",
+            "    <component :is=\"Icon\" class=\"x\" />",
+            "    <component :is=\"Card\">",
+            "      <p>inside</p>",
+            "    </component>",
+            "    <p>after</p>",
+            "  </div>",
+            "</div>",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let block = MarkerBlock { start: 0, end: lines.len() - 1 };
+
+        let stripped = strip_style_and_join(&lines, &block);
+        assert!(!stripped.contains(".secret"), "{stripped}");
+        assert!(!stripped.contains("data-impeccable-css"), "{stripped}");
+        assert_eq!(stripped.matches("<component :is=\"Icon\" class=\"x\" />").count(), 2, "{stripped}");
+
+        let original = extract_original(&lines, &block).expect("original slot");
+        assert_eq!(original, vec!["    <component :is=\"Icon\" class=\"x\" />".to_string()]);
+
+        let variant = extract_variant(&lines, &block, "1").expect("variant 1");
+        assert_eq!(
+            variant,
+            vec![
+                "    <component :is=\"Icon\" class=\"x\" />".to_string(),
+                "    <component :is=\"Card\">".to_string(),
+                "      <p>inside</p>".to_string(),
+                "    </component>".to_string(),
+                "    <p>after</p>".to_string(),
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod bake_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    const SESSION: &str = "ab12cd34";
+
+    /// The source as the generate lane's edit leaves it: the wrapper the
+    /// preflight wrote, three variants, one preview stylesheet.
+    fn app_jsx() -> String {
+        let variant = |n: &str, hidden: bool| {
+            let style = if hidden { " style={{ display: 'none' }}" } else { "" };
+            format!(
+                "          <div data-impeccable-variant=\"{n}\"{style}>\n            <div className=\"pricing-grid\">\n              <article className=\"pricing-card\">Starter</article>\n            </div>\n          </div>\n"
+            )
+        };
+        format!(
+            "export default function App() {{\n  return (\n    <main>\n      <section className=\"pricing\" id=\"pricing\">\n        <h2 className=\"pricing-title\">Simple pricing</h2>\n        <div data-impeccable-variants=\"{s}\" data-impeccable-variant-count=\"3\" style={{{{ display: \"contents\" }}}}>\n          {{/* impeccable-variants-start {s} */}}\n          {{/* Original */}}\n          <div data-impeccable-variant=\"original\">\n            <div className=\"pricing-grid\">\n              <article className=\"pricing-card\">Starter</article>\n            </div>\n          </div>\n          {{/* Variants: insert below this line */}}\n          <style data-impeccable-css=\"{s}\">{{`\n            @scope ([data-impeccable-variant=\"1\"]) {{ :scope > .pricing-grid {{ gap: 8px; }} }}\n            @scope ([data-impeccable-variant=\"2\"]) {{\n              :scope > .pricing-grid {{ gap: 32px; }}\n              :scope .pricing-card {{ border: 2px solid #111; }}\n            }}\n            @scope ([data-impeccable-variant=\"3\"]) {{ :scope > .pricing-grid {{ gap: 0; }} }}\n          `}}</style>\n{v1}{v2}{v3}          {{/* impeccable-variants-end {s} */}}\n        </div>\n      </section>\n    </main>\n  );\n}}\n",
+            s = SESSION,
+            v1 = variant("1", false),
+            v2 = variant("2", true),
+            v3 = variant("3", true)
+        )
+    }
+
+    /// A project whose session journal says the overlay saw the anchor
+    /// `div.pricing-grid` match exactly one element.
+    fn project(tag: &str) -> PathBuf {
+        project_with(tag, Some(json!({ "tagName": "div", "id": null, "classes": ["pricing-grid"], "anchor": "div.pricing-grid", "anchorMatches": 1 })))
+    }
+
+    fn project_with(tag: &str, element: Option<Value>) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("impeccable-accept-bake-{}-{}", tag, std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::create_dir_all(dir.join(".impeccable/live")).unwrap();
+        std::fs::write(dir.join("src/App.jsx"), app_jsx()).unwrap();
+        std::fs::write(dir.join("src/styles.css"), ".pricing-grid { display: grid; gap: 20px; }\n.pricing-card { padding: 20px; }\n").unwrap();
+        std::fs::write(dir.join("index.html"), "<html><body><div id=\"root\"></div></body></html>").unwrap();
+        std::fs::write(dir.join("package.json"), "{\"name\":\"t\"}").unwrap();
+        let env: Env = std::env::vars().collect();
+        let mut generate = json!({ "type": "generate", "id": SESSION, "count": 3, "pageUrl": "/", "action": "bolder" });
+        if let Some(element) = element {
+            generate["element"] = element;
+        }
+        crate::session::create_live_session_store(&dir.to_string_lossy(), &env, Some(SESSION))
+            .append_event(&generate)
+            .unwrap();
+        dir
+    }
+
+    fn accept(dir: &PathBuf, args: &[&str]) -> Value {
+        let env: Env = std::env::vars().collect();
+        let (mut io, captured) = Io::captured("", dir.clone(), env);
+        let argv: Vec<String> = args.iter().map(|a| a.to_string()).collect();
+        let code = run(&argv, &mut io);
+        drop(io);
+        let out = String::from_utf8_lossy(&captured.stdout.borrow()).into_owned();
+        let err = String::from_utf8_lossy(&captured.stderr.borrow()).into_owned();
+        assert_eq!(code, 0, "stdout: {out}\nstderr: {err}");
+        serde_json::from_str(out.trim()).unwrap_or_else(|e| panic!("{e}: {out}"))
+    }
+
+    #[test]
+    fn a_bake_makes_the_variant_permanent_and_appends_its_rules() {
+        let dir = project("flag");
+        let result = accept(&dir, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(result["handled"], json!(true), "{result}");
+        assert_eq!(result["baked"], json!(true), "{result}");
+        assert_eq!(result["carbonize"], json!(false));
+        assert_eq!(result["variant"], json!("2"));
+        assert_eq!(result["css"]["file"], json!("src/styles.css"), "{result}");
+        assert_eq!(result["css"]["rules"], json!(2));
+        assert_eq!(result["css"]["anchor"], json!("div.pricing-grid"));
+        assert_eq!(result["verify"]["clean"], json!(true), "{result}");
+        let jsx = std::fs::read_to_string(dir.join("src/App.jsx")).unwrap();
+        assert!(!jsx.contains("data-impeccable"), "{jsx}");
+        assert!(!jsx.contains("impeccable-variants"), "{jsx}");
+        assert!(!jsx.contains("<style"), "{jsx}");
+        assert_eq!(jsx.matches("className=\"pricing-grid\"").count(), 1, "{jsx}");
+        // The element sits where the wrapper started, at its indentation.
+        assert!(jsx.contains("        <h2 className=\"pricing-title\">Simple pricing</h2>\n        <div className=\"pricing-grid\">\n          <article className=\"pricing-card\">Starter</article>\n        </div>\n      </section>"), "{jsx}");
+        let css = std::fs::read_to_string(dir.join("src/styles.css")).unwrap();
+        assert!(css.starts_with(".pricing-grid { display: grid; gap: 20px; }\n"), "existing rules untouched: {css}");
+        assert!(css.contains("/* impeccable generate ab12cd34: accepted variant 2 */"), "{css}");
+        assert!(css.contains("div.pricing-grid { gap: 32px; }"), "{css}");
+        assert!(css.contains("div.pricing-grid .pricing-card { border: 2px solid #111; }"), "{css}");
+        assert!(!css.contains("8px") && !css.contains("gap: 0"), "other variants dropped: {css}");
+        assert!(!css.contains(":scope") && !css.contains("data-impeccable"), "{css}");
+        // Idempotent: the receipt answers a rerun.
+        let again = accept(&dir, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(again["alreadyApplied"], json!(true), "{again}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn no_session_bakes_without_the_flag_the_generate_lane_included() {
+        let env: Env = std::env::vars().collect();
+        // Plain live: no origin, no flag -> the carbonize block, as before.
+        let dir = project("origin");
+        let plain = accept(&dir, &["--id", SESSION, "--variant", "2"]);
+        assert_eq!(plain["carbonize"], json!(true), "{plain}");
+        assert!(plain.get("baked").is_none(), "{plain}");
+        let jsx = std::fs::read_to_string(dir.join("src/App.jsx")).unwrap();
+        assert!(jsx.contains("impeccable-carbonize-start"), "{jsx}");
+        assert!(!std::fs::read_to_string(dir.join("src/styles.css")).unwrap().contains("32px"));
+
+        // The generate verb's session (the journal says origin agent) carbonizes
+        // the same way: the agent integrates the accepted variant per live.md.
+        let dir2 = project("origin2");
+        let cwd2 = dir2.to_string_lossy().into_owned();
+        crate::session::create_live_session_store(&cwd2, &env, Some(SESSION))
+            .append_event(&json!({ "type": "generate", "id": SESSION, "origin": "agent", "count": 3, "pageUrl": "/", "action": "bolder" }))
+            .unwrap();
+        let lane = accept(&dir2, &["--id", SESSION, "--variant", "2"]);
+        assert_eq!(lane["carbonize"], json!(true), "{lane}");
+        assert!(lane.get("baked").is_none(), "{lane}");
+        assert!(std::fs::read_to_string(dir2.join("src/App.jsx")).unwrap().contains("impeccable-carbonize-start"));
+        // --bake is the only way in, and --no-bake still wins over it.
+        let dir3 = project("origin3");
+        let baked = accept(&dir3, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(baked["baked"], json!(true), "{baked}");
+        let dir4 = project("origin4");
+        let kept = accept(&dir4, &["--id", SESSION, "--variant", "2", "--bake", "--no-bake"]);
+        assert_eq!(kept["carbonize"], json!(true), "{kept}");
+        for d in [dir, dir2, dir3, dir4] {
+            let _ = std::fs::remove_dir_all(&d);
+        }
+    }
+
+    #[test]
+    fn a_class_anchor_the_page_showed_more_than_once_refuses_the_bake() {
+        // Three elements matched the anchor when Go fired (three cards from
+        // one JSX element, say): lasting rules on it would restyle them all.
+        let dir = project_with("siblings", Some(json!({ "anchor": "div.pricing-grid", "anchorMatches": 3 })));
+        let result = accept(&dir, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(result["carbonize"], json!(true), "{result}");
+        assert!(result["bakeSkipped"].as_str().unwrap().contains("div.pricing-grid matches 3 elements"), "{result}");
+        assert!(std::fs::read_to_string(dir.join("src/App.jsx")).unwrap().contains("impeccable-carbonize-start"));
+        assert!(!std::fs::read_to_string(dir.join("src/styles.css")).unwrap().contains("32px"));
+        // Without the overlay's descriptor there is nothing to verify against.
+        let dir2 = project_with("nodesc", None);
+        let result = accept(&dir2, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(result["carbonize"], json!(true), "{result}");
+        assert!(result["bakeSkipped"].as_str().unwrap().contains("no element descriptor"), "{result}");
+        for d in [dir, dir2] {
+            let _ = std::fs::remove_dir_all(&d);
+        }
+    }
+
+    #[test]
+    fn a_knob_session_falls_back_to_the_carbonize_block_with_the_reason() {
+        let dir = project("knobs");
+        let src = std::fs::read_to_string(dir.join("src/App.jsx")).unwrap().replace("gap: 32px", "gap: var(--p-gap, 32px)");
+        std::fs::write(dir.join("src/App.jsx"), src).unwrap();
+        let result = accept(&dir, &["--id", SESSION, "--variant", "2", "--bake"]);
+        assert_eq!(result["carbonize"], json!(true), "{result}");
+        assert!(result["bakeSkipped"].as_str().unwrap().contains("knobs"), "{result}");
+        let jsx = std::fs::read_to_string(dir.join("src/App.jsx")).unwrap();
+        assert!(jsx.contains("impeccable-carbonize-start"), "{jsx}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

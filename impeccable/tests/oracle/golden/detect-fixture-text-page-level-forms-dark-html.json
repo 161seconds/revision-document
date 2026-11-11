@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "\n<REPO>/tests/fixtures/antipatterns/page-level-forms-dark.html\n  [dark-glow] Zero-offset box-shadow glow (#22c55e)\n    → Colored glow shadows — a zero-offset chromatic halo (box- or text-shadow) on any background, or any colored blurred shadow on a dark background — are the default \"cool\" look of AI-generated UIs. Use neutral elevation shadows and subtle, purposeful lighting instead.\n  [radial-halo] radial-gradient halo (#8fd8f2 → transparent) on dark page\n    → A chromatic radial-gradient wash — saturated at the center, fading to transparent — used as a decorative background glow on a dark page. Same tell as glowing shadows, drawn with a gradient instead of a shadow. Ground the surface with a solid or subtly shifted background instead.\n\n2 anti-patterns found.\n",
+  "exit": 2,
+  "signal": null,
+  "files": {}
+}

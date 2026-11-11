@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Numbered Section Labels Fixture</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      font-size: 16px;
+      margin: 0;
+      padding: 40px;
+      background: #ffffff;
+      color: #222222;
+    }
+    .column { width: 520px; padding: 20px; }
+    h2 { font-size: 28px; margin: 0 0 12px; }
+    h3 { font-size: 22px; margin: 0 0 10px; }
+    section { margin-bottom: 48px; }
+
+    /* ── flag column styles ── */
+    .sec-index {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #b45309;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .sec-index-micro {
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #b45309;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    /* ── pass column styles ── */
+    .big-index {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: monospace;
+      display: block;
+    }
+    .plain-note {
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: #666666;
+      display: block;
+    }
+    .step-label {
+      font-family: monospace;
+      font-size: 11px;
+      font-weight: 700;
+      display: block;
+    }
+    .card {
+      border: 1px solid #d4d4d4;
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    /* ── relative ceiling and climbing ── */
+    .feature-row { display: flex; gap: 64px; }
+    .index-col { flex-shrink: 0; width: 17px; font-size: 16px; }
+    .mono-index { font-family: monospace; font-size: 14px; color: #71717a; }
+    .feature-h3 { font-size: 36px; margin: 0 0 12px; }
+    .sec-index-15 {
+      font-family: monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: #b45309;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .large-h2 { font-size: 44px; }
+
+    /* ── a leading hash, in bare and in drawn articles ── */
+    .hash-index {
+      font-size: 11px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .feature-h3-large { font-size: 40px; margin: 0 0 12px; }
+    .drawn-card { display: block; background: #f3efe6; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); color: inherit; text-decoration: none; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- ══ SHOULD FLAG: tiny numeric index labels repeated across sections ══ -->
+  <div class="column">
+
+    <section>
+      <span class="sec-index">01</span>
+      <h2>Alpha ships first</h2>
+      <p>Direct previous-sibling label: tiny, mono, bold, zero-padded index.</p>
+    </section>
+
+    <section>
+      <span class="sec-index">02</span>
+      <h2>Beta earns trust</h2>
+      <p>Second section repeating the same index scaffold.</p>
+    </section>
+
+    <section>
+      <span class="sec-index">03</span>
+      <div>
+        <h2>Gamma holds the line</h2>
+        <p>Label precedes the wrapper; the heading leads the wrapper.</p>
+      </div>
+    </section>
+
+    <section>
+      <span class="sec-index-micro">04 / ROLLOUT</span>
+      <h2>Delta closes the loop</h2>
+      <p>Index joined to a tracked micro-label by a separator glyph.</p>
+    </section>
+
+    <section>
+      <div class="feature-row">
+        <div class="index-col"><span class="mono-index">06</span></div>
+        <div class="feature-body">
+          <div class="feature-grid">
+            <div><h3 class="feature-h3">Instant deployment</h3><p>The index sits in a column beside the heading's grandparent.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <span class="sec-index-15">07</span>
+      <h2 class="large-h2">Omega grows larger</h2>
+      <p>A 15px index beside a 44px heading still reads as a micro label.</p>
+    </section>
+
+    <!-- A leading hash is the number. Each pair sits in an article nothing
+         draws as a card, so the article is a section, not a card. -->
+    <article>
+      <div><span class="hash-index">#1 Connect</span><h3 class="feature-h3-large">Xi connects</h3></div>
+      <p>A hash index over a feature heading in a bare article.</p>
+    </article>
+
+    <article>
+      <div><span class="hash-index">#2 Remember</span><h3 class="feature-h3-large">Omicron remembers</h3></div>
+      <p>The second feature repeats the hash scaffold.</p>
+    </article>
+
+  </div>
+
+  <!-- ══ SHOULD PASS ══ -->
+  <div class="column">
+
+    <section>
+      <span class="big-index">05</span>
+      <h2>Epsilon reads large</h2>
+      <p>16px index is a deliberate display device, not a micro label.</p>
+    </section>
+
+    <section>
+      <span class="plain-note">12 · minute read</span>
+      <h2>Zeta stays plain</h2>
+      <p>Parses as an index but carries no micro-label styling: regular weight, neutral color, no tracking, serif body face.</p>
+    </section>
+
+    <section>
+      <span class="sec-index">Step 6</span>
+      <h2>Eta walks steps</h2>
+      <p>Word-first label is not a numeric index.</p>
+    </section>
+
+    <section>
+      <span class="sec-index">7</span>
+      <h2>Theta counts casually</h2>
+      <p>A bare unpadded single digit is ordinary list numbering.</p>
+    </section>
+
+    <ol>
+      <li>
+        <span class="step-label">08</span>
+        <h3>Iota lives in a list</h3>
+      </li>
+      <li>
+        <span class="step-label">09</span>
+        <h3>Kappa lives in a list too</h3>
+      </li>
+    </ol>
+
+    <article class="card">
+      <span class="sec-index">10</span>
+      <h3>Lambda sits in a card</h3>
+      <p>Per-card indices are item numbering, not section scaffolding.</p>
+    </article>
+
+    <article class="card">
+      <span class="hash-index">#3 Experiment</span>
+      <h3 class="feature-h3-large">Pi keeps its card</h3>
+      <p>The same hash index in an article drawn as a card is the card's own numbering.</p>
+    </article>
+
+    <!-- A card component that draws the card on a link or a div around
+         the semantic article: the article is a card. -->
+    <a class="drawn-card" href="#rho"><article><span class="hash-index">#4 Plan</span><h3 class="feature-h3-large">Rho sits in a linked card</h3></article></a>
+    <div class="drawn-card"><article><span class="hash-index">#5 Build</span><h3 class="feature-h3-large">Sigma sits in a drawn wrapper</h3></article></div>
+
+    <!-- A ranked list: "#N Rated" is a rank, not a section number. -->
+    <article><span class="hash-index">#1 Rated</span><h3 class="feature-h3-large">Tau ranks first</h3></article>
+    <article><span class="hash-index">#2 Rated</span><h3 class="feature-h3-large">Upsilon ranks second</h3></article>
+
+    <nav aria-label="Progress">
+      <span class="sec-index">11</span>
+      <h3>Mu tracks progress</h3>
+    </nav>
+
+    <section>
+      <span class="sec-index-15">12</span>
+      <h3>Nu sits too close in size</h3>
+      <p>A 15px index beside a 22px heading is not a micro label.</p>
+    </section>
+
+  </div>
+
+</body>
+</html>

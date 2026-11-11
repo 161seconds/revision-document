@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--
+  Regression fixture for issue #408: tiny-text / undersized-ui-text must only
+  measure rendered text. On sites that set `html { font-size: 62.5% }` the root
+  computes to 10px, so every element that inherits the root and carries text
+  content — including <script>, <style>, <title>, <noscript>, and display:none /
+  visibility:hidden blocks — reports a 10px computed size. Their JS / CSS /
+  JSON-LD text satisfies hasDirectText, so before the fix they produced dozens
+  of phantom "10px body text" findings on every Shopify page.
+
+  Explicit pixel sizes throughout because jsdom does no layout.
+-->
+<html style="font-size: 10px">
+<head>
+<meta charset="utf-8">
+<!-- SHOULD PASS: a long <title> inherits the 10px root, but nothing renders it. -->
+<title>This is a fairly long document title that easily exceeds twenty characters</title>
+<!-- SHOULD PASS: stylesheet text is never painted. -->
+<style>
+  /* This CSS comment is deliberately longer than twenty characters so the style
+     element's text node clears the hasDirectText / textLen > 20 gate. */
+  body { font-size: 10px; font-family: system-ui, sans-serif; }
+  .rendered-body { font-size: 10px; }
+  .rendered-nav-link { font-size: 9px; }
+  .none-block { display: none; font-size: 10px; }
+  .hidden-block { visibility: hidden; font-size: 10px; }
+</style>
+<!-- SHOULD PASS: script payload text is never painted. -->
+<script>window.__ANALYTICS__ = { id: 1, ts: 0 }; console.log("an analytics payload string that is clearly longer than twenty characters");</script>
+<!-- SHOULD PASS: JSON-LD schema block, a Shopify staple. -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Product","name":"A product name long enough to exceed twenty characters"}</script>
+<!-- SHOULD PASS: noscript fallback prose is only shown without JS; still non-rendered here. -->
+<noscript>Please enable JavaScript in your browser to view this page content correctly.</noscript>
+</head>
+<body>
+
+<!-- SHOULD PASS: display:none block, its text is never painted. -->
+<div class="none-block">Hidden display-none block of body text long enough to exceed twenty characters.</div>
+
+<!-- SHOULD PASS: visibility:hidden paragraph, its text is never painted. -->
+<p class="hidden-block">Invisible visibility-hidden paragraph copy that is longer than the twenty char gate.</p>
+
+<!-- SHOULD FLAG (tiny-text): genuinely rendered body copy at 10px. -->
+<p class="rendered-body">This is real rendered body copy at 10px that is definitely long enough to flag.</p>
+
+<!-- SHOULD FLAG (undersized-ui-text): genuinely rendered interactive text at 9px. -->
+<nav aria-label="primary"><a href="/docs" class="rendered-nav-link">Rendered Nav Link</a></nav>
+
+</body>
+</html>

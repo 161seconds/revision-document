@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Justified Text: Should Flag vs Should Pass</title>
+  <style>
+    /* Two-column fixture: left = should flag, right = should pass.
+       justified-text fires only where justification stretches word spaces far
+       enough to open rivers: a narrow column, no hyphens: auto, and a script
+       that justifies on word spaces. Every column here declares its width in
+       pixels so the static engine and the browser read the same measure. */
+    body { font-family: system-ui, sans-serif; background: #fafafa; padding: 24px; margin: 0; color: #0f172a; line-height: 1.6; font-size: 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1280px; margin: 0 auto; }
+    .col h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .col h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 8px; color: #64748b; }
+    .case { margin-bottom: 16px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .case-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-style: italic; }
+
+    /* ── FLAG: justified in a column too narrow to absorb the stretch ── */
+
+    /* 300px at 16px is about 37 characters per line. */
+    .narrow-justify {
+      text-align: justify;
+      width: 300px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* hyphens: manual is not hyphenation the browser will apply on its own. */
+    .narrow-justify-manual {
+      text-align: justify;
+      hyphens: manual;
+      -webkit-hyphens: manual;
+      width: 260px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* A sidebar column: 240px at 16px is about 30 characters per line. */
+    .sidebar {
+      width: 240px;
+    }
+    .sidebar p {
+      text-align: justify;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* The paragraph's words all sit in one inline span, so the span carries
+       the text and the paragraph's 280px measure. */
+    .narrow-justify-span {
+      text-align: justify;
+      width: 280px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .narrow-justify-lead {
+      text-align: justify;
+      width: 240px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ── PASS: the premise does not reach these ── */
+
+    /* A short heading in a narrow column: one line, and the one line of a
+       justified block is set ragged. */
+    .narrow-justify-heading {
+      text-align: justify;
+      width: 300px;
+      font-size: 32px;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    /* A long measure: 760px at 16px is about 95 characters per line, enough
+       words per line that the extra space spreads out instead of pooling. */
+    .wide-justify {
+      text-align: justify;
+      width: 760px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Narrow, but the browser can break words to even the spacing. */
+    .narrow-justify-hyphens {
+      text-align: justify;
+      hyphens: auto;
+      -webkit-hyphens: auto;
+      width: 300px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* Narrow and unhyphenated, but set on a character grid or in a script
+       that justifies by elongating glyphs: no word spaces to stretch. */
+    .narrow-justify-cjk,
+    .narrow-justify-thai,
+    .narrow-justify-arabic {
+      text-align: justify;
+      width: 300px;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+
+    <div class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Narrow justified paragraph, no hyphenation</h3>
+      <div class="case">
+        <span class="case-label">300px column, about 37 characters per line</span>
+        <p class="narrow-justify">Forcing every line of a column this narrow out to the same width leaves only a handful of word spaces to carry the slack, so each one opens up until the gaps line up vertically and a river of white runs down the paragraph.</p>
+      </div>
+
+      <h3>Narrow justified paragraph with hyphens: manual</h3>
+      <div class="case">
+        <span class="case-label">260px column, hyphenation only where the author typed a soft hyphen</span>
+        <p class="narrow-justify-manual">Setting hyphens to manual leaves the breaking to the author, so an unmarked word still travels whole to the next line and the line it left behind stretches to cover the distance it used to fill.</p>
+      </div>
+
+      <h3>Justified sidebar column</h3>
+      <div class="case">
+        <div class="sidebar">
+          <span class="case-label">240px sidebar, about 30 characters per line</span>
+          <p>A sidebar is the worst place to justify: the measure is short enough that a single long word pushed to the next line doubles every remaining space on the line above it.</p>
+        </div>
+      </div>
+
+      <h3>Narrow justified paragraph set in one span</h3>
+      <div class="case">
+        <span class="case-label">280px column, every word inside an inline span</span>
+        <p class="narrow-justify-span"><span>Wrapping the whole paragraph in a span changes nothing about its lines: the paragraph still sets them at its narrow measure and stretches the few word spaces each one holds.</span></p>
+      </div>
+      <h3>Narrow paragraph with a one-line lead-in and a long emphasis</h3>
+      <div class="case">
+        <span class="case-label">240px column, the paragraph's own words on one line, the rest in an em</span>
+        <p class="narrow-justify-lead">See the note below here: <em>Justified lines in a narrow column stretch the spaces between words until rivers of white run down the page and break the reading rhythm.</em></p>
+      </div>
+    </div>
+
+    <div class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Justified at a long measure</h3>
+      <div class="case">
+        <span class="case-label">760px column, about 95 characters per line</span>
+        <p class="wide-justify">At a long measure there are enough word spaces on every line that the leftover width spreads thinly across all of them, which is why books and newspapers have justified comfortably for centuries without anyone seeing a river in the page.</p>
+      </div>
+
+      <h3>Links inside a justified paragraph at a long measure</h3>
+      <div class="case">
+        <span class="case-label">760px column; the links inherit justify but are set on the paragraph's lines</span>
+        <p class="wide-justify">The links in a long paragraph, such as <a href="#">this reference to an earlier chapter</a> or <u>an underlined title of a paper</u>, take the measure of the paragraph around them, whose lines are long enough to absorb the stretch.</p>
+      </div>
+
+      <h3>One-line heading in a narrow column</h3>
+      <div class="case">
+        <h4 class="narrow-justify-heading">Research topics</h4>
+      </div>
+
+      <h3>Narrow justified paragraph with hyphens: auto</h3>
+      <div class="case">
+        <span class="case-label">300px column, automatic hyphenation on</span>
+        <p class="narrow-justify-hyphens">With automatic hyphenation the browser breaks the long words itself, so every line ends close to the margin already and justification has almost nothing left to stretch.</p>
+      </div>
+
+      <h3>Narrow justified Chinese paragraph</h3>
+      <div class="case">
+        <span class="case-label">300px column, characters of uniform width</span>
+        <p class="narrow-justify-cjk" lang="zh-Hant">永慶房屋於一九八八年成立，專注本業，堅持創新，秉持先誠實再成交的精神，提供消費者透明的資訊與安心的服務，目前在雙北地區有逾二百八十家直營門市。</p>
+      </div>
+
+      <h3>Narrow justified Thai paragraph</h3>
+      <div class="case">
+        <span class="case-label">300px column, no spaces between words to stretch</span>
+        <p class="narrow-justify-thai" lang="th">การจัดวางข้อความแบบชิดขอบทั้งสองด้านในภาษาไทยไม่ได้ดึงช่องว่างระหว่างคำให้กว้างขึ้นเพราะโดยปกติแล้วภาษาไทยไม่ได้เว้นวรรคระหว่างคำในประโยคเดียวกัน</p>
+      </div>
+
+      <h3>Narrow justified Arabic paragraph</h3>
+      <div class="case">
+        <span class="case-label">300px column, justified by elongating glyphs</span>
+        <p class="narrow-justify-arabic" lang="ar" dir="rtl">يعتمد ضبط النص في الخط العربي على استطالة الحروف على السطر بدلا من توسيع المسافات بين الكلمات، ولذلك تبقى المسافات متساوية ولا تظهر تلك الفجوات البيضاء الممتدة عبر الفقرة.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

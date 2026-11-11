@@ -1,0 +1,50 @@
+/*
+ * A stylesheet that rounds nothing. A left or right accent drops only on a
+ * box known to be square, and a box no radius rule names is known square
+ * when no declaration anywhere in the file can round it. Every accent here
+ * passes, through each text-engine producer of side-tab.
+ */
+
+/* ── PASS: border shorthand ── */
+.callout {
+  padding: 12px;
+  border-left: 4px solid #0f766e;
+}
+
+/* ── PASS: border width longhand ── */
+.notice {
+  border-left-width: 5px;
+  border-left-color: #0f766e;
+}
+
+/* ── PASS: logical border ── */
+.entry {
+  border-inline-start: 6px solid #0f766e;
+}
+
+/* ── PASS: absolute ::before bar ── */
+.marker {
+  position: relative;
+}
+.marker::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  background: #0f766e;
+}
+
+/* ── PASS: inset box-shadow ── */
+.timeline-entry {
+  box-shadow: inset 8px 0 0 #0f766e;
+}
+
+/* ── PASS: the only radius in the file is too small to round a card ── */
+.chip {
+  border-radius: 2px;
+}
+.chip-accent {
+  border-right: 9px solid #0f766e;
+}

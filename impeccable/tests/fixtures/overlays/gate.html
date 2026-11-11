@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay hiding: a routing gate named like a loader</title>
+  <style>
+    /* A state picker shaped like bankofamerica.com's "Select Your State",
+       on a fixed, full-screen, opaque layer whose class even names a loader.
+       It holds a select and a button, so it is a gate the visitor answers,
+       not a preloader: the URL engine leaves it, and its own faint text is
+       scored. Pinned by crates/browser/tests/overlay_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .page-loading-overlay { position: fixed; inset: 0; z-index: 9999; background: #ffffff; padding: 120px; }
+    #gate-hint { margin: 0 0 12px; font-size: 14px; color: #b0b0b0; }
+  </style>
+</head>
+<body>
+  <h1>A page behind a state picker</h1>
+  <p id="page-copy">The page under the gate.</p>
+  <div class="page-loading-overlay" role="dialog" aria-label="Select your state">
+    <p id="gate-hint">Select your state to see the products offered where you live.</p>
+    <select aria-label="State"><option>California</option><option>Texas</option></select>
+    <button type="button">Go</button>
+  </div>
+</body>
+</html>

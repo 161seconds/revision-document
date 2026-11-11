@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in</title>
+  <style>
+    /* A short page that is still a page: a sign-in form with a faint hint,
+       under a standard OneTrust bottom bar whose text outweighs the page's
+       own. Almost all its visible text is the banner's, but the form is
+       content, so the validity gate scans it rather than refusing it as a
+       consent wall, and the hint reports. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    label { display: block; margin: 0 0 12px; }
+    .hint { color: #aaaaaa; font-size: 13px; }
+    #onetrust-banner-sdk { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 1000; padding: 20px; border-top: 1px solid #ccc; }
+    #onetrust-policy-text { margin: 0 0 12px; font-size: 14px; color: #b0b0b0; }
+  </style>
+</head>
+<body>
+  <h1>Sign in</h1>
+  <form>
+    <label>Email <input type="email"></label>
+    <label>Password <input type="password"></label>
+    <p class="hint" id="hint">Forgot password?</p>
+    <button type="submit">Sign in</button>
+  </form>
+  <div id="onetrust-consent-sdk">
+    <div id="onetrust-banner-sdk">
+      <p id="onetrust-policy-text">By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyze site usage, and assist in our marketing efforts. Some cookies are strictly necessary for the site to work; others help us understand how you use it so we can make it better. Read our Cookie Policy.</p>
+      <button type="button">Cookies Settings</button> <button type="button">Reject All</button> <button type="button">Accept All Cookies</button>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "serve-question: this direction round is comp-led with image generation (buildPath value \"comp\", toggle true), so every card declares a decision comp, canon included, declined challengers excepted; the page was not served. Missing a \"comp\": assigned, model-pick, challenger-a, canonCard. Give each of those cards \"comp\": \".impeccable/mocks/decision/<card id>.png\" (the canon card's goes inside canonCard), then rerun --start; the comps are generated after the page serves, as its NEXT line says.\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

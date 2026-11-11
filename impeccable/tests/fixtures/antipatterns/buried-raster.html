@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Buried raster fixture</title>
+<style>
+  /* FLAG: a produced texture applied under a near-opaque wash; the wash ships, the texture does not */
+  .paper-wash { width: 800px; height: 400px; background-image: linear-gradient(rgba(240,237,226,0.96), rgba(240,237,226,0.96)), url(assets/manual-paper.png); }
+  /* FLAG: same, layered order reversed in a comma list with the wash first at 0.95 */
+  .paper-wash-b { width: 800px; height: 400px; background: linear-gradient(0deg, rgba(255,255,255,.95), rgba(255,255,255,.95)), url("assets/bone-paper-texture.png") center/cover; }
+  /* FLAG: raster at near-zero opacity via the opacity property */
+  .grain { width: 800px; height: 400px; background-image: url(assets/carbon-paper-texture.png); opacity: 0.04; }
+  /* FLAG: <img> at near-zero opacity */
+  .ghost-img { opacity: 0.05; }
+
+  /* PASS: a legible tint over a photo (hero darkening) */
+  .hero-tint { width: 800px; height: 400px; background-image: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(assets/hero.jpg); }
+  /* PASS: texture at readable opacity */
+  .grain-visible { width: 800px; height: 400px; background-image: url(assets/paper.png); opacity: 0.6; }
+  /* PASS: gradient-only background, no raster to bury */
+  .flat { width: 800px; height: 400px; background-image: linear-gradient(rgba(240,237,226,0.96), rgba(240,237,226,0.96)); }
+  /* PASS: multiply blend keeps the material visible even under a strong color */
+  .blend { width: 800px; height: 400px; background-image: linear-gradient(#f0ede2, #f0ede2), url(assets/paper.png); background-blend-mode: multiply; }
+  /* PASS: opacity on a container that has no raster */
+  .faint-text { opacity: 0.05; }
+
+  /* The state layers below are not buried material. The SVG sources pass in
+     both engines; the icon, the placeholder and the crossfade frame need
+     boxes, so only a browser scan skips them. */
+  .stack { position: relative; width: 480px; height: 300px; }
+  .stack > img { position: absolute; top: 0; left: 0; width: 480px; height: 300px; }
+  .photo-card { position: relative; width: 320px; height: 180px; background-image: url(assets/keytopic-2048.jpg); background-size: cover; }
+  .placeholder { position: absolute; top: 0; left: 0; width: 320px; height: 180px; opacity: 0; filter: blur(10px); background-image: url(assets/keytopic-40.jpg); }
+</style>
+</head>
+<body>
+  <section class="paper-wash">Paper wash</section>
+  <section class="paper-wash-b">Paper wash b</section>
+  <section class="grain">Grain</section>
+  <img class="ghost-img" src="assets/vellum.png" alt="Ghost img" width="400" height="300">
+  <!-- FLAG: a texture held at 0.04 under copy, with no raster beside it -->
+  <div class="stack">
+    <img id="flag-buried-texture" src="assets/texture.png" alt="Buried texture" style="opacity: 0.04">
+    <p style="position: relative">Copy set over a texture nobody sees.</p>
+  </div>
+  <section class="hero-tint">Hero tint</section>
+  <section class="grain-visible">Grain visible</section>
+  <section class="flat">Flat</section>
+  <section class="blend">Blend</section>
+  <p class="faint-text">Faint text</p>
+
+  <!-- PASS: an icon state drawn in SVG -->
+  <img id="pass-svg-state-icon" src="assets/location-granted.svg" alt="" width="16" height="16" style="opacity: 0">
+  <!-- PASS: a copy button whose glyph is an SVG data URI, shown on hover -->
+  <button id="pass-svg-copy-button" style="width: 40px; height: 40px; opacity: 0; background-image: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%2F%3E')">Copy</button>
+  <!-- PASS: an icon-sized raster held at 0 -->
+  <img id="pass-png-icon" src="assets/pin.png" alt="Pin" width="24" height="24" style="opacity: 0">
+  <!-- PASS: a blurred low-resolution placeholder under the loaded picture -->
+  <article class="photo-card">
+    <canvas id="pass-blurred-placeholder" class="placeholder" width="320" height="180"></canvas>
+  </article>
+  <!-- PASS: an inactive crossfade frame under the painted one -->
+  <div class="stack">
+    <img id="pass-crossfade-painted" src="assets/screenshot-library.png" alt="Library view" style="opacity: 1">
+    <img id="pass-crossfade-frame" src="assets/screenshot-inbox.png" alt="Inbox view" style="opacity: 0">
+  </div>
+</body>
+</html>

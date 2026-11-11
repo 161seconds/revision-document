@@ -1,0 +1,779 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skill_workflow:
+        description: 'Run billed, browser-backed Claude workflow completion tests'
+        type: boolean
+        default: false
+  # Nightly full live-e2e matrix. The smoke groups already gate every PR; the
+  # full sweep is too slow for that, so it runs once a day against main.
+  schedule:
+    - cron: '0 7 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  # Scheduled runs get their own group: the 07:00 UTC nightly and a push to
+  # main share github.ref, and cancel-in-progress would let them kill each
+  # other mid-run.
+  group: ${{ github.workflow }}-${{ github.event_name == 'schedule' && 'nightly' || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Any request a job makes to the roll API is tagged as test traffic
+# (X-Impeccable-Client carries the channel), so CI never lands in the
+# choice dataset.
+env:
+  IMPECCABLE_TELEMETRY_CHANNEL: test
+
+jobs:
+  changes:
+    runs-on: namespace-profile-impeccable
+    outputs:
+      core: ${{ steps.plan.outputs.core }}
+      rust: ${{ steps.plan.outputs.rust }}
+      detector: ${{ steps.plan.outputs.detector }}
+      live: ${{ steps.plan.outputs.live }}
+      framework: ${{ steps.plan.outputs.framework }}
+      cli_remote_e2e: ${{ steps.plan.outputs.cli_remote_e2e }}
+      live_e2e: ${{ steps.plan.outputs.live_e2e }}
+      new_work_e2e: ${{ steps.plan.outputs.new_work_e2e }}
+      live_e2e_accept_cleanup: ${{ steps.plan.outputs.live_e2e_accept_cleanup }}
+      skill_behavior: ${{ steps.plan.outputs.skill_behavior }}
+      live_svelte_adapter_deepseek: ${{ steps.plan.outputs.live_svelte_adapter_deepseek }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Detect test plan
+        id: plan
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: node scripts/ci-test-plan.mjs
+
+  test-matrix:
+    name: test (Node ${{ matrix.node-version }})
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    strategy:
+      fail-fast: false
+      matrix:
+        # The workspace's floor (package.json devEngines); the published shim's is held by cli-shim-floor (#850).
+        node-version: [22.18.0, 24]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run core tests
+        run: bun run test:core
+
+      - name: Install Puppeteer browser
+        if: needs.changes.outputs.detector == 'true'
+        run: bunx puppeteer browsers install chrome
+
+      - name: Run detector tests
+        if: needs.changes.outputs.detector == 'true'
+        run: bun run test:detector
+
+      - name: Run live unit tests
+        if: needs.changes.outputs.live == 'true'
+        run: bun run test:live
+
+      - name: Run framework fixture tests
+        if: needs.changes.outputs.framework == 'true'
+        run: bun run test:framework
+
+      - name: Build
+        run: bun run build
+
+      - name: Validate VS Code package
+        run: bunx --package @vscode/vsce@3.9.2 vsce package --no-dependencies
+        working-directory: dist/vscode
+
+      # `bun run build:extension` runs `cargo xtask bundle`: the rule core
+      # compiled to wasm plus the page JS in browser-bundle/.
+      - name: Install the pinned toolchain
+        if: needs.changes.outputs.detector == 'true'
+        run: rustup show && rustup target add wasm32-unknown-unknown
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: needs.changes.outputs.detector == 'true'
+        with:
+          cache: rust
+
+      - name: Install wasm-pack
+        if: needs.changes.outputs.detector == 'true'
+        run: cargo install wasm-pack --locked
+
+      # wasm-pack fetches wasm-bindgen and binaryen (wasm-opt) from GitHub
+      # releases on first use; cached, a GitHub release outage cannot fail the build.
+      - name: Cache wasm-pack tools
+        if: needs.changes.outputs.detector == 'true'
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.cache/.wasm-pack
+
+      - name: Build extension
+        if: needs.changes.outputs.detector == 'true'
+        run: bun run build:extension
+
+      - name: Lint Firefox extension (web-ext)
+        if: needs.changes.outputs.detector == 'true'
+        # Pinned for reproducible CI. Fails on AMO errors; innerHTML style
+        # warnings in the panel renderer are non-blocking and not promoted to
+        # errors here.
+        run: npx --yes web-ext@10 lint --source-dir dist/extension-firefox
+
+      # Only meaningful right after the bundle was rebuilt, so it carries the
+      # same condition as that step rather than running unconditionally and
+      # comparing a committed artifact against an untouched tree. Every input
+      # `cargo xtask bundle` reads is in the detector trigger
+      # (scripts/test-suites.mjs), so a change to the registry rows or to how
+      # they are serialized lands here. The in-page bundle beside it is
+      # deliberately not checked: its bytes carry a wasm module built by
+      # whatever wasm-pack and wasm-opt the runner installed, so diffing it
+      # would fail on toolchain drift rather than on a real change.
+      - name: Verify the tracked rule registry is current
+        if: needs.changes.outputs.detector == 'true'
+        run: git diff --exit-code -- crates/live/assets/antipatterns.json
+
+      - name: Verify generated tracked outputs
+        # What `bun run build` writes, which runs on every PR.
+        # extension/detector/ is gitignored (built by `cargo xtask bundle`);
+        # it stays listed so a stray tracked copy shows up here.
+        run: git diff --exit-code -- .agents .claude .cursor .dsh .gemini .github/skills plugin extension/detector
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: impeccable-build-node-${{ matrix.node-version }}
+          # Ship the packaged zips, not the unpacked Firefox staging tree.
+          path: |
+            dist/
+            !dist/extension-firefox/
+          retention-days: 7
+
+  # The Rust workspace: the engine binary, the rule core, and every crate
+  # behind them. Everything builds from source with no downloads.
+  rust:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # rust-toolchain.toml names the channel; `rustup show` installs it.
+      # Never override the toolchain here.
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          cache: rust
+
+      - name: Build
+        run: cargo build --workspace --all-targets
+
+      - name: Test
+        run: cargo test --workspace
+
+  # The engine ships a windows-x64 binary (release-engine.yml), so the
+  # workspace has to build and pass its own tests there. Tests that need a
+  # browser or the oracle skip when those are absent.
+  rust-windows:
+    runs-on: windows-latest
+    needs: changes
+    if: needs.changes.outputs.rust == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the pinned toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo build --workspace --all-targets
+      # The default TEMP is on the image's C: drive. Every browser test starts
+      # Chrome on a new profile there, and with several starting at once that
+      # disk queues 30 to 40 requests deep for 20 s at a stretch: profile
+      # stores took up to 27 s to load and a page load of fourteen requests
+      # took 14 s. The runner's own temp directory is on the work drive, where
+      # the same loads stay under 3 s.
+      - name: Keep temporary files on the work drive
+        shell: pwsh
+        run: |
+          $temp = Join-Path $env:RUNNER_TEMP 'tmp'
+          New-Item -ItemType Directory -Force -Path $temp | Out-Null
+          "TEMP=$temp" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TMP=$temp" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      # The first Chrome start after boot reads the browser off that same C:
+      # drive and has taken 25 s to open its DevTools port, against the
+      # launcher's 30 s limit. Pay that once here, where no test is timing it.
+      # The step has taken 4 to 38 s; a start that never returns ends after
+      # three minutes and the tests run anyway.
+      - name: Start the browser once before the tests
+        shell: pwsh
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          $chrome = Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'
+          if (Test-Path $chrome) {
+            $profile = Join-Path $env:TEMP 'browser-warmup'
+            & $chrome --headless=new --no-sandbox --disable-gpu "--user-data-dir=$profile" --dump-dom about:blank | Out-Null
+          }
+          exit 0
+      - run: cargo test --workspace --no-fail-fast
+
+  launcher-windows:
+    runs-on: windows-latest
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Exercise Windows launcher downloads and verification
+        run: node --test tests/launcher-download.test.mjs
+      - name: Exercise Windows plugin hook commands
+        run: node --test tests/hook-build-windows.test.mjs
+
+  # The npm package ships only the shim (cli/bin/cli.js), and npm skips
+  # `latest` for a Node its engines reject, serving the newest version that
+  # admits it instead. So engines.node in package.json is the shim's floor, not
+  # the workspace's (that one is devEngines): raising it sends everyone below
+  # it to an older CLI that can no longer install (#361, #850). SHIM_FLOOR is
+  # the version this job proves, and engines.node must match it.
+  cli-shim-floor:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    env:
+      SHIM_FLOOR: 18.19.0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the published Node floor
+        run: |
+          floor=$(jq -r .engines.node package.json)
+          [ "$floor" = ">=$SHIM_FLOOR" ] || { echo "::error::package.json engines.node is $floor, but the shim is proven on >=$SHIM_FLOOR. Raise SHIM_FLOOR only when the shim itself needs a newer Node."; exit 1; }
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.SHIM_FLOOR }}
+      - name: Exercise the npm shim on its Node floor
+        run: node --test tests/cli-shim.test.mjs
+
+  # Behavior gate: replays the tests/oracle/ goldens against a release build
+  # of the engine from THIS checkout (so a PR is judged on its own source,
+  # not on the last published binary). Without this job the oracle only ever
+  # runs on developer laptops: tests/oracle.test.mjs skips cleanly when no
+  # binary is present, so the default suite is silent about it on CI.
+  oracle:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.oracle == 'true' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.new_work_e2e == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          cache: rust
+
+      - name: Build the engine from source
+        run: cargo build --release -p impeccable
+
+      - name: Replay oracle goldens
+        env:
+          IMPECCABLE_BIN: ${{ github.workspace }}/target/release/impeccable
+        run: node tests/oracle/run.mjs
+
+      - name: Install review test browser
+        run: bunx playwright install --with-deps chromium
+
+      - name: Verify review workflows and system themes
+        env:
+          IMPECCABLE_BIN: ${{ github.workspace }}/target/release/impeccable
+        run: node --test --test-timeout=180000 tests/new-work-e2e.test.mjs tests/review-theme.test.mjs
+
+  # Release-order guard (triage decision D4). Verifies that the engine release for
+  # the pinned ENGINE_VERSION is fully published — the five dist binaries + .sha256
+  # AND the five @impeccable/cli-<os>-<arch> npm platform packages — before a skill
+  # release/merge that depends on them. The launcher, npm shim, and
+  # `impeccable install` all dead-end without those assets.
+  #
+  # A hard gate since engine-v0.1.0 shipped: the assets for the pinned
+  # ENGINE_VERSION must exist before a skill/CLI release or a merge that bumps the
+  # pin, or the launcher, the npm shim and `impeccable install` dead-end.
+  # release.mjs hard-fails `release:skill`/`release:cli` on the same check.
+  engine-release-ready:
+    runs-on: namespace-profile-impeccable
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Check engine release assets for pinned ENGINE_VERSION
+        id: check
+        run: node scripts/check-engine-release.mjs
+
+      - name: Annotate missing engine release
+        # Only when the check itself failed, so a checkout or setup failure keeps its own error.
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          echo "::error title=Engine release not ready::The engine release for v$(cat ENGINE_VERSION) is not fully published (engine-v$(cat ENGINE_VERSION) release assets and/or the @impeccable/cli-<os>-<arch> npm platform packages). Publish the engine (bun run release:engine) and the platform packages (bun run release:platform-packages) before bumping ENGINE_VERSION on main or releasing the skill/CLI. If only engine-checksums.txt is named, run node scripts/check-engine-release.mjs --record and commit it."
+
+  test:
+    runs-on: namespace-profile-impeccable
+    needs: test-matrix
+    if: always()
+    steps:
+      - name: Verify Node test matrix
+        run: |
+          if [ "${{ needs.test-matrix.result }}" != "success" ]; then
+            echo "test-matrix result: ${{ needs.test-matrix.result }}"
+            exit 1
+          fi
+          echo "test matrix passed"
+
+  cli-remote-e2e:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.cli_remote_e2e == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Install dependencies
+        run: bun install
+
+      # The live verbs are the engine binary; build it from this checkout so the
+      # suite tests the branch, not the last published release.
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          cache: rust
+
+      - name: Build the engine
+        run: cargo build --release -p impeccable
+
+      - name: Run remote CLI E2E smoke
+        run: bun run test:cli-remote-e2e
+
+  live-e2e-smoke:
+    name: live-e2e smoke (${{ matrix.group }})
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.live_e2e == 'true' && github.event_name != 'workflow_dispatch' && github.event_name != 'schedule'
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - group: platform
+            fixtures: astro-vite7,monorepo-nested-vite,nextjs-app-router,vite7-vue,vite8-sveltekit
+          - group: svelte
+            fixtures: vite8-sveltekit-stateful
+          - group: react
+            fixtures: vite8-react-css-modules,vite8-react-insert,vite8-react-plain,vite8-react-pricing-cards
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Cache fixture npm downloads
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.npm
+
+      - name: Cache Playwright Chromium
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.cache/ms-playwright
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      # The live verbs are the engine binary; build it from this checkout so the
+      # suite tests the branch, not the last published release.
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          cache: rust
+
+      - name: Build the engine
+        run: cargo build --release -p impeccable
+
+      - name: Run live E2E tests
+        run: bun run test:live-e2e
+        env:
+          IMPECCABLE_E2E_ONLY: ${{ matrix.fixtures }}
+          IMPECCABLE_E2E_SCENARIOS: core,agent-target
+          IMPECCABLE_E2E_TEST_TIMEOUT_MS: 180000
+          IMPECCABLE_E2E_INSTALL_TIMEOUT_MS: 120000
+          IMPECCABLE_E2E_DEV_READY_TIMEOUT_MS: 60000
+          IMPECCABLE_E2E_ARTIFACT_DIR: test-results/live-e2e/${{ matrix.group }}
+
+      - name: Upload live E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-e2e-smoke-${{ matrix.group }}-artifacts
+          path: test-results/live-e2e
+          if-no-files-found: ignore
+
+  live-e2e-full:
+    name: live-e2e full (${{ matrix.group }})
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.live_e2e == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+    timeout-minutes: 25
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - group: platform
+            fixtures: astro-vite7,monorepo-nested-vite,nextjs-app-router,nuxt-vite7,vite7-vue
+          - group: svelte
+            fixtures: vite8-sveltekit,vite8-sveltekit-stateful
+          - group: react-a
+            fixtures: vite8-https,vite8-react-base-path,vite8-react-csp-meta,vite8-react-css-modules,vite8-react-emotion
+          - group: react-b
+            fixtures: vite8-react-insert,vite8-react-mapped-list,vite8-react-modal,vite8-react-plain,vite8-react-pricing-cards
+          - group: stateful
+            fixtures: vite8-react-radix-dialog,vite8-react-router-spa,vite8-react-styled-components,vite8-react-tabs
+          - group: styling
+            fixtures: vite8-react-tailwindv3,vite8-react-tailwindv4,vite8-react-ts,vite8-react-tsx-repeated-aside,vite8-react-unocss,vite8-react-vanilla-extract
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Cache fixture npm downloads
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.npm
+
+      - name: Cache Playwright Chromium
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.cache/ms-playwright
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+
+      # The live verbs are the engine binary; build it from this checkout so the
+      # suite tests the branch, not the last published release.
+      - name: Install the pinned toolchain
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          cache: rust
+
+      - name: Build the engine
+        run: cargo build --release -p impeccable
+
+      - name: Run live E2E tests
+        run: bun run test:live-e2e
+        env:
+          IMPECCABLE_E2E_ONLY: ${{ matrix.fixtures }}
+          IMPECCABLE_E2E_TEST_TIMEOUT_MS: 300000
+          IMPECCABLE_E2E_INSTALL_TIMEOUT_MS: 180000
+          IMPECCABLE_E2E_DEV_READY_TIMEOUT_MS: 120000
+          IMPECCABLE_E2E_ARTIFACT_DIR: test-results/live-e2e/${{ matrix.group }}
+
+      - name: Upload live E2E failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-e2e-full-${{ matrix.group }}-artifacts
+          path: test-results/live-e2e
+          if-no-files-found: ignore
+
+  live-e2e-accept-cleanup:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.live_e2e_accept_cleanup == 'true'
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - name: Skip without provider key
+        if: ${{ env.ANTHROPIC_API_KEY == '' && env.DEEPSEEK_API_KEY == '' }}
+        run: echo "Skipping provider-backed accept-cleanup regression because no provider API key is configured."
+
+      - name: Checkout repository
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        uses: ./.github/actions/setup-bun
+
+      - name: Cache fixture npm downloads
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.npm
+
+      - name: Cache Playwright Chromium
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.cache/ms-playwright
+
+      - name: Install dependencies
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        run: bun install
+
+      - name: Install Playwright Chromium
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        run: npx playwright install chromium
+
+      # The live verbs are the engine binary; build it from this checkout so the
+      # suite tests the branch, not the last published release.
+      - name: Install the pinned toolchain
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        with:
+          cache: rust
+
+      - name: Build the engine
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        run: cargo build --release -p impeccable
+
+      - name: Run accept cleanup regression
+        if: ${{ env.ANTHROPIC_API_KEY != '' || env.DEEPSEEK_API_KEY != '' }}
+        run: |
+          if [ -n "$DEEPSEEK_API_KEY" ]; then
+            export IMPECCABLE_E2E_LLM_PROVIDER=deepseek
+          else
+            export IMPECCABLE_E2E_LLM_PROVIDER=anthropic
+          fi
+          bun run test:live-e2e-accept-cleanup
+
+  live-svelte-adapter-deepseek:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.live_svelte_adapter_deepseek == 'true'
+    timeout-minutes: 25
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - name: Skip without DeepSeek key
+        if: ${{ env.DEEPSEEK_API_KEY == '' }}
+        run: echo "Skipping Svelte adapter DeepSeek sweep because DEEPSEEK_API_KEY is not configured."
+
+      - name: Checkout repository
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        uses: ./.github/actions/setup-bun
+
+      - name: Cache fixture npm downloads
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.npm
+
+      - name: Cache Playwright Chromium
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        with:
+          path: ~/.cache/ms-playwright
+
+      - name: Install dependencies
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        run: bun install
+
+      - name: Install Playwright Chromium
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        run: npx playwright install chromium
+
+      # The live verbs are the engine binary; build it from this checkout so the
+      # suite tests the branch, not the last published release.
+      - name: Install the pinned toolchain
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        run: rustup show
+
+      - name: Cache Rust on the Namespace cache volume
+        uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        with:
+          cache: rust
+
+      - name: Build the engine
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        run: cargo build --release -p impeccable
+
+      - name: Run Svelte adapter DeepSeek sweep
+        if: ${{ env.DEEPSEEK_API_KEY != '' }}
+        run: bun run test:live-svelte-adapter-deepseek
+
+  skill-behavior:
+    runs-on: namespace-profile-impeccable
+    needs: changes
+    if: needs.changes.outputs.skill_behavior == 'true' && github.event_name != 'pull_request'
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GOOGLE_CLOUD_API_KEY: ${{ secrets.GOOGLE_CLOUD_API_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Prepare engine for protocol tests
+        run: bun run fetch:engine
+
+      - name: Run skill behavior tests
+        run: bun run test:skill-behavior
+
+  skill-workflow:
+    # Expensive, manually opted-in completion diagnostics. This does not
+    # replace the multi-family skill-behavior protocol suite above.
+    runs-on: namespace-profile-impeccable
+    if: github.event_name == 'workflow_dispatch' && inputs.skill_workflow
+    timeout-minutes: 70
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      IMPECCABLE_SKILL_BEHAVIOR_MODELS: claude-sonnet-5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Prepare engine and browser before billing
+        run: |
+          test -n "$ANTHROPIC_API_KEY" || { echo 'ANTHROPIC_API_KEY is required'; exit 1; }
+          bun run fetch:engine
+          bunx playwright install --with-deps chromium
+      - name: Run completed skill workflows
+        env:
+          IMPECCABLE_SKILL_BEHAVIOR_TRACE_DIR: ${{ runner.temp }}/skill-workflow-traces
+        run: bun run test:skill-workflow
+      - name: Retain diagnostic traces
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: skill-workflow-traces
+          path: ${{ runner.temp }}/skill-workflow-traces
+          retention-days: 7

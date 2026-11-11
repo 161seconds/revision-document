@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faded at Rest vs Caught Mid-Reveal: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for which opacity low-contrast blends into the ink. A box
+       faded at rest (an accordion item held at half opacity, a card with
+       will-change, a label with an opacity transition that is not running)
+       fades the glyphs, and the faded colour is scored. A box caught in the
+       middle of a reveal is not at rest, and the text is scored at its
+       declared colour instead:
+
+       - a word parked blurred and sliding, as Framer's word reveal does
+         (`opacity` a few frames in, `filter: blur()`, `translateY`,
+         `will-change: transform`);
+       - a row under 0.1 opacity that is sliding in (`translateX`);
+       - a box an animation or transition running at capture is fading, CSS
+         or script.
+
+       The static HTML engine has no running animations and its cascade
+       carries no `filter`, `transform` or `will-change`, so it blends the
+       two should-pass cases marked "URL engine" and reports them, and it
+       scores the faint word mid-reveal at its blended colour. The two
+       running animations read their declared opacity of 1 there, and pass.
+       The URL behavior is pinned by
+       crates/browser/tests/transient_opacity.rs. Every case uses its own
+       text colour so a finding names the case. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111111; background: #ffffff; }
+    .grid { display: grid; grid-template-columns: 560px 560px; gap: 40px; padding: 24px 20px; }
+    .col { width: 560px; }
+    .col h2 { font: 600 20px/1.2 system-ui, sans-serif; margin: 0 0 16px; color: #111111; }
+    .col h3 { font: 600 16px/1.3 system-ui, sans-serif; margin: 28px 0 8px; color: #111111; }
+    .case { width: 480px; height: 32px; }
+    .case p, .case h4, .case span { margin: 0; font-size: 16px; line-height: 24px; font-weight: 400; }
+
+    /* Faded at rest. */
+    .faded-item { opacity: 0.5; }
+    .faded-item-title { color: #0a1015; }
+    .held-card { opacity: 0.45; will-change: transform; }
+    .held-card-copy { color: #121a22; }
+    .transition-label { opacity: 0.4; transition: opacity 300ms ease; color: #1b1b2b; }
+
+    /* Caught mid-reveal. */
+    .reveal-word {
+      display: inline-block;
+      opacity: 0.2;
+      filter: blur(8px);
+      transform: translateY(8px);
+      will-change: transform;
+    }
+    .reveal-faint { color: #b0b1b2; }
+    .reveal-dark { color: #0b1117; }
+    .slide-row { opacity: 0.05; transform: translateX(-19px); }
+    .slide-row-copy { color: #0c1218; }
+    @keyframes transient-slow-fade { from { opacity: 0.2; } to { opacity: 0.25; } }
+    .fading-heading { animation: transient-slow-fade 600s linear infinite; color: #0d1319; }
+    .script-reveal { display: inline-block; color: #0e1420; }
+  </style>
+</head>
+<body>
+  <main class="grid">
+    <section class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Header in an accordion item faded at rest</h3>
+      <div class="case faded-item"><h4 class="faded-item-title">Can I change plans later?</h4></div>
+
+      <h3>Card held faded with will-change</h3>
+      <div class="case held-card"><p class="held-card-copy">Coming soon to every workspace</p></div>
+
+      <h3>Label faded with an opacity transition at rest</h3>
+      <div class="case"><span class="transition-label">Collapse all</span></div>
+
+      <h3>Faint word caught mid-reveal, scored at its declared colour</h3>
+      <div class="case"><span class="reveal-word reveal-faint">testimonials</span></div>
+    </section>
+
+    <section class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Dark word caught mid-reveal (URL engine)</h3>
+      <div class="case"><span class="reveal-word reveal-dark">solutions</span></div>
+
+      <h3>Row sliding in from nothing (URL engine)</h3>
+      <div class="case slide-row"><p class="slide-row-copy">Pick a template:</p></div>
+
+      <h3>Heading faded in by a running CSS animation</h3>
+      <div class="case"><h4 class="fading-heading">Built for teams that ship</h4></div>
+
+      <h3>Word faded in by a running script animation</h3>
+      <div class="case"><span class="script-reveal" id="script-reveal">automation</span></div>
+    </section>
+  </main>
+  <script>
+    // A script reveal a capture catches early: a long Web Animations API
+    // fade that sits near 0.15 for the whole scan.
+    document.getElementById('script-reveal')
+      .animate([{ opacity: 0.15 }, { opacity: 0.2 }], { duration: 600000, fill: 'both' });
+  </script>
+</body>
+</html>

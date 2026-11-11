@@ -1,0 +1,300 @@
+/**
+ * Build-pipeline emitters for the Impeccable design hook.
+ *
+ * Two emission targets exist:
+ *
+ * 1. Project-local install (the `npx impeccable skills install` CLI path):
+ *      - Claude Code: `.claude/settings.json`   (${CLAUDE_PROJECT_DIR}-relative)
+ *      - Codex:       `.codex/hooks.json`
+ *      - Cursor:      `.cursor/hooks.json`
+ *      - Grok Build:  `.grok/hooks/impeccable.json`
+ *
+ * 2. Claude Code plugin package (the marketplace / `/plugin install` path):
+ *      - `plugin/hooks/hooks.json`              (${CLAUDE_PLUGIN_ROOT}-relative)
+ *        Also consumed by Grok Build via Claude Code plugin compatibility
+ *        (`CLAUDE_PLUGIN_ROOT` is aliased to `GROK_PLUGIN_ROOT`).
+ *
+ * 3. OpenAI plugin package:
+ *      - `hooks/hooks.json`                     (${PLUGIN_ROOT}-relative)
+ *
+ * The plugin variant resolves the hook script relative to the installed plugin
+ * root rather than assuming a `.claude/skills/impeccable/` layout, so it stays
+ * correct wherever Claude Code unpacks the plugin.
+ */
+
+export const IMPECCABLE_HOOK_COMMAND_MARKER = 'skills/impeccable/scripts/impeccable';
+
+const TIMEOUT_SECONDS = 5;
+const STATUS_MESSAGE = 'Checking UI changes';
+// The Stop deep pass scans every UI file touched in the session with the
+// full rule set, so it gets a longer budget than the single-file per-edit
+// pass. Wired only for Claude Code and Codex, which both dispatch a native
+// `Stop` hook event; Cursor's stop hook can only answer with a follow-up user
+// message and GitHub Copilot's stop-style events do not feed context back to
+// the model.
+const STOP_TIMEOUT_SECONDS = 30;
+const STOP_STATUS_MESSAGE = 'Design deep pass';
+
+// The hook is a verb of the impeccable launcher that ships in the skill's
+// scripts dir: `<scripts>/impeccable hook` (per-edit and Stop passes; Cursor's
+// retired preToolUse gate ran `hook-before-edit`, which still works). The launcher
+// runs the platform binary next to it, or downloads it once; no runtime probe
+// is needed and there is no Node on the path to check.
+export const LAUNCHER_NAME = 'impeccable';
+export const LAUNCHER_NAME_WINDOWS = 'impeccable.cmd';
+
+// A hook manifest can be copied into a user-level settings file (issue #399:
+// user-level hooks fire in every project, where a project-relative path may
+// not exist). Guard the invocation so a missing launcher exits 0 without
+// swallowing the hook's real exit code when it is present: the `[ ! -f X ] ||
+// X verb` form (not `... || true`) preserves the launcher's exit code, so
+// Claude's exit-2 blocking signal still reaches the agent.
+export const guardedLauncher = (launcherPath, verb = 'hook') =>
+  `[ ! -f "${launcherPath}" ] || "${launcherPath}" ${verb}`;
+
+// Same guard, launcher run through `sh`. VS Code's agent host syncs a plugin into
+// its own directory without the executable bit, so running the launcher directly
+// exits 126 and the agent host swallows the error (#1249).
+const guardedLauncherViaSh = (launcherPath, verb = 'hook') =>
+  `[ ! -f "${launcherPath}" ] || sh "${launcherPath}" ${verb}`;
+
+// Windows form for harnesses that read a `commandWindows` sibling (Codex
+// 0.146.0+ selects it on Windows; issue #452). Codex runs it in the session
+// shell, PowerShell by default and cmd.exe only as a fallback (#848), so the
+// string starts with `cmd /c`, an ordinary command in both, and cmd.exe gets
+// the guard: a missing launcher exits 0, a failing one non-zero. Backslash
+// separators: PowerShell drops the quotes around a space-free argument, and
+// cmd.exe would read a bare `/` as a switch.
+export const windowsLauncherCommand = (launcherCmdPath, verb = 'hook') => {
+  const quoted = `"${launcherCmdPath.replaceAll('/', '\\')}"`;
+  return `cmd /c if exist ${quoted} ${quoted} ${verb}`;
+};
+
+// Form for VS Code's `windows` sibling (#1249), which has two Windows runners:
+// PowerShell `-Command` in the Copilot extension, and a Node spawn of
+// `cmd.exe /c <line>` in the agent host, which escapes a double quote to `\"` so
+// the guard never finds the launcher. The path stays bare because VS Code
+// substitutes the plugin root itself and single-quotes one with unsafe characters.
+const vscodeWindowsLauncherCommand = (launcherCmdPath, verb = 'hook') => {
+  const bare = launcherCmdPath.replaceAll('/', '\\');
+  return `cmd /c if exist ${bare} ${bare} ${verb}`;
+};
+
+const WINDOWS_FORMS = { commandWindows: windowsLauncherCommand, windows: vscodeWindowsLauncherCommand };
+
+function stopEntry(command, handlerFields) {
+  return {
+    hooks: [
+      {
+        type: 'command',
+        command,
+        ...handlerFields,
+        timeout: STOP_TIMEOUT_SECONDS,
+        statusMessage: STOP_STATUS_MESSAGE,
+      },
+    ],
+  };
+}
+
+const launcherIn = (scriptsDir) => `${scriptsDir}/${LAUNCHER_NAME}`;
+const launcherCmdIn = (scriptsDir) => `${scriptsDir}/${LAUNCHER_NAME_WINDOWS}`;
+
+const CLAUDE_PROJECT_SCRIPTS = '${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts';
+const CLAUDE_PLUGIN_SCRIPTS = '${CLAUDE_PLUGIN_ROOT}/skills/impeccable/scripts';
+const CODEX_PLUGIN_SCRIPTS = '${PLUGIN_ROOT}/skills/impeccable/scripts';
+// Codex reads project hooks from `.codex/hooks.json`, but the skill payload the
+// hook invokes lives under the install's own skills dir: a `.codex`-directory
+// install keeps it at `.codex/skills/...`, while a `.agents` (Codex repo-skills)
+// install keeps it at `.agents/skills/...`. Derive the path from the install dir
+// so each generated manifest points at its own payload rather than a hardcoded
+// `.agents`; otherwise the guarded hook silently no-ops on `.codex` installs.
+const codexProjectScripts = (skillDir) => `${skillDir}/skills/impeccable/scripts`;
+const CURSOR_SCRIPTS = '.cursor/skills/impeccable/scripts';
+const GITHUB_PROJECT_SCRIPTS = '$(git rev-parse --show-toplevel)/.github/skills/impeccable/scripts';
+// Grok project hooks are relative to the git/workspace root. Claude tool names
+// in the matcher (Edit|Write|MultiEdit) alias to Grok's search_replace family.
+const GROK_PROJECT_SCRIPTS = '.grok/skills/impeccable/scripts';
+
+// `windowsKey` names the per-OS field the consuming harness reads its Windows
+// command from (`commandWindows` for Codex, `windows` for VS Code Copilot
+// Chat) and adds that sibling to every handler. It stays opt-in per manifest,
+// so each one carries only the field its own consumers read.
+function buildClaudeCompatibleHooks(matcher, scriptsDir, { windowsKey, codexWindows = false, sessionIdentity = false, guard = guardedLauncher, env } = {}) {
+  const command = guard(launcherIn(scriptsDir));
+  const handlerFields = {
+    ...(windowsKey ? { [windowsKey]: WINDOWS_FORMS[windowsKey](launcherCmdIn(scriptsDir)) } : {}),
+    ...(codexWindows ? { commandWindows: windowsLauncherCommand(launcherCmdIn(scriptsDir)) } : {}),
+    ...(env ? { env } : {}),
+  };
+  return {
+    ...(sessionIdentity ? { SessionStart: [{ hooks: [{ type: 'command', command, ...handlerFields,
+      timeout: TIMEOUT_SECONDS, statusMessage: 'Preparing build session' }] }] } : {}),
+    PostToolUse: [
+      {
+        matcher,
+        hooks: [
+          {
+            type: 'command',
+            command,
+            ...handlerFields,
+            timeout: TIMEOUT_SECONDS,
+            statusMessage: STATUS_MESSAGE,
+          },
+        ],
+      },
+    ],
+    Stop: [stopEntry(command, handlerFields)],
+  };
+}
+
+export function buildClaudeSettingsManifest() {
+  return {
+    description: 'Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop.',
+    hooks: buildClaudeCompatibleHooks('Edit|Write', CLAUDE_PROJECT_SCRIPTS, { sessionIdentity: true }),
+  };
+}
+
+// Plugin-packaged variant of the Claude hook. Claude Code reads the `hooks`
+// object from a plugin's `hooks/hooks.json`, and the command resolves relative
+// to ${CLAUDE_PLUGIN_ROOT} so it does not depend on the skill being copied into
+// `.claude/skills/`. No top-level `description`: Codex also loads bundled plugin
+// hooks from `hooks/hooks.json` and its strict parser rejects any field other
+// than `hooks`, failing the whole manifest (issue #330).
+// VS Code Copilot Chat loads this manifest too. On Windows it takes the `windows`
+// sibling over `command`, because the POSIX guard throws a ParserError under its
+// PowerShell runner (#1249). Codex reads `commandWindows` instead; keep both
+// forms because their runners quote substituted plugin roots differently. The `env`
+// tells the hook it runs under VS Code, whose two runners read different output
+// fields; Grok honors `env` too, so the hook checks the event shape first.
+export function buildClaudePluginHooksManifest() {
+  return {
+    hooks: buildClaudeCompatibleHooks('Edit|Write', CLAUDE_PLUGIN_SCRIPTS, {
+      sessionIdentity: true,
+      windowsKey: 'windows',
+      codexWindows: true,
+      guard: guardedLauncherViaSh,
+      env: { IMPECCABLE_HOOK_HARNESS: 'vscode' },
+    }),
+  };
+}
+
+// OpenAI plugin-packaged variant. Codex exposes ${PLUGIN_ROOT} for resources
+// inside the installed plugin, so the public bundle can use the native path
+// instead of relying on its Claude compatibility alias.
+export function buildCodexPluginHooksManifest() {
+  return {
+    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', CODEX_PLUGIN_SCRIPTS, { windowsKey: 'commandWindows' }),
+  };
+}
+
+// `skillDir` is the install's own dot-directory (a provider's configDir), so the
+// emitted command points at that install's payload. Defaults to `.codex` for the
+// Codex provider, whose self-consistent bundle keeps the skill at `.codex/skills`.
+export function buildCodexHooksManifest(skillDir = '.codex') {
+  return {
+    hooks: buildClaudeCompatibleHooks('Edit|Write|apply_patch', codexProjectScripts(skillDir), { windowsKey: 'commandWindows' }),
+  };
+}
+
+// Cursor runs the post-edit hook on `postToolUse`, whose response field
+// `additional_context` Cursor injects after the tool result. Every agent file
+// edit reports `tool_name: "Write"` with `tool_input: { file_path, content }`;
+// the matcher is an unanchored regex, so the anchors keep `WriteShellStdin`
+// out. (`afterFileEdit` fires too but its response never reaches the agent.)
+// No Stop entry: Cursor's `stop` can only answer with a `followup_message`
+// submitted as a new user turn (#1061). The engine's twin is
+// `cursor_hook_manifest` in crates/context/src/hook_markers.rs.
+// https://cursor.com/docs/hooks
+export function buildCursorHooksManifest(scriptsDir = CURSOR_SCRIPTS) {
+  return {
+    version: 1,
+    hooks: {
+      postToolUse: [
+        {
+          command: guardedLauncher(launcherIn(scriptsDir)),
+          matcher: '^Write$',
+          timeout: TIMEOUT_SECONDS,
+        },
+      ],
+    },
+  };
+}
+
+// GitHub Copilot reads project hooks from `.github/hooks/*.json`. Its schema
+// differs from Claude/Codex/Cursor: the event key is lowercase `postToolUse`,
+// each entry is flat (no nested `hooks` array), the command lives under `bash`
+// (with an optional `powershell` sibling), the timeout key is `timeoutSec`, and
+// `matcher` is a full-match regex (`^(?:PATTERN)$`) tested against the tool name.
+// Copilot's file-editing tool names vary by surface (verified against CLI
+// 1.0.63): `copilot -p` runs use `edit` ({path, old_str, new_str}) and `create`
+// ({path, file_text}); interactive sessions and the cloud agent use
+// `apply_patch` (a raw OpenAI-format patch string). The matcher covers all
+// three. The same manifest is honored by both the CLI and the cloud/app agent.
+// https://docs.github.com/en/copilot/reference/hooks-reference
+export function buildGitHubHooksManifest() {
+  return {
+    version: 1,
+    hooks: {
+      postToolUse: [
+        {
+          type: 'command',
+          matcher: 'edit|create|apply_patch',
+          bash: guardedLauncher(launcherIn(GITHUB_PROJECT_SCRIPTS)),
+          timeoutSec: TIMEOUT_SECONDS,
+        },
+      ],
+    },
+  };
+}
+
+// Grok Build discovers project hooks from `.grok/hooks/*.json` and requires
+// folder trust (`/hooks-trust` or `--trust`) before they run. Event schema is
+// Claude-compatible (PostToolUse / Stop / PreToolUse); Claude tool names in
+// matchers are aliased to Grok tools (Edit|Write|MultiEdit → search_replace).
+// There is no per-OS command field; a Windows install rewrites `command` to
+// the `cmd /c` form (crates/skills hook_manifest.rs).
+// https://docs.x.ai/build/features/hooks
+export function buildGrokHooksManifest() {
+  return {
+    hooks: buildClaudeCompatibleHooks('Edit|Write|MultiEdit', GROK_PROJECT_SCRIPTS),
+  };
+}
+
+// Gemini's hook timeouts are milliseconds. BeforeTool carries the session id
+// into `build-phase` shell calls only; AfterAgent uses the engine's shared
+// completion check. Gemini substitutes `$GEMINI_PROJECT_DIR` in the command
+// text with an already shell-escaped path before `bash -c` runs it, so the
+// token stays bare: inside double quotes the escaping would turn literal.
+// There is no per-OS command field; a Windows install rewrites this to a
+// PowerShell form (crates/skills hook_manifest.rs).
+export function buildGeminiHooksManifest() {
+  const launcher = '$GEMINI_PROJECT_DIR/.gemini/skills/impeccable/scripts/impeccable';
+  const command = `[ ! -f ${launcher} ] || ${launcher} hook`;
+  return { hooks: {
+    BeforeTool: [{ matcher: '^run_shell_command$', hooks: [{
+      name: 'impeccable-session', type: 'command', command, timeout: 5000,
+    }] }],
+    AfterAgent: [{ hooks: [{
+      name: 'impeccable-completion', type: 'command', command, timeout: 30000,
+    }] }],
+  } };
+}
+
+export function hooksJsonFor(provider, options = {}) {
+  switch (provider) {
+    case 'claude':
+      return buildClaudeSettingsManifest();
+    case 'codex':
+      return buildCodexHooksManifest(options.configDir || '.codex');
+    case 'cursor':
+      return buildCursorHooksManifest();
+    case 'github':
+      return buildGitHubHooksManifest();
+    case 'grok':
+      return buildGrokHooksManifest();
+    case 'gemini':
+      return buildGeminiHooksManifest();
+    default:
+      return null;
+  }
+}

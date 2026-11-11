@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scroll-reveal scan-order fixture</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; background: #ffffff; color: #1a1a1a; }
+  /* Both columns start below the fold, so their reveal wrappers are still at
+     opacity 0 when the page finishes loading. */
+  .hero { width: 1120px; height: 900px; padding: 40px 0 0 40px; }
+  .hero h1 { font-size: 44px; line-height: 1.2; width: 720px; }
+  .hero p { font-size: 18px; line-height: 1.6; width: 640px; }
+  .columns { display: flex; gap: 48px; padding: 40px; }
+  .column { width: 480px; }
+  .column h2 { font-size: 24px; line-height: 1.3; }
+  /* The wrapper a scroll-reveal page ships: hidden until its section is reached. */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+  .reveal.in-view { opacity: 1; transform: none; }
+
+  /* FLAG: 1.6:1 body copy on white, only measurable once the wrapper reveals */
+  #faint-copy { color: #c9c9c9; font-size: 16px; line-height: 1.6; width: 420px; }
+  /* FLAG: 9px control label in the revealed column */
+  #tiny-action { font-size: 9px; line-height: 1.4; padding: 6px 10px; border: 1px solid #1a1a1a; background: #ffffff; color: #1a1a1a; }
+  /* FLAG: 16px copy set at 1.1 line-height */
+  #cramped-copy { color: #1a1a1a; font-size: 16px; line-height: 1.1; width: 420px; }
+  /* FLAG: a raster that stays buried after the reveal - its own opacity never moves */
+  #buried-photo { width: 320px; height: 200px; opacity: 0.05; }
+
+  /* PASS: the same body copy at 14.8:1 */
+  #clean-copy { color: #1a1a1a; font-size: 16px; line-height: 1.6; width: 420px; }
+  /* PASS: the same control at 14px */
+  #clean-action { font-size: 14px; line-height: 1.4; padding: 6px 10px; border: 1px solid #1a1a1a; background: #ffffff; color: #1a1a1a; }
+  /* PASS: the clean column breaks its lines with care too (straggler) */
+  #clean-column { text-wrap: pretty; }
+  /* PASS: copy at 1.6 line-height */
+  #roomy-copy { color: #1a1a1a; font-size: 16px; line-height: 1.6; width: 420px; }
+  /* PASS in a URL scan, which reads the page after the reveal sweep and sees this
+     at opacity 1. The static engine has no reveal to run and reports it from the
+     stylesheet, which is what its golden records. */
+  #fade-photo { width: 320px; height: 200px; opacity: 0; transition: opacity 0.3s ease-out; }
+  .in-view #fade-photo { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Scroll-reveal scan order</h1>
+    <p>Everything below this hero sits in a reveal wrapper that is at opacity 0 until the
+    page is scrolled to it. A rule pass that reads the page before the reveal sweep runs
+    measures none of the left column and flags the fade-in raster in the right one.</p>
+  </div>
+
+  <div class="columns">
+    <section class="column reveal" id="flagged-column">
+      <h2>Revealed column that must flag</h2>
+      <p id="faint-copy">Body copy at 1.6:1 against the page background. It is legible to the
+      element pass only once the reveal wrapper has transitioned to full opacity, which is what
+      a visitor scrolling the page actually sees.</p>
+      <p id="cramped-copy">A second paragraph set at 1.1 line-height, tight enough that the
+      descenders of one line touch the ascenders of the next when the text wraps across the
+      measure of this column.</p>
+      <button id="tiny-action" type="button">Apply</button>
+      <img id="buried-photo" alt="Buried product shot" width="320" height="200"
+           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==">
+    </section>
+
+    <section class="column reveal" id="clean-column">
+      <h2>Revealed column that must stay clean</h2>
+      <p id="clean-copy">The same amount of body copy at full contrast against the page
+      background. It reveals on the same wrapper as the left column, so a pass that reads the
+      post-reveal page sees it and finds nothing wrong with it.</p>
+      <p id="roomy-copy">A second paragraph at 1.6 line-height, the leading this size of text
+      wants, wrapping across the same measure as the paragraph it is paired with on the other
+      side of this fixture.</p>
+      <button id="clean-action" type="button">Apply</button>
+      <img id="fade-photo" alt="Fading product shot" width="320" height="200"
+           src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==">
+    </section>
+  </div>
+
+  <script>
+    const sections = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) { entry.target.classList.add('in-view'); io.unobserve(entry.target); }
+      }
+    }, { threshold: 0.1 });
+    sections.forEach((el) => io.observe(el));
+  </script>
+</body>
+</html>

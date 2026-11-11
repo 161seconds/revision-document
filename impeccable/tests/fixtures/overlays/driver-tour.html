@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overlay hiding: a driver.js-shaped tour at load</title>
+  <style>
+    /* A driver.js 1.x-shaped tour (its classes and the rules its stylesheet
+       ships, not its script), as gamer.com.tw starts it on every load: a
+       full-screen `svg.driver-overlay` dimming the page, a
+       `div.driver-popover` dialog, `driver-active driver-fade` on <body>, and
+       the highlighted element's classes and aria. Under the popover sit a
+       faint line of copy and a CTA, real contrast failures; inside it, the
+       popover's own faint text. The URL engine hides the tour before the
+       rule pass. Pinned by crates/browser/tests/overlay_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    nav { height: 44px; background: #f4f4f4; }
+    .faint { position: absolute; top: 260px; left: 820px; width: 380px; margin: 0; font-size: 14px; line-height: 28px; color: #aaaaaa; }
+    .cta { position: absolute; top: 320px; left: 820px; display: inline-block; padding: 8px 16px; border-radius: 6px;
+      background: #ff7145; color: #ffffff; font-size: 15px; font-weight: 500; text-decoration: none; }
+    /* From driver.js 1.3.1's stylesheet. */
+    .driver-active .driver-overlay, .driver-active * { pointer-events: none; }
+    .driver-active .driver-active-element, .driver-active .driver-active-element *, .driver-popover, .driver-popover * { pointer-events: auto; }
+    .driver-popover { all: unset; box-sizing: border-box; color: #2d2d2d; margin: 0; padding: 15px; border-radius: 5px;
+      min-width: 250px; max-width: 300px; box-shadow: 0 1px 10px #0006; z-index: 1000000000; position: fixed; top: 0; right: 0; background-color: #fff; }
+    .driver-popover-title { font: 19px/normal sans-serif; font-weight: 700; display: block; margin: 0 0 12px; }
+    .driver-popover-description { font-size: 14px; color: #b5b5b5; display: block; }
+  </style>
+</head>
+<body class="driver-active driver-fade">
+  <nav class="main-nav driver-no-interaction driver-active-element" aria-haspopup="dialog" aria-expanded="true" aria-controls="driver-popover-content">Site navigation</nav>
+  <h1>A page under a product tour</h1>
+  <p>The copy near the top of the page is readable.</p>
+  <p class="faint" id="covered-copy">Faint copy the tour popover covers at load.</p>
+  <a href="#" class="cta" id="covered-cta">Open the store</a>
+  <div class="driver-popover" id="driver-popover-content" role="dialog" aria-labelledby="driver-popover-title"
+    style="display: block; top: 220px; left: 800px; width: 440px; max-width: 440px; height: 200px;">
+    <header id="driver-popover-title" class="driver-popover-title">Sign in to search and get notifications</header>
+    <div id="driver-popover-description" class="driver-popover-description">Step one of five: the top bar holds your menu and your messages.</div>
+    <footer class="driver-popover-footer"><button type="button" class="driver-popover-next-btn">Next</button></footer>
+  </div>
+  <svg class="driver-overlay driver-overlay-animated" viewBox="0 0 1280 800" preserveAspectRatio="xMinYMin slice"
+    style="fill-rule: evenodd; clip-rule: evenodd; z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+    <path d="M1280,0L0,0L0,800L1280,800L1280,0Z M0,0 L1280,0 L1280,44 L0,44 Z" style="fill: rgb(0, 0, 0); opacity: 0.7; pointer-events: auto; cursor: auto;"></path>
+  </svg>
+</body>
+</html>

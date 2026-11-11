@@ -1,0 +1,38 @@
+{
+  "steps": [
+    {
+      "stdout": "",
+      "stderr": "build-phase: --decision-comp names option one of a comp round, so it goes with --direction and never with --comp\n",
+      "exit": 1,
+      "signal": null
+    },
+    {
+      "stdout": "",
+      "stderr": "build-phase: decision comp .impeccable/mocks/decision/missing.png does not exist\n",
+      "exit": 1,
+      "signal": null
+    },
+    {
+      "stdout": "BUILD-PHASE COMPS  comp (pending comp round)  direction seed\n  comps       open    \n  spec        pending \n  plates      pending \n  hero        pending \n  sections    pending \n  motion      pending \n  responsive  pending \n  review      pending \nNEXT Comp round for the chosen direction (seed seed): read reference/visualize.md. The chosen decision comp .impeccable/mocks/decision/assigned.png is compositional option one; it stays where it is and is never regenerated. Generate two more compositional comps of the requested surface at its viewport into .impeccable/mocks/ (each with a prompt sidecar), put all three in front of the user, and set \"approved\": true in the chosen comp's sidecar (.impeccable/mocks/decision/assigned.png.json when they keep option one). Then impeccable build-phase advance. No page code before this closes.\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "stdout": "GATE COMPS FAILED (state unchanged)\n  - 1 comp (the chosen decision comp .impeccable/mocks/decision/assigned.png as option one, the others directly under .impeccable/mocks); the comp round puts three compositional options of the chosen direction in front of the user (reference/visualize.md). Generate the missing ones (harness image tool or generate-image.mjs), each with a .json sidecar holding its prompt.\n  - no comp is approved: put the three comps in front of the user (decision page via serve-question.mjs, or the structured question tool), then set \"approved\": true in the chosen comp's sidecar. A delegated pick is recorded the same way and disclosed.\n",
+      "stderr": "",
+      "exit": 2,
+      "signal": null
+    },
+    {
+      "stdout": "ADVANCED comps -> spec  3 comps, 1 approved\nNEXT Measure the comp: impeccable comp-spec --comp .impeccable/mocks/decision/assigned.png --grid, open .impeccable/build/comp-grid.png, write regions.json (every illustration, photo, texture as its own plate region; every text block its own text region), run impeccable comp-spec --comp .impeccable/mocks/decision/assigned.png --regions regions.json. Then measure the type: impeccable font-match --measure <id> for each text region (cap height, width class, weight class) and impeccable font-match --rank <lead text region> --text \"<its first words>\" to choose the headline face by metrics (the USE line is the CSS; with no browser it records the catalog's nearest face, which is the choice; do not install one, and do not write a chosen face into the spec by hand). Then impeccable build-phase advance.\n",
+      "stderr": "",
+      "exit": 0,
+      "signal": null
+    }
+  ],
+  "files": {
+    ".impeccable/build/approved-comp.json": "{\n  \"comp\": \".impeccable/mocks/decision/assigned.png\",\n  \"pixelSha256\": \"4c640a415d36339b4895de01ef99f1ab7726d8e4cf70029652485137c24d914e\",\n  \"fileSha256\": \"b4dd0dcead73188eb9a4043e70f9050c8a397182d3dfbad6f4be4f06a6a1db64\",\n  \"copy\": \".impeccable/build/approved-comp.png\",\n  \"at\": \"<ISO>\"\n}",
+    ".impeccable/build/state.json": "{\n  \"tool\": \"build-phase\",\n  \"version\": 2,\n  \"startedAt\": \"<ISO>\",\n  \"comp\": \".impeccable/mocks/decision/assigned.png\",\n  \"direction\": \"seed\",\n  \"breakpoint\": \"768x512\",\n  \"artifact\": null,\n  \"phase\": \"spec\",\n  \"phases\": {\n    \"comps\": {\n      \"status\": \"closed\",\n      \"openedAt\": \"<ISO>\",\n      \"closedAt\": \"<ISO>\",\n      \"attempts\": 2,\n      \"notes\": [],\n      \"gate\": {\n        \"ok\": true,\n        \"reasons\": [],\n        \"summary\": \"3 comps, 1 approved\",\n        \"approved\": \".impeccable/mocks/decision/assigned.png\",\n        \"at\": \"<ISO>\"\n      },\n      \"forced\": null\n    },\n    \"spec\": {\n      \"status\": \"open\",\n      \"openedAt\": \"<ISO>\",\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"plates\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"hero\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"sections\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"motion\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"responsive\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    },\n    \"review\": {\n      \"status\": \"pending\",\n      \"openedAt\": null,\n      \"closedAt\": null,\n      \"attempts\": 0,\n      \"notes\": [],\n      \"gate\": null,\n      \"forced\": null\n    }\n  },\n  \"finish\": null,\n  \"decisionComp\": \".impeccable/mocks/decision/assigned.png\",\n  \"sessionId\": \"<UUID>\"\n}"
+  }
+}

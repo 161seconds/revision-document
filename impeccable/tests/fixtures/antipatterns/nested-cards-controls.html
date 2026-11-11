@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nested-cards, a composite control drawn as a box</title>
+<!--
+  Should pass: a segmented switch (role="tablist"), a radio group and a
+  toolbar inside a card. Each is one control drawn with a border and a
+  radius, not a second card (easyveo.com).
+
+  Should flag: the same box with no control role.
+-->
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; font-size: 16px; color: #f5f5f4; background: #1c1917; margin: 24px; }
+  .col { display: inline-block; width: 440px; vertical-align: top; }
+  h2 { font-size: 20px; margin: 0 0 16px; }
+  .composer { width: 360px; padding: 16px; margin: 0 0 24px; background: #4b3c32; border: 1px solid #6b5a4e; border-radius: 18px; }
+  .composer p { margin: 0 0 12px; }
+  .switch { display: grid; grid-template-columns: 1fr 1fr; width: 320px; height: 44px; padding: 3px; background: #2f251f; border: 1px solid #6b5a4e; border-radius: 10px; }
+  .switch button { border: 0; border-radius: 7px; background: transparent; color: inherit; font-size: 12px; }
+  .switch .on { background: #4b3c32; }
+</style>
+</head>
+<body>
+
+<div class="col" id="should-flag">
+  <h2>Should flag</h2>
+  <div class="composer">
+    <p>Describe the video you want to make.</p>
+    <div class="switch flag-plain-box"><button type="button" class="on">Video</button><button type="button">Image</button></div>
+  </div>
+</div>
+
+<div class="col" id="should-pass">
+  <h2>Should pass</h2>
+  <div class="composer">
+    <p>Describe the video you want to make.</p>
+    <div class="switch pass-tablist" role="tablist" aria-label="Create a video or an image"><button type="button" role="tab" class="on">Video</button><button type="button" role="tab">Image</button></div>
+  </div>
+  <div class="composer">
+    <p>Pick the aspect ratio of the result.</p>
+    <div class="switch pass-radiogroup" role="radiogroup" aria-label="Aspect ratio"><button type="button" role="radio" class="on">Wide</button><button type="button" role="radio">Tall</button></div>
+  </div>
+  <div class="composer">
+    <p>Format the prompt before you send it.</p>
+    <div class="switch pass-toolbar" role="toolbar" aria-label="Formatting"><button type="button" class="on">Bold</button><button type="button">Italic</button></div>
+  </div>
+</div>
+
+</body>
+</html>

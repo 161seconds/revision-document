@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow, a docs page with a fixed outline</title>
+<!--
+  Should pass. A documentation page puts its long article beside an outline
+  column whose only content is a fixed layer. That column holds nothing in its
+  own flow to measure the fold against, so the tall article is not a column
+  overflowing a short sibling. first-viewport-column-overflow.html keeps the
+  flag case.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+  .docs { display: flex; gap: 32px; padding: 40px; }
+  .content { width: 70%; }
+  .content .long { height: 1600px; background: #f5f5f5; padding: 16px; }
+  .aside { width: 25%; position: relative; }
+  .aside-container { position: fixed; top: 80px; right: 40px; width: 240px; }
+</style>
+</head>
+<body>
+  <div class="docs">
+    <div class="content">
+      <h1>Introduction</h1>
+      <p>PicoMQ is a durable stream server. Clients create streams and append records.</p>
+      <div class="long">The rest of the documentation article.</div>
+    </div>
+    <div class="aside">
+      <div class="aside-container">
+        <p>On this page</p>
+        <p>Introduction</p>
+        <p>Vision</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

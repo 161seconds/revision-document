@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skipped Heading: footer column titles</title>
+  <style>
+    /* A skip into the footer is chrome, not a hole in the content outline
+       (corpus decision r5-p29-skipped-heading-footer-titles). The heading has
+       to sit in a footer (the element, role=contentinfo or #footer) and the
+       heading it follows has to be the last one before that footer, or the
+       footer's own first heading. A skip in the content reports, and so does
+       a skip between two later footer headings. */
+    body { font-family: system-ui, sans-serif; background: #ffffff; color: #1c1c24; margin: 0; }
+    main { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; width: 1200px; margin: 0 auto; padding: 24px 0; }
+    h1 { font-size: 32px; line-height: 40px; margin: 0 0 16px; width: 1200px; }
+    h2 { font-size: 24px; line-height: 32px; margin: 0 0 12px; }
+    h3 { font-size: 20px; line-height: 28px; margin: 0 0 12px; }
+    h4 { font-size: 16px; line-height: 24px; margin: 0 0 8px; }
+    h6 { font-size: 14px; line-height: 20px; margin: 0 0 8px; }
+    p { font-size: 16px; line-height: 24px; margin: 0 0 16px; max-width: 520px; }
+    .columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; width: 1200px; margin: 0 auto; padding: 24px 0; }
+    .closing { width: 1200px; margin: 0 auto; padding: 24px 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 style="grid-column: 1 / -1;">Footer column titles</h1>
+    <section aria-label="Should flag">
+      <h2>Should flag</h2>
+      <h4 data-expect="flag" data-case="Flag Content Skip">Jet fuel grades</h4>
+      <p>An h4 straight under an h2 in the content is a hole in the outline.</p>
+    </section>
+    <section aria-label="Should pass">
+      <h2>Should pass</h2>
+      <p>The footer below titles its link columns with h4 straight after this h2.</p>
+    </section>
+  </main>
+  <footer>
+    <div class="columns">
+      <div>
+        <h4 data-expect="pass" data-case="Pass First Column Title">Solutions</h4>
+        <p>Payments, invoicing, payroll.</p>
+      </div>
+      <div>
+        <h4 data-expect="pass" data-case="Pass Second Column Title">Company</h4>
+        <p>About, careers, press.</p>
+      </div>
+      <div>
+        <h6 data-expect="flag" data-case="Flag Skip Inside Footer">Legal small print</h6>
+        <p>An h6 under an h4 is a skip between two footer headings.</p>
+      </div>
+    </div>
+  </footer>
+  <div role="contentinfo">
+    <div class="closing">
+      <h2>Ready to level up</h2>
+      <p>The closing call to action lives inside the footer landmark.</p>
+    </div>
+    <div class="columns">
+      <div>
+        <h4 data-expect="pass" data-case="Pass Title After Footer Call To Action">Products</h4>
+        <p>Cans, cases, subscriptions.</p>
+      </div>
+      <div>
+        <h4 data-expect="pass" data-case="Pass Later Title">Quick links</h4>
+        <p>Stores, wholesale, contact.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

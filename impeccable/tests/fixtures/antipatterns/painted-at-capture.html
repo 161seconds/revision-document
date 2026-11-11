@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painted at capture: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the painted-at-capture gate of the URL engine's element
+       pass (crates/core/src/browser/painted.rs). Text and raster rules score
+       what a visitor sees, so an element that is not painted at rest has
+       nothing for them to score. Every should-pass case below carries the
+       same measurement as its should-flag twin; only its paint differs.
+
+       Covered here: tight-leading, undersized-ui-text, low-contrast,
+       buried-raster, bounce-easing. The gate also covers the other text
+       measurements (see PAINT_GATED_TEXT_RULES). The same predicate runs
+       inside clipped-overflow-container (on the positioned child it names)
+       and nested-cards (on the inner card), which also skips popup layers
+       named by BEM classes or by role="menu" / role="listbox".
+
+       The static HTML engine measures no boxes, so it reports the
+       should-pass cases as well. The URL behavior is pinned by
+       the_rule_pass_skips_what_is_not_painted in
+       crates/browser/tests/evidence.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111; background: #fff; }
+    .grid { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 24px 20px; }
+    .col { position: relative; width: 600px; }
+    .col h2 { font: 600 16px/1.2 system-ui; margin: 0 0 16px; color: #111; }
+    .col h3 { font: 600 14px/1.3 system-ui; margin: 32px 0 8px; color: #111; }
+
+    /* The measurements. */
+    .tight { width: 400px; margin: 0; font-size: 14px; line-height: 1.1; }
+    .micro { font-size: 10px; color: #111; }
+    .faint { margin: 0; font-size: 16px; color: #bbbbbb; }
+    .ghost { display: block; width: 320px; height: 120px; opacity: 0.05; }
+
+    /* A submenu held at max-height: 0, and the same submenu open. */
+    .submenu { width: 400px; max-height: 0; overflow: hidden; margin: 0; padding: 0; list-style: none; }
+    .submenu.open { max-height: 400px; }
+    .submenu li { width: 400px; }
+
+    /* A horizontal scroller at scroll-left 0. */
+    .scroller { width: 300px; height: 120px; overflow-x: auto; overflow-y: hidden; }
+    .track { display: flex; width: 900px; height: 100px; }
+    .cell { flex: 0 0 300px; width: 300px; height: 100px; padding: 8px; box-sizing: border-box; }
+
+    /* A wrapper with no size that hides its overflow, and one with room. */
+    .zero { width: 0; height: 0; overflow: hidden; }
+    .roomy { width: 420px; height: 120px; overflow: hidden; }
+    .zero-inner { width: 400px; }
+
+    /* A crossfade stack: the active layer and one faded out. */
+    .stack { position: relative; width: 320px; height: 120px; background: #ffffff; }
+    .layer { position: absolute; top: 0; left: 0; width: 320px; height: 120px; }
+    .fade { opacity: 0; transition: opacity 0.3s ease-out; }
+
+    /* A popover whose containing block is the column, not the strip that
+       hides overflow above it, so the strip does not clip it. */
+    .strip { width: 400px; height: 40px; overflow: hidden; margin-bottom: 96px; }
+    .popover { position: absolute; margin-top: 48px; width: 200px; height: 40px; }
+
+    /* An off-canvas panel parked before the start of the document. */
+    .offcanvas { position: absolute; top: 0; left: -2000px; width: 400px; height: 120px; }
+
+    /* An app shell: a wrapper that hides overflow around a main that scrolls,
+       and a frame that hides overflow around a column with nothing to
+       scroll. */
+    .shell { display: flex; width: 400px; height: 120px; overflow: hidden; }
+    .shell-main { flex: 1; overflow-y: auto; }
+    .frame { width: 400px; height: 120px; overflow: hidden; }
+    .column { height: 600px; overflow-y: auto; }
+    .filler { height: 300px; margin: 0; }
+
+    /* A fixed badge whose containing block is its container, not the
+       viewport, and a fixed drawer parked past the viewport's right edge. */
+    .cb { position: relative; width: 400px; height: 40px; }
+    .badge { position: fixed; top: 8px; left: 8px; }
+    .cb-will { will-change: transform; }
+    .cb-contain { contain: paint; }
+    .cb-translate { translate: 0 0; }
+    .cb-scale { scale: 1; }
+    .cb-rotate { rotate: 0deg; }
+    .cb-perspective { perspective: 800px; }
+    .cb-backdrop { backdrop-filter: blur(2px); }
+    .parked { position: fixed; top: 0; left: 100%; width: 300px; height: 120px; }
+
+    /* Rasters with a transition: Tailwind's `transition` utility list, a
+       lazy image fading in, and a poster over a video. */
+    .tw-transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-duration: 150ms; }
+    .buried { display: block; width: 320px; height: 120px; opacity: 0.08; }
+    .lazy-fade { display: block; width: 320px; height: 120px; opacity: 0; transition: opacity 0.4s; }
+    .tw-transition-opacity { transition-property: opacity; transition-duration: 150ms; }
+
+    /* A smooth-scroll frame (smooth-scrollbar, Locomotive Scroll): a wrapper
+       as tall as the viewport that hides overflow, around content a script
+       moves with transforms. */
+    .smooth-frame { height: 100vh; overflow: hidden; }
+    .smooth-content { transform: translate3d(0, 0, 0); }
+    .smooth-filler { height: 110vh; margin: 0; }
+
+    /* Screen-reader text: a 1px box whose clip removes it (video.js control
+       text, .sr-only, .visually-hidden). */
+    .player-bar { position: relative; width: 270px; height: 32px; background: #7384a8; }
+    .player-bar-twin { background: #7485a9; }
+    .sr-box { display: block; position: absolute; top: 0; left: 28px; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); font-size: 10px; line-height: 10px; }
+    .control-label { display: inline-block; font-size: 10px; line-height: 10px; color: #ffffff; }
+
+    /* A paragraph collapsed to no height that hides its overflow. */
+    .collapsed-copy { height: 0; overflow: hidden; }
+
+    /* A tray that springs open, open and collapsed. The box rule read off
+       it is bounce-easing; it was layout-transition until that rule was
+       retired. */
+    .tray { width: 400px; max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .tray.open { max-height: 200px; }
+    .volume-panel { width: 40px; height: 30px; transition: width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .seek-bar { width: 140px; height: 2px; background: #ccc; transition: height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    /* A clipping host with a positioned menu under it. */
+    .clip-host { position: relative; width: 300px; height: 40px; overflow: hidden; margin-bottom: 120px; }
+    .clip-menu { position: absolute; top: 100%; left: 0; width: 200px; padding: 8px; background: #222; color: #fff; }
+    .clip-host-cb { transform: translateZ(0); }
+    .clip-fixed { position: fixed; right: 8px; bottom: 8px; width: 120px; padding: 8px; background: #222; color: #fff; }
+    .clip-fixed-cb { position: fixed; top: 100%; left: 0; width: 200px; padding: 8px; background: #222; color: #fff; }
+
+    /* Cards inside cards, and popup panels that look like cards. */
+    .card { background: #ffffff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); padding: 16px; margin-bottom: 16px; }
+    .card .card { width: 320px; }
+    .hidden-panel { visibility: hidden; }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <section class="col" data-col="flag">
+      <h2>Should flag</h2>
+
+      <h3>Open submenu</h3>
+      <ul class="submenu open">
+        <li>
+          <a class="micro" id="flag-submenu-link" href="#submenu">Sustainability</a>
+          <p class="tight" id="flag-submenu-copy">Our sourcing commitments cover every region we buy from, with published audits, grower programs and a yearly progress report for each crop.</p>
+        </li>
+      </ul>
+
+      <h3>First cell of a scroller</h3>
+      <div class="scroller">
+        <div class="track">
+          <div class="cell"><p class="faint" id="flag-scroller-first">Starter plan</p></div>
+          <div class="cell"><p>Team plan</p></div>
+          <div class="cell"><p>Agency plan</p></div>
+        </div>
+      </div>
+
+      <h3>Wrapper with room</h3>
+      <div class="roomy">
+        <div class="zero-inner">
+          <p class="tight" id="flag-roomy-copy">This paragraph sits in a clipping wrapper that is large enough to show it, so its cramped leading is on screen and worth reporting.</p>
+        </div>
+      </div>
+
+      <h3>Active crossfade layer</h3>
+      <div class="stack">
+        <div class="layer"><p class="faint" id="flag-crossfade-copy">Guaranteed delivery</p></div>
+      </div>
+
+      <h3>Buried photo</h3>
+      <img class="ghost" id="flag-buried-photo" alt="Buried product shot" width="320" height="120"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+      <h3>Popover past a clipping strip</h3>
+      <div class="strip">
+        <span>Filters</span>
+        <div class="popover"><a class="micro" id="flag-popover-link" href="#filters">Reset all</a></div>
+      </div>
+
+      <h3>Below an inner scroller's fold</h3>
+      <div class="shell">
+        <div class="shell-main">
+          <p class="filler">Recent invoices</p>
+          <p class="faint" id="flag-shell-below-fold">Invoice history</p>
+        </div>
+      </div>
+
+      <h3>Buried photo with a transition utility</h3>
+      <img class="buried tw-transition" id="flag-tw-buried-photo" alt="Buried team photo" width="320" height="120"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+      <h3>Buried lazy photo with a transition utility</h3>
+      <img class="buried tw-transition" id="flag-lazy-tw-buried-photo" alt="Buried studio photo" width="320" height="120" loading="lazy"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+      <h3>Buried lazy photo with an opacity transition</h3>
+      <img class="buried tw-transition-opacity" id="flag-lazy-fade-buried-photo" alt="Buried product render" width="320" height="120" loading="lazy" decoding="async"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+      <h3>Fixed badges inside a containing block</h3>
+      <div class="cb cb-will"><a class="micro badge" id="flag-cb-will-link" href="#will">Offer ends 12:00</a></div>
+      <div class="cb cb-contain"><a class="micro badge" id="flag-cb-contain-link" href="#contain">Offer ends 13:00</a></div>
+      <div class="cb cb-translate"><a class="micro badge" id="flag-cb-translate-link" href="#translate">Offer ends 14:00</a></div>
+      <div class="cb cb-scale"><a class="micro badge" id="flag-cb-scale-link" href="#scale">Offer ends 15:00</a></div>
+      <div class="cb cb-rotate"><a class="micro badge" id="flag-cb-rotate-link" href="#rotate">Offer ends 16:00</a></div>
+      <div class="cb cb-perspective"><a class="micro badge" id="flag-cb-perspective-link" href="#perspective">Offer ends 17:00</a></div>
+      <div class="cb cb-backdrop"><a class="micro badge" id="flag-cb-backdrop-link" href="#backdrop">Offer ends 18:00</a></div>
+
+      <h3>Below a smooth-scroll frame's fold</h3>
+      <div class="smooth-frame">
+        <div class="smooth-content">
+          <p class="smooth-filler">Selected work</p>
+          <p class="faint" id="flag-smooth-below-fold">Case studies</p>
+        </div>
+      </div>
+
+      <h3>Visible control label</h3>
+      <div class="player-bar player-bar-twin"><span class="control-label" id="flag-sr-twin-copy">Loaded</span></div>
+
+      <h3>Paragraph with room</h3>
+      <p class="tight" id="flag-open-copy">This paragraph has its full height, so its cramped leading is on screen and worth reporting at every width it wraps to.</p>
+
+      <h3>Open tray</h3>
+      <div class="tray open" id="flag-open-tray"><p>Plans, pricing and the questions people ask most often before they sign up.</p></div>
+
+      <h3>Menu escaping a clipping host</h3>
+      <div class="clip-host" id="flag-clip-menu-host">
+        <button>Playback speed</button>
+        <div class="clip-menu" role="menu"><a href="#rate" role="menuitem">1.5x speed</a></div>
+      </div>
+
+      <h3>Fixed menu inside its containing block</h3>
+      <div class="clip-host clip-host-cb" id="flag-clip-fixed-cb-host">
+        <button>Share</button>
+        <div class="clip-fixed-cb" role="menu"><a href="#share" role="menuitem">Copy link</a></div>
+      </div>
+
+      <h3>Card inside a card</h3>
+      <div class="card">
+        <div class="card" id="flag-nested-card">A card nested inside another card, with its own shadow and radius.</div>
+      </div>
+    </section>
+
+    <section class="col" data-col="pass">
+      <h2>Should pass</h2>
+
+      <h3>Collapsed submenu</h3>
+      <ul class="submenu">
+        <li>
+          <a class="micro" id="pass-submenu-link" href="#collapsed">Human rights</a>
+          <p class="tight" id="pass-submenu-copy">We are committed to doing business in a way that respects human rights across our operations and our supply chain, in every country we work in.</p>
+        </li>
+      </ul>
+
+      <h3>Third cell of a scroller</h3>
+      <div class="scroller">
+        <div class="track">
+          <div class="cell"><p>Starter weeks</p></div>
+          <div class="cell"><p>Team weeks</p></div>
+          <div class="cell"><p class="faint" id="pass-scroller-third">Agency weeks</p></div>
+        </div>
+      </div>
+
+      <h3>Wrapper with no size</h3>
+      <div class="zero">
+        <div class="zero-inner">
+          <a class="micro" id="pass-zero-link" href="#zero">Read more</a>
+          <p class="tight" id="pass-zero-copy">This paragraph sits in a wrapper with no width and no height that hides its overflow, so nothing of it reaches the screen at all.</p>
+        </div>
+      </div>
+
+      <h3>Faded crossfade layer</h3>
+      <div class="stack">
+        <img class="layer" alt="Active story" width="320" height="120"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+        <img class="layer fade" id="pass-crossfade-poster" alt="Next story" width="320" height="120"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+        <div class="layer fade"><p class="faint" id="pass-crossfade-copy">Unlimited talk and text</p></div>
+      </div>
+
+      <h3>Off-canvas panel</h3>
+      <div class="offcanvas">
+        <a class="micro" id="pass-offcanvas-link" href="#offcanvas">Close panel</a>
+      </div>
+
+      <h3>Below a frame with nothing to scroll</h3>
+      <div class="frame">
+        <div class="column">
+          <p class="filler">Archived invoices</p>
+          <p class="faint" id="pass-frame-below">Invoice archive</p>
+        </div>
+      </div>
+
+      <h3>Lazy image fading in</h3>
+      <img class="lazy-fade" id="pass-lazy-photo" alt="Loading team photo" width="320" height="120" loading="lazy"
+        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+
+      <h3>Poster over a video</h3>
+      <div class="stack">
+        <div class="layer"><video class="layer" muted playsinline width="320" height="120"></video></div>
+        <img class="layer fade" id="pass-video-poster" alt="Video poster" width="320" height="120"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+      </div>
+
+      <h3>Fixed drawer past the viewport</h3>
+      <div class="parked">
+        <a class="micro" id="pass-parked-link" href="#parked">Close drawer</a>
+      </div>
+
+      <h3>Screen-reader control text</h3>
+      <div class="player-bar"><span class="sr-box"><span class="control-label" id="pass-sr-copy">Loaded</span>: <span class="control-label" id="pass-sr-percentage">24.53%</span></span></div>
+
+      <h3>Paragraph collapsed to no height</h3>
+      <p class="tight collapsed-copy" id="pass-collapsed-copy">This paragraph is collapsed to no height and hides its overflow, so none of its cramped leading reaches the screen.</p>
+
+      <h3>Collapsed tray</h3>
+      <div class="tray" id="pass-collapsed-tray"><p>Frequently asked questions about plans, billing, and cancelling.</p></div>
+
+      <h3>Controls of a player with no control bar</h3>
+      <div style="display: none"><div class="volume-panel" id="pass-hidden-volume"></div></div>
+
+      <h3>Seek bar of a parked player</h3>
+      <div class="offcanvas"><div class="seek-bar" id="pass-parked-seek-bar"></div></div>
+
+      <h3>Menu that never renders</h3>
+      <div class="clip-host" id="pass-clip-hidden-menu-host">
+        <button>Playback speed</button>
+        <div class="clip-menu" role="menu" style="display: none"><a href="#rate" role="menuitem">2x speed</a></div>
+      </div>
+
+      <h3>Fixed layer inside a host that is not its containing block</h3>
+      <div class="clip-host" id="pass-clip-fixed-host">
+        <button>Listen</button>
+        <div class="clip-fixed" role="dialog"><a href="#player">Audio player</a></div>
+      </div>
+
+      <h3>Mega-nav panel named with BEM classes</h3>
+      <div class="card">
+        <div class="card site-nav__dropdown-level2" id="pass-bem-dropdown">Solutions for aerospace, defense and commercial aviation teams.</div>
+      </div>
+
+      <h3>Panels with a popup role</h3>
+      <div class="card">
+        <ul class="card" role="menu" id="pass-role-menu"><li role="menuitem">Engines and propulsion systems</li></ul>
+      </div>
+      <div class="card">
+        <ul class="card" role="listbox" id="pass-role-listbox"><li role="option">Avionics and connected aircraft</li></ul>
+      </div>
+
+      <h3>Closed card panel</h3>
+      <div class="card">
+        <div class="card hidden-panel" id="pass-hidden-card">Missiles, radars and the sensors that guide them.</div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

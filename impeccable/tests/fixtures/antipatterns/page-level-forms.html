@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page-Level Stylesheet Forms: Should Flag vs Should Pass</title>
+  <style>
+    /* Fixture for the stylesheet-text forms of gradient-text, bounce-easing,
+       dark-glow, radial-halo and marquee. The page's painted root is light
+       (#f8fafc).
+
+       In the URL engine each declaration reports once: an element form that
+       reads the declaration off an element speaks for it, and the page form
+       on body stands only where no element form can (a pseudo-element, a
+       rule the element pass skips by tag). "Dark page" is read off the
+       painted root, a glow is measured against the surface it lands on, and
+       a property token has to be a name of its own (`--bprogress-box-shadow`
+       is not `box-shadow`, `border-width` is not `width`).
+
+       Should flag, URL engine: the gradient heading once, on the heading;
+       the overshooting button once, on the button; the amber CTA glow once,
+       on the CTA; the ticker strip once, its clone and its builder-specific
+       rule block folded in, its travel read through `calc()`.
+
+       Should pass, URL engine: the overridden HUD glow, the token shadow,
+       the avatar glow at 15% alpha that lifts its card by 14, every
+       transition of a layout property (the layout-transition rule was
+       retired on 2026-10-07, so the painted link's width, the collapsed
+       drawer's height and the `border-width` and `line-height` lookalikes
+       are all quiet), and the offset glow and halo declared beside a dark
+       player box on this light page.
+
+       The static HTML engine has no layout, no computed style of its own
+       elements' pseudo-elements and no painted root, so it keeps its base
+       behavior there: it reports the class and stylesheet duplicates, the
+       avatar glow, the three ticker rule blocks, and the offset glow and
+       halo "on dark page", decided from the player box's `#000000`. The URL
+       behavior is pinned by crates/browser/tests/page_level_forms.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; color: #111111; background: #f8fafc; }
+    .columns { display: grid; grid-template-columns: 600px 600px; gap: 40px; padding: 32px; }
+    .column > h2 { font-size: 18px; margin: 0 0 16px; color: #0f172a; }
+    .case { width: 560px; margin: 0 0 24px; padding: 16px; background: #ffffff; border: 1px solid #e2e8f0; }
+    .case > h3 { font-size: 15px; margin: 0 0 8px; color: #0f172a; }
+    .dark-card { width: 528px; height: 120px; padding: 16px; background: #0b0f19; }
+
+    /* PASS: a custom property named after a shadow declares a token. */
+    :root { --bprogress-box-shadow: 0 0 10px #29d, 0 0 5px #29d; }
+
+    /* PASS: a dark box in the stylesheet does not make this page dark. */
+    .player-box { width: 320px; height: 180px; background-color: #000000; }
+    @keyframes lift-shadow { 50% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.6); } }
+    .spotlight { width: 400px; height: 200px; background: radial-gradient(circle at 50% 0%, #8fd8f2 0%, transparent 70%); }
+
+    /* PASS: a glow a later rule overrides. */
+    .hud-label { display: block; width: 240px; height: 32px; color: #365314; text-shadow: 0 0 12px #84cc16; }
+    .case .hud-label { text-shadow: none; }
+
+    /* PASS: a glow nobody sees, 20px at 15% alpha on a near-black card. */
+    .avatar-faint { width: 80px; height: 80px; border-radius: 50%; background: #334155; box-shadow: 0 0 20px rgba(33, 196, 93, 0.15); }
+
+    /* FLAG: a glow on an element, reported on that element. */
+    .glow-cta { display: block; width: 197px; height: 40px; background: #111827; color: #fef3c7; box-shadow: 0 0 24px rgba(245, 158, 11, 0.6); }
+
+    /* FLAG: gradient text, worn as a stylesheet rule and utility classes. */
+    .brand-title { display: inline-block; margin: 0; font-size: 40px; font-weight: 800; background-image: linear-gradient(90deg, #ea580c, #be185d); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+    /* FLAG: overshooting easing on a button-like box. */
+    .pop-button { display: block; width: 160px; height: 40px; background: #1e293b; color: #ffffff; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+    /* PASS: a width transition on a painted link. */
+    .more-link { display: inline-block; width: 120px; height: 20px; color: #1d4ed8; transition: width 0.2s ease; }
+
+    /* PASS: transitions that name no layout property. */
+    .frame-box { width: 200px; height: 40px; border: 1px solid #94a3b8; transition: border-width 0.2s ease; }
+    .caption-line { width: 300px; transition: line-height 0.2s ease; }
+
+    /* PASS: a drawer collapsed at capture. */
+    .drawer-panel { display: none; width: 300px; height: 200px; transition: height 0.3s ease; }
+
+    /* FLAG: one ticker strip, a clone of its track, and a builder rule block. */
+    @keyframes ticker-move { 0% { transform: translateX(0%); } 100% { transform: translateX(calc(-100% - 32px)); } }
+    @keyframes ticker-move-clone { 0% { transform: translateX(100%); } 100% { transform: translateX(0%); } }
+    .ticker-strip { position: relative; width: 528px; height: 32px; overflow: hidden; }
+    .ticker-track { display: flex; gap: 32px; width: 900px; height: 32px; white-space: nowrap; }
+    .ticker-track--original { animation: ticker-move 20s linear infinite; }
+    .ticker-track--clone { position: absolute; top: 0; left: 0; animation: ticker-move-clone 20s linear infinite; }
+    .promo-band .ticker-track--original { animation: ticker-move 40s linear infinite; }
+  </style>
+</head>
+<body>
+  <div class="columns">
+    <div class="column">
+      <h2>Should flag</h2>
+
+      <div class="case">
+        <h3>Gradient heading with utility classes</h3>
+        <h4 class="brand-title bg-clip-text bg-gradient-to-r from-orange-600 to-pink-700">Ship it</h4>
+      </div>
+
+      <div class="case">
+        <h3>Button with overshooting easing</h3>
+        <div class="pop-button">Get started</div>
+      </div>
+
+      <div class="case">
+        <h3>Amber glow on a call to action</h3>
+        <div class="dark-card">
+          <a class="glow-cta" href="#start">Start now</a>
+        </div>
+      </div>
+
+      <div class="case promo-band">
+        <h3>Ticker strip with a clone track</h3>
+        <div class="ticker-strip">
+          <div class="ticker-track ticker-track--original"><span>Free shipping over $50</span><span>New arrivals weekly</span></div>
+          <div class="ticker-track ticker-track--clone" aria-hidden="true"><span>Free shipping over $50</span><span>New arrivals weekly</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="column">
+      <h2>Should pass</h2>
+
+      <div class="case">
+        <h3>HUD label whose glow is overridden</h3>
+        <span class="hud-label">Signal locked</span>
+      </div>
+
+      <div class="case">
+        <h3>Progress token named after a shadow</h3>
+        <p>The page declares a progress bar token and draws no bar.</p>
+      </div>
+
+      <div class="case">
+        <h3>Avatar glow too faint to see</h3>
+        <div class="dark-card">
+          <div class="avatar-faint"></div>
+        </div>
+      </div>
+
+      <div class="case">
+        <h3>Painted link with a width transition</h3>
+        <a class="more-link" href="#more">Read more</a>
+      </div>
+
+      <div class="case">
+        <h3>Transitions of border width and line height</h3>
+        <div class="frame-box"></div>
+        <p class="caption-line">A caption that eases its leading.</p>
+      </div>
+
+      <div class="case">
+        <h3>Drawer collapsed at capture</h3>
+        <div class="drawer-panel">Drawer content</div>
+      </div>
+
+      <div class="case">
+        <h3>Dark player box on a light page</h3>
+        <div class="player-box"></div>
+        <div class="spotlight"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

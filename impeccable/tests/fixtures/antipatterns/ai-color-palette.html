@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Color Palette — Should Flag vs Should Pass</title>
+  <style>
+    /* Two-column fixture: left = should flag, right = should pass.
+       ai-color-palette has two element paths. The gradient path wants a
+       surface whose ramp is mostly violet or cyan and that a visitor can
+       actually see. The neon-text path wants a run of glyphs the element
+       paints itself, in band, on a dark surface. Every case below carries
+       explicit pixel dimensions so the size and coverage gates are
+       decidable from the markup. */
+    body { font-family: system-ui, sans-serif; background: #f9fafb; padding: 24px; margin: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; max-width: 1200px; margin: 0 auto; }
+    .col h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 16px; color: #475569; }
+    .col h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin: 24px 0 8px; color: #64748b; }
+    .dark-context { background: #050b0f; padding: 16px; border-radius: 12px; width: 480px; }
+    .dark-context + .dark-context { margin-top: 12px; }
+
+    /* ── FLAG: the stock violet-to-cyan ramps ── */
+    .cta-ramp {
+      display: block; width: 186px; height: 70px; border-radius: 10px;
+      background-image: linear-gradient(90deg, rgb(130, 255, 247) 0%, rgb(71, 81, 255) 49%, rgb(133, 38, 254) 100%);
+    }
+    .hero-wash {
+      width: 480px; height: 200px; border-radius: 12px;
+      background-image: linear-gradient(135deg, rgb(255, 87, 36) 0%, rgb(192, 88, 243) 50%, rgb(42, 157, 144) 100%);
+    }
+    .glow-blob {
+      width: 158px; height: 158px; border-radius: 50%;
+      background-image: radial-gradient(50% 50%, rgba(133, 38, 254, 0.82) 0%, rgba(171, 171, 171, 0) 100%);
+    }
+    .violet-overlay {
+      width: 480px; height: 160px; border-radius: 12px;
+      background-image: linear-gradient(to right top, rgba(192, 88, 243, 0.2), rgba(255, 255, 255, 0.6), rgba(255, 87, 36, 0.25));
+    }
+    .neon-heading { font-size: 25px; margin: 0; color: rgb(130, 255, 247); }
+    .neon-hero-word { font-size: 70px; line-height: 1.1; margin: 0; color: rgb(133, 38, 254); }
+    /* One color fading out is a ramp, not a flat fill: only the alpha differs. */
+    .glow-fade {
+      width: 158px; height: 158px; border-radius: 50%;
+      background-image: radial-gradient(circle, rgba(168, 85, 247, 0.8) 0%, rgba(168, 85, 247, 0) 100%);
+    }
+    /* `object-fit` belongs to the image, never to the <picture> around it, so
+       a letterboxed photo leaves the fill showing top and bottom. */
+    .letterbox-scene {
+      position: relative; width: 120px; height: 214px; overflow: hidden; border-radius: 12px;
+      background-image: linear-gradient(150deg, rgb(133, 38, 254), rgb(130, 255, 247));
+    }
+    .letterbox-scene img { position: absolute; inset: 0; width: 120px; height: 214px; object-fit: contain; }
+    /* A scroll-reveal wrapper is captured at opacity 0; the visitor sees the
+       ramp the moment it scrolls in. */
+    .reveal { opacity: 0; }
+    .reveal-ramp {
+      width: 480px; height: 120px; border-radius: 12px;
+      background-image: linear-gradient(90deg, rgb(133, 38, 254), rgb(130, 255, 247));
+    }
+    /* A typewriter hero paints one text node per glyph and still spells the word. */
+    .typed-word { font-size: 70px; line-height: 1.1; color: rgb(133, 38, 254); }
+
+    /* ── PASS: declared but never painted ── */
+    /* A placeholder fill under an image that covers the whole box. */
+    .scene-fill {
+      position: relative; width: 120px; height: 214px; overflow: hidden; border-radius: 12px;
+      background-image: linear-gradient(150deg, rgb(168, 200, 232), rgb(167, 229, 211));
+    }
+    .scene-fill img { position: absolute; inset: 0; width: 120px; height: 214px; object-fit: cover; }
+    /* A five-percent tint reads as flat near-white. */
+    .tint-card {
+      width: 480px; height: 120px; border-radius: 12px;
+      background-image: linear-gradient(to right bottom, rgba(63, 176, 224, 0.05) 0%, rgba(42, 157, 144, 0.05) 100%);
+    }
+    /* A 120px blur at 18% opacity is atmosphere, not a palette. */
+    .spectrum-wash {
+      width: 480px; height: 160px; opacity: 0.18; filter: blur(120px); border-radius: 50%;
+      background-image: linear-gradient(90deg, rgb(198, 121, 196) 0%, rgb(250, 61, 29) 25%, rgb(255, 176, 5) 50%, rgb(225, 225, 254) 75%, rgb(3, 88, 247) 100%);
+    }
+    /* A one-pixel progress rail is not a surface. */
+    .timeline-rail {
+      display: block; width: 237px; height: 1px;
+      background-image: linear-gradient(90deg, rgba(63, 227, 223, 0.35), rgba(96, 165, 250, 0.14));
+    }
+    /* One magenta stop grazing the band inside a warm story ring. */
+    .story-ring {
+      width: 84px; height: 84px; border-radius: 50%;
+      background-image: linear-gradient(rgb(213, 0, 194), rgb(255, 53, 60), rgb(255, 136, 0), rgb(255, 201, 0));
+    }
+    /* Two identical stops paint a flat brand fill. */
+    .flat-fill {
+      width: 120px; height: 56px; border-radius: 28px;
+      background-image: linear-gradient(270deg, rgb(77, 20, 140) 0%, rgb(77, 20, 140) 100%);
+    }
+    /* Nav chrome that is not laid out at all. */
+    .closed-flyout {
+      display: none; width: 320px; height: 120px;
+      background-image: linear-gradient(90deg, rgb(0, 159, 219), rgb(130, 255, 247));
+    }
+    /* An icon strokes currentColor; neither it nor its geometry paints text. */
+    .accent-icon { display: block; width: 20px; height: 20px; color: rgb(130, 255, 247); }
+    /* A binary-rain texture: one glyph per span, 6.6 x 11px. */
+    .bit-row { display: flex; }
+    .bit { display: block; width: 7px; height: 11px; font-size: 11px; line-height: 11px; color: rgb(88, 196, 200); }
+    .spacer-span { color: rgb(130, 255, 247); }
+    .body-copy { font-size: 13px; margin: 0; color: #cbd5e1; }
+    /* A blurred wrapper blurs everything it renders, including the child that
+       carries the ramp. */
+    .blur-wrap { width: 480px; height: 160px; filter: blur(120px); }
+    .blur-blob {
+      width: 480px; height: 160px; border-radius: 50%;
+      background-image: linear-gradient(90deg, rgb(133, 38, 254), rgb(130, 255, 247));
+    }
+    /* `visibility: hidden` switches a subtree off for good. */
+    .hidden-branch { visibility: hidden; width: 320px; height: 120px; }
+    .hidden-ramp {
+      width: 320px; height: 120px;
+      background-image: linear-gradient(90deg, rgb(0, 159, 219), rgb(130, 255, 247));
+    }
+    /* A cover image under a <picture> hides the fill behind it completely. */
+    .covered-scene {
+      position: relative; width: 120px; height: 214px; overflow: hidden; border-radius: 12px;
+      background-image: linear-gradient(150deg, rgb(133, 38, 254), rgb(130, 255, 247));
+    }
+    .covered-scene img { position: absolute; inset: 0; width: 120px; height: 214px; object-fit: cover; }
+    /* The cyan band is hue 170 to 197 with an HSL saturation floor of 0.4
+       (corpus decision r6-t7-cyan-band): a teal-to-cyan ramp and a
+       cyan-950 to cyan-900 panel (197, 196) are in it; emerald (160 to 163),
+       sky (198, 199) and a grayed teal (saturation 0.2 to 0.26) are not. */
+    .cyan-950-panel {
+      width: 320px; height: 120px; border-radius: 12px;
+      background-image: linear-gradient(135deg, rgb(8, 51, 68), rgb(22, 78, 99));
+    }
+    .teal-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(20, 184, 166), rgb(6, 182, 212));
+    }
+    .emerald-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(5, 150, 105), rgb(6, 95, 70));
+    }
+    .sky-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(14, 165, 233), rgb(56, 189, 248));
+    }
+    .grayed-teal-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(95, 158, 160), rgb(106, 156, 153));
+    }
+    /* One dark teal fading only to 0.8 (observations-1010 row 14,
+       articulation-hub.vercel.app) is that colour laid flat: every stop
+       keeps 0.75 alpha or more. */
+    /* Teal to the same at 0.5 is a visible two-tone ramp. */
+    .teal-half-fade-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(20, 184, 166), rgba(20, 184, 166, 0.5));
+    }
+    .flat-fade-teal-cta {
+      width: 200px; height: 56px; border-radius: 10px;
+      background-image: linear-gradient(135deg, rgb(29, 74, 84), rgba(29, 74, 84, 0.8));
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="col">
+      <h2>Should flag</h2>
+
+      <h3>Gradient surfaces</h3>
+      <div class="dark-context">
+        <a class="cta-ramp" href="#cta-ramp"></a>
+      </div>
+      <div class="dark-context">
+        <div class="hero-wash"></div>
+      </div>
+      <div class="dark-context">
+        <div class="glow-blob"></div>
+      </div>
+      <div class="dark-context">
+        <div class="violet-overlay"></div>
+      </div>
+      <div class="dark-context">
+        <div class="glow-fade"></div>
+      </div>
+      <div class="dark-context">
+        <div class="letterbox-scene">
+          <picture>
+            <img alt="" width="120" height="214" src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='120'%3E%3Crect%20width='120'%20height='120'%20fill='%23334155'/%3E%3C/svg%3E">
+          </picture>
+        </div>
+      </div>
+      <div class="dark-context">
+        <div class="reveal">
+          <div class="reveal-ramp"></div>
+        </div>
+      </div>
+      <div class="dark-context">
+        <div class="teal-cta"></div>
+      </div>
+      <div class="dark-context">
+        <div class="cyan-950-panel"></div>
+      </div>
+      <div class="dark-context">
+        <div class="teal-half-fade-cta"></div>
+      </div>
+
+      <h3>Neon text on dark</h3>
+      <div class="dark-context">
+        <h4 class="neon-heading">Download</h4>
+        <p class="body-copy">A footer column heading in the accent, repeated sitewide.</p>
+      </div>
+      <div class="dark-context">
+        <p class="neon-hero-word">Design</p>
+      </div>
+      <div class="dark-context">
+        <p><span class="typed-word">I<!-- -->m<!-- -->a<!-- -->g<!-- -->e</span></p>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>Should pass</h2>
+
+      <h3>Gradients nobody sees</h3>
+      <div class="dark-context">
+        <div class="scene-fill">
+          <img alt="" width="120" height="214" src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='214'%3E%3Crect%20width='120'%20height='214'%20fill='%23334155'/%3E%3C/svg%3E">
+        </div>
+      </div>
+      <div class="dark-context">
+        <div class="tint-card"></div>
+      </div>
+      <div class="dark-context">
+        <div class="spectrum-wash"></div>
+      </div>
+      <div class="dark-context">
+        <span class="timeline-rail"></span>
+      </div>
+      <div class="dark-context">
+        <div class="story-ring"></div>
+      </div>
+      <div class="dark-context">
+        <div class="flat-fill"></div>
+      </div>
+      <div class="dark-context">
+        <div class="closed-flyout"></div>
+      </div>
+      <div class="dark-context">
+        <div class="blur-wrap"><div class="blur-blob"></div></div>
+      </div>
+      <div class="dark-context">
+        <div class="hidden-branch"><div class="hidden-ramp"></div></div>
+      </div>
+      <div class="dark-context">
+        <div class="covered-scene">
+          <picture>
+            <img alt="" width="120" height="214" src="data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='214'%3E%3Crect%20width='120'%20height='214'%20fill='%23334155'/%3E%3C/svg%3E">
+          </picture>
+        </div>
+      </div>
+
+      <h3>Outside the cyan band</h3>
+      <div class="dark-context">
+        <div class="emerald-cta"></div>
+      </div>
+      <div class="dark-context">
+        <div class="sky-cta"></div>
+      </div>
+      <div class="dark-context">
+        <div class="grayed-teal-cta"></div>
+      </div>
+      <div class="dark-context">
+        <div class="flat-fade-teal-cta"></div>
+      </div>
+
+      <h3>Color without painted glyphs</h3>
+      <div class="dark-context">
+        <svg class="accent-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="10" cy="10" r="8"></circle>
+          <path d="M6 10l3 3 5-6"></path>
+        </svg>
+        <p class="body-copy">One icon color decision, not a run of neon text.</p>
+      </div>
+      <div class="dark-context">
+        <div class="bit-row">
+          <span class="bit">1</span><span class="bit">0</span><span class="bit">1</span><span class="bit">1</span><span class="bit">0</span>
+        </div>
+        <p class="body-copy">A texture of single glyphs behind the hero.</p>
+      </div>
+      <div class="dark-context">
+        <p class="body-copy">A.I<span class="spacer-span"> </span>in production</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

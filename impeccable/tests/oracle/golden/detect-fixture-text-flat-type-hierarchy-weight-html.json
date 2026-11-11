@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "\n0 anti-patterns found.\n\n── Advisory (not counted as failures) ──\n\n<REPO>/tests/fixtures/antipatterns/flat-type-hierarchy-weight.html\n  [flat-type-hierarchy] Role sizes: body 14px, h3 14px, h1 16px, h2 16px (largest adjacent step 1.14:1; target 1.25:1; weight separates headings from body text)\n    → Dominant heading and body roles are separated by less than 1.25× at every step, leaving the size hierarchy flat. Add at least one stronger size step.\n\n1 advisory note. Suppress with --no-advisory.\n",
+  "exit": 0,
+  "signal": null,
+  "files": {}
+}

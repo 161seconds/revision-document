@@ -1,0 +1,7 @@
+{
+  "stdout": "",
+  "stderr": "usage: impeccable surface-brief <path|list|read|write> [target] [body-file] [related-target ...]\n",
+  "exit": 1,
+  "signal": null,
+  "files": {}
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow fixture</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111; background: #fff; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+
+  /* ── FLAG: two-column opening section, right column runs far past the fold
+        while the left column fits inside one viewport ── */
+  .flag { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; padding: 40px; }
+  .flag .short { }
+  .flag .short h1 { font-size: 40px; margin-bottom: 16px; }
+  .flag .tall .filler { height: 1600px; background: #eee; border-radius: 8px; padding: 16px; }
+
+  /* ── PASS: balanced two-column section, both fit ── */
+  .pass-balanced { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px; }
+  .pass-balanced .col { }
+
+  /* ── PASS: single full-page hero (no sibling column) ── */
+  .pass-hero { padding: 40px; }
+  .pass-hero .art { height: 1400px; background: #f3f3f3; }
+</style>
+</head>
+<body>
+  <section class="flag">
+    <div class="short">
+      <h1>Upload your film and add a narrator</h1>
+      <p>Paste a link or drop a file. We transcribe it, translate, and one narrator reads over the top.</p>
+      <p>The original stays audible underneath, just quieter.</p>
+    </div>
+    <aside class="tall">
+      <p>What is a lektor? A single calm voice reads every line of a foreign film.</p>
+      <div class="filler">A tall editorial column with a long photo and a lot of copy.</div>
+    </aside>
+  </section>
+
+  <section class="pass-balanced">
+    <div class="col">
+      <p>Left column with a normal amount of copy that fits comfortably within the opening viewport.</p>
+      <p>Two short paragraphs, nothing that runs long.</p>
+    </div>
+    <div class="col">
+      <p>Right column, also short. Both sides sit inside the first screen.</p>
+      <p>No column stretches the fold.</p>
+    </div>
+  </section>
+
+  <section class="pass-hero">
+    <div class="art"></div>
+  </section>
+</body>
+</html>

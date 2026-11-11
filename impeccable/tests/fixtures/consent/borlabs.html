@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: a Borlabs Cookie 3-shaped dialog</title>
+  <style>
+    /* A Borlabs Cookie 3-shaped dialog (its ids and marks, not its script),
+       as fischundfang.de serves it: `#BorlabsCookieBox` holding the dialog
+       and `#BorlabsDialogBackdrop`, the floating `#BorlabsCookieWidget`
+       shield, an inline `overflow: hidden` on <body>, and
+       `aria-hidden="true"` on the page wrapper, which Borlabs marks
+       `data-borlabs-cookie-aria-hidden`. The site's own aria-hidden icon has
+       no mark and keeps its aria-hidden. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    * { box-sizing: border-box; }
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    .section { height: 900px; }
+    #BorlabsDialogBackdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 999998; }
+    .brlbs-cmpnt-dialog { position: fixed; top: 160px; left: 50%; width: 600px; margin-left: -300px; padding: 28px;
+      background: #fff; border-radius: 8px; z-index: 999999; }
+    .brlbs-cmpnt-dialog p { margin: 0 0 16px; font-size: 14px; color: #b0b0b0; }
+    #BorlabsCookieWidget svg { position: fixed; left: 20px; bottom: 20px; width: 48px; height: 48px; z-index: 999997; }
+  </style>
+</head>
+<body style="overflow: hidden;">
+  <div id="page-wrap" aria-hidden="true" data-borlabs-cookie-aria-hidden="true">
+    <h1>A page behind a Borlabs dialog</h1>
+    <p id="copy">The page copy. Borlabs marks this wrapper aria-hidden while its dialog is open.</p>
+    <span id="site-icon" aria-hidden="true">*</span>
+    <div class="section"></div>
+    <div class="section"></div>
+  </div>
+  <div id="BorlabsCookieBox" data-borlabs-cookie-consent-required="true">
+    <div class="vue-focus-loop">
+      <div class="brlbs-cmpnt-dialog" role="dialog" aria-modal="true">
+        <p id="brlbs-text">Wir nutzen Cookies auf unserer Website. Einige von ihnen sind essenziell.</p>
+        <button type="button">Alle akzeptieren</button>
+      </div>
+      <div class="brlbs-fixed"><div id="BorlabsDialogBackdrop" class="brlbs-cmpnt-dialog-backdrop"></div></div>
+    </div>
+  </div>
+  <div id="BorlabsCookieWidget" class="brlbs-cmpnt-container">
+    <svg viewBox="0 0 48 48" role="presentation" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="#444"></circle></svg>
+  </div>
+</body>
+</html>

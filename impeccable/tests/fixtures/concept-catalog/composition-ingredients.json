@@ -1,0 +1,151 @@
+{
+ "schemaVersion": 1,
+ "catalogVersion": "fixture-1",
+ "qualityBar": {
+  "principle": "Fixture staging bar: every composition must name a structural idea that stays powerful when dressed in any committed visual identity and survives the wireframe test for deterministic seed testing."
+ },
+ "families": [
+  {
+   "id": "fixture-stagings",
+   "label": "Fixture Stagings",
+   "description": "Fixture staging family with one entry per mode for seed mode-filter testing."
+  },
+  {
+   "id": "fixture-stagings-b",
+   "label": "Fixture Stagings B",
+   "description": "Second fixture family so the catalog meets family minimums during validation."
+  },
+  {
+   "id": "fixture-stagings-c",
+   "label": "Fixture Stagings C",
+   "description": "Third fixture family so the catalog meets family minimums during validation."
+  },
+  {
+   "id": "fixture-stagings-d",
+   "label": "Fixture Stagings D",
+   "description": "Fourth fixture family so the catalog meets family minimums during validation."
+  }
+ ],
+ "compositions": [
+  {
+   "id": "fixture-stagings-case-1",
+   "familyId": "fixture-stagings",
+   "surface": "persuade",
+   "form": "a fixture surface staged as ranked plates case 1, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 1",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 1",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 1",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 1"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 1 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  },
+  {
+   "id": "fixture-stagings-case-2",
+   "familyId": "fixture-stagings",
+   "surface": "persuade",
+   "form": "a fixture surface staged as ranked plates case 2, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 2",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 2",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 2",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 2"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 2 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  },
+  {
+   "id": "fixture-stagings-case-3",
+   "familyId": "fixture-stagings",
+   "surface": "operate",
+   "form": "a fixture surface staged as ranked plates case 3, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 3",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 3",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 3",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 3"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 3 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  },
+  {
+   "id": "fixture-stagings-case-4",
+   "familyId": "fixture-stagings",
+   "surface": "operate",
+   "form": "a fixture surface staged as ranked plates case 4, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 4",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 4",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 4",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 4"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 4 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  },
+  {
+   "id": "fixture-stagings-case-5",
+   "familyId": "fixture-stagings",
+   "surface": "read",
+   "form": "a fixture surface staged as ranked plates case 5, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 5",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 5",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 5",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 5"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 5 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  },
+  {
+   "id": "fixture-stagings-case-6",
+   "familyId": "fixture-stagings",
+   "surface": "experience",
+   "form": "a fixture surface staged as ranked plates case 6, where one live register receives whichever plate the visitor promotes and rank stays legible throughout",
+   "lineage": "Fixture staging lineage of ranked plate choreography",
+   "tags": [
+    "plates",
+    "register",
+    "rank"
+   ],
+   "grammar": [
+    "Staging/hierarchy: one working field owns the page and ranked plates order everything else for case 6",
+    "Sequence/attention: attention walks the ranked plates in order and lands on the single live register for case 6",
+    "Controls/state: selecting a plate promotes it to the live register while the rest hold their rank for case 6",
+    "Adaptation: narrow screens stack the plates into one column and selection alone advances the sequence for case 6"
+   ],
+   "spark": "You promote the third plate and the live register accepts it with the whole rank sliding one notch to make room, case 6 holding steady.",
+   "webLeverage": "View transitions between plate ranks with a keyboard-promotable live register"
+  }
+ ]
+}

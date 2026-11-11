@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>first-viewport-column-overflow, a flex container laid out as one column</title>
+<!--
+  Should pass. A container that becomes two columns at a wider breakpoint
+  (flex-col lg:flex-row) stacks a short intro over a long list at this width.
+  Two boxes that share an x range are stacked, not columns, and a short block
+  above a long one is the ordinary flow of a page (submitmap.com).
+  first-viewport-column-overflow.html keeps the flag case.
+-->
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111111; background: #ffffff; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+  .stack { display: flex; flex-direction: column; align-items: flex-start; gap: 32px; padding: 36px 20px; }
+  .intro { width: 60%; height: 60px; }
+  .list { width: 80%; background: #f3f3f3; padding: 16px; }
+  .entries { height: 4100px; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="intro"><p>A short intro that opens the page.</p></div>
+    <div class="list">
+      <p>A long list of entries that runs for several screens.</p>
+      <div class="entries"></div>
+    </div>
+  </div>
+</body>
+</html>

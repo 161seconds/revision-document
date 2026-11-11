@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Script error, production React invariants (browser-only)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fff; }
+    main { max-width: 640px; margin: 0 auto; padding: 32px 24px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>An invariant number, read as its message</h1>
+    <p>A production React build throws a number where the message would be, so a
+    reader of the finding has to look the number up. The detector prints the message
+    for the common numbers and keeps the number beside it.</p>
+  </main>
+
+  <script>
+    // Should flag, decoded: a production hydration invariant in React 19's URL
+    // form. The finding reads `Uncaught Error: Minified React error #418:
+    // Hydration failed because the initial UI does not match what was rendered
+    // on the server. (at hydrateApp, <url>:...)`.
+    function hydrateApp() {
+      throw new Error('Minified React error #418; visit https://react.dev/errors/418?args[]=HTML&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.');
+    }
+    setTimeout(hydrateApp, 0);
+    // Should pass decoding: a number the table does not know still reports,
+    // with React's own text as it was.
+    function renderQueue() {
+      throw new Error('Minified React error #9999; visit https://react.dev/errors/9999 for the full message or use the non-minified dev environment for full errors and additional helpful warnings.');
+    }
+    setTimeout(renderQueue, 0);
+    // Should pass decoding: a message that is not a React invariant still
+    // reports, its number untouched.
+    function syncOrder() { throw new Error('Order #418 failed to sync'); }
+    setTimeout(syncOrder, 0);
+  </script>
+</body>
+</html>

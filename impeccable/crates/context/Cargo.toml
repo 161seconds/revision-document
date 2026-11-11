@@ -1,0 +1,33 @@
+[package]
+name = "impeccable-context"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+default = []
+# Use impeccable_core::registry::ANTIPATTERNS for doctor's known rule ids
+# instead of the embedded snapshot in src/rule_ids.rs.
+core-registry = []
+
+[dependencies]
+impeccable-common = { workspace = true, features = ["seed"] }
+impeccable-comp = { workspace = true }
+impeccable-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+once_cell = { workspace = true }
+sha2 = "0.10"
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+url = "2"
+ureq = { version = "2", default-features = false, features = ["tls", "json", "socks-proxy"] }
+rustls-native-certs = "0.8"
+webpki-roots = "1"
+unicode-normalization = "0.1.25"
+
+[dev-dependencies]
+# Stand-in upstream APIs in unit tests only; the runtime servers use
+# impeccable_common::http.
+tiny_http = "0.12"

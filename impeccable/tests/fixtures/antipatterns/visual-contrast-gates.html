@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Contrast Gates Fixture</title>
+  <!--
+    Which text the visual-contrast passes may measure, and what they may read
+    as its surface. Each should-pass case has a should-flag twin with the
+    same measurement a visitor can actually see.
+
+    URL engine: the sampled and pixel passes take a candidate only once it
+    clears the element pass's text gates (painted at capture, not disabled,
+    inked in a colour and a font that paint, not glyph-only), and a
+    background image drawn `no-repeat` that covers neither its box nor the
+    text is not read as the text's surface. Pinned by
+    crates/browser/tests/visual_contrast_gates.rs.
+
+    Both engines: text with no letter and no digit is not scored for
+    contrast on any tag. The static engine has no layout and no visual pass,
+    so it reports only the element-pass cases here.
+  -->
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      background: #f5f5f7;
+      color: #16161a;
+      font-family: system-ui, sans-serif;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 460px 460px;
+      gap: 24px;
+      width: 944px;
+      margin: 0 auto;
+    }
+
+    .column {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .column > h2 {
+      margin: 0;
+      color: #3f4654;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    .card {
+      position: relative;
+      width: 460px;
+      min-height: 96px;
+      padding: 24px;
+      border-radius: 12px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .pale-photo {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 460 200'%3E%3Crect width='460' height='200' fill='%23d9d4c8'/%3E%3Ccircle cx='96' cy='60' r='104' fill='%23e6e2d8'/%3E%3Cpath d='M0 150c80-30 150-22 220 8s130 20 240-40v82H0z' fill='%23cec8ba'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+    }
+
+    .paper {
+      background: #ffffff;
+    }
+
+    .green {
+      background: #1d9634;
+    }
+
+    /* 1. A tab strip that clips a row wider than itself. The second cell
+       starts past the viewport, where only a scroll a visitor never makes
+       would bring it into a capture. */
+    .tab-strip {
+      width: 412px;
+      overflow: hidden;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 700px;
+      width: max-content;
+    }
+
+    .tab-cell {
+      width: 380px;
+      margin: 0;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    /* 2. A faded submit button. The pixels read about 2.6:1; the disabled
+       one is exempt, as it is in the element pass. */
+    .fade-button {
+      display: block;
+      width: 280px;
+      height: 56px;
+      border: 0;
+      border-radius: 10px;
+      background: #374151;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+      opacity: 0.5;
+    }
+
+    /* 3. Text inked at a fifth of white on green. */
+    .circle {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 56px;
+      line-height: 1.2;
+    }
+
+    .circle-words {
+      font-size: 20px;
+    }
+
+    /* 4. A count badge carrying a frame sprite smaller than the badge, the
+       count centred inside the frame. */
+    .count-badge {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='22' viewBox='0 0 30 22' fill='none'%3E%3Crect x='0.75' y='0.75' width='24.5' height='16.5' rx='1' stroke='white' stroke-width='1.5'/%3E%3Cpath d='M4 21H28C28.5523 21 29 20.5523 29 20V5' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 50% 50%;
+      background-size: 40px 28px;
+    }
+
+    .count-badge-dark {
+      background-color: rgba(0, 0, 0, 0.72);
+    }
+
+    .count-badge-light {
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .count {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-style: normal;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 20px;
+    }
+
+    .count-dark {
+      color: #ffffff;
+    }
+
+    .count-light {
+      color: #cfcfcf;
+    }
+
+    /* 5. A dark button with a small icon at its left edge, on a pale photo:
+       the label sits on the button's own fill, not on the icon. */
+    .icon-button {
+      display: block;
+      width: 220px;
+      height: 48px;
+      padding: 0 16px 0 40px;
+      border: 0;
+      border-radius: 8px;
+      background: #1f2937 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M8 2v9M4 7l4 4 4-4M3 14h10' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat 12px 50% / 16px 16px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    /* 6. A chat launcher over its own gradient. */
+    .launcher {
+      display: block;
+      width: 120px;
+      height: 56px;
+      border: 0;
+      border-radius: 28px;
+      background: #1e40af linear-gradient(270deg, #1e3a8a 0%, #1e3a8a 100%);
+    }
+
+    .launcher-silent {
+      font-size: 0;
+      color: rgba(0, 0, 0, 0);
+    }
+
+    .launcher-visible {
+      color: rgba(255, 255, 255, 0.35);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* 7. A code line in a faint ink whose own text is only braces. */
+    .brace {
+      margin: 0;
+      color: rgba(0, 0, 0, 0.3);
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .brace .token {
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+  <main class="grid">
+    <section class="column" data-col="flag">
+      <h2>Should flag: text a visitor has to read</h2>
+
+      <div class="card pale-photo">
+        <div class="tab-strip">
+          <div class="tab-row">
+            <p class="tab-cell tab-cell-visible">Crawl any site into clean markdown</p>
+            <p class="tab-cell tab-cell-hidden">Resolve a brand profile from a domain</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card paper">
+        <button class="fade-button fade-button-enabled" type="button">Continue</button>
+      </div>
+
+      <div class="card green">
+        <div class="circle circle-words">Round the clock</div>
+      </div>
+
+      <div class="card pale-photo" style="min-height: 104px;">
+        <span class="count-badge count-badge-light"><i class="count count-light">12</i></span>
+      </div>
+
+      <div class="card paper">
+        <p class="brace brace-words">name: string</p>
+      </div>
+
+      <div class="card paper">
+        <button class="launcher launcher-visible" type="button">Ask us</button>
+      </div>
+    </section>
+
+    <section class="column" data-col="pass">
+      <h2>Should pass: nothing a visitor reads, or read on its own surface</h2>
+
+      <!-- The second cell of the strip in the flag column. -->
+
+      <div class="card paper">
+        <button class="fade-button fade-button-disabled" type="button" disabled>Continue</button>
+      </div>
+
+      <div class="card green">
+        <div class="circle circle-glyph">&#x25EF;</div>
+      </div>
+
+      <div class="card pale-photo" style="min-height: 104px;">
+        <span class="count-badge count-badge-dark"><i class="count count-dark">12</i></span>
+      </div>
+
+      <div class="card pale-photo">
+        <button class="icon-button" type="button">Download the report</button>
+      </div>
+
+      <div class="card paper">
+        <p class="brace brace-glyph">{ <span class="token">name</span> }</p>
+      </div>
+
+      <div class="card paper">
+        <button class="launcher launcher-silent" type="button">ASK FEDEX</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

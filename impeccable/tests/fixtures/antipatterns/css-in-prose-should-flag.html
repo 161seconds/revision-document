@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+  Companion to css-in-prose-should-pass.html: the same patterns applied as
+  real styling. The scoped-corpus scan must still catch every carrier a page
+  can style itself with — a <style> rule, an inline style="" attribute, and
+  Tailwind utility classes.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Real gradient-text styling</title>
+<style>
+  body { font-family: Georgia, serif; margin: 0; padding: 40px 24px; background: #fdfcf9; color: #1f2933; }
+  /* SHOULD FLAG (gradient-text + ai-color-palette): a real style rule. */
+  .gradient-heading {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 44px;
+  }
+</style>
+</head>
+<body>
+<h1 class="gradient-heading">Ship Faster With Us</h1>
+
+<!-- SHOULD FLAG (gradient-text): the same construction inline. -->
+<h2 style="background: linear-gradient(90deg, #667eea, #764ba2); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px;">Inline gradient heading</h2>
+
+<!-- SHOULD FLAG (gradient-text, Tailwind): bg-clip-text + bg-gradient-to- classes. -->
+<h2 class="bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500 text-transparent">Tailwind gradient heading</h2>
+
+<p>Body copy long enough to make this a real page for the scanners to read.</p>
+</body>
+</html>

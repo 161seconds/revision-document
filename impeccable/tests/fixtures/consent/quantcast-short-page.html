@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consent hiding: one root matched by two selectors</title>
+  <style>
+    /* A short page with copy of its own under a Quantcast-shaped banner whose
+       root carries both the id and the class the manager list names. It is
+       one root and its text is counted once, so the page's copy is outside
+       it and the page is scanned. Pinned by
+       crates/browser/tests/consent_hiding.rs. */
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 40px; color: #111; background: #fff; }
+    #qc-cmp2-container { position: fixed; left: 0; right: 0; bottom: 0; padding: 24px; background: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Opening hours</h1>
+  <p>The studio is open Tuesday to Saturday from ten until six, and by appointment on Mondays and holidays.</p>
+  <div id="qc-cmp2-container" class="qc-cmp2-container">
+    <p>We and our partners store and access information on your device, such as cookies, and process personal data such as unique identifiers and browsing data, to personalise content and advertising and to measure its performance.</p>
+  </div>
+</body>
+</html>

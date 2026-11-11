@@ -1,0 +1,41 @@
+{
+ "schemaVersion": 2,
+ "reviews": {
+  "fixture-stagings-case-1": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "77657aed9494"
+  },
+  "fixture-stagings-case-2": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "356ddb691bf8"
+  },
+  "fixture-stagings-case-3": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "9d2fa989ef83"
+  },
+  "fixture-stagings-case-4": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "8b5ffb897bfb"
+  },
+  "fixture-stagings-case-5": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "025f50b81dee"
+  },
+  "fixture-stagings-case-6": {
+   "status": "approved",
+   "reviewedBy": "pbakaus",
+   "reviewedAt": "2026-07-21T00:00:00.000Z",
+   "formHash": "30356239718d"
+  }
+ }
+}

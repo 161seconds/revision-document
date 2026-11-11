@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nav CTA contrast construction sweep</title>
+<style>
+  :root{
+    --v3bg: #f0b64e;
+    --v3fg: #cfd9e9;
+  }
+  body{ margin:0; font-family: Georgia, serif; color:#1c2430; background:#ffffff; }
+  header{ display:flex; align-items:center; gap:2rem; padding:1rem 2rem; background:#12213a; }
+  .nav{ display:flex; gap:1.5rem; align-items:center; }
+  .nav a{ font-size:0.9rem; text-decoration:none; }
+  .cta{ display:inline-block; padding:0.6em 1.1em; border-radius:6px; font-weight:600; }
+
+  /* v1: solid bg + own low-contrast color, both on the button class */
+  a.cta.v1{ background:#e8b84b; color:#c9d6ea; }
+
+  /* v2: specificity cascade — .nav a (0,1,1) beats .v2 (0,1,0) for color */
+  .nav a{ color:#b7c6de; }
+  .v2{ background:#e5a93f; color:#26313f; }
+
+  /* v3: var() indirection for both colors */
+  a.cta.v3{ background:var(--v3bg); color:var(--v3fg); }
+
+  /* v4: gradient background, low-contrast text against every stop */
+  a.cta.v4{ background:linear-gradient(90deg,#f2b854,#e8a83e); color:#d3dcec; }
+
+  /* v5: pseudo-element paints the surface; button itself transparent */
+  a.cta.v5{ position:relative; background:transparent; color:#d0daea; }
+  .v5::before{ content:""; position:absolute; inset:0; border-radius:6px; background:#efb352; z-index:-1; }
+
+  /* v6: color inherited from header, button only sets bg */
+  header{ color:#ccd8ea; }
+  .v6{ background:#eab04a; }
+
+  /* v7: alpha-composited own bg over the dark header */
+  a.cta.v7{ background:rgb(240 178 74 / 0.85); color:#d2dcec; }
+
+  /* v8: oklch serialization for both sides */
+  a.cta.v8{ background:oklch(0.82 0.15 75); color:oklch(0.80 0.05 258); }
+
+  /* v9: background-image url only (no computable color) + low contrast vs header */
+  a.cta.v9{ background-image:url("data:image/gif;base64,R0lGODlhAQABAIAAAP7uSwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=="); color:#d5deed; }
+</style>
+</head>
+<body>
+<header>
+  <span style="color:#f4f7fb;font-weight:700">Acme</span>
+  <nav class="nav" aria-label="Primary">
+    <a href="#a">Product</a>
+    <a href="#b">Docs</a>
+    <a class="cta v1" href="#s">Start now v1</a>
+    <a class="cta v2" href="#s">Start now v2</a>
+    <a class="cta v3" href="#s">Start now v3</a>
+    <a class="cta v4" href="#s">Start now v4</a>
+    <a class="cta v5" href="#s">Start now v5</a>
+    <a class="cta v6" href="#s">Start now v6</a>
+    <a class="cta v7" href="#s">Start now v7</a>
+    <a class="cta v8" href="#s">Start now v8</a>
+    <a class="cta v9" href="#s">Start now v9</a>
+  </nav>
+</header>
+<main style="padding:4rem 2rem; max-width:60ch;">
+  <h1 style="font-size:2.4rem; margin:0 0 1rem;">A page that exists to host a header</h1>
+  <p style="line-height:1.6;">The paragraphs below the header keep the document honest so the
+  detector treats this as a full page rather than a fragment. Nothing here should trip any rule.</p>
+  <p style="line-height:1.6;">Second paragraph of ordinary body copy with comfortable measure and
+  line height, dark ink on paper.</p>
+</main>
+</body>
+</html>

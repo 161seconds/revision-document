@@ -1,0 +1,20 @@
+[package]
+name = "impeccable-hook"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+impeccable-common = { workspace = true }
+impeccable-comp-verbs = { workspace = true }
+impeccable-core = { workspace = true }
+impeccable-detect = { workspace = true }
+impeccable-context = { workspace = true }
+serde_json = { workspace = true }
+regex = { workspace = true }
+once_cell = { workspace = true }
+sha2 = "0.10"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

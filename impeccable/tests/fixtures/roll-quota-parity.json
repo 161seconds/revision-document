@@ -1,0 +1,2550 @@
+{
+ "comment": "Challenger rolls from impeccable-site scripts/lib/catalog/roll-selection.mjs. Modes without a tier quota were recorded before quotas existed; operate cases were recorded from the quota version. select_approved_challengers must deal exactly these. closed-interaction is the same catalog with every interaction world closed to operate.",
+ "concepts": [
+  {
+   "id": "graphic-f0-c0",
+   "familyId": "graphic-f0",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f0-c1",
+   "familyId": "graphic-f0",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "operate",
+     "read"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f0-c2",
+   "familyId": "graphic-f0",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "operate",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f1-c0",
+   "familyId": "graphic-f1",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": []
+   }
+  },
+  {
+   "id": "graphic-f1-c1",
+   "familyId": "graphic-f1",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3
+   }
+  },
+  {
+   "id": "graphic-f1-c2",
+   "familyId": "graphic-f1",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f2-c0",
+   "familyId": "graphic-f2",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "operate",
+     "read"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f2-c1",
+   "familyId": "graphic-f2",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "operate",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "graphic-f2-c2",
+   "familyId": "graphic-f2",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": []
+   }
+  },
+  {
+   "id": "graphic-f3-c0",
+   "familyId": "graphic-f3",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2
+   }
+  },
+  {
+   "id": "graphic-f3-c1",
+   "familyId": "graphic-f3",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "experience"
+    ],
+    "breadth": "niche"
+   }
+  },
+  {
+   "id": "graphic-f3-c2",
+   "familyId": "graphic-f3",
+   "wellTier": "graphic",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "operate",
+     "read"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f0-c0",
+   "familyId": "interaction-f0",
+   "wellTier": "interaction",
+   "status": "rejected",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "operate",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f0-c1",
+   "familyId": "interaction-f0",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": []
+   }
+  },
+  {
+   "id": "interaction-f0-c2",
+   "familyId": "interaction-f0",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1
+   }
+  },
+  {
+   "id": "interaction-f1-c0",
+   "familyId": "interaction-f1",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f1-c1",
+   "familyId": "interaction-f1",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "operate",
+     "read"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f1-c2",
+   "familyId": "interaction-f1",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "operate",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f2-c0",
+   "familyId": "interaction-f2",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": []
+   }
+  },
+  {
+   "id": "interaction-f2-c1",
+   "familyId": "interaction-f2",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3
+   }
+  },
+  {
+   "id": "interaction-f2-c2",
+   "familyId": "interaction-f2",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f3-c0",
+   "familyId": "interaction-f3",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "operate",
+     "read"
+    ],
+    "breadth": "niche"
+   }
+  },
+  {
+   "id": "interaction-f3-c1",
+   "familyId": "interaction-f3",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "operate",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "interaction-f3-c2",
+   "familyId": "interaction-f3",
+   "wellTier": "interaction",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": []
+   }
+  },
+  {
+   "id": "atmosphere-f0-c0",
+   "familyId": "atmosphere-f0",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f0-c1",
+   "familyId": "atmosphere-f0",
+   "wellTier": "atmosphere",
+   "status": "rejected",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f0-c2",
+   "familyId": "atmosphere-f0",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f1-c0",
+   "familyId": "atmosphere-f1",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f1-c1",
+   "familyId": "atmosphere-f1",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f1-c2",
+   "familyId": "atmosphere-f1",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f2-c0",
+   "familyId": "atmosphere-f2",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f2-c1",
+   "familyId": "atmosphere-f2",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f2-c2",
+   "familyId": "atmosphere-f2",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ],
+    "breadth": "niche"
+   }
+  },
+  {
+   "id": "atmosphere-f3-c0",
+   "familyId": "atmosphere-f3",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "dual",
+   "review": {
+    "status": "approved",
+    "rating": 2,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f3-c1",
+   "familyId": "atmosphere-f3",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "composition",
+   "review": {
+    "status": "approved",
+    "rating": 3,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  },
+  {
+   "id": "atmosphere-f3-c2",
+   "familyId": "atmosphere-f3",
+   "wellTier": "atmosphere",
+   "status": "approved",
+   "strength": "world",
+   "review": {
+    "status": "approved",
+    "rating": 1,
+    "allowedModes": [
+     "persuade",
+     "read",
+     "experience"
+    ]
+   }
+  }
+ ],
+ "closedInteraction": "interaction worlds get allowedModes [\"persuade\"]",
+ "cases": [
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f0-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f2-c2",
+    "interaction-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "interaction-f1-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f2-c0",
+    "interaction-f1-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c2",
+    "interaction-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f0-c0",
+    "atmosphere-f3-c0",
+    "atmosphere-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c2",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c2",
+    "interaction-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f1-c2",
+    "atmosphere-f3-c2",
+    "atmosphere-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f1-c0",
+    "interaction-f2-c0",
+    "interaction-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f3-c2",
+    "graphic-f0-c0",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "interaction-f0-c2",
+    "interaction-f2-c2",
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f2-c0",
+    "graphic-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c0",
+    "atmosphere-f2-c1",
+    "interaction-f3-c1",
+    "interaction-f2-c0",
+    "graphic-f0-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f3-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "interaction-f1-c0",
+    "interaction-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f1-c1",
+    "interaction-f1-c1",
+    "interaction-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c1",
+    "atmosphere-f0-c0",
+    "interaction-f2-c1",
+    "interaction-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "interaction-f1-c1",
+    "interaction-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f3-c0",
+    "interaction-f2-c0",
+    "interaction-f0-c1",
+    "graphic-f1-c1",
+    "graphic-f0-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "interaction-f1-c0",
+    "interaction-f2-c1",
+    "graphic-f0-c0",
+    "graphic-f2-c1",
+    "atmosphere-f1-c1",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "interaction-f0-c1",
+    "interaction-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": null,
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "interaction-f2-c0",
+    "interaction-f1-c1",
+    "atmosphere-f0-c0",
+    "atmosphere-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f0-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f2-c2",
+    "interaction-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "interaction-f1-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f2-c0",
+    "interaction-f1-c2",
+    "graphic-f2-c2",
+    "graphic-f1-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c2",
+    "interaction-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f0-c0",
+    "atmosphere-f3-c0",
+    "atmosphere-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c2",
+    "interaction-f1-c0",
+    "graphic-f1-c2",
+    "graphic-f3-c0",
+    "atmosphere-f3-c2",
+    "atmosphere-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f1-c0",
+    "interaction-f2-c0",
+    "interaction-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f3-c2",
+    "graphic-f0-c0",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "interaction-f0-c2",
+    "interaction-f2-c2",
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f1-c2",
+    "graphic-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c0",
+    "atmosphere-f2-c1",
+    "interaction-f3-c1",
+    "interaction-f2-c0",
+    "graphic-f0-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f3-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "interaction-f1-c0",
+    "interaction-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f1-c1",
+    "interaction-f2-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c1",
+    "atmosphere-f0-c0",
+    "interaction-f2-c1",
+    "interaction-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c1",
+    "graphic-f1-c0",
+    "graphic-f0-c0",
+    "interaction-f3-c1",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f3-c0",
+    "interaction-f0-c1",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "interaction-f1-c0",
+    "interaction-f2-c1",
+    "graphic-f0-c0",
+    "graphic-f2-c1",
+    "atmosphere-f1-c1",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "interaction-f0-c1",
+    "interaction-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "persuade",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c1",
+    "interaction-f2-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f0-c2",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c2",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c0",
+    "graphic-f2-c0",
+    "atmosphere-f0-c2",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c0",
+    "interaction-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "atmosphere-f3-c0",
+    "atmosphere-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c2",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c0",
+    "graphic-f2-c0",
+    "atmosphere-f3-c2",
+    "atmosphere-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f1-c0",
+    "interaction-f2-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f0-c2",
+    "graphic-f3-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c0",
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c0",
+    "atmosphere-f2-c1",
+    "interaction-f2-c0",
+    "interaction-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f3-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "interaction-f0-c1",
+    "interaction-f2-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f1-c1",
+    "interaction-f3-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c1",
+    "atmosphere-f0-c0",
+    "interaction-f2-c1",
+    "interaction-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "interaction-f2-c0",
+    "interaction-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f3-c0",
+    "interaction-f3-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c1",
+    "interaction-f0-c1",
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "atmosphere-f1-c1",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "interaction-f1-c1",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "read",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f2-c0",
+    "interaction-f3-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f0-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f2-c2",
+    "interaction-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "interaction-f1-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f2-c0",
+    "interaction-f1-c2",
+    "graphic-f2-c2",
+    "graphic-f1-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c2",
+    "interaction-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f0-c0",
+    "atmosphere-f3-c0",
+    "atmosphere-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c2",
+    "interaction-f1-c0",
+    "graphic-f1-c2",
+    "graphic-f3-c0",
+    "atmosphere-f3-c2",
+    "atmosphere-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "atmosphere-f0-c2",
+    "atmosphere-f1-c0",
+    "interaction-f2-c0",
+    "interaction-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f0-c0",
+    "atmosphere-f2-c0",
+    "interaction-f1-c2",
+    "interaction-f3-c2",
+    "graphic-f0-c0",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "interaction-f0-c2",
+    "interaction-f2-c2",
+    "atmosphere-f3-c2",
+    "atmosphere-f1-c2",
+    "graphic-f1-c2",
+    "graphic-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c0",
+    "atmosphere-f2-c1",
+    "interaction-f3-c1",
+    "interaction-f2-c0",
+    "graphic-f0-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f3-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "interaction-f1-c0",
+    "interaction-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f1-c1",
+    "interaction-f2-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "atmosphere-f3-c1",
+    "atmosphere-f0-c0",
+    "interaction-f2-c1",
+    "interaction-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c1",
+    "graphic-f1-c0",
+    "graphic-f0-c0",
+    "interaction-f3-c1",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "atmosphere-f2-c0",
+    "atmosphere-f3-c0",
+    "interaction-f0-c1",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "interaction-f1-c0",
+    "interaction-f2-c1",
+    "graphic-f0-c0",
+    "graphic-f2-c1",
+    "atmosphere-f1-c1",
+    "atmosphere-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "atmosphere-f1-c0",
+    "atmosphere-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "interaction-f0-c1",
+    "interaction-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "experience",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c1",
+    "interaction-f2-c0",
+    "atmosphere-f0-c0",
+    "atmosphere-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "interaction-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f2-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "graphic-f0-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 3,
+   "picks": [
+    "interaction-f1-c2",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c0",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c0",
+    "interaction-f1-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 3,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "interaction-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "interaction-f1-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 3,
+   "picks": [
+    "interaction-f0-c2",
+    "graphic-f1-c0",
+    "graphic-f3-c2",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "interaction-f0-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 1,
+   "picks": [
+    "interaction-f3-c2",
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f1-c2",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 3,
+   "picks": [
+    "interaction-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "interaction-f3-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f2-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c1",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "interaction-f0-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 3,
+   "picks": [
+    "interaction-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c1",
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c1",
+    "interaction-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f3-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 3,
+   "picks": [
+    "interaction-f2-c0",
+    "graphic-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "interaction-f2-c1",
+    "graphic-f2-c1",
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "graphic-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "interaction-f0-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "interaction-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 3,
+   "picks": [
+    "graphic-f2-c0",
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "interaction-f3-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 0,
+   "picks": [
+    "interaction-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 1,
+   "picks": [
+    "interaction-f1-c1",
+    "graphic-f1-c0",
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 2,
+   "picks": [
+    "interaction-f2-c1",
+    "graphic-f1-c0",
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "open",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 3,
+   "picks": [
+    "interaction-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "alpha",
+   "reroll": 3,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f3-c2",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c2",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c0",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "beta",
+   "reroll": 3,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f2-c2",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "gamma",
+   "reroll": 3,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f3-c2",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 0,
+   "picks": [
+    "graphic-f3-c2",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c2",
+    "graphic-f3-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c0",
+    "graphic-f2-c2",
+    "graphic-f3-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 2,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c2",
+    "graphic-f3-c2",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "direction",
+   "key": "delta",
+   "reroll": 3,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c2",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f3-c2",
+    "graphic-f2-c2"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 0,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 1,
+   "picks": [
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 2,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "alpha",
+   "reroll": 3,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 0,
+   "picks": [
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c1"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 2,
+   "picks": [
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c1"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "beta",
+   "reroll": 3,
+   "picks": [
+    "graphic-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 0,
+   "picks": [
+    "graphic-f2-c1",
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 1,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c1",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "gamma",
+   "reroll": 3,
+   "picks": [
+    "graphic-f2-c0",
+    "graphic-f1-c1",
+    "graphic-f3-c0",
+    "graphic-f0-c1",
+    "graphic-f2-c1",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 0,
+   "picks": [
+    "graphic-f2-c1",
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c0"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 1,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f3-c0",
+    "graphic-f1-c0",
+    "graphic-f2-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c1"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 2,
+   "picks": [
+    "graphic-f1-c0",
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c1"
+   ]
+  },
+  {
+   "catalog": "closed-interaction",
+   "mode": "operate",
+   "scope": "surface",
+   "key": "delta",
+   "reroll": 3,
+   "picks": [
+    "graphic-f0-c1",
+    "graphic-f2-c0",
+    "graphic-f1-c0",
+    "graphic-f3-c0",
+    "graphic-f1-c1",
+    "graphic-f2-c1"
+   ]
+  }
+ ]
+}

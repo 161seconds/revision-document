@@ -1,0 +1,168 @@
+/**
+ * `live-wrap` and `live-insert` corpus: locator errors, replace/insert
+ * wrappers across HTML / JSX / TSX / Astro / Vue / Svelte, deferred writes,
+ * --text disambiguation, generated-file guards, buffer-aware originals.
+ */
+import { LIVE_FILES, linkSvelte, write, writeBuffer } from '../live-helpers.mjs';
+
+const F = LIVE_FILES;
+const W = (id, workspace, args, extra = {}) => ({ id, verb: 'live-wrap', workspace, args, files: [...F, ...(extra.snap || [])], ...extra });
+const I = (id, workspace, args, extra = {}) => ({ id, verb: 'live-insert', workspace, args, files: [...F, ...(extra.snap || [])], ...extra });
+const buffered = (ws, ops, pageUrl = '/') => writeBuffer(ws, [{ id: 'e1', pageUrl, element: { tagName: 'p' }, ops, stagedAt: '2026-08-01T00:00:00.000Z' }]);
+// Two components in one file; the first returns a multi-line self-closing tag.
+const FIELD_TSX = `export function FieldLegend(props) {
+  return (
+    <legend
+      className="field-legend"
+      {...props}
+    />
+  );
+}
+
+export function FieldGroup({ children }) {
+  return <div className="field-group">{children}</div>;
+}
+`;
+// #1281: the locator's first hit (Components/) lacks the picked text; Pages/ has it.
+const PANEL_TEXT = 'Company billing contact Primary contact for invoices and renewal notices.';
+const PANEL_FILES = {
+  snap: ['src/**'],
+  setup: (ws) => {
+    write(ws, 'src/Components/Detail.html', '<section>\n  <div class="panel-body">Checklist item detail copy.</div>\n</section>\n');
+    write(ws, 'src/Pages/Show.html', `<main>\n  <div class="panel-body">${PANEL_TEXT}</div>\n</main>\n`);
+  },
+};
+const PANEL_DYNAMIC = {
+  snap: ['src/**'],
+  setup: (ws) => write(ws, 'src/Pages/Show.html', '<main>\n  <div class="panel-body">{{ company.billing_contact }}</div>\n</main>\n'),
+};
+// A hit without a candidate (the class only in a <style> block) must not count against the one real element.
+const PANEL_STYLE_HIT = {
+  snap: ['src/**'],
+  setup: (ws) => {
+    write(ws, 'src/Components/Detail.html', '<style>.panel-body { padding: 1rem; }</style>\n<section>\n  <div class="panel-head">Detail</div>\n</section>\n');
+    write(ws, 'src/Pages/Show.html', '<main>\n  <div class="panel-body">{{ company.billing_contact }}</div>\n</main>\n');
+  },
+};
+// Both hits carry the class on a <p>, so --tag div locates nothing anywhere.
+const PANEL_WRONG_TAG = {
+  snap: ['src/**'],
+  setup: (ws) => {
+    write(ws, 'src/Components/Detail.html', '<section>\n  <p class="panel-body">Checklist item detail copy.</p>\n</section>\n');
+    write(ws, 'src/Pages/Show.html', `<main>\n  <p class="panel-body">${PANEL_TEXT}</p>\n</main>\n`);
+  },
+};
+// The text's file sits in a later search dir (pages/ after src/).
+const PANEL_LATER_DIR = {
+  snap: ['src/**', 'pages/**'],
+  setup: (ws) => {
+    write(ws, 'src/Components/Detail.html', '<section>\n  <div class="panel-body">Checklist item detail copy.</div>\n</section>\n');
+    write(ws, 'pages/show.html', `<main>\n  <div class="panel-body">${PANEL_TEXT}</div>\n</main>\n`);
+  },
+};
+
+// An img that never closes, then a twin that does: the first stays the match.
+const UNCLOSED = {
+  snap: ['src/**'], setup: (ws) => write(ws, 'src/void.html', '<main>\n  <img class="void-hero" src="/a.png">\n  <img class="void-hero" src="/b.png" />\n</main>\n'),
+};
+
+export default [
+  // --- argument / usage paths ---
+  W('live-wrap-help', 'live-html', ['--help']),
+  W('live-wrap-missing-id', 'live-html', ['--classes', 'hero-title']),
+  W('live-wrap-missing-locator', 'live-html', ['--id', 'ab12cd34', '--tag', 'h1']),
+  W('live-wrap-target-missing-value', 'live-html', ['--id', 'ab12cd34', '--classes', 'x', '--target']),
+  W('live-wrap-element-not-found', 'live-html', ['--id', 'ab12cd34', '--classes', 'no-such-class']),
+  W('live-wrap-element-not-in-source', 'live-html', ['--id', 'ab12cd34', '--classes', 'built-title']),
+  W('live-wrap-file-is-generated', 'live-html', ['--id', 'ab12cd34', '--classes', 'built-title', '--file', 'dist/generated.html']),
+  W('live-wrap-file-element-missing', 'live-html', ['--id', 'ab12cd34', '--classes', 'hero-title', '--file', 'src/cards.html']),
+  W('live-wrap-file-element-unclosed', 'live-html', ['--id', 'ab12cd34', '--classes', 'void-hero', '--tag', 'img', '--file', 'src/void.html'], UNCLOSED),
+  // --- HTML replace wrappers ---
+  W('live-wrap-html-by-id', 'live-html', ['--id', 'ab12cd34', '--count', '3', '--element-id', 'hero'], { snap: ['index.html'] }),
+  W('live-wrap-html-by-classes-tag', 'live-html', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['index.html'] }),
+  W('live-wrap-html-by-query', 'live-html', ['--id', 'ab12cd34', '--count', '2', '--query', 'hero-hook'], { snap: ['index.html'] }),
+  W('live-wrap-html-eq-form', 'live-html', ['--id=ab12cd34', '--count=1', '--element-id=features'], { snap: ['index.html'] }),
+  W('live-wrap-html-multiline', 'live-html', ['--id', 'ab12cd34', '--classes', 'side-note', '--tag', 'aside'], { snap: ['index.html'] }),
+  W('live-wrap-html-deferred', 'live-html', ['--id', 'ab12cd34', '--classes', 'side-note', '--tag', 'aside', '--defer-source-write'], { snap: ['index.html'] }),
+  W('live-wrap-html-explicit-file', 'live-html', ['--id', 'ab12cd34', '--classes', 'doc-title', '--file', 'public/docs/guide.html'], { snap: ['public/**'] }),
+  W('live-wrap-html-page-url-no-pending', 'live-html', ['--id', 'ab12cd34', '--element-id', 'hero', '--page-url', '/'], { snap: ['index.html'] }),
+  // --- --text disambiguation (src/cards.html has three identical cards) ---
+  W('live-wrap-text-picks-second', 'live-html', ['--id', 'ab12cd34', '--classes', 'card', '--tag', 'div', '--text', 'Beta card Second card body copy.', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  W('live-wrap-text-ambiguous', 'live-html', ['--id', 'ab12cd34', '--classes', 'card-body', '--tag', 'p', '--text', 'card body copy', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  W('live-wrap-text-not-in-source', 'live-html', ['--id', 'ab12cd34', '--classes', 'card', '--tag', 'div', '--text', 'Rendered from props elsewhere', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  W('live-wrap-text-short-falls-back', 'live-html', ['--id', 'ab12cd34', '--classes', 'card', '--tag', 'div', '--text', 'zzz', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  W('live-wrap-no-text-first-match', 'live-html', ['--id', 'ab12cd34', '--classes', 'card', '--tag', 'div', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  W('live-wrap-text-picks-later-file', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT, '--defer-source-write'], PANEL_FILES),
+  W('live-wrap-text-in-no-file', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', 'Rendered from props elsewhere'], PANEL_FILES),
+  W('live-wrap-text-single-file-dynamic', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT, '--defer-source-write'], PANEL_DYNAMIC),
+  W('live-wrap-text-style-hit-and-dynamic', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT, '--defer-source-write'], PANEL_STYLE_HIT),
+  W('live-wrap-text-hits-without-candidates', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT], PANEL_WRONG_TAG),
+  W('live-wrap-text-picks-later-search-dir', 'live-html', ['--id', 'ab12cd34', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT, '--defer-source-write'], PANEL_LATER_DIR),
+  // --- JSX / TSX / Astro / Vue ---
+  W('live-wrap-jsx', 'live-vite', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'] }),
+  W('live-wrap-jsx-deferred', 'live-vite', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1', '--defer-source-write'], { snap: ['src/**'] }),
+  W('live-wrap-jsx-mapped-item', 'live-vite', ['--id', 'ab12cd34', '--classes', 'item-row', '--tag', 'li', '--text', 'First'], { snap: ['src/**'] }),
+  W('live-wrap-tsx-multiline', 'live-vite', ['--id', 'ab12cd34', '--classes', 'panel', '--tag', 'section'], { snap: ['src/**'] }),
+  W('live-wrap-tsx-multiline-self-closing', 'live-vite', ['--id', 'ab12cd34', '--classes', 'field-legend', '--tag', 'legend'], {
+    snap: ['src/**'], setup: (ws) => write(ws, 'src/Field.tsx', FIELD_TSX),
+  }),
+  W('live-wrap-tsx-component-tag-case', 'live-vite', ['--id', 'ab12cd34', '--count', '1', '--element-id', 'password', '--tag', 'input', '--file', 'src/Login.tsx', '--defer-source-write'], {
+    snap: ['src/Login.tsx'],
+    setup: (ws) => write(ws, 'src/Login.tsx', 'export function Login() {\n  return (\n    <form>\n      <Input id="password" type="password" required />\n    </form>\n  );\n}\n'),
+  }),
+  W('live-wrap-astro', 'live-astro', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'] }),
+  W('live-wrap-astro-deferred', 'live-astro', ['--id', 'ab12cd34', '--element-id', 'features', '--defer-source-write'], { snap: ['src/**'] }),
+  W('live-wrap-vue', 'live-nuxt', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['pages/**'] }),
+  W('live-wrap-tanstack-tsx', 'live-tanstack', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'] }),
+  W('live-wrap-monorepo-child-from-root', 'live-monorepo', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1', '--target', 'website'], { snap: ['website/src/**', 'website/.impeccable/**'] }),
+  // --- Svelte: no compiler -> source-preview fallback; with compiler -> component preview ---
+  W('live-wrap-svelte-no-compiler', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'] }),
+  W('live-wrap-svelte-env-disabled', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'], env: { IMPECCABLE_LIVE_SVELTE_COMPONENT: '0' }, setup: linkSvelte }),
+  W('live-wrap-svelte-component', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'], setup: linkSvelte }),
+  W('live-wrap-svelte-component-each', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'expense-list', '--tag', 'ul'], { snap: ['src/**'], setup: linkSvelte }),
+  W('live-wrap-svelte-component-refused-script', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'page', '--tag', 'main'], {
+    snap: ['src/**'], setup: (ws) => { linkSvelte(ws); write(ws, 'src/routes/+page.svelte', '<main class="page">\n  <script>let x = 1;</script>\n  <h1>Hi</h1>\n</main>\n'); },
+  }),
+  W('live-wrap-svelte-component-twice', 'live-sveltekit', ['--id', 'ab12cd34', '--classes', 'hero-title', '--tag', 'h1'], { snap: ['src/**'], setup: linkSvelte, steps: [{}, {}] }),
+  // --- pending manual edits ---
+  W('live-wrap-pending-edits-no-page-url', 'live-html', ['--id', 'ab12cd34', '--classes', 'hero-hook', '--tag', 'p'], {
+    snap: ['index.html'], setup: (ws) => buffered(ws, [{ ref: 'main>p.hero-hook', tag: 'p', originalText: 'Minimal static page for oracle live-mode goldens.', newText: 'Edited hook copy.' }]),
+  }),
+  W('live-wrap-pending-edits-applied', 'live-html', ['--id', 'ab12cd34', '--classes', 'hero-hook', '--tag', 'p', '--page-url', '/'], {
+    snap: ['index.html'], setup: (ws) => buffered(ws, [{ ref: 'main>p.hero-hook', tag: 'p', originalText: 'Minimal static page for oracle live-mode goldens.', newText: 'Edited hook copy.' }]),
+  }),
+  W('live-wrap-pending-edits-other-page', 'live-html', ['--id', 'ab12cd34', '--classes', 'hero-hook', '--tag', 'p', '--page-url', '/about'], {
+    snap: ['index.html'], setup: (ws) => buffered(ws, [{ ref: 'main>p.hero-hook', tag: 'p', originalText: 'Minimal static page for oracle live-mode goldens.', newText: 'Edited hook copy.' }]),
+  }),
+  W('live-wrap-pending-edits-ambiguous', 'live-html', ['--id', 'ab12cd34', '--classes', 'cards', '--tag', 'section', '--file', 'src/cards.html', '--page-url', '/'], {
+    snap: ['src/**'], setup: (ws) => buffered(ws, [{ ref: 'section>div>p', tag: 'p', originalText: 'card body copy.', newText: 'card body text.' }]),
+  }),
+  W('live-wrap-pending-edits-unrelated', 'live-html', ['--id', 'ab12cd34', '--element-id', 'hero'], {
+    snap: ['index.html'], setup: (ws) => buffered(ws, [{ ref: 'x', tag: 'p', originalText: 'Some other page copy', newText: 'x' }]),
+  }),
+
+  // --- live-insert.mjs ---
+  I('live-insert-help', 'live-html', ['--help']),
+  I('live-insert-missing-id', 'live-html', ['--position', 'after', '--element-id', 'features']),
+  I('live-insert-missing-position', 'live-html', ['--id', 'ab12cd34', '--element-id', 'features']),
+  I('live-insert-invalid-position', 'live-html', ['--id', 'ab12cd34', '--position', 'below', '--element-id', 'features']),
+  I('live-insert-missing-locator', 'live-html', ['--id', 'ab12cd34', '--position', 'after']),
+  I('live-insert-element-not-found', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'nope']),
+  I('live-insert-element-not-in-source', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'built-title']),
+  I('live-insert-file-is-generated', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'built-title', '--file', 'dist/generated.html']),
+  I('live-insert-html-after', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--element-id', 'features'], { snap: ['index.html'] }),
+  I('live-insert-html-before', 'live-html', ['--id', 'ab12cd34', '--count', '2', '--position', 'before', '--element-id', 'features'], { snap: ['index.html'] }),
+  I('live-insert-html-deferred', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'side-note', '--tag', 'aside', '--defer-source-write'], { snap: ['index.html'] }),
+  I('live-insert-html-text-ambiguous', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'card-body', '--tag', 'p', '--text', 'card body copy', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  I('live-insert-html-text-picks', 'live-html', ['--id', 'ab12cd34', '--position', 'before', '--classes', 'card', '--tag', 'div', '--text', 'Gamma card Third card body copy.', '--file', 'src/cards.html'], { snap: ['src/**'] }),
+  I('live-insert-text-picks-later-file', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'panel-body', '--tag', 'div', '--text', PANEL_TEXT, '--defer-source-write'], PANEL_FILES),
+  I('live-insert-text-in-no-file', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'panel-body', '--tag', 'div', '--text', 'Rendered from props elsewhere'], PANEL_FILES),
+  I('live-insert-html-unclosed-before', 'live-html', ['--id', 'ab12cd34', '--position', 'before', '--classes', 'void-hero', '--tag', 'img', '--file', 'src/void.html'], UNCLOSED),
+  I('live-insert-html-unclosed-after', 'live-html', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'void-hero', '--tag', 'img', '--file', 'src/void.html'], UNCLOSED),
+  I('live-insert-jsx-after', 'live-vite', ['--id', 'ab12cd34', '--position', 'after', '--element-id', 'features'], { snap: ['src/**'] }),
+  I('live-insert-jsx-before-deferred', 'live-vite', ['--id', 'ab12cd34', '--position', 'before', '--classes', 'hero-title', '--tag', 'h1', '--defer-source-write'], { snap: ['src/**'] }),
+  I('live-insert-astro-after', 'live-astro', ['--id', 'ab12cd34', '--position', 'after', '--element-id', 'features'], { snap: ['src/**'] }),
+  I('live-insert-vue-after', 'live-nuxt', ['--id', 'ab12cd34', '--position', 'after', '--classes', 'hero-hook', '--tag', 'p'], { snap: ['pages/**'] }),
+  I('live-insert-svelte-component', 'live-sveltekit', ['--id', 'ab12cd34', '--position', 'after', '--element-id', 'features'], { snap: ['src/**'] }),
+  I('live-insert-svelte-env-disabled', 'live-sveltekit', ['--id', 'ab12cd34', '--position', 'after', '--element-id', 'features'], { snap: ['src/**'], env: { IMPECCABLE_LIVE_SVELTE_COMPONENT: 'false' } }),
+];

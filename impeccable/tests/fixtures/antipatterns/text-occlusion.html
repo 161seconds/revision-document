@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>text-occlusion fixture</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; color: #111; background: #fff; }
+  section { padding: 40px; position: relative; }
+
+  /* ── FLAG 1: opaque box painted over text (>30%) ── */
+  .flag-box-wrap { position: relative; height: 120px; }
+  .flag-box-text { position: absolute; top: 40px; left: 40px; font-size: 20px; width: 300px; }
+  .flag-box-cover { position: absolute; top: 30px; left: 30px; width: 240px; height: 60px;
+    background: #1f7a3d; border-radius: 8px; z-index: 5; }
+
+  /* ── FLAG 2: inline element with opaque fill + leaked vertical padding ── */
+  .flag-leak-host { position: relative; margin-top: 30px; }
+  .flag-leak { display: inline; background: #2f8543; padding: 36px; border-radius: 6px; }
+  .flag-leak-card { background: #14202b; color: #fff; padding: 24px; border-radius: 6px; }
+
+  /* ── FLAG 3: big headline overhanging an opaque card ── */
+  .flag-hero { position: relative; height: 220px; }
+  .flag-headline { position: absolute; top: 40px; left: 0; font-size: 64px; font-weight: 800;
+    width: 760px; color: #b22; white-space: nowrap; }
+  .flag-card { position: absolute; top: 20px; left: 700px; width: 360px; height: 180px;
+    background: #f4f5f7; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,.08); border-radius: 8px; }
+
+  /* ── PASS: stacked headline with tight leading (line-box bleed, no real overlap) ── */
+  .pass-stack { margin-top: 40px; }
+  .pass-eyebrow { font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: #a33; }
+  .pass-title { font-size: 96px; line-height: .9; font-weight: 800; }
+
+  /* ── PASS: text over image with a scrim, text on top (readable) ── */
+  .pass-hero { position: relative; height: 200px; overflow: hidden; border-radius: 8px; }
+  .pass-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pass-hero .scrim { position: absolute; inset: 0; background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+  .pass-hero .cap { position: absolute; bottom: 16px; left: 16px; color: #fff; font-size: 24px; z-index: 2; }
+
+  /* ── PASS: fixed status bar over content at the fold ── */
+  .pass-under { margin-top: 20px; font-size: 16px; }
+  /* Invisible interaction layer: an opacity-0 scrubber input stretched over
+     text, like a before/after comparison handle. It paints nothing, so it must
+     not read as an occluder despite its UA background-color. */
+  .pass-scrubber-wrap { position: relative; margin-top: 30px; height: 80px; }
+  .pass-scrubber-text { position: absolute; top: 20px; left: 10px; font-size: 20px; width: 320px; }
+  .pass-scrubber-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; z-index: 5; margin: 0; }
+  .pass-fixedbar { position: fixed; left: 0; right: 0; bottom: 0; height: 40px; background: #b22;
+    color: #fff; display: flex; align-items: center; padding: 0 16px; }
+  /* ── PASS: text clipped by a scroll region, with an opaque bar right below it ──
+     getBoundingClientRect reports where a box would be if nothing cut it off, so
+     the lines that have scrolled past this panel's bottom edge still report
+     their full rects, and those rects land on the bar. Nothing overlaps: those
+     lines are clipped away, and scrolling brings them into the panel rather than
+     out from under anything. Any sticky footer or toolbar under a scroll region
+     has this shape, which is why it has to probe only where the text paints. */
+  .pass-scrollbox { width: 420px; height: 90px; overflow-y: auto;
+    background: #fff; border: 1px solid #ccd; }
+  .pass-scrollbox p { margin: 0 0 10px; padding: 0 12px; font-size: 16px; color: #222; }
+  .pass-scrollbox p:first-child { padding-top: 12px; }
+  .pass-underbar { width: 420px; height: 64px; background: #223; color: #fff;
+    display: flex; align-items: center; padding: 0 12px; font-size: 16px; }
+  /* ── PASS: closed <details> menu ──
+     Chrome lays out closed <details> content and hides it through
+     ::details-content, so this link has a real rect over the cover box below
+     and paints nothing. */
+  .pass-menu { position: absolute; top: 160px; left: 40px; }
+  .pass-menu nav { position: absolute; top: 80px; left: 0; width: 300px; }
+  .pass-menu nav a { display: block; height: 44px; line-height: 44px; }
+</style>
+</head>
+<body>
+  <!-- First in the document on purpose: the probe only samples text in the
+       first viewport, and this case is about geometry rather than about where
+       on the page it sits. -->
+  <div class="pass-scrollbox">
+    <p>Palette and material, warm cream ground with hairline sepia rules</p>
+    <p>Type and composition, engraved italic names over small-caps labels</p>
+    <p>Topology and navigation, move by life stage rather than by index</p>
+    <p>Controls and state, align and overlay and compare and annotate</p>
+  </div>
+  <div class="pass-underbar">Scrolled-out lines report rects that land here</div>
+  <details class="pass-menu">
+    <summary>Menu</summary>
+    <nav><a href="#docs">Documentation</a></nav>
+  </details>
+
+  <section>
+    <div class="flag-box-wrap">
+      <p class="flag-box-text">Root cause identified in four minutes</p>
+      <div class="flag-box-cover" aria-hidden="true"></div>
+    </div>
+
+    <div class="flag-leak-host">
+      <span class="flag-leak" aria-hidden="true"></span>
+      <div class="flag-leak-card">Incident closed. Missing index on the replica, found from one alert.</div>
+    </div>
+
+    <div class="flag-hero">
+      <div class="flag-headline">The trace you need is the one they sampled away.</div>
+      <div class="flag-card">
+        <p>INCIDENT 4417</p>
+        <p>service checkout-api</p>
+      </div>
+    </div>
+
+    <div class="pass-stack">
+      <p class="pass-eyebrow">Family Italian on the waterfront</p>
+      <h1 class="pass-title">Trattoria da Nonna Lucia</h1>
+    </div>
+
+    <div class="pass-hero">
+      <img src="data:image/gif;base64,R0lGODlhAQABAIABAAAAAP///yH5BAEAAAEALAAAAAABAAEAAAICTAEAOw==" alt="">
+      <div class="scrim"></div>
+      <div class="cap">Villa on the cliff</div>
+    </div>
+
+    <p class="pass-under">Every span of every trace, kept on disk, no sampling ever applied here.</p>
+  </section>
+  <div class="pass-fixedbar">8/8 services up &middot; p99 1.20s &middot; retention infinite</div>
+    <div class="pass-scrubber-wrap">
+      <p class="pass-scrubber-text">Drag anywhere to compare versions</p>
+      <input class="pass-scrubber-input" type="range" min="0" max="100" value="50">
+    </div>
+</body>
+</html>
