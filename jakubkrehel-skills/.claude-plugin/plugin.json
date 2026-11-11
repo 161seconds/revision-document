@@ -1,0 +1,12 @@
+{
+  "name": "interfaces",
+  "description": "Skills for building great product interfaces: typography, colors, layout, accessibility, UI polish and writing.",
+  "version": "1.19.2",
+  "author": {
+    "name": "Jakub Krehel",
+    "email": "jakub@kbo.sk"
+  },
+  "homepage": "https://interfaces.dev/",
+  "repository": "https://github.com/jakubkrehel/skills",
+  "license": "MIT"
+}

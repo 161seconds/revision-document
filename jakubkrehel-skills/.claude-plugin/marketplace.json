@@ -1,0 +1,15 @@
+{
+  "name": "interfaces",
+  "description": "Agent skills for building great product interfaces, from typography and color to accessibility and UX writing.",
+  "owner": {
+    "name": "Jakub Krehel",
+    "email": "jakub@kbo.sk"
+  },
+  "plugins": [
+    {
+      "name": "interfaces",
+      "source": "./",
+      "description": "Skills for building great product interfaces: typography, colors, layout, accessibility, UI polish and writing."
+    }
+  ]
+}
