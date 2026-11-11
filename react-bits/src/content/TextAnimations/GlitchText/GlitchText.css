@@ -1,0 +1,115 @@
+.glitch {
+  --glitch-mask-a: linear-gradient(
+    #000 var(--glitch-a-top, 0%),
+    transparent var(--glitch-a-top, 0%),
+    transparent calc(100% - var(--glitch-a-bottom, 100%)),
+    #000 calc(100% - var(--glitch-a-bottom, 100%))
+  );
+  --glitch-mask-b: linear-gradient(
+    #000 var(--glitch-b-top, 0%),
+    transparent var(--glitch-b-top, 0%),
+    transparent calc(100% - var(--glitch-b-bottom, 100%)),
+    #000 calc(100% - var(--glitch-b-bottom, 100%))
+  );
+  position: relative;
+  margin: 0 auto;
+  font-size: clamp(2rem, 10vw, 8rem);
+  font-weight: 900;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+}
+
+.glitch__text {
+  display: block;
+  opacity: var(--glitch-alpha, 1);
+  transform: skewX(var(--glitch-skew, 0deg));
+  transform-origin: 0 50%;
+  -webkit-mask-image: var(--glitch-mask-a), var(--glitch-mask-b);
+  mask-image: var(--glitch-mask-a), var(--glitch-mask-b);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.glitch__slice {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--glitch-alpha, 1);
+  transform-origin: 0 50%;
+}
+
+.glitch__slice--a {
+  text-shadow: var(--glitch-a-shadow, none);
+  clip-path: inset(var(--glitch-a-top, 0%) 0 var(--glitch-a-bottom, 100%) 0);
+  transform: translate3d(var(--glitch-a-x, 0px), var(--glitch-a-y, 0px), 0) skewX(var(--glitch-skew, 0deg));
+}
+
+.glitch__slice--b {
+  text-shadow: var(--glitch-b-shadow, none);
+  clip-path: inset(var(--glitch-b-top, 0%) 0 var(--glitch-b-bottom, 100%) 0);
+  transform: translate3d(var(--glitch-b-x, 0px), var(--glitch-b-y, 0px), 0) skewX(var(--glitch-skew, 0deg));
+  -webkit-mask-image: var(--glitch-mask-a);
+  mask-image: var(--glitch-mask-a);
+}
+
+.glitch--rgb .glitch__text {
+  position: relative;
+  z-index: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.glitch--rgb .glitch__slice {
+  clip-path: none;
+  text-shadow: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: calc(var(--glitch-alpha, 1) * var(--glitch-split, 0));
+}
+
+.glitch--rgb .glitch__slice--a {
+  color: var(--glitch-color-a, currentColor);
+}
+
+.glitch--rgb .glitch__slice--b {
+  color: var(--glitch-color-b, currentColor);
+}
+
+.glitch--noise .glitch__slice {
+  display: none;
+}
+
+.glitch__char {
+  position: relative;
+}
+
+.glitch__char[data-glyph] {
+  visibility: hidden;
+}
+
+.glitch__char::after {
+  content: attr(data-glyph);
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  visibility: visible;
+  text-align: center;
+  color: var(--glitch-glyph, currentColor);
+}
+
+.glitch__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,50 @@
+.circular-text {
+  position: relative;
+  margin: 0 auto;
+  border-radius: 50%;
+  text-align: center;
+  cursor: pointer;
+}
+
+.circular-text__tilt,
+.circular-text__plane,
+.circular-text__ring {
+  position: absolute;
+  inset: 0;
+}
+
+.circular-text__tilt {
+  transform-style: preserve-3d;
+}
+
+.circular-text__plane {
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.circular-text__letter {
+  position: absolute;
+  inset: 0;
+  display: inline-block;
+  white-space: pre;
+}
+
+.circular-text[data-settled] .circular-text__letter {
+  transition: transform 0.5s cubic-bezier(0, 0, 0, 1);
+}
+
+.circular-text__line {
+  position: absolute;
+  inset: 1.3em;
+  border: 0 solid currentColor;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.circular-text__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

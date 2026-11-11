@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://reactbits.dev/sitemap.xml
+
+# Library index for AI agents, including the React Bits Pro catalogue
+# https://reactbits.dev/llms.txt

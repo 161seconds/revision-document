@@ -1,0 +1,12 @@
+.blob-cursor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob-cursor-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

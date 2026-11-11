@@ -1,0 +1,100 @@
+.masked-heading {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-wrap: balance;
+  -webkit-font-smoothing: antialiased;
+}
+
+.masked-heading__measure {
+  color: transparent;
+}
+
+.masked-heading__word {
+  display: inline-block;
+  white-space: pre;
+}
+
+.masked-heading__word:not(:last-child)::after {
+  content: ' ';
+}
+
+.masked-heading__baseline {
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+
+.masked-heading__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.masked-heading__reveal {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.masked-heading__clip {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.masked-heading__media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  will-change: transform, filter;
+}
+
+.masked-heading__tint {
+  position: absolute;
+  inset: 0;
+  display: block;
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
+.masked-heading__spot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.masked-heading__spot--tone {
+  background: #808080;
+  mix-blend-mode: saturation;
+}
+
+.masked-heading__spot--shade {
+  background: #000;
+  opacity: 0.55;
+}
+
+.masked-heading__outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke-linejoin: round;
+}
+
+.masked-heading__source {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}

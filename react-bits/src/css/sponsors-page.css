@@ -1,0 +1,201 @@
+.spx .pg-inner {
+  max-width: 1100px;
+}
+
+.spx-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.spx-stat-well {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+}
+
+.spx-stat-value {
+  color: #fff;
+  font-family: 'Geist', sans-serif;
+  font-size: clamp(40px, 4.4vw, 56px);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -2.4px;
+}
+
+.spx-stat-label {
+  padding: 13px 10px 8px 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Geist', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.spx-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.spx-plan-well {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px 20px 20px;
+}
+
+.spx-plan-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.spx-plan-name {
+  margin: 0;
+  color: #fff;
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.spx-plan-note {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Geist', sans-serif;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.spx-plan-price {
+  margin: 0;
+  color: #fff;
+  font-family: 'Geist', sans-serif;
+  font-size: 44px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+.spx-plan-price span {
+  margin-left: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.spx-plan-btn {
+  width: 100%;
+}
+
+.spx-plan-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin: 0;
+  padding: 18px 14px 14px;
+  list-style: none;
+}
+
+.spx-plan-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: 'Geist', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.spx-plan-benefits svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.spx-contact {
+  margin-top: 12px;
+}
+
+.spx-contact-well {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 26px 26px 28px;
+}
+
+.spx-contact-title {
+  margin: 0;
+  color: #fff;
+  font-family: 'Geist', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.6px;
+}
+
+.spx-contact-sub {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .spx-plans {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 640px) {
+  .spx-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .spx-stat-well {
+    height: 120px;
+  }
+
+  .spx-plans {
+    gap: 8px;
+  }
+
+  .spx-contact {
+    margin-top: 8px;
+  }
+
+  .spx-contact-well {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px 20px;
+  }
+}
+
+:root[data-theme='light'] .spx-stat-value,
+:root[data-theme='light'] .spx-plan-name,
+:root[data-theme='light'] .spx-plan-price,
+:root[data-theme='light'] .spx-contact-title {
+  color: #18181b;
+}
+
+:root[data-theme='light'] .spx-stat-label,
+:root[data-theme='light'] .spx-plan-note,
+:root[data-theme='light'] .spx-plan-price span,
+:root[data-theme='light'] .spx-contact-sub {
+  color: #71717a;
+}
+
+:root[data-theme='light'] .spx-plan-benefits li {
+  color: #3f3f46;
+}
+
+:root[data-theme='light'] .spx-plan-benefits svg {
+  color: #a1a1aa;
+}

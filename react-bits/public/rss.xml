@@ -1,0 +1,811 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>React Bits changelog</title>
+    <link>https://reactbits.dev/get-started/changelog</link>
+    <description>Keep up with the newest additions to React Bits.</description>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 08 Nov 2026 12:00:00 GMT</lastBuildDate>
+    <atom:link href="https://reactbits.dev/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Updated: Antigravity</title>
+      <link>https://reactbits.dev/backgrounds/antigravity</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Antigravity@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: ASCII Text</title>
+      <link>https://reactbits.dev/text-animations/ascii-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/AsciiText@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Balatro</title>
+      <link>https://reactbits.dev/backgrounds/balatro</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Balatro@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Beams</title>
+      <link>https://reactbits.dev/backgrounds/beams</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Beams@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Blob Cursor</title>
+      <link>https://reactbits.dev/animations/blob-cursor</link>
+      <guid isPermaLink="false">reactbits:Animations/BlobCursor@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container. TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Border Glow</title>
+      <link>https://reactbits.dev/components/border-glow</link>
+      <guid isPermaLink="false">reactbits:Components/BorderGlow@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Stops the intro sweep when disabled or unmounted and prevents overlapping sweeps when restarted.</description>
+    </item>
+    <item>
+      <title>Updated: Card Nav</title>
+      <link>https://reactbits.dev/components/card-nav</link>
+      <guid isPermaLink="false">reactbits:Components/CardNav@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Fixes TypeScript errors when rendering navigation links with custom components.</description>
+    </item>
+    <item>
+      <title>Updated: Circular Gallery</title>
+      <link>https://reactbits.dev/components/circular-gallery</link>
+      <guid isPermaLink="false">reactbits:Components/CircularGallery@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Color Bends</title>
+      <link>https://reactbits.dev/backgrounds/color-bends</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/ColorBends@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container. TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Crosshair</title>
+      <link>https://reactbits.dev/animations/crosshair</link>
+      <guid isPermaLink="false">reactbits:Animations/Crosshair@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: CRT Warp</title>
+      <link>https://reactbits.dev/backgrounds/crt-warp</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/CRTWarp@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Crystalized Ball</title>
+      <link>https://reactbits.dev/animations/crystalized-ball</link>
+      <guid isPermaLink="false">reactbits:Animations/CrystalizedBall@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Cubes</title>
+      <link>https://reactbits.dev/animations/cubes</link>
+      <guid isPermaLink="false">reactbits:Animations/Cubes@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Dark Veil</title>
+      <link>https://reactbits.dev/backgrounds/dark-veil</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/DarkVeil@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Dither Veil</title>
+      <link>https://reactbits.dev/animations/dither-veil</link>
+      <guid isPermaLink="false">reactbits:Animations/DitherVeil@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Preserves reveal trails and prevents flicker while resizing.</description>
+    </item>
+    <item>
+      <title>Updated: Dot Field</title>
+      <link>https://reactbits.dev/backgrounds/dot-field</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/DotField@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Elastic Mesh</title>
+      <link>https://reactbits.dev/animations/elastic-mesh</link>
+      <guid isPermaLink="false">reactbits:Animations/ElasticMesh@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Electric Border</title>
+      <link>https://reactbits.dev/animations/electric-border</link>
+      <guid isPermaLink="false">reactbits:Animations/ElectricBorder@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Electric Logo</title>
+      <link>https://reactbits.dev/animations/electric-logo</link>
+      <guid isPermaLink="false">reactbits:Animations/ElectricLogo@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Falling Text</title>
+      <link>https://reactbits.dev/text-animations/falling-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/FallingText@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>TypeScript installs now include Matter.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Flex Carousel</title>
+      <link>https://reactbits.dev/components/flex-carousel</link>
+      <guid isPermaLink="false">reactbits:Components/FlexCarousel@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Fluid Glass</title>
+      <link>https://reactbits.dev/components/fluid-glass</link>
+      <guid isPermaLink="false">reactbits:Components/FluidGlass@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents resize flicker and ignores font or image loads that finish after unmounting.</description>
+    </item>
+    <item>
+      <title>Updated: Folder Float</title>
+      <link>https://reactbits.dev/micro/folder-float</link>
+      <guid isPermaLink="false">reactbits:Micro/FolderFloat@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Micro</category>
+      <description>TypeScript installs now include Matter.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Glow Cursor</title>
+      <link>https://reactbits.dev/animations/glow-cursor</link>
+      <guid isPermaLink="false">reactbits:Animations/GlowCursor@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Gradient Waves</title>
+      <link>https://reactbits.dev/backgrounds/gradient-waves</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/GradientWaves@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Grid Distortion</title>
+      <link>https://reactbits.dev/backgrounds/grid-distortion</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/GridDistortion@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Halftone Reveal</title>
+      <link>https://reactbits.dev/animations/halftone-reveal</link>
+      <guid isPermaLink="false">reactbits:Animations/HalftoneReveal@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Preserves reveal trails and prevents flicker while resizing.</description>
+    </item>
+    <item>
+      <title>Updated: Hyperspeed</title>
+      <link>https://reactbits.dev/backgrounds/hyperspeed</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Hyperspeed@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container. TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Infinite Menu</title>
+      <link>https://reactbits.dev/components/infinite-menu</link>
+      <guid isPermaLink="false">reactbits:Components/InfiniteMenu@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Lanyard</title>
+      <link>https://reactbits.dev/components/lanyard</link>
+      <guid isPermaLink="false">reactbits:Components/Lanyard@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Letter Glitch</title>
+      <link>https://reactbits.dev/backgrounds/letter-glitch</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LetterGlitch@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Light Pillar</title>
+      <link>https://reactbits.dev/backgrounds/light-pillar</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LightPillar@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Light Rays</title>
+      <link>https://reactbits.dev/backgrounds/light-rays</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LightRays@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Lightfall</title>
+      <link>https://reactbits.dev/backgrounds/lightfall</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Lightfall@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Line Waves</title>
+      <link>https://reactbits.dev/backgrounds/line-waves</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LineWaves@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Liquid Chrome</title>
+      <link>https://reactbits.dev/backgrounds/liquid-chrome</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LiquidChrome@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Liquid Ether</title>
+      <link>https://reactbits.dev/backgrounds/liquid-ether</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/LiquidEther@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Magic Rings</title>
+      <link>https://reactbits.dev/backgrounds/magic-rings</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/MagicRings@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Masked Heading</title>
+      <link>https://reactbits.dev/text-animations/masked-heading</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/MaskedHeading@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Fixes resize observer loops and TypeScript errors with custom heading tags.</description>
+    </item>
+    <item>
+      <title>Updated: Meta Balls</title>
+      <link>https://reactbits.dev/animations/meta-balls</link>
+      <guid isPermaLink="false">reactbits:Animations/MetaBalls@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Micro Slats</title>
+      <link>https://reactbits.dev/backgrounds/micro-slats</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/MicroSlats@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Model Viewer</title>
+      <link>https://reactbits.dev/components/model-viewer</link>
+      <guid isPermaLink="false">reactbits:Components/ModelViewer@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Molten Metal</title>
+      <link>https://reactbits.dev/backgrounds/molten-metal</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/MoltenMetal@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Morph Slider</title>
+      <link>https://reactbits.dev/components/morph-slider</link>
+      <guid isPermaLink="false">reactbits:Components/MorphSlider@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Paper Crumple</title>
+      <link>https://reactbits.dev/micro/paper-crumple</link>
+      <guid isPermaLink="false">reactbits:Micro/PaperCrumple@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Micro</category>
+      <description>Prevents canvas flicker while resizing the container. TypeScript installs now include Three.js type definitions.</description>
+    </item>
+    <item>
+      <title>Updated: Pattern Waves</title>
+      <link>https://reactbits.dev/backgrounds/pattern-waves</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/PatternWaves@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Pill Nav</title>
+      <link>https://reactbits.dev/components/pill-nav</link>
+      <guid isPermaLink="false">reactbits:Components/PillNav@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Fixes TypeScript errors when rendering navigation links with custom components.</description>
+    </item>
+    <item>
+      <title>Updated: Pixel Snow</title>
+      <link>https://reactbits.dev/backgrounds/pixel-snow</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/PixelSnow@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Plasma</title>
+      <link>https://reactbits.dev/backgrounds/plasma</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Plasma@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Plasma Wave</title>
+      <link>https://reactbits.dev/backgrounds/plasma-wave</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/PlasmaWave@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Prismatic Burst</title>
+      <link>https://reactbits.dev/backgrounds/prismatic-burst</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/PrismaticBurst@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Prompt Bar</title>
+      <link>https://reactbits.dev/micro/prompt-bar</link>
+      <guid isPermaLink="false">reactbits:Micro/PromptBar@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Micro</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Radar</title>
+      <link>https://reactbits.dev/backgrounds/radar</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Radar@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Reflective Card</title>
+      <link>https://reactbits.dev/components/reflective-card</link>
+      <guid isPermaLink="false">reactbits:Components/ReflectiveCard@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Ripple Distortion</title>
+      <link>https://reactbits.dev/animations/ripple-distortion</link>
+      <guid isPermaLink="false">reactbits:Animations/RippleDistortion@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Ripple Grid</title>
+      <link>https://reactbits.dev/backgrounds/ripple-grid</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/RippleGrid@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Side Rays</title>
+      <link>https://reactbits.dev/backgrounds/side-rays</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/SideRays@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Silk</title>
+      <link>https://reactbits.dev/backgrounds/silk</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/Silk@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Sliced Waves</title>
+      <link>https://reactbits.dev/backgrounds/sliced-waves</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/SlicedWaves@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Soft Aurora</title>
+      <link>https://reactbits.dev/backgrounds/soft-aurora</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/SoftAurora@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Star Border</title>
+      <link>https://reactbits.dev/animations/star-border</link>
+      <guid isPermaLink="false">reactbits:Animations/StarBorder@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Sticker Peel</title>
+      <link>https://reactbits.dev/animations/sticker-peel</link>
+      <guid isPermaLink="false">reactbits:Animations/StickerPeel@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>Updated: Tech Text</title>
+      <link>https://reactbits.dev/text-animations/tech-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/TechText@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Keeps glyph motion and selection stable and prevents canvas flicker while resizing.</description>
+    </item>
+    <item>
+      <title>Updated: Tilted Card</title>
+      <link>https://reactbits.dev/components/tilted-card</link>
+      <guid isPermaLink="false">reactbits:Components/TiltedCard@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Holding Enter or Space now activates the card only once per key press.</description>
+    </item>
+    <item>
+      <title>Updated: Warp Text</title>
+      <link>https://reactbits.dev/text-animations/warp-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/WarpText@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Keeps text visible while resizing and rebuilding its layout.</description>
+    </item>
+    <item>
+      <title>Updated: Web Threads</title>
+      <link>https://reactbits.dev/backgrounds/web-threads</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/WebThreads@2026-11-08</guid>
+      <pubDate>Sun, 08 Nov 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Prevents canvas flicker while resizing the container.</description>
+    </item>
+    <item>
+      <title>New: Gradient ASCII</title>
+      <link>https://reactbits.dev/backgrounds/gradient-ascii</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/GradientASCII@added</guid>
+      <pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Soft gradient glows drawn in ASCII characters that scramble under the cursor.</description>
+    </item>
+    <item>
+      <title>Updated: Fluid Glass</title>
+      <link>https://reactbits.dev/components/fluid-glass</link>
+      <guid isPermaLink="false">reactbits:Components/FluidGlass@2026-10-15</guid>
+      <pubDate>Thu, 15 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Same look with less than half the GPU work. On high refresh rate screens it also draws fewer frames while the glass is at rest.</description>
+    </item>
+    <item>
+      <title>Updated: Acid Squares</title>
+      <link>https://reactbits.dev/backgrounds/acid-squares</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/AcidSquares@2026-10-14</guid>
+      <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Rebuilt as a rolling field of glossy squares under two drifting colored lights, with square ripples, film grain and an intro that switches the squares on from the center.</description>
+    </item>
+    <item>
+      <title>Updated: Ghost Fibers</title>
+      <link>https://reactbits.dev/backgrounds/ghost-fibers</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/GhostFibers@2026-10-14</guid>
+      <pubDate>Wed, 14 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Rebuilt as layered ribbons of fine glowing fibers with soft depth of field, bright folds and new looks to pick from.</description>
+    </item>
+    <item>
+      <title>Updated: Aero Shards</title>
+      <link>https://reactbits.dev/backgrounds/aero-shards</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/AeroShards@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Rebuilt as silk ribbons of thick glass shards that stream smoothly on layered depths, light up along their edges and soften into the distance. Adds a chrome finish, survey markers, a cursor that parts the shards, a light wave on click, presets and an edge fade.</description>
+    </item>
+    <item>
+      <title>Updated: Blur Text</title>
+      <link>https://reactbits.dev/text-animations/blur-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/BlurText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Text can now zoom, tilt in 3D, pull into focus or drift in, starting from the middle, the end or at random. It can also loop, replay on hover or click, start in a second color and keep the hovered word sharp.</description>
+    </item>
+    <item>
+      <title>Updated: Card Nav</title>
+      <link>https://reactbits.dev/components/card-nav</link>
+      <guid isPermaLink="false">reactbits:Components/CardNav@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt with a springy open, cards that rise, unfold or fade in, sliding link arrows, open on hover, a stacked layout for small screens and a light mode.</description>
+    </item>
+    <item>
+      <title>Updated: Circular Text</title>
+      <link>https://reactbits.dev/text-animations/circular-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/CircularText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Fling the ring and it coasts back to its cruising speed, leans toward the cursor in 3D and can sit back like a planet’s orbit. Add an icon in the middle, an inner circle and natural spacing with gaps.</description>
+    </item>
+    <item>
+      <title>Updated: Count Up</title>
+      <link>https://reactbits.dev/text-animations/count-up</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/CountUp@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Numbers can roll into place like an odometer, settle with a spring, shorten to 1.2K or 3.4M and replay on hover.</description>
+    </item>
+    <item>
+      <title>Updated: Counter</title>
+      <link>https://reactbits.dev/components/counter</link>
+      <guid isPermaLink="false">reactbits:Components/Counter@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt with springy rolling digits, motion blur and a spin-in intro. Formats currency, percentages, separators and locales, and digits slide in and out as the number grows or shrinks.</description>
+    </item>
+    <item>
+      <title>Updated: CRT Warp</title>
+      <link>https://reactbits.dev/backgrounds/crt-warp</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/CRTWarp@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Rebuilt as a real CRT that warms up into view, with true scanlines, phosphor masks, afterglow and bloom. The cursor bends the picture like a magnet, clicks flip the channel, and presets add amber, green and arcade looks.</description>
+    </item>
+    <item>
+      <title>Updated: Curved Loop</title>
+      <link>https://reactbits.dev/text-animations/curved-loop</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/CurvedLoop@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Text can now travel along a wave, a closed ring or a straight line, with outlined letters and an accent mark between repeats. Scrolling the page gives the loop a burst of speed that eases off.</description>
+    </item>
+    <item>
+      <title>Updated: Decrypted Text</title>
+      <link>https://reactbits.dev/text-animations/decrypted-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/DecryptedText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Letters can now roll in like a flip board or brighten out of faint glyphs, with an accent color that settles as they decode. Text can loop, and hovering can scramble just the letters near the cursor.</description>
+    </item>
+    <item>
+      <title>Updated: Depth Text</title>
+      <link>https://reactbits.dev/text-animations/depth-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/DepthText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>The extrusion can now fade into the page, and the word presses in on hover and springs back. It can also float gently while idle.</description>
+    </item>
+    <item>
+      <title>Updated: Echo Text</title>
+      <link>https://reactbits.dev/text-animations/echo-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/EchoText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Click the text to send out a burst of echoes, or let the echoes drift on their own or trail behind page scrolling. Echoes can also fade between two colors.</description>
+    </item>
+    <item>
+      <title>Updated: Elastic Slider</title>
+      <link>https://reactbits.dev/components/elastic-slider</link>
+      <guid isPermaLink="false">reactbits:Components/ElasticSlider@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt with smoother springs and a rubber-band pull at both ends. Adds vertical and pill styles, icons and values inside the track, ticks, a handle, centered fills, and keyboard and scroll control.</description>
+    </item>
+    <item>
+      <title>Updated: Flowing Menu</title>
+      <link>https://reactbits.dev/components/flowing-menu</link>
+      <guid isPermaLink="false">reactbits:Components/FlowingMenu@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt around one liquid band that glides and stretches between rows and leans toward the cursor, with an intro sweep. New capsule and slab shapes, an editorial layout, notes per row and keyboard support.</description>
+    </item>
+    <item>
+      <title>Updated: Fold Text</title>
+      <link>https://reactbits.dev/text-animations/fold-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/FoldText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Letters can now open like blinds or flip over like cards, and fold away near the cursor as it passes. Looping text can hold as long as you like before folding back up.</description>
+    </item>
+    <item>
+      <title>Updated: Fuzzy Text</title>
+      <link>https://reactbits.dev/text-animations/fuzzy-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/FuzzyText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Text can now resolve out of heavy static when it first appears and tear into soft color fringes. The fuzz can follow the cursor, run all the time or fire in bursts on click.</description>
+    </item>
+    <item>
+      <title>Updated: Glitch Text</title>
+      <link>https://reactbits.dev/text-animations/glitch-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/GlitchText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Pick from four glitch styles: sliced bands, a jittering color split, a scanning tear or swapped glyphs. Set how hard it glitches, add skew and flicker, and play short bursts on click.</description>
+    </item>
+    <item>
+      <title>Updated: Gradient Waves</title>
+      <link>https://reactbits.dev/backgrounds/gradient-waves</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/GradientWaves@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>Waves are now lit with soft light and shadow, rise from calm water on load, catch a light that follows the cursor and roll a swell in on click. Adds light direction, presets, a light mode and no dependencies.</description>
+    </item>
+    <item>
+      <title>Updated: Image Trail</title>
+      <link>https://reactbits.dev/animations/image-trail</link>
+      <guid isPermaLink="false">reactbits:Animations/ImageTrail@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>The eight fixed variants are now one trail you can tune: size, timing, zoom, flash, drift, tilt, rotation and a stacking pile. Four presets recreate the favourite looks.</description>
+    </item>
+    <item>
+      <title>Updated: Logo Loop</title>
+      <link>https://reactbits.dev/animations/logo-loop</link>
+      <guid isPermaLink="false">reactbits:Animations/LogoLoop@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Now draggable with a soft fade that works on any background and an intro. Adds wave, arc and 3D orbit paths, a center lens, dock-style magnify, stepping, labels and perspective tilt.</description>
+    </item>
+    <item>
+      <title>Updated: Masked Heading</title>
+      <link>https://reactbits.dev/text-animations/masked-heading</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/MaskedHeading@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Two new entrances, letters growing in one by one and a focus pull, plus a soft light that follows the cursor and brings back full color. Letters can also be drawn as thin strokes that the image fills as it arrives.</description>
+    </item>
+    <item>
+      <title>Updated: Masonry</title>
+      <link>https://reactbits.dev/components/masonry</link>
+      <guid isPermaLink="false">reactbits:Components/Masonry@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt with springy reflow, tiles that appear as you scroll, hover zoom, lift and tilt, captions, a lightbox and drag to reorder. Columns now follow the container and tiles keep each image's shape.</description>
+    </item>
+    <item>
+      <title>Updated: Molten Metal</title>
+      <link>https://reactbits.dev/backgrounds/molten-metal</link>
+      <guid isPermaLink="false">reactbits:Backgrounds/MoltenMetal@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Backgrounds</category>
+      <description>The metal now ignites from its white-hot cores, the cursor heats the filaments it passes and clicks flare them white-hot. Adds filament width, haze, rotation and position controls, more colors, crisper fine detail, a richer light mode and no dependencies.</description>
+    </item>
+    <item>
+      <title>Updated: Orbit Images</title>
+      <link>https://reactbits.dev/animations/orbit-images</link>
+      <guid isPermaLink="false">reactbits:Animations/OrbitImages@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Rebuilt with real depth, so photos pass behind and in front of whatever sits in the middle, and it now fits any container. Drag to spin it, click a photo to bring it forward, and style the tiles, shadows and path.</description>
+    </item>
+    <item>
+      <title>Updated: Particle Text</title>
+      <link>https://reactbits.dev/text-animations/particle-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/ParticleText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Text can now rain in, swirl into place or print behind a sweeping line, and particles can be drawn as squares or short strokes. Click to blow the particles apart and watch them spring back.</description>
+    </item>
+    <item>
+      <title>Updated: Pill Nav</title>
+      <link>https://reactbits.dev/components/pill-nav</link>
+      <guid isPermaLink="false">reactbits:Components/PillNav@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Components</category>
+      <description>Rebuilt with a smoother rising fill and rolling labels, a sliding active dot, a gliding pill option, a menu that folds in on small screens, and a light mode.</description>
+    </item>
+    <item>
+      <title>Updated: Pixel Swap</title>
+      <link>https://reactbits.dev/animations/pixel-swap</link>
+      <guid isPermaLink="false">reactbits:Animations/PixelSwap@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Animations</category>
+      <description>Rebuilt to be fast and seamless, with pixels that spring in from wherever the cursor enters and retreat the moment it leaves. New dot and spin styles and a pixel intro.</description>
+    </item>
+    <item>
+      <title>Updated: Rotating Text</title>
+      <link>https://reactbits.dev/text-animations/rotating-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/RotatingText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Words can now flip, blur, zoom or drop in with a small bounce, rolling up or down. A highlight block smoothly resizes to fit each word and keeps the text readable on any color.</description>
+    </item>
+    <item>
+      <title>Updated: Scrambled Text</title>
+      <link>https://reactbits.dev/text-animations/scrambled-text</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/ScrambledText@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Letters near the cursor can now rise, blur or swell like a lens, and a click sends a scramble wave through the text. Works with any typeface without the layout jumping.</description>
+    </item>
+    <item>
+      <title>Updated: Scroll Float</title>
+      <link>https://reactbits.dev/text-animations/scroll-float</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/ScrollFloat@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Letters can now flip, scatter, blur or wave into place, by letter or by word, from above or below. Pick which go first and let them arrive in an accent color.</description>
+    </item>
+    <item>
+      <title>Updated: Scroll Reveal</title>
+      <link>https://reactbits.dev/text-animations/scroll-reveal</link>
+      <guid isPermaLink="false">reactbits:TextAnimations/ScrollReveal@2026-10-13</guid>
+      <pubDate>Tue, 13 Oct 2026 12:00:00 GMT</pubDate>
+      <category>Text Animations</category>
+      <description>Text can now reveal by word, letter or line, rising, flipping or popping into place, and light up in an accent color as it appears. It can also play once on entering view.</description>
+    </item>
+  </channel>
+</rss>

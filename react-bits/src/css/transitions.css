@@ -1,0 +1,26 @@
+.page-transition-fade {
+  transition: opacity 300ms var(--ease-out);
+}
+
+.page-transition-fade-out {
+  opacity: 0;
+}
+
+.page-transition-fade-in {
+  opacity: 1;
+}
+
+.sidebar-item.transitioning {
+  pointer-events: none;
+}
+
+.category-page {
+  will-change: opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.category-page.loading {
+  pointer-events: none;
+  opacity: 1;
+}
