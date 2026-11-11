@@ -1,0 +1,38 @@
+{
+  "name": "context-mode",
+  "version": "2.1.7",
+  "description": "Context window saver for 10 coding agents. Local and free: sandboxed code execution, FTS5 search, session continuity.",
+  "author": {
+    "name": "Mert Koseoglu",
+    "url": "https://github.com/mksglu"
+  },
+  "homepage": "https://github.com/mksglu/context-mode#readme",
+  "repository": "https://github.com/mksglu/context-mode",
+  "license": "Elastic-2.0",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "gemini-cli",
+    "qwen-code",
+    "copilot-cli",
+    "vscode",
+    "opencode",
+    "pi",
+    "kiro",
+    "zcode",
+    "mcp",
+    "context-window",
+    "sandbox",
+    "fts5",
+    "pi-package"
+  ],
+  "mcpServers": {
+    "context-mode": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/start.mjs"
+      ]
+    }
+  },
+  "skills": "./skills/"
+}
