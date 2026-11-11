@@ -1,0 +1,14 @@
+research_topic:
+  description: >
+    Research the topic {title} and gather latest information about it.
+  expected_output: >
+    A list of insights and key points about the topic {title}.
+  agent: topic_researcher
+
+write_chapter:
+  description: >
+    Write a chapter about the topic {title} based on the insights and key points gathered by the topic researcher agent.
+    Ensure the chapter is engaging and adheres to what a good chapter should be.
+  expected_output: >
+    A beautifully crafted chapter about the topic {title}.
+  agent: writer

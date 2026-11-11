@@ -1,0 +1,11 @@
+[project]
+name = "build-code-harness"
+version = "0.1.0"
+description = "A coding-agent harness rebuilt from scratch on CrewAI."
+requires-python = ">=3.11"
+dependencies = [
+    "crewai[tools,litellm]",
+    "crewai-tools[e2b]",
+    "python-dotenv",
+    "pytest",
+]

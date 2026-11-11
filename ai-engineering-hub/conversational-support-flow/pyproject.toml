@@ -1,0 +1,13 @@
+[project]
+name = "conversational-support-flow"
+version = "0.1.0"
+description = "A customer support bot using CrewAI conversational flow"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "ag-ui-crewai>=0.3.0",
+    "crewai>=1.15.16",
+    "crewai-tools>=1.15.17",
+    "exa-py>=2.18.1",
+    "fastapi",
+    "uvicorn[standard]",
+]

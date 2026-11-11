@@ -1,0 +1,28 @@
+analysis_task:
+  description: >
+    Analyse the usage of {brand_name} in the scraped content of the website containing these details:
+    - URL
+    - Markdown Content
+
+    This is the list of scraped data:
+    {web_data}
+
+  expected_output: >
+    A clear and concise analysis of the website and how the {brand_name} is being used in the website.
+    Your analysis should cover the include distinct analysis for each web page. 
+    Each piece of web page analysis should include the url of the post, the description of the post,
+    your thoughts on the tone of the post, the sentiment of towards the brand, the engagement of the post (if visible), etc.
+  agent: analysis_agent
+
+write_report_task:
+  description: >
+    Write a crisp bullet point report about the analysis of the website and how the {brand_name} is being used in the website.
+  expected_output: >
+    A clear and concise bullet point report about the analysis of the website and how the {brand_name} is being used in the website.
+    For each web page in the input data, the output should be in the structured format provided to you:
+    - A short and crisp title summarizing how the {brand_name} is being used in a web page.
+    - The URL of the web page.
+    - A detailed analysis of the usage of {brand_name} in the web page with bullet points. You can cover things like the tone of the web page,
+    the sentiment towards the brand, whether it received a ton of engagement (if mentioned in the web page), whether it was a paid partnership, etc.
+    Maintain a verbal communicative tone in each of the bullet points but don't be too verbose.
+  agent: writer_agent

@@ -1,0 +1,11 @@
+[project]
+name = "eyelevel-mcp-rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "groundx>=2.3.0",
+    "ipykernel>=6.29.5",
+    "mcp[cli]>=1.6.0",
+]

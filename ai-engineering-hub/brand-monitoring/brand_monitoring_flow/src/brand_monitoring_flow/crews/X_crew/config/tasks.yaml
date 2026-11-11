@@ -1,0 +1,36 @@
+analysis_task:
+  description: >
+    Analyze the usage of {brand_name} in a set of X posts containing these details:
+    - URL
+    - Views
+    - Likes
+    - Replies
+    - Reposts
+    - Hashtags
+    - Quotes
+    - Bookmarks
+    - Description
+    - Tagged Users
+    - Original Poster ID
+
+    This is the list of scraped data:
+    {x_data}
+
+  expected_output: >
+    A clear and concise analysis of the X posts and how the {brand_name} is being used in the posts.
+    Your analysis should include distinct analysis for each post. Each piece of analysis should include the url of the post, the description of the post,
+    your thoughts on the tone of the post, the sentiment of towards the brand, the engagement of the post (if visible), etc.
+  agent: analysis_agent
+
+write_report_task:
+  description: >
+    Write a crisp bullet point report about the analysis of the X posts and how the {brand_name} is being used in the posts.
+  expected_output: >
+    A clear and concise bullet point report about the analysis of the X posts and how the {brand_name} is being used in the posts.
+    For each post in the input data, the output should be in the structured format provided to you:
+    - A short and crisp title summarizing how the {brand_name} is being used in a post.
+    - The URL of the post.
+    - A detailed analysis of the usage of {brand_name} in the post with bullet points. You can cover things like the tone of the post,
+    the sentiment towards the brand, whether it received a ton of engagement (if mentioned in the post), whether it was a paid partnership, etc.
+    Maintain a verbal communicative tone in each of the bullet points but don't be too verbose.
+  agent: writer_agent

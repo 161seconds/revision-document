@@ -1,0 +1,33 @@
+analysis_task:
+  description: >
+    Analyse the usage of {brand_name} in a set of Instagram posts containing these details:
+    - URL
+    - Description
+    - Likes
+    - Number of comments
+    - Is paid partnership
+    - Followers
+    - Original poster ID
+    
+    This is the list of scraped data:
+    {instagram_data}
+
+  expected_output: >
+    A clear and concise analysis of the Instagram posts and how the {brand_name} is being used in the posts. There are multiple posts in the input data.
+    Your analysis should include distinct analysis for each post. Each piece of analysis should include the url of the post, the description of the post, your thoughts on the tone of the post, the sentiment of the audience
+    towards the brand, a commentary on the engagement of the post, whether it was a paid partnership and if yes, did it perform well or not, etc.
+
+  agent: analysis_agent
+
+write_report_task:
+  description: >
+    Write a crisp bullet point report about the analysis of the Instagram posts and how the {brand_name} is being used in the posts.
+  expected_output: >
+    A clear and concise bullet point report about the analysis of the Instagram posts and how the {brand_name} is being used in the posts.
+    For each post in the input data, the output should be in the structured format provided to you:
+    - A short and crisp title summarizing how the {brand_name} is being used in a post.
+    - The URL of the post.
+    - A detailed analysis of the usage of {brand_name} in the post with bullet points. You can cover things like the tone of the post,
+    the sentiment of the audience towards the brand, whether it received a ton of engagement, whether it was a paid partnership, etc.
+    Maintain a verbal communicative tone in each of the bullet points but don't be too verbose.
+  agent: writer_agent

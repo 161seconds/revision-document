@@ -1,0 +1,17 @@
+# Core dependencies
+cartesia==1.4.0
+livekit==0.22.0
+livekit-agents==0.12.17
+livekit-api==0.8.2
+livekit-plugins-assemblyai==0.2.3
+livekit-plugins-cartesia==0.4.10
+livekit-plugins-deepgram==0.7.0
+livekit-plugins-llama-index==0.2.3
+livekit-plugins-openai==0.11.2
+livekit-plugins-silero==0.7.5
+livekit-protocol==0.9.2
+llama-index-core==0.12.24.post1
+llama-index-llms-ollama==0.5.3
+llama-index-llms-openai==0.3.25
+openai==1.65.2
+python-dotenv==1.0.1
