@@ -1,0 +1,26 @@
+# Internal planning, session state and review documents
+/plans/
+/.claude/
+
+# Local working evidence and generated packages
+/.local/
+/examples/.experiments/
+/.cache/
+/.pnpm-store/
+**/.wrangler/
+/dist/
+**/__pycache__/
+*.pyc
+**/node_modules/
+**/dist/
+
+# Anatomy geometry (169 MB of STL). Hosted in the R2 bucket and listed in
+# examples/assets-manifest.json; `pnpm --dir examples fetch-assets` restores it locally.
+/examples/public/assets/
+
+# Environment and machine-local files
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
