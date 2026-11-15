@@ -1,0 +1,83 @@
+{
+  "skill_name": "api-contract-guard",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this complete before/after API change for compatibility. Baseline: HEAD; proposed: working tree; all relevant files are supplied. Before server/routes.js:10: app.get('/api/bookings/:id', (_, res) => res.json({ data: { bookingId: 'B-104' } })); After server/routes.js:10: app.get('/api/bookings/:id', (_, res) => res.json({ data: { id: 'B-104' } })); Unchanged web/booking.js:18: const id = response.data.bookingId; line 19: if (typeof id !== 'string') throw new Error('Missing bookingId'); Existing clients remain supported. Review only; no edits or live requests.",
+      "expected_output": "A concrete response-field compatibility finding citing the changed server and unchanged consumer, with a small fix and regression check.",
+      "files": [],
+      "expectations": [
+        "Identifies bookingId being replaced by id as a confirmed breaking change.",
+        "Connects server/routes.js:10 to web/booking.js:18 or :19 and explains the thrown error.",
+        "Does not claim to have executed tests or contacted an API.",
+        "Proposes preserving bookingId or an explicit versioned migration rather than silently changing the consumer alone."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review this complete internal DTO refactor. Before Api/BookingResponse.cs:6: [JsonPropertyName(\"bookingId\")] public string BookingId { get; init; } = \"\"; After Api/BookingResponse.cs:6: [JsonPropertyName(\"bookingId\")] public string Id { get; init; } = \"\"; Every server assignment was renamed consistently. The endpoint uses System.Text.Json with attributes enabled. Both versions serialize exactly {\"bookingId\":\"B-104\"}. Unchanged web/booking.js reads bookingId. No other change exists. Review only.",
+      "expected_output": "No confirmed breaking change; the serialized contract remains bookingId despite the C# property rename.",
+      "files": [],
+      "expectations": [
+        "Does not report the C# rename as an API break.",
+        "Explains why JsonPropertyName preserves the response field.",
+        "Does not demand a compatibility alias when the existing serialized field is already preserved."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review the compatibility of this complete validation change. Before server/create.js:8 accepted POST /bookings with {horseId:'H-104'} and defaulted transportType to 'road'. After server/create.js:8 rejects requests without transportType with HTTP 400 and code TRANSPORT_TYPE_REQUIRED. Unchanged mobile/create.js:14 sends JSON.stringify({horseId}). Documentation supports the current mobile release for another 90 days. No adapter or old route remains. Review only.",
+      "expected_output": "A request compatibility finding showing the previously valid mobile payload now receives 400.",
+      "files": [],
+      "expectations": [
+        "Reports the newly required transportType as a confirmed break for the supported mobile client.",
+        "Uses the old payload without transportType as a counterexample.",
+        "Accounts for the documented support window and proposes retaining the prior default or a compatible rollout."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Review this complete additive response change. Before GET /status returns {status:'ok'}. After it returns {status:'ok',serverTime:'2026-11-15T00:00:00Z'}. The entire supported client is web/status.js:5: const {status} = await response.json(); line 6: render(status); it ignores all other fields. There is no strict decoder, body signature, exact-shape assertion, or other published restriction on extra fields. No other behavior changes. Review only.",
+      "expected_output": "No confirmed breaking change for the reviewed consumer; do not turn an additive field into a hypothetical finding.",
+      "files": [],
+      "expectations": [
+        "Does not classify adding serverTime as a confirmed break.",
+        "Scopes the result to the supplied contract and client rather than claiming all possible clients were checked.",
+        "Does not introduce speculative high-severity findings."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review this complete response enum change. Before server/state.js:12 only emits state='pending' or 'done'. After server/state.js:12 emits state='cancelled' when booking.cancelled is true; such bookings are reachable. Unchanged web/state.js:7-10: switch(payload.state) { case 'pending': return 'Waiting'; case 'done': return 'Completed'; default: throw new Error('Unsupported state'); }. This client is still supported. No version boundary or fallback exists. Review only.",
+      "expected_output": "A confirmed break when a cancelled booking reaches the unchanged exhaustive client.",
+      "files": [],
+      "expectations": [
+        "Connects the newly emitted cancelled value with the actual throwing default branch.",
+        "Does not dismiss every enum extension as automatically safe.",
+        "Suggests a focused cancelled-booking regression check and compatible rollout."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Review whether a DTO change breaks our frontend. The only supplied evidence is the proposed server DTO {id:string}; no baseline, Git history, previous OpenAPI document, serializer settings, or frontend source is available. The frontend is in a repository you cannot access. Do not invent missing artifacts or run commands against another system.",
+      "expected_output": "An incomplete review with specific missing evidence and no invented break or compatibility guarantee.",
+      "files": [],
+      "expectations": [
+        "Uses an incomplete conclusion because the requested before/after consumer comparison cannot be established.",
+        "Does not invent a prior bookingId field or an observed frontend failure.",
+        "Identifies the previous contract and frontend usage as missing evidence."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Review this complete API version addition. Existing GET /api/v1/bookings/:id still returns {bookingId:'B-104'} with identical status, authorization, and behavior. The change adds GET /api/v2/bookings/:id returning {id:'B-104'}. Existing clients continue calling v1; the release policy permits opt-in v2. Both handlers and all callers have been supplied; no v1 removal or redirect exists. Review only.",
+      "expected_output": "No confirmed regression for v1 consumers; recognize the explicit opt-in version boundary.",
+      "files": [],
+      "expectations": [
+        "Does not compare the v2 payload to v1 as if v1 were replaced.",
+        "Recognizes that the existing route and serialized response remain available.",
+        "Does not require updating existing clients to v2."
+      ]
+    }
+  ]
+}

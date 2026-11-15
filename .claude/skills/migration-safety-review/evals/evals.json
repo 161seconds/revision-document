@@ -1,0 +1,84 @@
+{
+  "skill_name": "migration-safety-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review only; do not execute SQL. PostgreSQL 16, EF Core 9/Npgsql. The requested change is to rename customer_code to business_code while keeping values. Before schema: bookings(id uuid primary key, customer_code text not null). Existing representative row: id='1f92e5f0-3e04-4b5e-9f7d-4d4b4d9c8e21', customer_code='EQ-2026-104'. Migrations/RenameCode.cs:12 Up calls DropColumn(\"customer_code\",\"bookings\"); line 13 calls AddColumn<string>(\"business_code\",\"bookings\",nullable:false,defaultValue:\"\"). No data copy or other migration exists. New app reads business_code. The deployment supports a maintenance window with no app overlap. Assess the migration as written.",
+      "expected_output": "A confirmed destructive rename finding: the existing customer code is discarded and replaced with an empty default; suggest a provider-supported rename and value-preservation test.",
+      "files": [],
+      "expectations": [
+        "Identifies DropColumn plus AddColumn as losing the supplied existing business value.",
+        "Cites Migrations/RenameCode.cs:12 or :13 and gives the before/after value.",
+        "Suggests a rename rather than an unnecessary repository or application redesign.",
+        "Does not claim SQL or a database test was executed."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Review only; no database access. PostgreSQL 16, EF Core 9/Npgsql. The runner explicitly opens one transaction around the entire migration. Migrations/AddIndex.cs:9: migrationBuilder.Sql(\"CREATE INDEX CONCURRENTLY ix_orders_created_at ON orders(created_at)\"); suppressTransaction is omitted. There is no custom SQL wrapper or transaction override. The orders table and created_at column exist in the preceding schema; the new index does not exist. Assess whether this migration can execute as written.",
+      "expected_output": "A confirmed transaction-block incompatibility for CREATE INDEX CONCURRENTLY, accounting for the explicit outer transaction.",
+      "files": [],
+      "expectations": [
+        "Identifies that CREATE INDEX CONCURRENTLY cannot execute in the supplied transaction block.",
+        "Does not claim suppressTransaction alone fixes an independently opened outer transaction.",
+        "Suggests a runner-supported execution path outside the transaction or an ordinary build when workload policy permits."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review only. PostgreSQL 16. The entire migration is migrations/004_notes.sql:1: ALTER TABLE orders ADD COLUMN delivery_note text NULL; There is no default, data update, drop, or new constraint. Both old and new app versions name columns explicitly in SELECT and INSERT statements; new code accepts delivery_note=null. Schema change runs before new code. The table has 500 rows and a documented maintenance window. No other affected object exists. Can you confirm a data-loss, application-compatibility, or full-table-rewrite issue from this change?",
+      "expected_output": "No confirmed issue within the supplied scope; do not invent a rewrite, data loss, or mandatory multi-stage migration.",
+      "files": [],
+      "expectations": [
+        "Does not assert that adding this nullable column necessarily rewrites all rows.",
+        "Does not demand expand/backfill/contract stages for this compatible addition.",
+        "Does not describe the DDL as universally lock-free or certify production execution."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Static review only. PostgreSQL 16. Existing schema is users(id bigint primary key, email text NULL), with no UNIQUE or NOT NULL guarantees. migrations/005_email.sql:1 sets email NOT NULL; line 2 adds UNIQUE(email). The script has no preflight or cleanup. The current data and aggregate counts are unavailable. Old and new apps already require non-null unique emails in the normal creation path, but historical imports are undocumented. Assess the deployment risk without guessing the actual rows.",
+      "expected_output": "A needs_validation data-precondition risk with aggregate preflight queries, not an invented confirmed production failure.",
+      "files": [],
+      "expectations": [
+        "Identifies existing nulls and duplicates as the precise possible failure conditions.",
+        "Does not claim that null or duplicate emails definitely exist.",
+        "Recommends aggregate null/duplicate checks without exposing email values or running them implicitly.",
+        "Does not recommend NOT VALID as general syntax for UNIQUE or NOT NULL."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review only. PostgreSQL 16. orders.reference is a business field that users can edit; nullable values should be backfilled from the stable order number. Existing rows: {id:104,reference:'CUSTOM-104',deleted_at:null}; {id:105,reference:null,deleted_at:'2026-10-01'}; {id:106,reference:null,deleted_at:null}. migrations/006_reference.sql:4: UPDATE orders SET reference = 'ORD-' || id::text, deleted_at = NULL; No WHERE clause or previous copy exists. The task requires preserving existing references and soft-delete state. Assess the data effects.",
+      "expected_output": "A concrete data-preservation finding covering the overwritten custom reference and reactivated soft-deleted order; propose a null-only backfill without modifying deletion state.",
+      "files": [],
+      "expectations": [
+        "Shows CUSTOM-104 being overwritten and the deleted row becoming active.",
+        "Suggests updating only null references and preserving deleted_at.",
+        "Does not silently omit soft-deleted null-reference rows if the later schema requires every reference to be populated."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Review only; do not run SQL. PostgreSQL 16. Before schema: payments(id bigint primary key, amount_minor bigint not null). A supplied existing row has amount_minor=5000000000. migrations/007_amount.sql:2: ALTER TABLE payments ALTER COLUMN amount_minor TYPE integer USING amount_minor::integer; No filtering, rescaling, or prior update exists. New code also uses a 32-bit signed integer. Assess upgrade behavior and preservation of the supplied value.",
+      "expected_output": "A confirmed out-of-range conversion failure with a minimal recommendation to retain a sufficiently wide type unless an explicit business conversion is authorized.",
+      "files": [],
+      "expectations": [
+        "Recognizes 5000000000 exceeds the PostgreSQL integer range and the cast fails for the supplied row.",
+        "Does not propose truncation or silent rescaling of monetary values.",
+        "Does not confuse this known-value failure with an unknown data-precondition risk."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Review this migration plan with the supplied evidence only. The new field is business_code. Expand migration adds a nullable business_code while retaining customer_code; backfill copies customer_code only where business_code IS NULL. During the overlap, the new app writes both fields in one transaction and reads COALESCE(business_code, customer_code). The old app remains running and writes only customer_code, including updates to existing rows after the backfill; there is no trigger or synchronization job. Contract migration will eventually remove customer_code after old app shutdown. Representative interleaving: backfill copies 'EQ-104'; old app then changes customer_code to 'EQ-REVISED'; new app reads the row. No database execution is authorized.",
+      "expected_output": "A confirmed overlap consistency problem: the new app reads stale non-null business_code after an old-app update. A stage list and new-app dual-write do not cover old writers.",
+      "files": [],
+      "expectations": [
+        "Traces the concrete interleaving and identifies the stale EQ-104 result.",
+        "Does not approve the plan solely because it uses expand/backfill/contract and new-app dual writes.",
+        "Proposes synchronizing all writers or a deployment/read strategy that accounts for old-app updates before contract."
+      ]
+    }
+  ]
+}

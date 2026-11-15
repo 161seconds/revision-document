@@ -258,6 +258,8 @@ For automated setup and in-depth configuration, refer to the **[AI Agent Optimiz
 
 Supplementary skills covering agent harnesses, context compaction, tool design, evaluation, debugging, and verification are detailed in [HARNESS.md](HARNESS.md), including upstream references, pinned commits, and MIT licensing.
 
+Hai skill tự xây dựng dùng chung cho Codex và Claude Code: [API Contract Guard](.agents/skills/api-contract-guard/SKILL.md) kiểm tra thay đổi API với contract cũ và consumer; [Migration Safety Review](.agents/skills/migration-safety-review/SKILL.md) kiểm tra giữ dữ liệu, tương thích ứng dụng và rủi ro triển khai migration. Xem [cách gọi, cài đặt và tình huống đánh giá](HARNESS.md#skill-tự-xây-dựng-contract-và-migration). Bản nguồn ở `.agents/skills/`, bản Claude Code ở `.claude/skills/`; mặc định chỉ review.
+
 ### Project Kickoff
 
 Use [`$project-kickoff`](.agents/skills/project-kickoff/SKILL.md) to inspect a new or unfamiliar project before implementation: folder responsibilities, system design, code/Git conventions, validation commands, and the first useful feature. New applications follow the bundled [Pegaxus folder baseline](.agents/skills/project-kickoff/references/pegaxus-layout.md); existing projects retain their established structure. Supporting skills load only when relevant and available.

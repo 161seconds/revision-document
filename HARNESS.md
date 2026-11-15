@@ -9,6 +9,8 @@ Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT, cùng 
 | Skill | Khi sử dụng |
 | --- | --- |
 | [project-kickoff](.agents/skills/project-kickoff/SKILL.md) | Bắt đầu dự án mới hoặc làm quen repo: khảo sát cấu trúc, system design, quy ước code/Git, lệnh kiểm tra; dùng mẫu Pegaxus khi tạo mới và chọn skill phụ theo nhu cầu. |
+| [api-contract-guard](.agents/skills/api-contract-guard/SKILL.md) | Review thay đổi API dựa trên contract cũ, implementation và consumer: route, DTO/JSON, validation, lỗi, phân trang và khả năng tương thích với client đang được hỗ trợ. |
+| [migration-safety-review](.agents/skills/migration-safety-review/SKILL.md) | Review migration schema/dữ liệu: mất dữ liệu, điều kiện constraint, tương thích app cũ/mới, khóa, transaction và khả năng phục hồi; tập trung EF Core/PostgreSQL. |
 | [harness-engineering](.agents/skills/harness-engineering/SKILL.md) | Thiết kế vòng lặp agent, giới hạn vùng được sửa, evaluator cố định, rollback và nhật ký bền vững. |
 | [context-compression](.agents/skills/context-compression/SKILL.md) | Tóm tắt hoặc bàn giao phiên dài, giữ nguyên quyết định, đường dẫn, trạng thái kiểm thử và việc còn lại. |
 | [tool-design](.agents/skills/tool-design/SKILL.md) | Thiết kế schema, mô tả, kết quả và lỗi của tool/MCP; loại bỏ tool trùng chức năng. |
@@ -27,6 +29,33 @@ Bổ sung 14 skill vào `.agents/skills/`, chọn từ sáu dự án MIT, cùng 
 Có thể gọi trực tiếp bằng tên, ví dụ `$systematic-debugging`, `$harness-engineering`, `$reverse-engineer-anything` hoặc `$ruflo`. Skill mới có thể được nhận diện từ lượt chat tiếp theo.
 
 `security-review` của ECC dùng để phòng ngừa lỗi khi phát triển; `security-audit` của Cloudflare dùng để điều tra và xác minh lỗ hổng. `security-audit` mặc định chỉ hướng dẫn theo câu hỏi; chỉ chạy toàn bộ quy trình khi người dùng yêu cầu audit/pentest codebase, review bảo mật toàn diện hoặc tạo báo cáo. Ví dụ: `$security-audit audit toàn bộ repo này, profile quick`. Full audit cần agent hỗ trợ subagent độc lập; chạy mã của mục tiêu cần sandbox cô lập ở cấp hệ điều hành, không có mạng ngoài, giới hạn tài nguyên và quyền ghi. Thiếu điều kiện thực thi thì giữ kết luận `needs_validation` cùng thông tin còn thiếu.
+
+## Skill tự xây dựng: contract và migration
+
+Hai skill này được viết riêng cho repo, dùng Markdown và YAML, không cần dependency mới. Mặc định chỉ review và báo cáo; chỉ sửa khi yêu cầu đã cho phép. Skill không tự cấp quyền gọi API thật, kết nối production, áp dụng migration hoặc rollback.
+
+- **API Contract Guard:** so sánh hành vi trước/sau, lần theo serializer và nơi client sử dụng dữ liệu. Chỉ báo breaking change có counterexample và bằng chứng từ consumer hoặc contract đã công bố; tách phần thiếu dữ kiện. Thay đổi nội bộ hoặc thêm field response không mặc nhiên là lỗi.
+- **Migration Safety Review:** đọc migration, schema trước đó, runner và code app liên quan. Phân biệt lỗi đã chứng minh với `needs_validation` phụ thuộc dữ liệu; kiểm tra mất giá trị, app cũ vẫn ghi dữ liệu, transaction của concurrent index và giới hạn của rollback. Không suy diễn kết quả PostgreSQL từ SQLite hoặc EF InMemory.
+
+Bản nguồn nằm trong `.agents/skills/`; `.claude/skills/` chứa bản sao giống hệt để Claude Code nhận diện trong repo này. Khi sửa skill, đồng bộ nguyên thư mục tương ứng sang `.claude/skills/`. Dùng ở repo khác bằng cách sao chép nguyên thư mục vào `.agents/skills/<tên>/` cho Codex hoặc `.claude/skills/<tên>/` cho Claude Code. Mỗi thư mục tự chứa hướng dẫn và tình huống kiểm thử; không phụ thuộc đường dẫn máy cá nhân, tool MCP hoặc cấu hình model cụ thể.
+
+Ví dụ với Codex:
+
+```text
+$api-contract-guard review thay đổi chưa commit, kiểm tra có làm hỏng frontend không; chỉ báo lỗi có dẫn chứng.
+$migration-safety-review review migration mới với PostgreSQL, kiểm tra giữ dữ liệu và rollout; chưa chạy migration.
+```
+
+Ví dụ với Claude Code:
+
+```text
+/api-contract-guard review thay đổi chưa commit, kiểm tra contract với frontend; chưa sửa code.
+/migration-safety-review review migration mới, tách lỗi đã chứng minh với điều kiện cần kiểm tra dữ liệu.
+```
+
+Mỗi skill có **7 tình huống đánh giá hành vi** trong [API evals](.agents/skills/api-contract-guard/evals/evals.json) và [migration evals](.agents/skills/migration-safety-review/evals/evals.json). Khi bảo trì skill, chạy từng `prompt` trong phiên sạch, chỉ cung cấp đầu vào, giữ `expected_output` và `expectations` cho người chấm sau khi nhận kết quả. Thử cả hai công cụ; chấm bằng chứng và hành vi, không so khớp nguyên văn. Các fixture không cần API hoặc database thật và không cho phép thực thi SQL được trích dẫn. Validate YAML/JSON và kiểm tra bản sao chỉ xác minh cấu trúc; chưa phải bằng chứng các tình huống đã chạy đạt trên cả hai CLI.
+
+Kiểm tra ngày **2026-11-15**: bốn bản skill qua validator, các liên kết file mới hợp lệ, 14 tình huống đọc được và hai cặp thư mục khớp byte. Chưa chạy được đánh giá hành vi: Codex CLI báo lỗi refresh access token `401`, Claude Code báo `Not logged in`. Claude Code tại máy là `2.1.170`; lệnh `claude plugin validate` của phiên bản này chỉ kiểm tra plugin manifest nên không dùng làm bằng chứng validate skill độc lập. Không tạo plugin manifest chỉ để vượt kiểm tra này.
 
 ## Khởi động dự án
 
