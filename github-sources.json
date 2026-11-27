@@ -126,37 +126,43 @@
       "repository": "addyosmani/agent-skills",
       "status": "import",
       "path": "addyosmani-agent-skills",
-      "commit": "301b02b12bff98e4688e6984af6556802322bbde",
+      "commit": "e997ac5b9a74eab332d5e9793bb38a38c8cfdd74",
       "branch": "main",
-      "files": 240,
-      "bytes": 1161462,
+      "files": 280,
+      "bytes": 1432111,
       "license": "MIT",
       "description": "Production-grade engineering skills for AI coding agents.",
-      "archive_sha256": "5e6faf152ae7e1a0ce26047b1dc2098a3704fdd1fe35d5a78c72a7f377b1f56b",
+      "archive_sha256": "690759ec4884476da9772c6f14d39ae85d9ef0168b283b6e108417c4a56ef351",
       "entries": [
         {
           "path": ".agents/plugins/marketplace.json",
-          "sha": "1f0be075edc6b8235b5a81e6d9c3196fdb3cd758",
+          "sha": "cf09ae0d1fca17323e7d489b177eb84a104522e7",
           "mode": "100644",
           "size": 536
         },
         {
           "path": ".claude-plugin/marketplace.json",
-          "sha": "ebb6d5ab56653cdc09add52b0ba61029e0a1d422",
+          "sha": "c15caa9a6ac8c36c5e873303edc62420d5e142d6",
           "mode": "100644",
           "size": 857
         },
         {
           "path": ".claude-plugin/plugin.json",
-          "sha": "679485e288023b265350289bc0860d5c625dd57a",
+          "sha": "95520e156985200ad9e2087aa1efdb5599cd4d1d",
           "mode": "100644",
           "size": 517
         },
         {
-          "path": ".claude/commands/build.md",
-          "sha": "62ea38e1cad458d0318a968c638c5346cbd4f3be",
+          "path": ".claude/commands/a11y.md",
+          "sha": "4ffc405504661b117e72a0f622fc0da425a62583",
           "mode": "100644",
-          "size": 3990
+          "size": 1561
+        },
+        {
+          "path": ".claude/commands/build.md",
+          "sha": "ef3ae0086cf3c7cd4fea8ff2667fe9ad1a878ca5",
+          "mode": "100644",
+          "size": 4799
         },
         {
           "path": ".claude/commands/code-simplify.md",
@@ -172,9 +178,9 @@
         },
         {
           "path": ".claude/commands/plan.md",
-          "sha": "c50898587068bfb5f3aa2b4267bf077f09e04ac7",
+          "sha": "b2c8783381dd8a3ba8da74cbcaafa1299ad70225",
           "mode": "100644",
-          "size": 836
+          "size": 1030
         },
         {
           "path": ".claude/commands/review.md",
@@ -190,9 +196,9 @@
         },
         {
           "path": ".claude/commands/spec.md",
-          "sha": "57de3cdc3813402bab88f0db9df09948181560be",
+          "sha": "5bd7b6983717681e465290a57aa0e6497abba4fa",
           "mode": "100644",
-          "size": 944
+          "size": 1389
         },
         {
           "path": ".claude/commands/test.md",
@@ -214,15 +220,21 @@
         },
         {
           "path": ".codex-plugin/plugin.json",
-          "sha": "81bc4e233d307d815b97f7f50145d3b0cd5e649d",
+          "sha": "b2424eb65f1930e1c3f799d2b3638caf95409bef",
           "mode": "100644",
           "size": 1120
         },
         {
-          "path": ".gemini/commands/build.toml",
-          "sha": "b7a4f7f1f6ab193c3abb75690bb9df7a88024371",
+          "path": ".gemini/commands/a11y.toml",
+          "sha": "715030d5b5c16530a699511cd3c25c59275228de",
           "mode": "100644",
-          "size": 3840
+          "size": 1534
+        },
+        {
+          "path": ".gemini/commands/build.toml",
+          "sha": "b0723e7c82060f0584a4c04a945adb0dde213641",
+          "mode": "100644",
+          "size": 4637
         },
         {
           "path": ".gemini/commands/code-simplify.toml",
@@ -238,9 +250,9 @@
         },
         {
           "path": ".gemini/commands/planning.toml",
-          "sha": "53a88075533c6b8b2933a48b4ca92e9d1da49be7",
+          "sha": "c5d1fd9275f275c9fced1b3f051cbff8f36f825f",
           "mode": "100644",
-          "size": 804
+          "size": 998
         },
         {
           "path": ".gemini/commands/review.toml",
@@ -256,9 +268,9 @@
         },
         {
           "path": ".gemini/commands/spec.toml",
-          "sha": "799f682b0fe450bade82da5b63a51d7817f22acd",
+          "sha": "d16ef85ffa70e2db2e44dd314ce9ff6bf2144e47",
           "mode": "100644",
-          "size": 911
+          "size": 1348
         },
         {
           "path": ".gemini/commands/test.toml",
@@ -274,21 +286,21 @@
         },
         {
           "path": ".gitattributes",
-          "sha": "6313b56c57848efce05faa7aa7e901ccfc2886ea",
+          "sha": "a64933fe648f619e97434c6d9bb445a3bb1e44d5",
           "mode": "100644",
-          "size": 19
+          "size": 73
         },
         {
           "path": ".github/ISSUE_TEMPLATE/skill-gap.yml",
-          "sha": "dac6216a5ace3cd1f34bb2b9a753c6f133592892",
+          "sha": "59920434d4e0c7fac94108b5843168b5a8e09978",
           "mode": "100644",
-          "size": 2669
+          "size": 2705
         },
         {
           "path": ".github/workflows/test-plugin-install.yml",
-          "sha": "534b968fc4484fcd67c98b9b1e9e1d230a6f58ff",
+          "sha": "014160c48763f80948cee1430e55c196f1af4685",
           "mode": "100644",
-          "size": 5042
+          "size": 6270
         },
         {
           "path": ".gitignore",
@@ -304,21 +316,21 @@
         },
         {
           "path": "AGENTS.md",
-          "sha": "e97670ed868e90b73753fafbe305cdabc7f55ad3",
+          "sha": "b52f3f2f2849ddf95e1780b01d54e6dca8bd5162",
           "mode": "100644",
-          "size": 5386
+          "size": 5454
         },
         {
           "path": "CLAUDE.md",
-          "sha": "97674d0b173c7c25764e11dc816a298a63119594",
+          "sha": "fa831f2c1316e7b0e2be88fd3837eb3f49cf8b46",
           "mode": "100644",
-          "size": 4094
+          "size": 4354
         },
         {
           "path": "CONTRIBUTING.md",
-          "sha": "3c3a015be673a04efd8647c201acfbb2fad7189a",
+          "sha": "89ba6193c6cb7bf8c2aee3fb5f461446402f1cb2",
           "mode": "100644",
-          "size": 9404
+          "size": 9506
         },
         {
           "path": "LICENSE",
@@ -328,9 +340,15 @@
         },
         {
           "path": "README.md",
-          "sha": "7f610b8ca80ff9bc7ba7f95f3209430c3481891d",
+          "sha": "cd4b32384d2222c3fe7f51856ddfed33a7765fd8",
           "mode": "100644",
-          "size": 25930
+          "size": 26537
+        },
+        {
+          "path": "agents/accessibility-auditor.md",
+          "sha": "39033ad75fe2b39eafc70a74e3919cb91448dd46",
+          "mode": "100644",
+          "size": 7610
         },
         {
           "path": "agents/code-reviewer.md",
@@ -357,10 +375,16 @@
           "size": 12278
         },
         {
-          "path": "commands/build.toml",
-          "sha": "b7a4f7f1f6ab193c3abb75690bb9df7a88024371",
+          "path": "commands/a11y.toml",
+          "sha": "a512182b938fb70761f4864a178e21098307f585",
           "mode": "100644",
-          "size": 3840
+          "size": 1610
+        },
+        {
+          "path": "commands/build.toml",
+          "sha": "b0723e7c82060f0584a4c04a945adb0dde213641",
+          "mode": "100644",
+          "size": 4637
         },
         {
           "path": "commands/code-simplify.toml",
@@ -376,9 +400,9 @@
         },
         {
           "path": "commands/planning.toml",
-          "sha": "53a88075533c6b8b2933a48b4ca92e9d1da49be7",
+          "sha": "c5d1fd9275f275c9fced1b3f051cbff8f36f825f",
           "mode": "100644",
-          "size": 804
+          "size": 998
         },
         {
           "path": "commands/review.toml",
@@ -394,9 +418,9 @@
         },
         {
           "path": "commands/spec.toml",
-          "sha": "799f682b0fe450bade82da5b63a51d7817f22acd",
+          "sha": "d16ef85ffa70e2db2e44dd314ce9ff6bf2144e47",
           "mode": "100644",
-          "size": 911
+          "size": 1348
         },
         {
           "path": "commands/test.toml",
@@ -412,45 +436,45 @@
         },
         {
           "path": "docs/adoption-guide.md",
-          "sha": "e636b824f97c964a0bac7ae3a5f5da036513e1f0",
+          "sha": "c8c9f95ee807fde65c17ea7de3595bf2fc085560",
           "mode": "100644",
           "size": 11566
         },
         {
           "path": "docs/advanced-per-agent-configuration.md",
-          "sha": "d06a87b7cec0c657ee321fbcd8d910d074ee5954",
+          "sha": "c1a79b2b2b0b5248708bf5fd5f1fe76f1b97122c",
           "mode": "100644",
-          "size": 7110
+          "size": 7326
         },
         {
           "path": "docs/agents.md",
-          "sha": "e4ccea98e5d59b3a150c1defc9b2b179da14123b",
+          "sha": "f3712c745d1c2de8a0a8a4cddbc40c7fe14cab32",
           "mode": "100644",
-          "size": 7164
+          "size": 7487
         },
         {
           "path": "docs/antigravity-setup.md",
-          "sha": "f2350a882ce237b74863049d8ab96759ceaa0e99",
+          "sha": "f193e56fa2461a84a258cf2364478f87e2949259",
           "mode": "100644",
-          "size": 6893
+          "size": 7024
         },
         {
           "path": "docs/codex-setup.md",
-          "sha": "25e25e0db60c0755260a1a73be058e453cc4c96c",
+          "sha": "2a5340fdc9dfbb8951a39a2bdbdf516c793060c1",
           "mode": "100644",
           "size": 2447
         },
         {
           "path": "docs/commandcode-setup.md",
-          "sha": "0150adc6e92f119e5101966a4784c0079560e4d1",
+          "sha": "0e886cb3d6a993b423128c91616c92a1cc523fbf",
           "mode": "100644",
           "size": 2437
         },
         {
           "path": "docs/comparison.md",
-          "sha": "2c51daa6f47bb2896e91b4197279d44f8cd45f42",
+          "sha": "142dbd2996292a88f1693e4239572c75a955f762",
           "mode": "100644",
-          "size": 15362
+          "size": 15396
         },
         {
           "path": "docs/copilot-cli-setup.md",
@@ -460,9 +484,9 @@
         },
         {
           "path": "docs/copilot-setup.md",
-          "sha": "b33d111c222348bb4d70aba64a8987454089c7e9",
+          "sha": "2ef224d64a5ba73c581bd9287c7f4b8875c63101",
           "mode": "100644",
-          "size": 11478
+          "size": 11604
         },
         {
           "path": "docs/cursor-setup.md",
@@ -478,15 +502,15 @@
         },
         {
           "path": "docs/gemini-cli-setup.md",
-          "sha": "5a2a2472202dd5cd61fa6e0796f0e0c1755a35a7",
+          "sha": "4cee20a2d4a234a389b1a2aa29187dfe36c51552",
           "mode": "100644",
-          "size": 5915
+          "size": 6022
         },
         {
           "path": "docs/getting-started.md",
-          "sha": "f09e0cf0632a5b2cb9e7eaa03694a866c92d52e5",
+          "sha": "1f919b0ac385134f053f47aa1a22e96eb217315b",
           "mode": "100644",
-          "size": 11199
+          "size": 11376
         },
         {
           "path": "docs/opencode-setup.md",
@@ -502,9 +526,9 @@
         },
         {
           "path": "docs/skill-anatomy.md",
-          "sha": "04e493326aa5f7ea8b87ce5ca8de9925147a802b",
+          "sha": "1d36912e896ebae8d1e1b403a8f8025c74d3d781",
           "mode": "100644",
-          "size": 11244
+          "size": 11823
         },
         {
           "path": "docs/windsurf-setup.md",
@@ -514,9 +538,15 @@
         },
         {
           "path": "evals/README.md",
-          "sha": "56c810ee7f2f88243e06df2fbb253872df782d7e",
+          "sha": "a9c2d4e9988846e799436b404acf76e9c77455b5",
           "mode": "100644",
-          "size": 19326
+          "size": 26585
+        },
+        {
+          "path": "evals/cases/accessibility-engineering.json",
+          "sha": "a577b6c68c6df8e909a6868b1a59cc0846272b21",
+          "mode": "100644",
+          "size": 2659
         },
         {
           "path": "evals/cases/api-and-interface-design.json",
@@ -562,9 +592,9 @@
         },
         {
           "path": "evals/cases/debugging-and-error-recovery.json",
-          "sha": "f6a12cddf6c41378d9f11ba4d55e47e2cddde3a7",
+          "sha": "c65c77600cbc1ec2875054b4b448ebde54728db3",
           "mode": "100644",
-          "size": 2078
+          "size": 2489
         },
         {
           "path": "evals/cases/deprecation-and-migration.json",
@@ -574,9 +604,9 @@
         },
         {
           "path": "evals/cases/documentation-and-adrs.json",
-          "sha": "14a166f58af341642b1f708c4a315f99f420f8ab",
+          "sha": "cfcdadb3faec270b076feef2ca68365212dbb606",
           "mode": "100644",
-          "size": 3234
+          "size": 5787
         },
         {
           "path": "evals/cases/doubt-driven-development.json",
@@ -652,9 +682,9 @@
         },
         {
           "path": "evals/cases/spec-driven-development.json",
-          "sha": "2e9a04d478b41d1c00fc1afeee32f80a8a033fca",
+          "sha": "07887cc4846581357213335a5843d3b7026da992",
           "mode": "100644",
-          "size": 2657
+          "size": 2964
         },
         {
           "path": "evals/cases/test-driven-development.json",
@@ -667,6 +697,18 @@
           "sha": "bf873612a37d9ac5d417a40ffd70b63760131f0e",
           "mode": "100644",
           "size": 1262
+        },
+        {
+          "path": "evals/fixtures/accessibility-engineering/AUDIT-REQUEST.md",
+          "sha": "c62384ee41377321a87756003a220a69c5333502",
+          "mode": "100644",
+          "size": 835
+        },
+        {
+          "path": "evals/fixtures/accessibility-engineering/checkout-form.html",
+          "sha": "04d076235875f2e476a45bd78cc9771c05905bfe",
+          "mode": "100644",
+          "size": 1398
         },
         {
           "path": "evals/fixtures/api-and-interface-design/service-brief.md",
@@ -781,6 +823,18 @@
           "sha": "7c6dda6b71dbd1d0d1d877710e805481519e09b1",
           "mode": "100644",
           "size": 838
+        },
+        {
+          "path": "evals/fixtures/documentation-and-adrs/rate-limiter.js",
+          "sha": "0bf06fb904cdeb63f69d0aedcfc95706ec93084b",
+          "mode": "100644",
+          "size": 724
+        },
+        {
+          "path": "evals/fixtures/documentation-and-adrs/rate-limiter.md",
+          "sha": "4bc16f4ef5d3f0648d0984f4f32dcba1163b0ced",
+          "mode": "100644",
+          "size": 1156
         },
         {
           "path": "evals/fixtures/doubt-driven-development/migration-plan.md",
@@ -1023,6 +1077,18 @@
           "size": 321
         },
         {
+          "path": "evals/plugin/code-review-fires-on-plain-request/graders/skill-fired.md",
+          "sha": "b3d99df074d4ac93022afba8c5267d04f939945d",
+          "mode": "100644",
+          "size": 103
+        },
+        {
+          "path": "evals/plugin/code-review-fires-on-plain-request/prompt.md",
+          "sha": "be90eaad601e23365a8b5a996f18f679dd1528c1",
+          "mode": "100644",
+          "size": 1079
+        },
+        {
           "path": "evals/plugin/code-review-fires/graders/off-by-one.md",
           "sha": "1db921b7bc79644a76a223552676853221149594",
           "mode": "100644",
@@ -1075,6 +1141,36 @@
           "sha": "721882ecbe8842b99ac5ed388e600325c67adb17",
           "mode": "100644",
           "size": 389
+        },
+        {
+          "path": "evals/plugin/debugging-fires-on-pasted-diff/graders/diagnosis-and-regression-guard.md",
+          "sha": "fdbf56edc2756d41d47c517ddd452e105ad49b8c",
+          "mode": "100644",
+          "size": 984
+        },
+        {
+          "path": "evals/plugin/debugging-fires-on-pasted-diff/graders/skill-fired.md",
+          "sha": "ad8d2ae4a83d3802e2b36a3fd2884becc535758a",
+          "mode": "100644",
+          "size": 108
+        },
+        {
+          "path": "evals/plugin/debugging-fires-on-pasted-diff/prompt.md",
+          "sha": "ed6b4dd422aa241ab3a14f98994e70c105280131",
+          "mode": "100644",
+          "size": 1116
+        },
+        {
+          "path": "evals/plugin/debugging-stays-quiet-on-review/graders/not-fired.md",
+          "sha": "2d515de66c5e026d4082f7d65d405aa37a02c517",
+          "mode": "100644",
+          "size": 132
+        },
+        {
+          "path": "evals/plugin/debugging-stays-quiet-on-review/prompt.md",
+          "sha": "1bea2f659ac1432508ead3e3774d94ada86f0082",
+          "mode": "100644",
+          "size": 933
         },
         {
           "path": "evals/plugin/gitflow-fires-on-commit-message/graders/skill-fired.md",
@@ -1167,6 +1263,18 @@
           "size": 1034
         },
         {
+          "path": "evals/plugin/tdd-stays-quiet-on-refactor/graders/not-fired.md",
+          "sha": "1d3105ba234f70318f689109fec6ecc1e4194a33",
+          "mode": "100644",
+          "size": 127
+        },
+        {
+          "path": "evals/plugin/tdd-stays-quiet-on-refactor/prompt.md",
+          "sha": "09fc37105643c15f883b1d1f47091bb63f3d5bb6",
+          "mode": "100644",
+          "size": 914
+        },
+        {
           "path": "evals/skill-impact.md",
           "sha": "a40ef1367a11a65fc12c49fc1f6483d4fe675cfb",
           "mode": "100644",
@@ -1186,9 +1294,9 @@
         },
         {
           "path": "hooks/sdd-cache-post.sh",
-          "sha": "7a9c5b544ef93a6c33c7c32770b71138f868dcd7",
+          "sha": "608db5d12f449e0323e10827279ea3516ca77845",
           "mode": "100755",
-          "size": 4567
+          "size": 4576
         },
         {
           "path": "hooks/sdd-cache-pre.sh",
@@ -1198,9 +1306,9 @@
         },
         {
           "path": "hooks/sdd-cache-test.sh",
-          "sha": "b9f5bbaabc02d5fbc0934aa82e0d6125f851fed8",
+          "sha": "0c9cd5ddf7f28bf51236235ecc558eeb9bebac26",
           "mode": "100755",
-          "size": 11298
+          "size": 12433
         },
         {
           "path": "hooks/session-start-test.sh",
@@ -1228,15 +1336,15 @@
         },
         {
           "path": "plugin.json",
-          "sha": "8a9ac7100abdcb9ead294adc22aa7607cd22482e",
+          "sha": "4c647e95853a02c5eadb9e82cdee28c1801594fa",
           "mode": "100644",
           "size": 547
         },
         {
           "path": "references/accessibility-checklist.md",
-          "sha": "214ab49b504869227015bfd8eaaeb44e4355467e",
+          "sha": "48f15da2526662bf14c3f0703c2920b5b0e40ce5",
           "mode": "100644",
-          "size": 5332
+          "size": 5569
         },
         {
           "path": "references/definition-of-done.md",
@@ -1264,9 +1372,9 @@
         },
         {
           "path": "references/security-checklist.md",
-          "sha": "910fbff3ff3ee67e343ef308fe224f95edb5b5ce",
+          "sha": "dbad3cc327ae035b64c762560ff779fae226ae48",
           "mode": "100644",
-          "size": 14503
+          "size": 14993
         },
         {
           "path": "references/testing-patterns.md",
@@ -1279,6 +1387,12 @@
           "sha": "9868294dfe07637c7ee5109e40bf5716479163b5",
           "mode": "100644",
           "size": 12781
+        },
+        {
+          "path": "scripts/lib/behavioral-record.js",
+          "sha": "70784bd079aa4108f1acffa73e64dfb9f3cc3040",
+          "mode": "100644",
+          "size": 5803
         },
         {
           "path": "scripts/lib/execution-status.js",
@@ -1299,6 +1413,12 @@
           "size": 27198
         },
         {
+          "path": "scripts/lib/skill-resources.js",
+          "sha": "5b1e32c003dad9ba4bcf2297bdd37cd5d37bdf27",
+          "mode": "100644",
+          "size": 1442
+        },
+        {
           "path": "scripts/quality-gate-test.js",
           "sha": "ce193af2b61f34eb0cf9eb46ac129b911ed52381",
           "mode": "100644",
@@ -1306,15 +1426,15 @@
         },
         {
           "path": "scripts/run-evals-test.js",
-          "sha": "73bdcd90145d5bc0c1119acf6ab5463b96fcdb5c",
+          "sha": "fee183f65248d09ae9a98e924a325baa18e08797",
           "mode": "100644",
-          "size": 45559
+          "size": 70064
         },
         {
           "path": "scripts/run-evals.js",
-          "sha": "9d2d8282bb73a381f358e91b81d60513c50d032a",
+          "sha": "7cf7c6492787533e58b9175a4f04585a86a5fda2",
           "mode": "100644",
-          "size": 30888
+          "size": 34317
         },
         {
           "path": "scripts/staged-secret-scan-test.js",
@@ -1323,10 +1443,22 @@
           "size": 3351
         },
         {
-          "path": "scripts/validate-artifact-paths-test.js",
-          "sha": "f79c64f337d7114d234db1d0b211ea04572982d5",
+          "path": "scripts/sync-shared-references-test.js",
+          "sha": "ed3e6424cce4a82ab0b8b2247d3f24204ebb1161",
           "mode": "100644",
-          "size": 7977
+          "size": 7332
+        },
+        {
+          "path": "scripts/sync-shared-references.js",
+          "sha": "10dcf2f037ebf1af214082b402e8627873429425",
+          "mode": "100644",
+          "size": 3950
+        },
+        {
+          "path": "scripts/validate-artifact-paths-test.js",
+          "sha": "9a69fe2ce7ea257c4f513dec5d5023f22d859e33",
+          "mode": "100644",
+          "size": 8387
         },
         {
           "path": "scripts/validate-artifact-paths.js",
@@ -1348,15 +1480,15 @@
         },
         {
           "path": "scripts/validate-reference-links-test.js",
-          "sha": "891e472eb3a6e74d498b213a0798a94d6a8dcb5c",
+          "sha": "ec9acecb1fc9cf7ffc747f961571e75e85fe4471",
           "mode": "100644",
-          "size": 19874
+          "size": 22631
         },
         {
           "path": "scripts/validate-reference-links.js",
-          "sha": "b659bcdc70cce1c41cd16a9118b42616a29d8288",
+          "sha": "f48d92105769fcb90141cac15ddea5a19925ccbf",
           "mode": "100644",
-          "size": 7804
+          "size": 8288
         },
         {
           "path": "scripts/validate-skills.js",
@@ -1366,15 +1498,33 @@
         },
         {
           "path": "scripts/validate-versions-test.js",
-          "sha": "6814ad945608fac49935a408ca70993b606227ce",
+          "sha": "7ea636c536ad46857a3dea486793e2795b9e6ba9",
           "mode": "100644",
-          "size": 905
+          "size": 3610
         },
         {
           "path": "scripts/validate-versions.js",
           "sha": "68bf72ec161f02ac5a1a784efef6c1f7bdb330f0",
           "mode": "100644",
           "size": 919
+        },
+        {
+          "path": "skills/accessibility-engineering/SKILL.md",
+          "sha": "6ac467875c614a3354a4df1afa432ab02d4bc705",
+          "mode": "100644",
+          "size": 7846
+        },
+        {
+          "path": "skills/accessibility-engineering/references/shared/accessibility-checklist.md",
+          "sha": "48f15da2526662bf14c3f0703c2920b5b0e40ce5",
+          "mode": "100644",
+          "size": 5569
+        },
+        {
+          "path": "skills/accessibility-engineering/scripts/audit-a11y.sh",
+          "sha": "1c9eb22863a4a74cb69ec667c36ac49e918ff3cc",
+          "mode": "100755",
+          "size": 8048
         },
         {
           "path": "skills/api-and-interface-design/SKILL.md",
@@ -1390,15 +1540,27 @@
         },
         {
           "path": "skills/ci-cd-and-automation/SKILL.md",
-          "sha": "531bb8f085950cf0823296610b7d6350a918b0c6",
+          "sha": "eab42601b1d0d780cdf3b998e11c48773b75a436",
           "mode": "100644",
-          "size": 11512
+          "size": 11677
         },
         {
           "path": "skills/code-review-and-quality/SKILL.md",
-          "sha": "15ea44c93c61dcec705720342c1fd78755702f85",
+          "sha": "1c5ab78da82fc6965c0b57b295560327b19c6098",
           "mode": "100644",
-          "size": 21263
+          "size": 21650
+        },
+        {
+          "path": "skills/code-review-and-quality/references/shared/performance-checklist.md",
+          "sha": "81f754909440211c3a925a770abccf2da6d1d0fc",
+          "mode": "100644",
+          "size": 13292
+        },
+        {
+          "path": "skills/code-review-and-quality/references/shared/security-checklist.md",
+          "sha": "dbad3cc327ae035b64c762560ff779fae226ae48",
+          "mode": "100644",
+          "size": 14993
         },
         {
           "path": "skills/code-simplification/SKILL.md",
@@ -1408,15 +1570,15 @@
         },
         {
           "path": "skills/constraint-driven-development/SKILL.md",
-          "sha": "d41ab055104f249d505fb6ea706e20b15f439a9f",
+          "sha": "20cef20c0938923fe784c77c625f9f9256d665fe",
           "mode": "100644",
-          "size": 22216
+          "size": 22205
         },
         {
           "path": "skills/constraint-driven-development/references/floor-guard.md",
-          "sha": "6ba8b6dac977228c50f157564b6e6a31efbcca0d",
+          "sha": "431bd6e848ced077336801d1bd954f32447ef59b",
           "mode": "100644",
-          "size": 10701
+          "size": 11508
         },
         {
           "path": "skills/constraint-driven-development/scripts/quality-gate.mjs",
@@ -1432,9 +1594,9 @@
         },
         {
           "path": "skills/debugging-and-error-recovery/SKILL.md",
-          "sha": "13c1a431626c23270542c7b570d7193ba79c3a96",
+          "sha": "a078674507959e787e0bc031aaf65fa919382375",
           "mode": "100644",
-          "size": 10893
+          "size": 11169
         },
         {
           "path": "skills/deprecation-and-migration/SKILL.md",
@@ -1444,21 +1606,33 @@
         },
         {
           "path": "skills/documentation-and-adrs/SKILL.md",
-          "sha": "eff8fddc25d972bc0e3b367d23afa0705b7a87b5",
+          "sha": "019bf43d1845051775f83b4d894ee090365091b0",
           "mode": "100644",
-          "size": 10999
+          "size": 12594
         },
         {
           "path": "skills/doubt-driven-development/SKILL.md",
-          "sha": "8e6d12737711d4926d87303ab0c111deb43ab8b2",
+          "sha": "482bb4253ad86e1abdc2a55ee759b7139aaf35da",
           "mode": "100644",
-          "size": 16753
+          "size": 16755
+        },
+        {
+          "path": "skills/doubt-driven-development/references/shared/orchestration-patterns.md",
+          "sha": "09cddd31d52a95be1d9bca814547d184b9945e44",
+          "mode": "100644",
+          "size": 18201
         },
         {
           "path": "skills/frontend-ui-engineering/SKILL.md",
-          "sha": "631971815da44e24f4d0bca2b7d983ba6d1bcfc4",
+          "sha": "cdb6a19a02b75761dc535a16b3b741fb4bd2d1fb",
           "mode": "100644",
-          "size": 11950
+          "size": 12573
+        },
+        {
+          "path": "skills/frontend-ui-engineering/references/shared/accessibility-checklist.md",
+          "sha": "48f15da2526662bf14c3f0703c2920b5b0e40ce5",
+          "mode": "100644",
+          "size": 5569
         },
         {
           "path": "skills/git-workflow-and-versioning/SKILL.md",
@@ -1498,9 +1672,15 @@
         },
         {
           "path": "skills/incremental-implementation/SKILL.md",
-          "sha": "9c4f49bc841adb3c0f98baaa9eabd435a5b64ef9",
+          "sha": "141010b667e6771779c1cc50a1b7d3b39ad300a3",
           "mode": "100644",
-          "size": 9629
+          "size": 9630
+        },
+        {
+          "path": "skills/incremental-implementation/references/shared/definition-of-done.md",
+          "sha": "35e39f9e15f6dd0ff4725a6e5cbce7f2aa69064a",
+          "mode": "100644",
+          "size": 3798
         },
         {
           "path": "skills/interview-me/SKILL.md",
@@ -1510,45 +1690,93 @@
         },
         {
           "path": "skills/observability-and-instrumentation/SKILL.md",
-          "sha": "84d9cb373467fe0e15236e190833ecc90f840c38",
+          "sha": "7cfd593d226bf66bdd557a2f248e6f95780d618e",
           "mode": "100644",
-          "size": 13948
+          "size": 13949
+        },
+        {
+          "path": "skills/observability-and-instrumentation/references/shared/observability-checklist.md",
+          "sha": "ad40d7aa3fca5d2091fa45be234c14aee22c3588",
+          "mode": "100644",
+          "size": 5129
         },
         {
           "path": "skills/performance-optimization/SKILL.md",
-          "sha": "296cf3f79eaa4c910cae44ecd50fcc4246e2b9d5",
+          "sha": "3059f41a1ebd30e09bb67c0a6ab38bf09ad2e32d",
           "mode": "100644",
-          "size": 16783
+          "size": 16785
         },
         {
           "path": "skills/performance-optimization/references/optimization-patterns.md",
-          "sha": "63e27bcc7a051c3dc23c164f146f374e119874cc",
+          "sha": "253a88544de596b1506e37bfed9825909b3c2d4c",
           "mode": "100644",
-          "size": 9692
+          "size": 9694
+        },
+        {
+          "path": "skills/performance-optimization/references/shared/performance-checklist.md",
+          "sha": "81f754909440211c3a925a770abccf2da6d1d0fc",
+          "mode": "100644",
+          "size": 13292
         },
         {
           "path": "skills/planning-and-task-breakdown/SKILL.md",
-          "sha": "296249b64334bcfd1aeaefd27b9e3e5494e38ec0",
+          "sha": "a30ecd63ffb7009dc9b4187918fc8838c5697354",
           "mode": "100644",
-          "size": 10564
+          "size": 10678
+        },
+        {
+          "path": "skills/planning-and-task-breakdown/references/shared/definition-of-done.md",
+          "sha": "35e39f9e15f6dd0ff4725a6e5cbce7f2aa69064a",
+          "mode": "100644",
+          "size": 3798
         },
         {
           "path": "skills/security-and-hardening/SKILL.md",
-          "sha": "fc85325b50e72b935f2916dd74af12c650e9c7f4",
+          "sha": "03e427de05f2780d7b4618542be9ed1c03ea84a9",
           "mode": "100644",
-          "size": 17578
+          "size": 17595
         },
         {
           "path": "skills/security-and-hardening/references/hardening-patterns.md",
-          "sha": "ad1d8fe783a605fef5be622c02062626cc06a948",
+          "sha": "9449688ca4887e76ac7d2e0bd076b0a01bc1dd26",
           "mode": "100644",
-          "size": 13352
+          "size": 14097
+        },
+        {
+          "path": "skills/security-and-hardening/references/shared/security-checklist.md",
+          "sha": "dbad3cc327ae035b64c762560ff779fae226ae48",
+          "mode": "100644",
+          "size": 14993
         },
         {
           "path": "skills/shipping-and-launch/SKILL.md",
-          "sha": "451b7f12638ebeb1ee9f96ce66b47f5e992696c8",
+          "sha": "0c277c1c70d9c98ddf461bb6f052c453d9c70dc7",
           "mode": "100644",
-          "size": 11540
+          "size": 11544
+        },
+        {
+          "path": "skills/shipping-and-launch/references/shared/accessibility-checklist.md",
+          "sha": "48f15da2526662bf14c3f0703c2920b5b0e40ce5",
+          "mode": "100644",
+          "size": 5569
+        },
+        {
+          "path": "skills/shipping-and-launch/references/shared/definition-of-done.md",
+          "sha": "35e39f9e15f6dd0ff4725a6e5cbce7f2aa69064a",
+          "mode": "100644",
+          "size": 3798
+        },
+        {
+          "path": "skills/shipping-and-launch/references/shared/performance-checklist.md",
+          "sha": "81f754909440211c3a925a770abccf2da6d1d0fc",
+          "mode": "100644",
+          "size": 13292
+        },
+        {
+          "path": "skills/shipping-and-launch/references/shared/security-checklist.md",
+          "sha": "dbad3cc327ae035b64c762560ff779fae226ae48",
+          "mode": "100644",
+          "size": 14993
         },
         {
           "path": "skills/source-driven-development/SKILL.md",
@@ -1558,21 +1786,33 @@
         },
         {
           "path": "skills/spec-driven-development/SKILL.md",
-          "sha": "3fcc536f14f261dab1a785ef906ddf6f12074389",
+          "sha": "b96b9f757adcff8c71ab9da3bce638791763a8fa",
           "mode": "100644",
-          "size": 13099
+          "size": 17003
         },
         {
           "path": "skills/test-driven-development/SKILL.md",
-          "sha": "1937b9b9798d8986f4d979355565311bbaa7244f",
+          "sha": "aa28050a4533a06fdd02e50102649705878e0b24",
           "mode": "100644",
-          "size": 16845
+          "size": 16985
+        },
+        {
+          "path": "skills/test-driven-development/references/shared/testing-patterns.md",
+          "sha": "86abe519a60566535ec2b3092bf6a04a0f6722f7",
+          "mode": "100644",
+          "size": 7543
         },
         {
           "path": "skills/using-agent-skills/SKILL.md",
-          "sha": "d56ac03ab057036c1bdcc9127c88952758ee2f0d",
+          "sha": "30e644445003bb0a73cd38965ca8f11166333734",
           "mode": "100644",
-          "size": 10446
+          "size": 10647
+        },
+        {
+          "path": "skills/using-agent-skills/references/shared/definition-of-done.md",
+          "sha": "35e39f9e15f6dd0ff4725a6e5cbce7f2aa69064a",
+          "mode": "100644",
+          "size": 3798
         }
       ]
     },
