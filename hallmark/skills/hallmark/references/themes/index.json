@@ -1,5 +1,4 @@
 {
- "built": "2026-10-22",
  "themes": [
   {
    "name": "Almanac",
@@ -1476,6 +1475,56 @@
    "picture": "references/themes/piste.jpg"
   },
   {
+   "name": "Refract",
+   "slug": "refract",
+   "genre": "atmospheric",
+   "posture": "restrained",
+   "paper": {
+    "band": "light",
+    "L": 98.2,
+    "hue": 95
+   },
+   "display": {
+    "class": "grotesk-sans",
+    "face": "Funnel Display"
+   },
+   "accent": {
+    "band": "cool",
+    "hue": 232
+   },
+   "keywords": [
+    "pool",
+    "lido",
+    "swim",
+    "spa",
+    "hotel",
+    "resort",
+    "water",
+    "skincare",
+    "sunscreen",
+    "eyewear",
+    "glass",
+    "optics",
+    "light",
+    "daylight",
+    "architecture",
+    "interiors",
+    "studio",
+    "wellness",
+    "bathhouse",
+    "summer",
+    "clean",
+    "calm",
+    "product launch",
+    "hardware"
+   ],
+   "material": "sunlit white plaster with real light falling across it, water caustics or prism dispersion rendered live, deep pool-blue ink, Funnel Display at a light weight over Funnel Sans, clear surfaces that cast tinted shadows, one water signal",
+   "file": "references/themes/refract.md",
+   "photo": "natural con=3 exp=4",
+   "pictured": "Timetable-led, Stage hero",
+   "picture": "references/themes/refract.jpg"
+  },
+  {
    "name": "Ribbon",
    "slug": "ribbon",
    "genre": "atmospheric",
@@ -2045,6 +2094,54 @@
    "photo": "tint accent con=10",
    "pictured": "Workbench, Stage hero, in the night colourway",
    "picture": "references/themes/ultraviolet.jpg"
+  },
+  {
+   "name": "Vantage",
+   "slug": "vantage",
+   "genre": "modern-minimal",
+   "posture": "restrained",
+   "paper": {
+    "band": "dark",
+    "L": 13.5,
+    "hue": 235
+   },
+   "display": {
+    "class": "grotesk-sans",
+    "face": "Geologica"
+   },
+   "accent": {
+    "band": "chromatic-lime",
+    "hue": 126
+   },
+   "keywords": [
+    "lidar",
+    "scan",
+    "survey",
+    "mapping",
+    "3d",
+    "spatial",
+    "point cloud",
+    "robotics",
+    "autonomy",
+    "drone",
+    "construction",
+    "digital twin",
+    "geospatial",
+    "measurement",
+    "sensor",
+    "inspection",
+    "engineering",
+    "heritage",
+    "digitisation",
+    "infrastructure",
+    "reality capture",
+    "terrain"
+   ],
+   "material": "blue-black ground, a live point cloud of the real thing as the hero's light, a sweep that lights it, pale steel ink, Geologica with sharpened corners at a light weight, hairline frames with corner ticks, one lime signal for what was found",
+   "file": "references/themes/vantage.md",
+   "photo": "muted con=6 sat=-20",
+   "pictured": "Feature Ledger, Stage hero",
+   "picture": "references/themes/vantage.jpg"
   },
   {
    "name": "Vellum",

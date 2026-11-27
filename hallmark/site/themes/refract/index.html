@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bellwater Lido: a heated outdoor pool, open every day of the year</title>
+<meta name="description" content="Bellwater Lido is a heated fifty metre pool under open sky. Book a lane by the session, from 06:30 to 21:00, every day of the year.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300;400;500&family=Funnel+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2711%27 fill=%27none%27 stroke=%27%23005f94%27 stroke-width=%276%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="scene.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" data-nav>
+  <div class="nav__pill">
+    <a class="wordmark" href="#top" aria-label="Bellwater Lido, home"><span class="wordmark__ring" aria-hidden="true"></span>Bellwater Lido</a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#today">Sessions</a>
+      <a href="#quiet">Quiet hours</a>
+      <a href="#prices">Prices</a>
+      <a href="#visit">Visit</a>
+    </nav>
+    <a class="btn btn--sm" href="#book">Book a swim</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="pool" aria-hidden="true">
+    <canvas class="water" data-water="ground"></canvas>
+    <div class="pool__wall"></div>
+  </div>
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Swim outside, all year.</h1>
+      <p class="lead">A heated fifty metre pool under open sky, booked by the session.</p>
+      <div class="hero__actions">
+        <a class="btn" href="#book">Book a swim</a>
+        <a class="btn btn--clear" href="#prices">See prices</a>
+      </div>
+      <p class="hero__fine">Open every day, 06:30 to 21:00</p>
+    </div>
+
+    <form class="clear today" data-today aria-labelledby="today-title">
+      <div class="today__head">
+        <div>
+          <p class="today__title" id="today-title">Today</p>
+          <p class="today__date">Tuesday 27 October</p>
+        </div>
+        <dl class="today__temps">
+          <div><dt>Water</dt><dd class="num">24.0°C</dd></div>
+          <div><dt>Air</dt><dd class="num">13°C</dd></div>
+        </dl>
+      </div>
+      <fieldset class="slots">
+        <legend class="visually-hidden">Pick a session</legend>
+        <label class="slot">
+          <input type="radio" name="slot" value="12:30" data-name="Lunch lanes" checked>
+          <span class="slot__time num">12:30</span>
+          <span class="slot__name">Lunch lanes<small>Fast, medium, slow</small></span>
+          <span class="slot__left num">3 left</span>
+        </label>
+        <label class="slot">
+          <input type="radio" name="slot" value="15:30" data-name="Family swim">
+          <span class="slot__time num">15:30</span>
+          <span class="slot__name">Family swim<small>Whole pool, no lanes</small></span>
+          <span class="slot__left num">30 left</span>
+        </label>
+        <label class="slot is-full">
+          <input type="radio" name="slot" value="17:30" disabled>
+          <span class="slot__time num">17:30</span>
+          <span class="slot__name">Evening lanes<small>Fast, medium, slow</small></span>
+          <span class="slot__left">Full</span>
+        </label>
+        <label class="slot">
+          <input type="radio" name="slot" value="19:30" data-name="Late swim">
+          <span class="slot__time num">19:30</span>
+          <span class="slot__name">Late swim<small>Medium, slow</small></span>
+          <span class="slot__left num">14 left</span>
+        </label>
+      </fieldset>
+      <div class="today__foot">
+        <p class="today__price"><span class="num">£6.50</span><small>One swim, 45 minutes</small></p>
+        <button class="btn" type="submit" data-today-btn>Book 12:30</button>
+      </div>
+      <p class="today__done" data-today-done role="status" hidden></p>
+    </form>
+  </div>
+</section>
+
+<section class="section lanes" id="today" aria-labelledby="lanes-head">
+  <div class="container">
+    <div class="head head--split">
+      <h2 id="lanes-head">Today, lane by lane</h2>
+      <p class="lead">Every session has fast, medium and slow lanes unless it says whole pool.</p>
+    </div>
+    <ol class="timetable">
+      <li class="row is-past">
+        <span class="row__time num">06:30</span>
+        <span class="row__name">Early lanes<small>Until 08:00</small></span>
+        <span class="row__lanes"><i>Fast</i><i>Medium</i><i>Slow</i></span>
+        <span class="row__state">Finished</span>
+      </li>
+      <li class="row is-past">
+        <span class="row__time num">09:00</span>
+        <span class="row__name">Lane swim<small>Until 11:00</small></span>
+        <span class="row__lanes"><i>Medium</i><i>Slow</i></span>
+        <span class="row__state">Finished</span>
+      </li>
+      <li class="row is-next">
+        <canvas class="row__light" data-water="row" aria-hidden="true"></canvas>
+        <span class="row__time num">12:30</span>
+        <span class="row__name">Lunch lanes<small>Until 14:00</small></span>
+        <span class="row__lanes"><i>Fast</i><i>Medium</i><i>Slow</i></span>
+        <a class="row__state pill pill--live" href="#book"><span class="num">3</span> spaces, book</a>
+      </li>
+      <li class="row">
+        <span class="row__time num">15:30</span>
+        <span class="row__name">Family swim<small>Until 17:00</small></span>
+        <span class="row__lanes"><i class="wide">Whole pool</i></span>
+        <a class="row__state pill" href="#book"><span class="num">30</span> spaces</a>
+      </li>
+      <li class="row is-full">
+        <span class="row__time num">17:30</span>
+        <span class="row__name">Evening lanes<small>Until 19:00</small></span>
+        <span class="row__lanes"><i>Fast</i><i>Medium</i><i>Slow</i></span>
+        <span class="row__state pill pill--full">Full</span>
+      </li>
+      <li class="row">
+        <span class="row__time num">19:30</span>
+        <span class="row__name">Late swim<small>Until 21:00, under lights</small></span>
+        <span class="row__lanes"><i>Medium</i><i>Slow</i></span>
+        <a class="row__state pill" href="#book"><span class="num">14</span> spaces</a>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section warm" aria-labelledby="warm-head">
+  <div class="container warm__grid">
+    <p class="warm__fig num" aria-hidden="true">24<span>°C</span></p>
+    <div class="warm__text">
+      <h2 id="warm-head">Warm water in January</h2>
+      <p class="lead">The pool is heated to 24 degrees every day of the year, checked each morning at six.</p>
+      <ul class="facts">
+        <li><span>Length</span><b>50 metres, eight lanes</b></li>
+        <li><span>Hours</span><b>06:30 to 21:00, every day</b></li>
+        <li><span>Poolside</span><b>Sauna, hot showers, lockers</b></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section quiet" id="quiet" aria-labelledby="quiet-head">
+  <div class="container">
+    <div class="quiet__top">
+      <div class="head">
+        <h2 id="quiet-head">Pick a quiet hour</h2>
+        <p class="lead" data-quiet-line>Weekdays are quietest at two in the afternoon.</p>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="Show">
+        <button type="button" role="radio" aria-checked="true" data-days="weekday">Weekdays</button>
+        <button type="button" role="radio" aria-checked="false" data-days="weekend">Weekends</button>
+      </div>
+    </div>
+    <figure class="busy">
+      <div class="busy__plot">
+        <canvas class="busy__water" data-water="bars" role="img" aria-label="Weekdays: busiest from 17:00 to 19:00, quietest at 14:00."></canvas>
+        <span class="busy__now" data-now aria-hidden="true"><span>Now</span></span>
+      </div>
+      <div class="busy__hours" aria-hidden="true">
+        <span>06</span><span>07</span><span>08</span><span>09</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span>
+      </div>
+      <figcaption class="busy__cap"><span>How full the pool usually is, hour by hour</span><span>Last four weeks</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section show" aria-label="The pool">
+  <div class="container">
+    <figure class="show__frame" data-slot>
+      <img class="photo" src="photos/palms.jpg" width="1920" height="1280" alt="Still blue pool water with the reflections of palm trees across the tiles" loading="lazy" decoding="async">
+    </figure>
+    <p class="show__cap">Still water before the first lane goes in.</p>
+  </div>
+</section>
+
+<section class="section prices" id="prices" aria-labelledby="prices-head">
+  <div class="container prices__grid">
+    <div class="prices__main">
+      <div class="head">
+        <h2 id="prices-head">Swim once, or all year</h2>
+        <p class="lead">Members book seven days ahead, everyone else three.</p>
+      </div>
+      <div class="clear board">
+        <table>
+          <thead>
+            <tr><th scope="col">Ticket</th><th scope="col" class="r">Adult</th><th scope="col" class="r">Under 18</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">One swim<small>45 minutes, any session</small></th><td class="r num">£6.50</td><td class="r num">£4.00</td></tr>
+            <tr><th scope="row">Ten swims<small>Kept for a year</small></th><td class="r num">£58</td><td class="r num">£36</td></tr>
+            <tr class="is-lead"><th scope="row">Monthly<small>Swim as often as you like</small></th><td class="r num">£42</td><td class="r num">£26</td></tr>
+            <tr><th scope="row">Yearly<small>Two months free</small></th><td class="r num">£420</td><td class="r num">£260</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <figure class="prices__photo" data-slot>
+      <img class="photo" src="photos/lanes.jpg" width="1920" height="1440" alt="White starting blocks along a clear blue pool divided by red lane ropes" loading="lazy" decoding="async">
+    </figure>
+  </div>
+</section>
+
+<section class="section book" id="book" aria-labelledby="book-head">
+  <div class="container book__grid">
+    <form class="clear booker" data-booker aria-labelledby="book-head">
+      <h2 id="book-head">Book your lane</h2>
+      <fieldset class="days">
+        <legend>Day</legend>
+        <label><input type="radio" name="day" value="Today" checked><span>Today<small class="num">27</small></span></label>
+        <label><input type="radio" name="day" value="Wednesday"><span>Wed<small class="num">28</small></span></label>
+        <label><input type="radio" name="day" value="Thursday"><span>Thu<small class="num">29</small></span></label>
+        <label><input type="radio" name="day" value="Friday"><span>Fri<small class="num">30</small></span></label>
+        <label><input type="radio" name="day" value="Saturday"><span>Sat<small class="num">31</small></span></label>
+      </fieldset>
+      <fieldset class="times">
+        <legend>Session</legend>
+        <label><input type="radio" name="time" value="07:00"><span class="num">07:00</span></label>
+        <label><input type="radio" name="time" value="12:30" checked><span class="num">12:30</span></label>
+        <label><input type="radio" name="time" value="15:30"><span class="num">15:30</span></label>
+        <label><input type="radio" name="time" value="19:30"><span class="num">19:30</span></label>
+      </fieldset>
+      <div class="booker__foot">
+        <label class="field">
+          <span>Email for your ticket</span>
+          <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+        </label>
+        <button class="btn" type="submit" data-booker-btn>Book today at 12:30</button>
+      </div>
+      <p class="booker__done" data-booker-done role="status" hidden></p>
+    </form>
+    <div class="visit" id="visit">
+      <h3>Finding us</h3>
+      <p class="visit__addr">Marsh Lane, Bellwater, at the north gate of the park.</p>
+      <dl class="visit__list">
+        <div><dt>By train</dt><dd>Ten minutes on foot from Bellwater station</dd></div>
+        <div><dt>By bike</dt><dd>Racks for forty by the gate</dd></div>
+        <div><dt>Bring</dt><dd>A towel and a lock; caps are optional</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__line">See you in the water.</p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="Footer">
+        <a href="#today">Sessions</a>
+        <a href="#prices">Prices</a>
+        <a href="#visit">Visit</a>
+        <a href="#book">Book a swim</a>
+      </nav>
+      <p class="foot__fine">Bellwater Lido, Marsh Lane, Bellwater. Photographs: <a href="https://commons.wikimedia.org/wiki/File:Swimming_Pool_in_a_hotel_in_Tamil_Nadu_03.jpg">Kritzolina</a> (CC BY-SA 4.0), <a href="https://commons.wikimedia.org/wiki/File:Swimming_Pool_lanes_and_starting_blocks_at_AIS.jpg">KeepActive Australia</a> (CC BY-SA 4.0), Wikimedia Commons.</p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

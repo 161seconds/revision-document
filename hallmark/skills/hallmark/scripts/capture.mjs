@@ -15,7 +15,7 @@
 // of the viewport; --full captures the whole scroll height. It never draws a browser bar or a device
 // frame: the page frames the picture in the theme's material.
 import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
-import { join, dirname, resolve, relative } from 'node:path';
+import { join, dirname, resolve, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -70,7 +70,7 @@ if (has('cdp')) {
   const dpr = await page.evaluate(() => devicePixelRatio).catch(() => 1);
   const rel = relative(process.cwd(), file);
   console.log(`${rel}  ${Math.round(box.width * dpr)} x ${Math.round(box.height * dpr)}  (app window)`);
-  console.log(`  <img src="${rel}" width="${Math.round(box.width * dpr)}" height="${Math.round(box.height * dpr)}" alt="" loading="lazy">`);
+  console.log(`  <img src="${rel.split(sep).join('/')}" width="${Math.round(box.width * dpr)}" height="${Math.round(box.height * dpr)}" alt="" loading="lazy">`);
   await app.disconnect();
   process.exit(0);
 }
@@ -98,11 +98,18 @@ try {
       if (!to) { console.log(`skip ${route}: not on ${new URL(target).origin}`); await p.close(); continue; }
       const res = await p.goto(to, { waitUntil: 'networkidle2', timeout: 45000 }).catch((e) => ({ err: e.message }));
       if (res && res.err) { console.log(`skip ${route} at ${size}: ${res.err}`); await p.close(); continue; }
+      if (isUrl && res && !res.ok() && res.status() !== 304) {
+        console.log(`skip ${route} at ${size}: HTTP ${res.status()} from ${res.url()}`);
+        await p.close();
+        continue;
+      }
       await p.evaluate(async () => { if (document.fonts) await document.fonts.ready; for (const i of document.querySelectorAll('img[loading="lazy"]')) i.loading = 'eager'; await Promise.race([Promise.all([...document.images].filter((i) => !i.complete).map((i) => new Promise((r) => { i.onload = i.onerror = r; }))), new Promise((r) => setTimeout(r, 6000))]); }).catch(() => {});
       await new Promise((r) => setTimeout(r, wait));
       await p.bringToFront();
       const slug = route === '/' ? 'home' : route.replace(/^\/|\/$/g, '').replace(/[^\w-]+/g, '-');
-      const file = join(out, `${name}-${slug}-${size}${selector ? '-part' : ''}.png`);
+      const stem = join(out, `${name}-${slug}-${size}${selector ? '-part' : ''}`);
+      let file = `${stem}.png`, suffix = 2;
+      while (made.some((m) => m.file === file)) file = `${stem}-${suffix++}.png`;
       let shot;
       if (selector) {
         const el = await p.$(selector);
@@ -119,7 +126,7 @@ try {
 for (const m of made) {
   const rel = relative(process.cwd(), m.file);
   console.log(`${rel}  ${m.w} x ${m.h}  (${m.route}, ${m.size})`);
-  console.log(`  <img src="${rel}" width="${m.w}" height="${m.h}" alt="" loading="lazy">`);
+  console.log(`  <img src="${rel.split(sep).join('/')}" width="${m.w}" height="${m.h}" alt="" loading="lazy">`);
 }
 if (!made.length) process.exitCode = 1;
 else console.log(`\n${made.length} screenshot${made.length > 1 ? 's' : ''}. Look at each one before placing it: sample data only, nothing personal (names, emails, tokens), the screen in the state that tells the page's story.`);

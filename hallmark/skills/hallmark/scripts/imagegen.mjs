@@ -45,8 +45,16 @@ const metaPath = stem + ".json";
 const pathFor = (i) => (n === 1 ? cachePath : `${stem}-${i + 1}.png`);
 
 const sameRequest = () => { if (!args.out) return true; try { return JSON.parse(readFileSync(metaPath, "utf8")).hash === hash; } catch { return false; } };
-if (!args.force && existsSync(cachePath) && sameRequest()) {
-  out({ path: cachePath, cached: true, model, prompt });
+if (!args.force && sameRequest()) {
+  const cachedPaths = [];
+  for (let i = 0; i < n; i++) {
+    const path = pathFor(i);
+    if (!existsSync(path)) break;
+    cachedPaths.push(path);
+  }
+  if (cachedPaths.length === n) {
+    out({ path: cachedPaths[0], paths: cachedPaths, cached: true, model, prompt });
+  }
 }
 
 const key = process.env.TOGETHER_API_KEY;
@@ -73,6 +81,7 @@ try {
   const data = await res.json();
   const images = (data?.data ?? []).map((d) => d?.b64_json).filter(Boolean);
   if (!images.length) out({ error: "no-image", message: "image API returned no b64_json payload" }, 1);
+  if (images.length !== n) out({ error: "image-count", message: `image API returned ${images.length} images; requested ${n}. No files were written.` }, 1);
 
   mkdirSync(cacheDir, { recursive: true });
   const paths = [];

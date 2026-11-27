@@ -19,3 +19,5 @@ jobs:
         run: |
           node skills/hallmark/scripts/theme.mjs index
           git diff --exit-code -- skills/hallmark/references/themes/index.json
+      - name: Every test file passes
+        run: node --test skills/hallmark/scripts/*.test.mjs skills/hallmark/scripts/fixtures/*/*.test.mjs

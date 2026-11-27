@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* sloplint: Hallmark's mechanical gate checker. Zero dependencies, Node 18+. Gate ids and tiers: references/gates.md. */
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, realpathSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, extname, dirname, basename, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -46,16 +46,20 @@ function collectFiles(paths) {
   const seen = new Set();
   const visit = (p, top) => {
     const abs = resolve(p);
-    if (seen.has(abs)) return;
     let st;
-    try { st = statSync(abs); } catch { console.error(`sloplint: cannot read ${p}`); return; }
+    let real;
+    try { st = statSync(abs); real = realpathSync(abs); } catch { console.error(`sloplint: cannot read ${p}`); if (top) process.exit(2); return; }
     if (st.isDirectory()) {
       const base = basename(abs);
-      if (base === 'node_modules' || base.startsWith('.') || (!top && BUILD_DIRS.has(base))) return;
+      if (base === 'node_modules' || (!top && (base.startsWith('.') || BUILD_DIRS.has(base)))) return;
+    }
+    if (seen.has(real)) return;
+    seen.add(real);
+    if (st.isDirectory()) {
       for (const e of readdirSync(abs)) visit(join(abs, e), false);
     } else {
       const ext = extname(abs).toLowerCase();
-      if (ext === '.css' || DOC_EXT.has(ext)) { seen.add(abs); files.push(abs); }
+      if (ext === '.css' || DOC_EXT.has(ext)) files.push(abs);
     }
   };
   for (const p of paths) visit(p, true);

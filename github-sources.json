@@ -31,7 +31,11 @@
     {
       "repository": "Nutlope/hallmark",
       "status": "existing",
-      "path": "hallmark"
+      "path": "hallmark",
+      "commit": "04977e15f3dfd6ee4b74c887dac3eb52665d6c92",
+      "branch": "main",
+      "files": 860,
+      "bytes": 66060120
     },
     {
       "repository": "cloudflare/security-audit-skill",

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swath: every site scan, measured from the office</title>
+<meta name="description" content="Swath turns drone and tripod lidar scans of a construction site into a site you can measure, cut and compare without going back out.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght,CRSV,SHRP@200..500,0,0..100&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="scene.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" data-nav>
+  <div class="container nav__in">
+    <a class="wordmark" href="#top" aria-label="Swath, home"><span class="wordmark__mark" aria-hidden="true"><i></i><i></i><i></i></span>Swath</a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#layers">Layers</a>
+      <a href="#cut">Section cuts</a>
+      <a href="#scans">Scan log</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="nav__end">
+      <a class="nav__login" href="#demo">Log in</a>
+      <a class="btn btn--sm" href="#demo">Book a demo</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" aria-labelledby="hero-head">
+  <div class="hero__still" aria-hidden="true"></div>
+  <canvas class="hero__cloud" data-cloud="hero" aria-hidden="true"></canvas>
+  <div class="container hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-head">Every site, measured from the office.</h1>
+      <p class="lead">Turn every drone or tripod scan into a site you can measure.</p>
+      <div class="hero__actions">
+        <a class="btn" href="#demo">Book a demo</a>
+        <a class="btn btn--line" href="#layers">Open the sample scan</a>
+      </div>
+      <dl class="readout ticks" aria-label="This scan">
+        <div><dt>Scan</dt><dd class="num">14</dd></div>
+        <div><dt>Points</dt><dd class="num">21.6<span class="u"> M</span></dd></div>
+        <div><dt>Area</dt><dd class="num">4.3<span class="u"> ha</span></dd></div>
+        <div><dt>Accuracy</dt><dd class="num">±12<span class="u"> mm</span></dd></div>
+      </dl>
+    </div>
+  </div>
+  <div class="hero__callouts" aria-hidden="true">
+    <div class="callout callout--found" data-at="pile"><span class="callout__dot"></span><span class="callout__leader"></span><span class="callout__note"><span>Stockpile since scan 13</span><b class="num">1,760<span class="u"> m³</span></b></span></div>
+    <div class="callout" data-at="slab"><span class="callout__dot"></span><span class="callout__leader"></span><span class="callout__note"><span>Level 3 slab</span><b class="num">52.050<span class="u"> m</span></b></span></div>
+  </div>
+</section>
+
+<section class="layers" id="layers" aria-labelledby="layers-head">
+  <div class="container layers__grid">
+    <div class="layers__text">
+      <h2 id="layers-head">Hide what you are not measuring.</h2>
+      <p class="lead">Every point is sorted as it lands, so each layer is one switch.</p>
+      <ul class="switches" role="list">
+        <li><label class="switch"><span class="switch__name"><b>Ground</b><span>Terrain, pad and road</span></span><span class="num switch__n">16.2<span class="u"> M</span></span><input type="checkbox" data-layer="0" checked><span class="switch__track" aria-hidden="true"></span></label></li>
+        <li><label class="switch"><span class="switch__name"><b>Structures</b><span>Frame, core and crane</span></span><span class="num switch__n">3.9<span class="u"> M</span></span><input type="checkbox" data-layer="1" checked><span class="switch__track" aria-hidden="true"></span></label></li>
+        <li><label class="switch"><span class="switch__name"><b>Canopy</b><span>Boundary trees</span></span><span class="num switch__n">1.5<span class="u"> M</span></span><input type="checkbox" data-layer="2" checked><span class="switch__track" aria-hidden="true"></span></label></li>
+        <li><label class="switch switch--found"><span class="switch__name"><b>Changed since scan 13</b><span>Moved more than 50 mm</span></span><span class="num switch__n">1<span class="u"> area</span></span><input type="checkbox" data-layer="lime" checked><span class="switch__track" aria-hidden="true"></span></label></li>
+      </ul>
+    </div>
+    <figure class="layers__view ticks">
+      <canvas data-cloud="layers" aria-label="The sample site as points, seen from above at an angle"></canvas>
+      <figcaption><span>Sample site, scan 14</span><span>Live, turning once every two minutes</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="accuracy" aria-labelledby="acc-head">
+  <div class="container accuracy__grid">
+    <p class="accuracy__figure ticks num" aria-hidden="true">±12<span class="u">mm</span></p>
+    <div class="accuracy__text">
+      <h2 id="acc-head">Checked against your control, every time.</h2>
+      <dl class="facts">
+        <div><dt>Drone scans</dt><dd class="num">±12<span class="u"> mm</span></dd></div>
+        <div><dt>Tripod scans</dt><dd class="num">±4<span class="u"> mm</span></dd></div>
+        <div><dt>Control points per site</dt><dd class="num">6<span class="u"> or more</span></dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="cut" id="cut" aria-labelledby="cut-head" data-cut>
+  <div class="container">
+    <div class="cut__head">
+      <h2 id="cut-head">Cut anywhere. Read every level.</h2>
+      <p class="lead">Drag the line on the plan; the section redraws from the scan.</p>
+    </div>
+    <div class="cut__body">
+      <div class="cut__stage">
+        <canvas class="cut__points" aria-label="A section through the sample site at the chosen line"></canvas>
+        <div class="mark" data-mark="top" hidden><span class="mark__dot"></span><span class="mark__label"><span>Highest structure</span><b class="num"></b><span class="u"> m</span></span></div>
+        <div class="mark" data-mark="pad" hidden><span class="mark__dot"></span><span class="mark__label"><span>Pad level</span><b class="num"></b><span class="u"> m</span></span></div>
+        <div class="mark mark--found" data-mark="pile" hidden><span class="mark__dot"></span><span class="mark__label"><span>Stockpile height</span><b class="num"></b><span class="u"> m</span></span></div>
+      </div>
+      <div class="cut__key">
+        <canvas class="cut__plan" aria-hidden="true"></canvas>
+        <label class="cut__range"><span>Cut line</span><output class="num" data-cut-at>South 16.0 m</output><input type="range" min="-86" max="86" step="0.5" value="-16" aria-label="Cut line position, metres from the site centre"></label>
+        <p class="cut__note">Both axes at the same scale.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="compare" id="compare" aria-labelledby="cmp-head">
+  <div class="container">
+    <div class="compare__head">
+      <h2 id="cmp-head">What changed since last Tuesday.</h2>
+      <dl class="delta">
+        <div class="delta__lead"><dt>New stockpile</dt><dd class="num">1,760<span class="u"> m³</span></dd></div>
+        <div><dt>Level 3 slab</dt><dd class="num">1,008<span class="u"> m²</span></dd></div>
+        <div><dt>Moved under 50 mm</dt><dd>Everything else</dd></div>
+      </dl>
+    </div>
+    <div class="compare__stage ticks" data-compare>
+      <canvas aria-label="The sample site in scan 13 on the left and scan 14 on the right, with what is new in scan 14 lit"></canvas>
+      <span class="compare__tag compare__tag--a">Scan 13</span>
+      <span class="compare__tag compare__tag--b"><i aria-hidden="true"></i>Scan 14</span>
+      <div class="compare__handle"><span class="compare__knob" role="slider" tabindex="0" aria-label="Compare scans" aria-valuemin="0" aria-valuemax="100" aria-valuenow="36"><svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18-6-6 6-6"/><path d="m15 6 6 6-6 6"/></svg></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="scans" id="scans" aria-labelledby="scans-head">
+  <div class="container">
+    <div class="scans__head">
+      <h2 id="scans-head">Every scan kept, every change named.</h2>
+      <p class="lead">Five weeks of the sample site.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="log">
+        <thead><tr><th scope="col">Scan</th><th scope="col">Captured</th><th scope="col">Method</th><th scope="col" class="r">Area</th><th scope="col" class="r">Points</th><th scope="col" class="r">Accuracy</th><th scope="col">What changed</th></tr></thead>
+        <tbody>
+          <tr class="is-live"><td class="num"><span class="live" aria-label="Latest"></span>14</td><td>Tue 20 Oct, 07:40</td><td>Drone</td><td class="num r">4.3 ha</td><td class="num r">21.6 M</td><td class="num r">±12 mm</td><td>New stockpile, level 3 slab</td></tr>
+          <tr><td class="num">13</td><td>Tue 13 Oct, 07:35</td><td>Drone</td><td class="num r">4.3 ha</td><td class="num r">21.1 M</td><td class="num r">±12 mm</td><td>Level 3 columns up</td></tr>
+          <tr><td class="num">12</td><td>Thu 8 Oct, 11:10</td><td>Tripod</td><td class="num r">0.9 ha</td><td class="num r">64.0 M</td><td class="num r">±4 mm</td><td>Core walls checked plumb</td></tr>
+          <tr><td class="num">11</td><td>Tue 6 Oct, 07:45</td><td>Drone</td><td class="num r">4.3 ha</td><td class="num r">20.8 M</td><td class="num r">±12 mm</td><td>Haul road regraded</td></tr>
+          <tr><td class="num">10</td><td>Tue 29 Sep, 07:30</td><td>Drone</td><td class="num r">4.3 ha</td><td class="num r">20.4 M</td><td class="num r">±12 mm</td><td>Tower crane erected</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing" aria-labelledby="price-head">
+  <div class="container">
+    <h2 id="price-head">Priced by site, never by seat.</h2>
+    <div class="plans">
+      <article class="plan">
+        <h3>One site</h3>
+        <p class="plan__price num">£540<span class="u"> a month</span></p>
+        <ul role="list"><li>One live site, the whole team</li><li>Layers, cuts and volumes</li><li>Weekly change report</li></ul>
+      </article>
+      <article class="plan plan--lead ticks">
+        <h3>Programme</h3>
+        <p class="plan__price num">£2,400<span class="u"> a month</span></p>
+        <ul role="list"><li>Up to six sites, side by side</li><li>Cross-site progress</li><li>CAD and BIM exports</li></ul>
+      </article>
+      <article class="plan">
+        <h3>Estate</h3>
+        <p class="plan__price num">Quoted</p>
+        <ul role="list"><li>Twelve sites or more</li><li>Single sign-on</li><li>A named survey lead</li></ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="demo" id="demo" aria-labelledby="demo-head">
+  <div class="container demo__grid">
+    <div class="demo__text">
+      <h2 id="demo-head">See your own site in points.</h2>
+      <p class="lead">Send one scan; we walk you through it in thirty minutes.</p>
+      <dl class="facts facts--quiet">
+        <div><dt>Any scanner</dt><dd>E57, LAS and LAZ</dd></div>
+        <div><dt>Your data</dt><dd>Deleted after the call</dd></div>
+      </dl>
+    </div>
+    <form class="form ticks" data-endpoint="" aria-labelledby="demo-head" novalidate>
+      <div class="field-row">
+        <label for="f-name">Name</label>
+        <input id="f-name" name="name" autocomplete="name" required>
+      </div>
+      <div class="field-row">
+        <label for="f-email">Work email</label>
+        <input id="f-email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field-row">
+        <label for="f-co">Company</label>
+        <input id="f-co" name="company" autocomplete="organization">
+      </div>
+      <div class="field-row">
+        <label for="f-sites">Live sites</label>
+        <select id="f-sites" name="sites"><option>One</option><option>Two to six</option><option>Seven to twelve</option><option>More than twelve</option></select>
+      </div>
+      <button class="btn btn--wide" type="submit">Book a demo</button>
+      <p class="form__note" id="form-note" role="status" aria-live="polite">We reply within one working day.</p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true" data-points-word="Swath">Swath<canvas></canvas></p>
+    <div class="foot__row">
+      <nav class="foot__links" aria-label="Footer"><a href="#layers">Layers</a><a href="#cut">Section cuts</a><a href="#scans">Scan log</a><a href="#pricing">Pricing</a><a href="#demo">Book a demo</a></nav>
+      <p class="foot__legal">&copy; 2026 Swath. The sample site is generated.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-slot] > img').forEach((i) => { if (i.complete && !i.naturalWidth) i.remove(); else i.addEventListener('error', () => i.remove(), { once: true }); });
+const nav = document.querySelector('[data-nav]'); const onS = () => nav.classList.toggle('is-scrolled', scrollY > 24); addEventListener('scroll', onS, { passive: true }); onS();
+const form = document.querySelector('.form'); const note = form.querySelector('#form-note');
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const fields = [...form.querySelectorAll('input[required]')];
+  fields.forEach((i) => i.setAttribute('aria-invalid', !i.checkValidity() || !i.value.trim()));
+  const bad = fields.find((i) => !i.checkValidity() || !i.value.trim());
+  note.classList.toggle('is-error', !!bad);
+  if (bad) { bad.setAttribute('aria-describedby', 'form-note'); note.textContent = bad.type === 'email' ? 'That address looks incomplete. Write it as name@example.com.' : 'Add your name so we know who to call.'; bad.focus(); return; }
+  if (!form.dataset.endpoint) { note.textContent = 'Nothing was sent: this form is not connected yet.'; return; }
+  fetch(form.dataset.endpoint, { method: 'POST', body: new FormData(form) }).then((r) => { note.textContent = r.ok ? 'Request received. We reply within one working day.' : 'That did not go through. Try again in a minute.'; }).catch(() => { note.textContent = 'That did not go through. Try again in a minute.'; });
+});
+</script>
+</body>
+</html>

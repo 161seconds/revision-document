@@ -48,7 +48,7 @@ Daylight on a working sheet: warm off-white paper with a faint grain, the medium
 
 ## Surfaces
 
-- The ground is the medium's grid, generated in CSS: stacked linear gradients for bars, beats, sixteenths and rows (black-key rows tinted every octave for a piano roll), on `--color-sheet` behind the stage, then continued faintly past it and masked to fade out radially. The same grid returns in small crops beside steps and at the close.
+- The ground is the medium's grid in CSS: stacked linear gradients for bars, beats, sixteenths and rows (black-key rows tinted every octave for a piano roll), on `--color-sheet` behind the stage, then continued faintly past it and masked to fade out radially. The grid returns in small crops beside steps and at the close.
 - On the grid, the work: four part lanes in `--lane-*` tones as rounded clips (`--radius-clip`, a tinted gradient, an inset hairline in the lane tone, a lit top edge) carrying bar waveforms or notes; a hairline playhead; a key strip and a fine-numeral ruler.
 - Texture is generated: a 180px feTurbulence grain at 5% over the paper, and at 30% soft-light on rubber.
 - Light from above on every part. Two warm blooms stay, quieter: `--color-accent` near 8% top right, `--color-accent-2` near 5% bottom left, fixed.
@@ -94,7 +94,7 @@ Warm, daylight, specific: the verb (hum, make, listen), the output (song, part, 
 ```css
 h1, h2, h3 { font-weight: var(--display-weight); color: var(--color-ink); }
 .roll { --beat: 40px; --row: 14px; background-color: var(--color-sheet); background-image: linear-gradient(to right, var(--grid-bar) 1px, transparent 1px), linear-gradient(to right, var(--grid-beat) 1px, transparent 1px), linear-gradient(to right, var(--grid-16) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-row) 1px, transparent 1px); background-size: calc(var(--beat) * 4) 100%, var(--beat) 100%, calc(var(--beat) / 4) 100%, 100% var(--row); }
-.clip { border-radius: var(--radius-clip); background: linear-gradient(color-mix(in oklab, var(--c) 18%, var(--color-sheet)), color-mix(in oklab, var(--c) 28%, var(--color-sheet))); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c) 42%, transparent), inset 0 1px 0 var(--hi); }
+.clip { --c: var(--lane-1); border-radius: var(--radius-clip); background: linear-gradient(color-mix(in oklab, var(--c) 18%, var(--color-sheet)), color-mix(in oklab, var(--c) 28%, var(--color-sheet))); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--c) 42%, transparent), inset 0 1px 0 var(--hi); }
 .rec { border-radius: 50%; background: radial-gradient(circle at 50% 30%, var(--bezel), var(--color-paper-3)); box-shadow: inset 0 2px 3px var(--shade-2), 0 1px 0 var(--hi); }
 .rec__cap { border-radius: 50%; background: radial-gradient(120% 110% at 50% 18%, var(--rubber-hi), var(--rubber) 48%, var(--rubber-lo)); box-shadow: inset 0 1px 0.5px var(--hi), 0 5px 9px -3px var(--shade-3); }
 .pill { border-radius: var(--radius-pill); background: var(--color-sheet); box-shadow: 0 0 0 1px var(--shade-1), 0 8px 18px -10px var(--shade-2), inset 0 1px 0 var(--hi); font-weight: 500; }

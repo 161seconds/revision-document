@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 const cmd = args[0];
 const flag = (k, d = null) => { const i = args.indexOf('--' + k); const v = i >= 0 ? args[i + 1] : undefined; return v !== undefined && !String(v).startsWith('--') ? v : d; };
 const has = (k) => args.includes('--' + k);
-const VALUED = new Set(['genre', 'prompt', 'brief', 'log', 'n', 'reroll', 'dealt', 'dir', 'axes', 'face', 'hue', 'entry', 'redesign', 'theme', 'orient', 'save', 'avoid', 'material', 'seed', 'job']);
+const VALUED = new Set(['genre', 'prompt', 'brief', 'log', 'n', 'reroll', 'dealt', 'dir', 'axes', 'face', 'hue', 'entry', 'redesign', 'scope', 'theme', 'orient', 'save', 'avoid', 'material', 'seed', 'job']);
 const positional = () => { const out = []; for (let i = 1; i < args.length; i++) { const a = args[i]; if (a.startsWith('--')) { if (VALUED.has(a.slice(2))) i++; continue; } out.push(a); } return out; };
 const GENRES = ['editorial', 'modern-minimal', 'atmospheric', 'playful'];
 // A theme slug names a file in references/themes, so it is a plain name, never a path.
@@ -36,7 +36,7 @@ function usage() {
 }
 
 function parseHeader(src, file) {
-  const m = /^---\n([\s\S]*?)\n---/.exec(src);
+  const m = /^---\r?\n([\s\S]*?)\r?\n---/.exec(src);
   if (!m) throw new Error(`${file}: no header block`);
   const h = {};
   for (const line of m[1].split('\n')) {
@@ -69,7 +69,7 @@ function buildIndex() {
     if (slugs.has(e.slug)) throw new Error(`duplicate slug ${e.slug}`);
     slugs.add(e.slug);
   }
-  writeFileSync(INDEX, JSON.stringify({ built: new Date().toISOString().slice(0, 10), themes: entries }, null, 1) + '\n');
+  writeFileSync(INDEX, JSON.stringify({ themes: entries }, null, 1) + '\n');
   return entries;
 }
 
@@ -193,7 +193,10 @@ function draw() {
   const near = (opts, n, k, extra = []) => { const bad = new Set([...recent(k, n), ...extra]); const ok = opts.filter((o) => ![...bad].some((b) => b && b.includes(low(o)))); return ok.length ? ok : opts; };
   const take = (opts, m = 1) => { const pool = [...new Set(opts)]; const out = []; while (out.length < m && pool.length) out.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]); return out; };
   const shapes = take(near(DRAW.shapes[material], 3, 'shape', pictured), 1);
-  const jobName = low(flag('job', '')).replace(/download|app/, 'try').replace(/software|saas/, 'sign up').replace(/newsletter|waitlist/, 'subscribe').replace(/watch|read/, 'listen');
+  // Synonyms match the whole job: "app" is try, "application" is not.
+  const JOB_SYNONYMS = { download: 'try', app: 'try', software: 'sign up', saas: 'sign up', newsletter: 'subscribe', waitlist: 'subscribe', watch: 'listen', read: 'listen' };
+  const rawJob = low(flag('job', '')).trim();
+  const jobName = JOB_SYNONYMS[rawJob] || rawJob;
   const job = DRAW.jobs[jobName] || null;
   const [hero] = take(near(job ? [...job.heroes, ...job.heroes, ...DRAW.heroes[material].filter((h) => !/settled|stage/i.test(h) || job.heroes.includes(h))] : DRAW.heroes[material], 1, 'hero', pictured));
   const [nav] = take(near(DRAW.navs, 3, 'nav'));
@@ -209,7 +212,8 @@ function draw() {
   console.log(`draw ${seed} (fresh each build; --seed ${seed} repeats it)${pictured.length ? ` · clear of the theme picture's ${pictured.join(' and ')}` : ''}`);
   console.log(`shape: ${shapes[0]} · hero: ${hero} · nav: ${nav} · footer: ${footer}`);
   console.log(`${job ? '' : `first section after the hero: ${opener} · `}leave out this time: ${skip.join(' and ')} · the hero leads with ${lead}, if the prompt has it`);
-  console.log(job ? `job: ${jobName} · the action: ${action}\nbuild these, in the order the shape suits (the first right after the hero): ${native.join('; ')} · close on: ${close} (anatomy.md § ${jobName})` : 'no --job given: name the page\'s job (subscribe, book, visit, attend, buy, try, sign up, hire, join, listen) and draw again with --job');
+  const jobs = 'subscribe, book, visit, attend, buy, try, sign up, hire, join, listen';
+  console.log(job ? `job: ${jobName} · the action: ${action}\nbuild these, in the order the shape suits (the first right after the hero): ${native.join('; ')} · close on: ${close} (anatomy.md § ${jobName})` : rawJob ? `unknown --job "${rawJob}": name the page's job (${jobs}) and draw again with --job` : `no --job given: name the page's job (${jobs}) and draw again with --job`);
   console.log(`photos: pass --seed ${seed} to every theme.mjs photos call, so this build's picks are its own, and take its first fitting pick for the hero rather than hunting for the library's single best frame`);
   console.log('take the draw unless the prompt\'s material refuses a pick; name any swap in the Picks block, and stamp draw: ' + seed);
 }
@@ -245,7 +249,11 @@ function deal() {
   });
   const pool = scored.filter((s) => !s.blocked).sort((a, b) => b.fit - a.fit || a.r - b.r);
   const previously = new Set();
-  for (let r = 0; r < reroll; r++) for (const p of pickFrom(pool, n, previously)) previously.add(p.t.slug);
+  for (let r = 0; r < reroll; r++) {
+    const hand = pickFrom(pool, n, previously);
+    if (!hand.length) break;
+    for (const p of hand) previously.add(p.t.slug);
+  }
   const picked = pickFrom(pool, n, previously);
   if (!picked.length) { console.error(`nothing left to deal at reroll ${reroll}; use a lower --reroll`); process.exit(1); }
 
@@ -577,7 +585,9 @@ function validate(files) {
   let bad = 0;
   for (const f of files) {
     try {
-      const src = readFileSync(f, 'utf8');
+      // Frontmatter accepts CRLF, so the CSS Build hint matchers must see the same
+      // normalised text; a raw CRLF file silently skipped every hint check.
+      const src = readFileSync(f, 'utf8').replace(/\r\n?/g, '\n');
       const e = parseHeader(src, f);
       const problems = [];
       if (!PAPER_BANDS.has(e.paper.band)) problems.push(`paper band ${e.paper.band}`);

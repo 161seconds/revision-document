@@ -43,7 +43,7 @@
 - **Enterprise-Grade Security Standards**: Comprehensive coverage of OWASP Top 10, Zero Trust, OAuth2/OIDC, Cryptography, and DevSecOps best practices.
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
 - **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
-- **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
+- **Hallmark UI Design**: A complete upstream source snapshot with 50 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
 - **Claude SEO**: A complete upstream source snapshot with 29 skills, 20 specialist agents, and 11 extensions for technical SEO, content, structured data, and AI search.
 - **Superpowers**: A complete upstream source snapshot with 15 development skills covering brainstorming, implementation plans, TDD, debugging, code review, and Git worktrees.
 - **Imported GitHub Projects**: 12 additional source snapshots in root directories, with a Vietnamese catalog, pinned commits, and integrity checks; existing projects and integrations are skipped.
@@ -78,7 +78,7 @@
 | **22** | **Integration Testing in .NET** | API-Service-Repository testing, xUnit, WebApplicationFactory, Testcontainers, database isolation, and verified persistence tests | [dotnet-integration-testing/](dotnet-integration-testing/README.md) \| [Cheat Sheet](dotnet-integration-testing/summary.md) |
 | **23** | **DDD & Modular Monolith** | Context mapping, Aggregates, Invariants, Bounded Context ownership, module contracts, domain events, and Ordering-Billing lab | [ddd-modular-monolith/](ddd-modular-monolith/README.md) \| [Cheat Sheet](ddd-modular-monolith/summary.md) |
 | **24** | **Reliable Payments & Webhooks** | Signatures, idempotency keys, inbox/outbox patterns, retries, reconciliation, and PostgreSQL replay/rollback lab | [reliable-payments/](reliable-payments/README.md) \| [Cheat Sheet](reliable-payments/summary.md) |
-| **25** | **Hallmark UI Design** | 48 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
+| **25** | **Hallmark UI Design** | 50 visual themes, custom page design, content-preserving redesign, UI audits, responsive layouts, and accessibility checks | [hallmark/](hallmark/README.md) \| [Skill Guide](hallmark/skills/hallmark/SKILL.md) |
 | **26** | **Claude SEO Skills** | Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search/GEO, local and international SEO, e-commerce, and Google APIs | [seo-skills/](seo-skills/README.md) \| [Skill Guide](seo-skills/skills/seo/SKILL.md) \| [Commands](seo-skills/docs/COMMANDS.md) |
 | **27** | **Superpowers Development Skills** | Brainstorming, implementation plans, TDD, root-cause debugging, code review, Git worktrees, parallel execution, and skill authoring | [superpowers/](superpowers/README.md) \| [Skill Guide](superpowers/skills/using-superpowers/SKILL.md) \| [Testing](superpowers/docs/testing.md) |
 | **28** | **VNZ Training Camp: CI/CD** | Manual deployment, CI build/test/security checks, Continuous Delivery vs Deployment, health checks, rollback, and deployment strategies | [vnz-ci-cd/](vnz-ci-cd/README.md) |
@@ -268,9 +268,9 @@ See [usage and installation](HARNESS.md#khởi-động-dự-án) and [source att
 
 ### Hallmark UI Design
 
-[Hallmark](hallmark/README.md) provides design guidance for Claude Code, Codex, Cursor, and OpenCode. It includes 48 themes, custom design directions, redesign workflows that preserve content and wiring, and UI audits with static and browser-based checks.
+[Hallmark](hallmark/README.md) provides design guidance for Claude Code, Codex, Cursor, and OpenCode. It includes 50 themes, custom design directions, redesign workflows that preserve content and wiring, and UI audits with static and browser-based checks.
 
-- **Source snapshot**: [Nutlope/hallmark](https://github.com/Nutlope/hallmark), version `2.0.0`, pinned to commit [`7ec8682`](https://github.com/Nutlope/hallmark/commit/7ec868225c6caa040558c321ee0fefa0e73f83a8).
+- **Source snapshot**: [Nutlope/hallmark](https://github.com/Nutlope/hallmark), version `2.0.0`, pinned to commit [`04977e1`](https://github.com/Nutlope/hallmark/commit/04977e15f3dfd6ee4b74c887dac3eb52665d6c92).
 - **Start here**: [Skill guide](hallmark/skills/hallmark/SKILL.md), [theme catalog](hallmark/skills/hallmark/references/themes/index.json), and [design gates](hallmark/skills/hallmark/references/gates.md).
 - **Installation**: The source is stored in `hallmark/`; it is not installed in `.agents/skills/`. Follow the [upstream installation instructions](hallmark/README.md#install) to enable it in a project.
 - **Codex usage after installation**: `$hallmark <prompt>`, `$hallmark redesign <path>`, or `$hallmark audit <path>`.
