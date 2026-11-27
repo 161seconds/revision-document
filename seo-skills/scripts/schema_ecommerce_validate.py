@@ -19,7 +19,8 @@ The Rich Results Test catches structural errors. This validator catches
 the *policy* errors: fields that parse fine but disqualify the product
 from a rich feature. It also flags the deprecated v1.x types
 (Vehicle Listing, Claim Review, Estimated Salary, Learning Video,
-Course Info, Special Announcement).
+Special Announcement). Course is not flagged: Google retired Course
+Info, which has no type of its own, and Course list is still live.
 
 Usage::
 
@@ -40,16 +41,13 @@ from pathlib import Path
 # Types Google retired June 2025 (announced via developers.google.com/search/blog
 # /2025/06/simplifying-search-results). Generating any of these in 2026 is a
 # Critical finding because the rich result no longer renders.
+# Course is excluded: only Course Info was retired; Course list remains live.
 _DEPRECATED_TYPES: dict[str, str] = {
     "Vehicle": "Vehicle Listing rich result retired June 2025.",
     "VehicleListing": "Vehicle Listing rich result retired June 2025.",
     "ClaimReview": "Claim Review rich result retired June 2025.",
     "EstimatedSalary": "Estimated Salary rich result retired June 2025.",
     "LearningVideo": "Learning Video rich result retired June 2025.",
-    "Course": (
-        "The Course rich result is still live but the Course Info carousel "
-        "variant was retired June 2025. Verify which use-case applies."
-    ),
     "SpecialAnnouncement": (
         "Special Announcement rich result deprecated July 2025."
     ),
@@ -69,13 +67,29 @@ _REQUIRED_SHIPPING_FIELDS = (
 )
 
 
+def _node_types(payload: dict) -> list[str]:
+    """Normalize Schema.org type IRIs without conflating other vocabularies."""
+    kinds = payload.get("@type", [])
+    if isinstance(kinds, str):
+        kinds = [kinds]
+    if not isinstance(kinds, list):
+        return []
+    names = []
+    for kind in kinds:
+        if not isinstance(kind, str):
+            continue
+        for namespace in ("https://schema.org/", "http://schema.org/"):
+            if kind.startswith(namespace):
+                kind = kind[len(namespace):]
+                break
+        names.append(kind)
+    return names
+
+
 def _iter_typed(payload, target_type: str):
     """Yield every dict in ``payload`` whose @type matches ``target_type``."""
     if isinstance(payload, dict):
-        kind = payload.get("@type")
-        if isinstance(kind, str) and kind == target_type:
-            yield payload
-        elif isinstance(kind, list) and target_type in kind:
+        if _has_type(payload, target_type):
             yield payload
         for v in payload.values():
             yield from _iter_typed(v, target_type)
@@ -87,11 +101,7 @@ def _iter_typed(payload, target_type: str):
 def _all_types(payload) -> list[str]:
     types: list[str] = []
     if isinstance(payload, dict):
-        kind = payload.get("@type")
-        if isinstance(kind, str):
-            types.append(kind)
-        elif isinstance(kind, list):
-            types.extend(t for t in kind if isinstance(t, str))
+        types.extend(_node_types(payload))
         for v in payload.values():
             types.extend(_all_types(v))
     elif isinstance(payload, list):
@@ -100,17 +110,91 @@ def _all_types(payload) -> list[str]:
     return types
 
 
+def _as_dicts(value) -> list[dict]:
+    """JSON-LD repeats a property as either one object or a list of objects."""
+    if isinstance(value, dict):
+        return [value]
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    return []
+
+
+def _reference_resolver(payload):
+    """Resolve exact local @id references within their graph, without fetching.
+
+    Only unambiguous definitions are used. This deliberately does not expand
+    contexts/relative IRIs or merge partial definitions of the same node.
+    References are read on demand, so cycles do not expand the input tree.
+    """
+    scopes: dict[int, dict[str, dict | None]] = {}
+    has_base_context = False
+
+    def has_base(value):
+        if isinstance(value, dict):
+            return "@base" in value or any(has_base(child) for child in value.values())
+        return isinstance(value, list) and any(has_base(child) for child in value)
+
+    def visit(value, definitions, *, document=False):
+        nonlocal has_base_context
+        if isinstance(value, dict):
+            has_base_context |= has_base(value.get("@context"))
+            scopes[id(value)] = definitions
+            node_id = value.get("@id")
+            if isinstance(node_id, str) and node_id and set(value) - {"@id", "@context"}:
+                if node_id not in definitions:
+                    definitions[node_id] = value
+                elif definitions[node_id] != value:
+                    definitions[node_id] = None
+            for key, child in value.items():
+                if key in ("@context", "@value"):
+                    continue
+                # A document's bare @graph is its default graph. Embedded
+                # graphs have their own definitions, even for the same @id.
+                if key == "@graph" and not (
+                    document and set(value) <= {"@context", "@graph"}
+                ):
+                    visit(child, {})
+                else:
+                    visit(child, definitions)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child, definitions)
+
+    visit(payload, {}, document=True)
+
+    def resolve(value):
+        if isinstance(value, dict) and set(value) == {"@id"}:
+            node_id = value["@id"]
+            if isinstance(node_id, str):
+                # A compact IRI prefix can be rebound by a local context.
+                # Resolving those requires context expansion, not string keys.
+                explicit_id = node_id.startswith(("https://", "http://", "_:"))
+                if ":" in node_id and not explicit_id:
+                    return value
+                # Relative IDs can mean different nodes under scoped @base
+                # contexts. Leave them unresolved without JSON-LD expansion.
+                if has_base_context and not explicit_id:
+                    return value
+                return scopes.get(id(value), {}).get(node_id) or value
+        return value
+
+    return resolve
+
+
+def _has_loyalty_price(offer: dict, resolve) -> bool:
+    return any(
+        _has_type(spec, "UnitPriceSpecification") and spec.get("validForMemberTier")
+        for spec in (resolve(value) for value in _as_dicts(offer.get("priceSpecification")))
+    )
+
+
 def _has_type(payload: dict, target_type: str) -> bool:
-    kind = payload.get("@type")
-    if isinstance(kind, str):
-        return kind == target_type
-    if isinstance(kind, list):
-        return target_type in kind
-    return False
+    return target_type in _node_types(payload)
 
 
 def validate(payload: dict | list, *, require_eu_energy: bool = False) -> dict:
     findings: list[dict] = []
+    resolve = _reference_resolver(payload)
 
     # 1. Deprecated rich-result type generation.
     for kind in _all_types(payload):
@@ -155,10 +239,19 @@ def validate(payload: dict | list, *, require_eu_energy: bool = False) -> dict:
         elif isinstance(offers, list):
             offers_list = offers
         else:
-            offers_list = []
+            # Keep invalid scalar values so the same shape check used for
+            # list entries reports them instead of silently passing.
+            offers_list = [offers]
 
+        offers_list = [resolve(offer) for offer in offers_list]
         for offer in offers_list:
             if not isinstance(offer, dict):
+                findings.append({
+                    "severity": "High",
+                    "rule": "malformed-offer",
+                    "message": "Each entry in offers must be a JSON object, "
+                               f"got {type(offer).__name__}.",
+                })
                 continue
             if _has_type(offer, "AggregateOffer"):
                 findings.append({
@@ -181,9 +274,13 @@ def validate(payload: dict | list, *, require_eu_energy: bool = False) -> dict:
                         "message": f"Offer is missing recommended {field!r}.",
                     })
 
+        # Non-object offers were reported above; the offer-level fallbacks
+        # below read the first offer that is an object.
+        first_offer = next((o for o in offers_list if isinstance(o, dict)), {})
+
         # 4. hasMerchantReturnPolicy (recommended or conditional).
-        return_policy = prod.get("hasMerchantReturnPolicy") or (
-            offers_list[0].get("hasMerchantReturnPolicy") if offers_list else None
+        return_policy = prod.get("hasMerchantReturnPolicy") or first_offer.get(
+            "hasMerchantReturnPolicy"
         )
         if not return_policy:
             findings.append({
@@ -192,19 +289,19 @@ def validate(payload: dict | list, *, require_eu_energy: bool = False) -> dict:
                 "message": "Product (or its Offer) is missing "
                            "hasMerchantReturnPolicy.",
             })
-        elif isinstance(return_policy, dict):
-            for field in _REQUIRED_RETURN_POLICY_FIELDS:
-                if field not in return_policy:
-                    findings.append({
-                        "severity": "Medium",
-                        "rule": f"return-policy-{field}",
-                        "message": f"MerchantReturnPolicy is missing {field!r}.",
-                    })
+        else:
+            for policy in _as_dicts(return_policy):
+                policy = resolve(policy)
+                for field in _REQUIRED_RETURN_POLICY_FIELDS:
+                    if field not in policy:
+                        findings.append({
+                            "severity": "Medium",
+                            "rule": f"return-policy-{field}",
+                            "message": f"MerchantReturnPolicy is missing {field!r}.",
+                        })
 
         # 5. shippingDetails (recommended or conditional).
-        shipping = prod.get("shippingDetails") or (
-            offers_list[0].get("shippingDetails") if offers_list else None
-        )
+        shipping = prod.get("shippingDetails") or first_offer.get("shippingDetails")
         if not shipping:
             findings.append({
                 "severity": "Medium",
@@ -212,20 +309,20 @@ def validate(payload: dict | list, *, require_eu_energy: bool = False) -> dict:
                 "message": "Product (or its Offer) is missing "
                            "shippingDetails.",
             })
-        elif isinstance(shipping, dict):
-            for field in _REQUIRED_SHIPPING_FIELDS:
-                if field not in shipping:
-                    findings.append({
-                        "severity": "Medium",
-                        "rule": f"shipping-{field}",
-                        "message": f"OfferShippingDetails is missing {field!r}.",
-                    })
+        else:
+            for details in _as_dicts(shipping):
+                details = resolve(details)
+                for field in _REQUIRED_SHIPPING_FIELDS:
+                    if field not in details:
+                        findings.append({
+                            "severity": "Medium",
+                            "rule": f"shipping-{field}",
+                            "message": f"OfferShippingDetails is missing {field!r}.",
+                        })
 
         # 6. Loyalty / MemberProgram visibility (Medium).
         if not prod.get("hasMemberProgram") and not any(
-            o.get("priceSpecification", {}).get("@type") == "UnitPriceSpecification"
-            and o.get("priceSpecification", {}).get("validForMemberTier")
-            for o in offers_list if isinstance(o, dict)
+            _has_loyalty_price(o, resolve) for o in offers_list if isinstance(o, dict)
         ):
             findings.append({
                 "severity": "Medium",

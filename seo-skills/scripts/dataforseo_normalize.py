@@ -17,6 +17,7 @@ Original concept: Matej Marjanovic (Pro Hub Challenge)
 import argparse
 import json
 import math
+import re
 import sys
 from typing import Any, Optional
 
@@ -107,9 +108,13 @@ def format_markdown_table(
 
     display_headers = headers or [col.replace("_", " ").title() for col in columns]
 
+    def escape_cell(value: str) -> str:
+        return (value.replace("\\", "\\\\").replace("|", "\\|")
+                .replace("\r\n", " ").replace("\r", " ").replace("\n", " "))
+
     # Header row
     lines = [
-        "| " + " | ".join(display_headers) + " |",
+        "| " + " | ".join(escape_cell(header) for header in display_headers) + " |",
         "| " + " | ".join(["---"] * len(columns)) + " |",
     ]
 
@@ -124,7 +129,7 @@ def format_markdown_table(
                 val = f"{val:.2f}" if not val.is_integer() else f"{int(val)}"
             else:
                 val = str(val)
-            row_values.append(val)
+            row_values.append(escape_cell(val))
         lines.append("| " + " | ".join(row_values) + " |")
 
     if len(items) > max_rows:
@@ -189,6 +194,8 @@ def compute_statistics(values: list[float]) -> dict[str, Optional[float]]:
 
 def _normalize_price(raw: Any) -> Optional[float]:
     """Convert various price formats to float."""
+    if isinstance(raw, dict):
+        raw = raw.get("current")
     if raw is None:
         return None
     if isinstance(raw, (int, float)):
@@ -207,21 +214,34 @@ def _normalize_currency(raw: Any) -> str:
     if not raw:
         return "USD"
     text = str(raw).upper().strip()
-    # Handle common symbols
-    symbol_map = {"$": "USD", "EUR": "EUR", "GBP": "GBP", "JPY": "JPY"}
+    # Map common currency symbols to their ISO 4217 code. ISO codes already in
+    # the text pass through via the fallback below, so only symbols need listing.
+    symbol_map = {"$": "USD", "€": "EUR", "£": "GBP", "¥": "JPY"}
     return symbol_map.get(text, text[:3] if len(text) >= 3 else "USD")
 
 
+# A negative reading is tested before a positive one, so "not in stock",
+# "no longer in stock", "out of stock" and "unavailable" never read as in stock.
+_NEGATIVE_AVAILABILITY_RE = re.compile(
+    r"out of stock|outofstock|sold out|unavailable"
+    r"|\b(?:not|no longer|never)(?: \w+){0,3} (?:in stock|available)\b"
+)
+
+
 def _normalize_availability(raw: Any) -> str:
-    """Normalize availability to enum string."""
+    """Normalize legacy labels while retaining distinct Merchant stock states."""
     if not raw:
         return "unknown"
     text = str(raw).lower().strip()
-    if "in_stock" in text or "in stock" in text:
-        return "in_stock"
-    if "out_of_stock" in text or "out of stock" in text:
+    if text in {"limited_stock", "backordered", "on_display_to_order"}:
+        return text
+    # Underscores, hyphens and runs of whitespace all read as one space.
+    flat = re.sub(r"[\s_\-]+", " ", text)
+    if _NEGATIVE_AVAILABILITY_RE.search(flat):
         return "out_of_stock"
-    if "preorder" in text or "pre-order" in text or "pre_order" in text:
+    if "in stock" in flat or "instock" in flat:
+        return "in_stock"
+    if "preorder" in flat or "pre order" in flat:
         return "preorder"
     return "unknown"
 
@@ -251,7 +271,7 @@ def normalize_merchant(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     Normalize Google Shopping and Amazon product data.
 
     Handles variations in DataForSEO response format:
-    - Price as string or number
+    - Price as a structured current/currency object, string or number
     - Rating as nested dict or flat float
     - Availability as various string formats
 
@@ -267,21 +287,32 @@ def normalize_merchant(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     for item in items:
         # Handle rating as dict or scalar
         rating_raw = item.get("rating")
+        reviews = item.get("reviews_count")
         if isinstance(rating_raw, dict):
-            rating_val = _safe_float(rating_raw.get("value") or rating_raw.get("rating_value"))
+            rating_value = rating_raw.get("value")
+            rating_val = _safe_float(rating_raw.get("rating_value") if rating_value is None else rating_value)
+            if reviews is None:
+                reviews = rating_raw.get("votes_count")
         else:
             rating_val = _safe_float(rating_raw)
 
+        price = item.get("price")
+        currency = item.get("currency")
+        if not currency and isinstance(price, dict):
+            currency = price.get("currency")
+
         product = {
             "title": str(item.get("title", "")),
-            "price": _normalize_price(item.get("price")),
-            "currency": _normalize_currency(item.get("currency")),
+            "price": _normalize_price(price),
+            "currency": _normalize_currency(currency),
             "seller": str(item.get("seller", item.get("seller_name", ""))),
             "rating": round(rating_val, 1),
-            "reviews_count": _safe_int(item.get("reviews_count")),
+            "reviews_count": _safe_int(reviews),
             "url": str(item.get("url", "")),
             "image_url": str(item.get("image_url", item.get("marketplace_url", ""))),
-            "availability": _normalize_availability(item.get("availability")),
+            "availability": _normalize_availability(
+                item.get("availability") or item.get("product_availability")
+            ),
         }
 
         # Amazon-specific fields

@@ -558,6 +558,7 @@ Use Indexing API commands only for pages with JobPosting or BroadcastEvent embed
 **Tiers:**
 - Tier 0 (API key only): PSI, CrUX, CrUX History
 - Tier 1 (+ OAuth or Service Account): GSC, URL Inspection, Indexing API
+  (an OAuth sign-in is read-only by default; add `--indexing` to `google_auth.py --auth` for the Indexing API)
 - Tier 2 (+ GA4 property config): GA4 organic traffic
 - Tier 3 (+ Google Ads developer token): Keyword Planner
 
@@ -687,7 +688,7 @@ Ahrefs API metrics (extension). **Prerequisites:** Ahrefs extension installed (`
 
 ### `/seo bing [command]`
 
-Bing Webmaster Tools + IndexNow (extension). **Prerequisites:** Bing extension installed (`./extensions/bing-webmaster/install.sh`).
+Bing Webmaster Tools + IndexNow (extension). The `seo-bing` skill ships with the plugin. **Prerequisites:** keys stored once with `./extensions/bing-webmaster/install.sh` (or `install.ps1`).
 ```
 /seo bing links <url>                 # Inbound links from Bing Webmaster
 /seo bing compare <urlA> <urlB>       # Compare two URLs' Bing link profiles
@@ -700,7 +701,7 @@ Bing Webmaster Tools + IndexNow (extension). **Prerequisites:** Bing extension i
 
 ### `/seo matomo [command] [site-id]`
 
-Matomo Reporting API (extension). **Prerequisites:** Matomo extension installed (`./extensions/matomo/install.sh`), which writes the instance URL, API token, and optional default site ID to `~/.config/claude-seo/matomo.json` (0600). `MATOMO_URL`, `MATOMO_API_TOKEN`, and `MATOMO_SITE_ID` in the environment override the file. Works against self-hosted Matomo or Matomo Cloud; an instance on a private address must be named in `CLAUDE_SEO_LOCAL_TARGETS`.
+Matomo Reporting API (extension). **Prerequisites:** Matomo extension installed (`./extensions/matomo/install.sh`), which writes the instance URL, API token, and optional default site ID to `~/.config/claude-seo/matomo.json` (0600), or to `matomo.json` in `CLAUDE_SEO_PROFILE_DIR` when it is set. `MATOMO_URL`, `MATOMO_API_TOKEN`, and `MATOMO_SITE_ID` in the environment override the file. Works against self-hosted Matomo or Matomo Cloud; an instance on a private address must be named in `CLAUDE_SEO_LOCAL_TARGETS`.
 
 Use as a GA4 alternative or supplement when you want full data ownership, no Google dependency, or privacy-first analytics.
 ```
@@ -716,6 +717,25 @@ Use as a GA4 alternative or supplement when you want full data ownership, no Goo
 All commands accept `--days` (default 28), `--limit` (default 50),
 `--site-id`, and `--json`. The audit orchestrator spawns the
 `seo-matomo` agent automatically when credentials are present.
+
+---
+
+### `/seo posthog [command]`
+
+PostHog analytics via the PostHog MCP server (extension). The `seo-posthog` skill and agent ship with the plugin. **Prerequisites:** the PostHog MCP server registered (`./extensions/posthog/install.sh` or `install.ps1` offers to do it), connected and authenticated (`/mcp`). No credentials are stored by claude-seo. Queries run as HogQL through the MCP `exec` tool (`call execute-sql`).
+
+Use as a GA4 alternative or supplement when the site already sends `$pageview` events to PostHog. PostHog has no keyword data; use `/seo google` for Search Console.
+```
+/seo posthog check                 # Confirm the MCP is connected and $pageview events exist
+/seo posthog organic               # Organic search visits per day (28d)
+/seo posthog top-pages             # Top organic landing pages
+/seo posthog device                # Organic traffic by device type
+/seo posthog country               # Organic traffic by country
+/seo posthog referrers             # Referrer / channel breakdown
+```
+
+Options: days (default 28) and limit (default 50). The audit orchestrator
+spawns the `seo-posthog` agent automatically when the MCP is connected.
 
 ---
 
@@ -754,11 +774,23 @@ Multi-page Lighthouse audit via Unlighthouse (extension, MIT, no API quota). **P
 
 ---
 
+### `/seo shopify [crawl|check] <url>`
+
+Uncapped, sitemap-complete crawl of a Shopify store you administer, signed with the store's Crawler Access signature from a project-local `.shopify-env`, then the `seo-audit` pipeline on the crawl artifacts (extension, no API keys). The `seo-shopify` skill ships with the plugin. Without a valid signature for the host, `seo-audit` runs unchanged. **Prerequisites:** a signature from the Shopify admin (Online Store > Preferences > Crawler access) in `.shopify-env` (`./extensions/shopify/install.sh` or `install.ps1` can create the file from the template; see `extensions/shopify/docs/SHOPIFY-SETUP.md`).
+```
+/seo shopify https://shop.example              # precheck, signed crawl, full audit
+/seo shopify crawl https://shop.example        # crawl only, artifacts in ./crawl
+/seo shopify check https://shop.example        # is there a valid signature for this host?
+```
+
+---
+
 ## Quick Reference
 
 | Command | Use Case |
 |---------|----------|
 | `/seo audit <url>` | Full website audit with parallel subagents |
+| `/seo shopify <url>` | Uncapped signed crawl of a Shopify store you administer, then the audit (extension) |
 | `/seo page <url>` | Single page analysis |
 | `/seo technical <url>` | Technical SEO across 9 categories |
 | `/seo content <url>` | E-E-A-T and content quality |
@@ -790,4 +822,5 @@ Multi-page Lighthouse audit via Unlighthouse (extension, MIT, no API quota). **P
 | `/seo profound [command]` | LLM citation tracking with time-series data (extension) |
 | `/seo bing [command] <url>` | Bing Webmaster Tools + IndexNow URL submission (extension) |
 | `/seo matomo [command] [args]` | Matomo Reporting API: GA4 alternative or complement (extension) |
+| `/seo posthog [command]` | PostHog via MCP: GA4 alternative or complement (extension) |
 | `/seo unlighthouse <url>` | Multi-page Lighthouse runner, runs locally (extension) |

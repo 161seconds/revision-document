@@ -50,7 +50,7 @@ Result JSON::
 Exit status::
 
     0  analysis completed (a low score is a finding, not a failed run)
-    1  score below ``--fail-under N`` (opt-in gate, off by default)
+    1  fetch failed, or score below ``--fail-under N`` (opt-in gate)
     2  URL refused by url_safety
 """
 
@@ -63,28 +63,14 @@ import re
 import sys
 from typing import Optional
 
+from bs4 import BeautifulSoup
+from requests import RequestException
+
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 from url_safety import URLSafetyError, decode_response_text, safe_requests_get  # noqa: E402
 
-_SPECULATION_BLOCK_RE = re.compile(
-    r'<script\b[^>]*\btype\s*=\s*["\']speculationrules["\'][^>]*>(?P<body>.*?)</script>',
-    re.IGNORECASE | re.DOTALL,
-)
-_PRELOAD_LINK_RE = re.compile(
-    r'<link\b[^>]*\brel\s*=\s*["\']preload["\'][^>]*>', re.IGNORECASE,
-)
-_PRERENDER_LINK_RE = re.compile(
-    r'<link\b[^>]*\brel\s*=\s*["\']prerender["\'][^>]*>', re.IGNORECASE,
-)
-_FETCHPRIORITY_HIGH_RE = re.compile(
-    r'\bfetchpriority\s*=\s*["\']high["\']', re.IGNORECASE,
-)
-_LCP_IMG_HINT_RE = re.compile(
-    r'<(?:img|video|source)\b[^>]*\bfetchpriority\s*=\s*["\']high["\']',
-    re.IGNORECASE,
-)
 _UNLOAD_LISTENER_RE = re.compile(
     r'\b(?:addEventListener|on)\s*\(\s*["\']?unload["\']?', re.IGNORECASE,
 )
@@ -100,25 +86,38 @@ def _extract_speculation_actions(body: str) -> list[str]:
         payload = json.loads(body.strip())
     except json.JSONDecodeError:
         return []
+    if not isinstance(payload, dict):
+        # A speculationrules body must be a JSON object; a bare array,
+        # string, or null is valid JSON but carries no action fields.
+        return []
     for action_kind in ("prefetch", "prerender"):
-        if isinstance(payload.get(action_kind), list):
+        rules = payload.get(action_kind)
+        if isinstance(rules, list) and any(isinstance(rule, dict) for rule in rules):
             actions.add(action_kind)
     return sorted(actions)
 
 
 def analyse(html: str, headers: Optional[dict] = None) -> dict:
     headers = headers or {}
-    speculation_blocks = list(_SPECULATION_BLOCK_RE.finditer(html))
+    soup = BeautifulSoup(html, "html.parser")
+    speculation_blocks = [
+        script for script in soup.find_all("script")
+        if (script.get("type") or "").lower() == "speculationrules"
+    ]
     actions: set[str] = set()
-    for m in speculation_blocks:
-        for a in _extract_speculation_actions(m.group("body")):
+    for block in speculation_blocks:
+        for a in _extract_speculation_actions(block.string or ""):
             actions.add(a)
     speculation_header = "speculation-rules" in {k.lower() for k in headers}
 
-    preload_count = len(_PRELOAD_LINK_RE.findall(html))
-    prerender_count = len(_PRERENDER_LINK_RE.findall(html))
-    fetchpriority_count = len(_FETCHPRIORITY_HIGH_RE.findall(html))
-    lcp_img_hint = bool(_LCP_IMG_HINT_RE.search(html))
+    link_rels = [{rel.lower() for rel in link.get("rel", [])}
+                 for link in soup.find_all("link")]
+    preload_count = sum("preload" in rels for rels in link_rels)
+    prerender_count = sum("prerender" in rels for rels in link_rels)
+    high_priority = [element for element in soup.find_all(attrs={"fetchpriority": True})
+                     if element["fetchpriority"].lower() == "high"]
+    fetchpriority_count = len(high_priority)
+    lcp_img_hint = any(element.name in {"img", "video", "source"} for element in high_priority)
 
     cc_value = ""
     for key, value in headers.items():
@@ -134,7 +133,7 @@ def analyse(html: str, headers: Optional[dict] = None) -> dict:
     # absence of bfcache-killers, and the absence of deprecated prerender.
     score = 0
     recs: list[str] = []
-    if speculation_blocks or speculation_header:
+    if actions or speculation_header:
         score += 25
     else:
         recs.append(
@@ -213,9 +212,15 @@ def main() -> int:
 
     try:
         resp = safe_requests_get(args.url, timeout=20, allow_redirects=True)
-    except URLSafetyError as exc:
-        print(f"Error: url_safety: {exc}", file=sys.stderr)
-        return 2
+        resp.raise_for_status()
+    except (URLSafetyError, RequestException) as exc:
+        refused = isinstance(exc, URLSafetyError)
+        error = f"url_safety: {exc}" if refused else f"Fetch failed: {exc}"
+        if args.json:
+            print(json.dumps({"url": args.url, "error": error}, indent=2))
+        else:
+            print(f"Error: {error}", file=sys.stderr)
+        return 2 if refused else 1
 
     result = {"url": resp.url, **analyse(decode_response_text(resp), dict(resp.headers))}
 

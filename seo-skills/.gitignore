@@ -40,6 +40,7 @@ env/
 **/service_account*.json
 **/oauth-token.json
 **/.google-token.json
+**/.shopify-env
 
 # Node (if any)
 node_modules/
@@ -107,6 +108,8 @@ seo command demo.gif
 # Generated Google SEO reports
 Google-SEO-Report-*.html
 Google-SEO-Report-*.pdf
+SEO-Audit-Report-*.html
+SEO-Audit-Report-*.pdf
 
 # Claude Code local config (project-specific permissions, not for repo)
 .claude/

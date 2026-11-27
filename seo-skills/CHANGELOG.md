@@ -7,6 +7,690 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.3] - 2026-11-26
+
+Fixes release: 36 community fixes, three dependency updates and maintainer follow-ups. No new
+features.
+
+### Changed
+
+- **Matomo landing pages count entrances.** In `top_pages` and `pages`, `visits` is now the
+  number of visits that started on the page and `unique_visitors` the visitors who entered
+  there. Both keys used to count every visit that included the page, so the numbers drop and
+  the order changes. (#469)
+- **The Matomo organic report names `API.get` as its `method`** (it was `VisitsSummary.get`),
+  and a daily `pageviews` value can be `null`. (#506)
+- **`domain_history.py` takes a bare domain only.** A URL, a path or a trailing slash
+  (`https://example.com`, `example.com/`) exits with code 2, and `domain` in the output is the
+  IDNA A-label (`xn--...`), not the spelling that was passed. (#471)
+- **Search Console `--days` counts whole dates back from the data-lag cutoff.** The default
+  request covers 28 dates instead of 26, so its window starts two days earlier and default
+  totals run a little higher than before. `--days 1` and `--days 2` no longer send an inverted
+  range, `--end-date` without `--start-date` is honoured, and `--days 0` exits with code 2
+  before any request. An explicit start date still overrides the day count. (#475)
+- **`pagespeed_check.py` exits with code 1 when Lighthouse reports a runtime error** inside a
+  successful PageSpeed response. The error is in `error`; with `--json` the categories and
+  field data that were returned are kept. (#507)
+- **A field CLS percentile from PageSpeed is always read in hundredths.** A percentile of 1
+  is 0.01, not 1.0. A drift baseline captured earlier with such a value shows one improvement
+  on the next comparison. (#480)
+- **Drift reads every robots meta tag.** A baseline that stored only the last of several tags
+  can report `noindex_added` once on the next comparison: the noindex is real, it was only not
+  recorded before. (#486)
+- **Sitemap `totals.invalid_locs` counts page URLs only.** Invalid child-sitemap locations of a
+  sitemap index are no longer added to it; each index still reports its own
+  `invalid_loc_count`. (#502)
+- **Bing backlink discovery marks a later page as partial**, including the last page, when the
+  pages before it were not read. Only page 0 of a one-page result is complete. (#483)
+- **The unknown-path check in `agentic_check.py` passes on 404 or 410 only.** A 401, 403, 429
+  or 5xx answer is reported as inconclusive with its error, not as a working missing-page
+  response. The `http-404` check is now titled "Unknown URLs report missing content" and its
+  data can carry `inconclusive` and `error`. (#508)
+- **UCP profile validation follows the specification:** `payment_handlers` must be present as
+  an object, empty registries are accepted, `capabilities` may be omitted, and a version that
+  is not a real calendar date is an error. `missing-capabilities` is no longer emitted and an
+  empty `services` no longer gives `missing-services`. New issue codes:
+  `missing-payment-handlers`, `payment-handlers-not-an-object`, `capabilities-not-an-object`
+  and `version-not-a-date`. (#512, #513)
+- **Matomo `totals.pageviews` can be `null`** when the instance returns no page-view metric. It
+  was filled with the action count before. (#506)
+- **GA4 `totals.users` can be `null`** when the period aggregate cannot be fetched; the daily
+  and landing-page data are still returned, with `totals_error`. Sessions and page views come
+  from the same aggregate query, and `avg_daily_sessions` divides by the days requested, not
+  by the days that had data. (#468)
+- **robots.txt groups follow RFC 9309.** A `Sitemap` line or another non-rule record no longer
+  ends a user-agent group, which can change which rules `agentic_check.py` applies to a
+  crawler and where `agentic_fix.py` places `Content-Signal`. (#505)
+- **An HSTS header with a valued `includeSubDomains` fails the HSTS grade** and the preload
+  check. (#503)
+- **Dependencies:** `idna` is now a declared requirement (it was already installed through
+  `requests`), and the floors of `htmldate` (1.11.0), `playwright` (1.65.1) and `numpy`
+  (2.4.6) are raised. A changed `requirements.txt` rebuilds the tool's virtual environment on
+  the next run. (#471; floors by Dependabot, #492, #493, #494)
+- **Community integrations:** `docs/COMMUNITY-INTEGRATIONS.md` lists claude-seo-cloro
+  (issue #453, rbatista191) and claude-seo-goanyapi (issue #422, shineforever).
+
+### Fixed
+
+- **Install:** seo-cockpit installs and updates without a GitHub SSH key. Its marketplace
+  source is the full HTTPS URL instead of the `owner/repo` shorthand, which Claude Code clones
+  over SSH. (issue #529, reported by ancestraljoe; first proposed by qangggggg in #417)
+- **GA4:** device and country reports print their breakdown rows in text mode instead of an
+  organic summary full of zeros. (#467, Afloat16)
+- **GA4:** the user total of an organic report is a period-wide distinct count from an
+  aggregate query, so returning visitors are not counted once per active day, and daily
+  averages include days without traffic. (#468, Afloat16)
+- **Search Console:** quick wins are chosen from every returned query row before the limit of
+  20, so eligible queries no longer disappear when the 200 rows with the most impressions rank
+  outside positions 4 to 10. (#473, Afloat16)
+- **Search Console:** `--days` requests the number of dates asked for; see Changed.
+  (#475, Afloat16)
+- **Search Console:** query and URL Inspection errors are classified by the real HTTP status.
+  A `403` inside a property URL or a message no longer turns a rate limit, a server error or
+  a timeout into "Permission denied". (#478, Afloat16)
+- **Report:** when Search Console totals are incomplete, the cover, summary and performance
+  cards label them as sums of the returned rows and say that site-wide totals are
+  unavailable. (#474, Afloat16)
+- **Report:** the Excel workbook keeps PageSpeed scores as the script wrote them, so a score of
+  1 out of 100 stays 1 and is coloured as failing instead of becoming 100, and CrUX rows keep
+  their good, needs-improvement and poor ratings. (#485, Afloat16)
+- **Indexing API:** a publish receipt shows the timestamp of the requested update or deletion,
+  not an older notification of the other type. (#477, Afloat16)
+- **Keyword Planner:** keyword ideas follow Google Ads continuation pages up to the requested
+  limit instead of stopping at a short first page. (#481, Afloat16)
+- **PageSpeed:** a field CLS percentile of 1 is reported as 0.01, for URL and origin data.
+  (#480, Afloat16)
+- **PageSpeed:** a Lighthouse runtime failure inside a successful response is reported as an
+  error, with the API key removed from the message. (#507, Afloat16)
+- **Bing:** a requested later page of backlink discovery stays marked partial and keeps its
+  link details. (#483, Afloat16)
+- **Matomo:** organic landing pages are ranked and counted by entry visits, so pages reached
+  later in a session no longer displace the pages where sessions started. (#469, Afloat16)
+- **Matomo:** page views come from the Actions metrics through `API.get`. Downloads and
+  outlinks are no longer counted as page views. (#506, Afloat16)
+- **Shopify:** a resumed crawl reuses stored records only for URLs that the current store
+  still lists and allows. Pages from another store, a removed sitemap entry or a newly
+  excluded path no longer reach the summary and the sample. (#470, Afloat16)
+- **Domain history:** internationalized domain names are converted to their IDNA form before
+  the WHOIS query, for the system client and the socket fallback alike, and a malformed domain
+  argument is rejected with a plain error before anything is queried. (#471, Afloat16)
+- **Schema:** offers, return policies, shipping details and loyalty price specifications that
+  are linked by `@id` inside the page are resolved before validation, so valid linked nodes no
+  longer give missing-type or missing-field findings. Unresolved and ambiguous references are
+  still reported. (#472, Afloat16)
+- **Schema:** `Course` markup, alone or in a Course list, is no longer failed as a retired
+  type. Google retired Course Info, not the Course type. (#504, Afloat16)
+- **Schema:** `NaN`, `Infinity` and `-Infinity` in JSON-LD are rejected as invalid JSON by the
+  HTML parser and the page checks, and valid blocks next to them are kept. (#490, Afloat16)
+- **Page checks:** resource URLs are resolved against the document base before the
+  mixed-content check, which catches relative scripts and styles that load over HTTP on an
+  HTTPS page. (#479, Afloat16)
+- **Page checks:** a script counts as JSON-LD only when its type is exactly
+  `application/ld+json` (any case, parameters ignored), so lookalike types no longer give
+  false invalid-JSON-LD findings. (#488, Afloat16)
+- **Parser:** all `robots` meta tags of a page are combined. A later permissive or empty tag
+  no longer hides an earlier `noindex` from drift checks or a page-level `nofollow` from
+  backlink verification. (#486, Afloat16)
+- **Preload:** the speculation-rules bonus is given only for a rule set that parses and holds
+  at least one rule, or for the `Speculation-Rules` header. Malformed JSON and empty action
+  lists no longer score. (#489, Afloat16)
+- **Sitemap:** fractional seconds are kept when the oldest and newest `lastmod` values are
+  chosen, with any timezone offset. (#491, Afloat16)
+- **Sitemap:** Unicode and Punycode spellings of one host are compared as the same host, which
+  removes false cross-host warnings and duplicate URLs for internationalized domains.
+  (#496, Afloat16)
+- **Sitemap:** invalid child-sitemap locations no longer inflate the page-URL total.
+  (#502, Afloat16)
+- **Drift:** a change in the order of independent JSON-LD blocks is no longer reported as a
+  schema change. Stored baselines work as they are; order inside a block and real data
+  changes still count. (#509, Afloat16)
+- **Transport:** an HSTS header whose `includeSubDomains` directive carries a value is graded
+  as invalid, as browsers treat it, and no longer passes the preload check. (#503, Afloat16)
+- **Agent readiness:** robots.txt user-agent groups stay intact across `Sitemap` and other
+  non-rule records, as RFC 9309 defines, so crawler access findings and Content-Signal drafts
+  read the same groups. (#505, Afloat16)
+- **Agent readiness:** an authentication, rate-limit or server error on the unknown-path
+  probe is reported as inconclusive instead of passing as a correct missing-page response.
+  (#508, Afloat16)
+- **Content:** phrase matching in `content_quality.py` works across line wraps, repeated or
+  non-breaking spaces and typographic apostrophes. (#497, Afloat16)
+- **Content:** `content_humanize.py` keeps Markdown indentation and two-space line breaks.
+  Only double spaces between two words are tidied. (#501, divya0795)
+- **Content:** named Markdown footnotes such as `[^source]` count as citation markers in
+  `content_verify.py`. (#511, Afloat16)
+- **Content:** claim verification checks overlapping matches once per pattern, which keeps
+  drafts with many statistics fast. (#482, Afloat16)
+- **UCP:** a minimal discovery profile with empty registries and no `capabilities` no longer
+  gets missing-service and missing-capability errors, and `payment_handlers` is checked.
+  (#512, Afloat16)
+- **UCP:** malformed or impossible version dates and non-string component versions are
+  rejected. (#513, Afloat16)
+- `scripts/shopify_crawl.py` and `scripts/parse_html.py` keep their executable bit.
+- The description of `verify_release.py` no longer promises a check for files that the
+  manifest does not list. The script never made one, and a virtual environment or an editor
+  folder would fail it. (follow-up to #461)
+
+## [2.6.2] - 2026-11-15
+
+### Security
+
+- Hardening that ships with the opt-in. An entry with a scheme, credentials, a
+  path, a CIDR suffix, a wildcard or port 0 is dropped instead of being read
+  as something else. A trusted proxy is reachable on its own port only: a
+  redirect that `NO_PROXY` would send straight to the proxy's address, on any
+  port, is refused. A proxy URL without a port is matched on the port it
+  really uses (80 for `http://`).
+- The GCP (`fd20:ce::254`) and Oracle Cloud (`192.0.0.192`) metadata addresses, and any
+  address wrapped in 6to4 form, can never be allowlisted: not as a trusted proxy and not in
+  `CLAUDE_SEO_LOCAL_TARGETS`.
+- A malformed proxy URL (an out-of-range port, for one) is refused with a fixed message
+  instead of an error that repeated the URL, including any password in it.
+
+### Added
+
+- `CLAUDE_SEO_TRUSTED_PROXIES` names a configured HTTP proxy on loopback or a
+  private address that the operator trusts (#398 by @eduardopicazzo, issue
+  #280). Some sandboxes send every request through a CONNECT proxy on the
+  sandbox itself, and nothing leaves any other way: Anthropic-hosted Claude
+  Code cloud sessions set `HTTPS_PROXY` to a proxy on 127.0.0.1. Since v2.3.0
+  that proxy is refused, so every live fetch failed there. The variable is a
+  comma-separated list of `host` or `host:port` entries with the ranges of
+  `CLAUDE_SEO_LOCAL_TARGETS` (loopback, RFC 1918, RFC 6598); link-local and
+  the cloud metadata endpoints are refused even when listed, and a listed name
+  is re-checked when it resolves. It names proxies only: it never allows an
+  audit target, and `CLAUDE_SEO_LOCAL_TARGETS` never trusts a proxy. Unset,
+  the policy is unchanged.
+- The same variable now covers the headless browser. Since v2.6.1 the browser
+  egress guard refused a proxy on loopback or a private address, so
+  screenshots, rendering and Unlighthouse failed behind a sandbox proxy,
+  cntlm or px. A listed proxy is now accepted as the guard's upstream. Every
+  destination is still resolved and checked as public by the guard before it
+  is passed to the proxy, SOCKS and `https://` proxies stay refused for the
+  browser, and the guard's per-run credential and the Chromium sandbox policy
+  are unchanged. The refused-proxy error names the variable.
+- **Shopify extension** (`/seo shopify`): a sitemap-complete crawl of a Shopify store you
+  administer, signed with the store's Crawler Access signature from a project-local
+  `.shopify-env`, then handed to the audit. A signed crawl has no page cap. Without a usable
+  signature the crawl runs at the unsigned limits (500 pages, concurrency 2, 1 second delay),
+  and `.shopify-env` can only make it gentler; lifting those limits takes a command-line flag.
+  A signature block that is malformed or expired is reported as not usable and is never sent.
+  robots.txt is respected by default, signed or not, and only the `--ignore-robots`
+  command-line flag switches that off. Eight rate-limit responses in a row stop the crawl with
+  exit code 5 and a partial `summary.json`; continue later with `--resume`. (#302, Nordalux)
+- **PostHog extension** (`/seo posthog`): organic traffic, top landing pages, device and
+  country splits and referrers from the PostHog MCP server, as a GA4 alternative or
+  complement. There is no script and no stored credential: authentication belongs to the MCP
+  server. The audit spawns the agent when the PostHog tool is available under either spelling,
+  `mcp__posthog__exec` or `mcp__PostHog__exec`. The agent runs read-only `SELECT` queries
+  only, and the setup guide recommends a read-only PostHog login or API key, because the MCP
+  tool itself can also write. (#336, AlexMili)
+- **Per-project credentials.** `CLAUDE_SEO_PROFILE_DIR` points `google_auth.py`,
+  `backlinks_auth.py` and `matomo_auth.py` at a per-project directory for `google-api.json`,
+  `oauth-token.json`, `backlinks-api.json` and `matomo.json`. Set it in a project's
+  `.claude/settings.local.json` under `env`. Unset, the scripts use `~/.config/claude-seo/` as
+  before. `--check` prints the directory in use, and the scripts warn when it sits inside a
+  git work tree, where keys could be committed by mistake. The DataForSEO budget stays global.
+  (#341, lciolecki)
+- **`/seo bing` loads on plugin installs.** The `seo-bing` skill now ships with the plugin,
+  and the Bing installers work for a plugin install: they store the keys and no longer stop
+  with "claude-seo base not installed". Manual installs still get the skill copied. (issue
+  #458)
+- `seo_updates.py` JSON output carries `total_matching` and `truncated`, and the text output
+  says how many matching updates were left out, so a cut list no longer reads as "no such
+  update". The skills that look up Google updates now ask for the full list. (issue #459)
+- `sync_flow.py` exits with code 75 and a clear message when GitHub rate limits the sync, so a
+  rate limit can be told apart from a real failure.
+- `seo-shopify` and `seo-posthog` load as plugin skills, and the `seo-posthog` agent ships in
+  `agents/`. Like `seo-bing` (#458), both skills are mirrored into `skills/` and kept identical
+  to the extension copies by a test. A plugin-only install had neither before. The plugin now
+  ships 29 sub-skills and 20 sub-agents.
+
+### Changed
+
+- **IndexNow requires an exact host match.** A URL on a subdomain of the declared host is no
+  longer accepted, and URLs outside the directory that holds the key file are refused. (#430)
+- **A single-node JSON-LD `@graph` is accepted.** An object in `@graph` is validated like a
+  one-item list instead of being dropped or reported as an error. (#452)
+- **`supported_versions` in the UCP report is an object** that maps each version to its
+  profile URI. It was a list of version strings. (#454)
+- **Audit reports are named `SEO-Audit-Report-*`.** A full report built from audit results is
+  no longer named and labelled as a Google report. Reports built from Google API data keep the
+  `Google-SEO-Report-*` name. (#457)
+- **`seo_updates.py --limit 0` means no limit.** It returned an empty list before. A negative
+  `--limit` is now an error. (issue #459)
+- **`preload_check.py` exits with code 1 when the page cannot be fetched** or answers with an
+  HTTP error. Error pages were scored before. A refused URL still exits with 2. (#445)
+- **`parasite_risk.py` exits with code 1 and reports `unknown` risk when no page could be
+  audited.** That case used to pass as low risk. (#431)
+- **Drift baselines for URLs with path parameters need re-capturing.** A URL such as
+  `/page;v=2` now has its own baseline key, so its old baseline is no longer found. (#432)
+
+### Fixed
+
+- **Report:** the PDF report works on macOS with Pango installed through Homebrew. When
+  WeasyPrint cannot load its system libraries, or PageSpeed rate limits a request made without
+  an API key, the error names the cause and the fix. `page_checks.py` also follows a canonical
+  that names another URL and says when it redirects back to the page. The canonical comes
+  from the page, so unless it is on the audited page's own origin it is fetched from public
+  addresses only and `CLAUDE_SEO_LOCAL_TARGETS` never applies to it.
+  (#457, Vivek-Chaudhari30)
+- **Report:** a URL Inspection result without an index status no longer crashes the
+  indexation report; the failed inspection is shown. (#433, Afloat16)
+- **Report:** an XLSX-only report no longer needs the chart or PDF dependencies, and a missing
+  `openpyxl` is reported as an export error. (#434, Afloat16)
+- **Report:** results taken straight from the Search Console and URL Inspection scripts are
+  exported to XLSX with their field names, query labels, CTR percentages and inspection
+  failures. (#435, Afloat16)
+- **Report:** PageSpeed mobile results are read the same way in charts, summaries,
+  recommendations and the workbook, and the Best Practices score is no longer missing from the
+  workbook. (#436, Afloat16)
+- **Report:** `google_report.py --format all` still writes the XLSX and HTML files when the
+  PDF renderer is unavailable, and reports the PDF error. (#450, Afloat16)
+- **Transport:** a certificate that chains to a valid root no longer fails verification on
+  Windows. `transport_check.py` trusts certifi's root certificates as well as the system store.
+  (issue #421)
+- **Transport:** the TLS handshake never waits longer than the requested timeout.
+- **Transport:** the CSP grade follows the directives browsers actually apply to script
+  elements and event handlers, not only `script-src`. (#443, Afloat16)
+- **Transport:** an HSTS header with a duplicate directive is flagged as invalid instead of
+  being reported as meeting the preload requirements. (#444, Afloat16)
+- **Transport:** the framing grade reflects the policy in effect. A broad `frame-ancestors`
+  no longer passes because it is present or because of an `X-Frame-Options` value it
+  overrides, and a restrictive additional CSP policy counts. (#451, Afloat16)
+- **Schema:** a scalar `offers` value is reported by the merchant schema validator instead of
+  passing silently. (#425, Afloat16)
+- **Schema:** every return policy and shipping detail is validated when a product lists more
+  than one. (#429, Afloat16)
+- **Schema:** types written as full `http://schema.org/` or `https://schema.org/` addresses
+  are recognised by the merchant schema validator. (#438, Afloat16)
+- **Schema:** a single JSON-LD node object in `@graph` is read by the HTML parser and the
+  schema hook instead of being dropped or rejected. (#452, Afloat16)
+- **Drift:** relative links and images in a snapshot are resolved against the final URL after
+  redirects. (#423, Afloat16)
+- **Drift:** Core Web Vitals are compared only when both snapshots hold field data for the
+  same scope (URL or origin), which removes false regressions when coverage changes.
+  (#427, Afloat16)
+- **Drift:** URLs that differ only in a path parameter (`;name=value`) no longer share one
+  baseline. (#432, Afloat16)
+- **Drift:** a removed meta description is reported, an empty canonical counts as absent, and
+  one removed canonical gives one finding, not two. (#441, Afloat16)
+- **DataForSEO:** Merchant availability keeps limited stock, backorder and display-to-order
+  states, and is also read for seller listings. Labels such as "not in stock", "no longer
+  available", "sold out" and "unavailable" are never read as in stock. (#440, Afloat16)
+- **DataForSEO:** product titles, review text and headers that contain pipes, backslashes or
+  line breaks stay inside their Markdown table cell. (#442, Afloat16)
+- **DataForSEO:** structured Merchant prices, currencies and rating vote counts are kept,
+  including a price or rating of zero. (#448, Afloat16)
+- **Search Console:** batch URL inspection counts only the URLs it actually inspected, after
+  blank entries are removed and the batch cap is applied, so indexation rates are correct.
+  `requested_total` holds the number requested. (#446, Afloat16)
+- **CrUX:** trends compare the first and last four calendar weeks instead of the first and
+  last four weeks that have data, so old measurements are not presented as recent. Weeks
+  without data before a page became eligible are skipped and each window may miss one week;
+  otherwise the trend is reported as insufficient data. (#426, Afloat16)
+- **Content:** `content_quality.py` counts whole words in Greek, Cyrillic, Arabic, Hebrew,
+  Devanagari and other scripts that put spaces between words, and in accented Latin text.
+  Thai, Lao, Khmer and Myanmar text is counted roughly and flagged as low confidence.
+  (#455, rampilea)
+- **Parser:** `parse_html.py --url` no longer hangs when standard input is open but empty, as
+  in the Claude desktop app. A URL passed where a file is expected gets an error that names
+  `--url`, and the skill instructions use `--url`. (issue #459)
+- **Parser:** mail, telephone, script and other non-web links are left out of page-link
+  counts. (#428, Afloat16)
+- **Preload:** resource hints are read from real HTML elements, including unquoted
+  attributes, and lookalikes in comments, script strings and `data-*` attributes are ignored.
+  (#437, Afloat16)
+- **Preload:** an HTTP or network error gives a failed audit instead of a score for the error
+  page, and `--json` returns the error as JSON. (#445, Afloat16)
+- **Parasite risk:** HTTP error pages are left out of the scan, and a scan with no auditable
+  page reports unknown risk instead of low risk. (#431, Afloat16)
+- **IndexNow:** submitted URLs outside the host and directory covered by the ownership key are
+  rejected. (#430, Afloat16)
+- **Sitemap:** relative links in an Atom feed are resolved against the final feed URL and
+  `xml:base`, so they appear in URL counts and samples. (#449, Afloat16)
+- **Domain history:** registration, renewal and expiry dates are kept when WHOIS timestamps
+  carry a UTC offset. (#439, Afloat16)
+- **Agent UX:** input checks recognise ARIA and implicit labels, and find unnamed controls
+  that have no `id`. (#424, Afloat16)
+- **Agent readiness:** `Vary: Accept-Encoding` or `Vary: Accept-Language` is no longer taken
+  for `Vary: Accept` in the Markdown negotiation check. (issue #459)
+- **UCP:** the audit keeps the profile URI of each entry in `supported_versions` and reports
+  entries with an invalid version or URI. (#454, kevin9327)
+- **Maps:** the maps agent no longer tries to call DataForSEO itself. The orchestrator passes
+  the paid maps data to it, and the agent states which tier it used. The geo-grid guidance now
+  sends one task per request, which is what the DataForSEO Live endpoints accept. (issue #459)
+- The Shopify and PostHog installers no longer stop with "claude-seo base not installed" on a
+  plugin install. They detect the plugin the way the Bing installer does and copy nothing
+  there: PostHog offers to register the MCP server, and Shopify offers to create
+  `.shopify-env` from the template, owner-only and never over an existing file. Manual
+  installs still get the files copied, now with the launcher path rewritten.
+
+## [2.6.1] - 2026-11-14
+
+### Security
+
+- The headless browser now sends every connection through a local guard that checks each
+  destination, including every redirect, so an audited site can no longer redirect Chromium to
+  loopback, private network or cloud metadata addresses. Unlighthouse runs behind the same
+  guard. Reported by namaserajesh and by Tobi (Nordalux), who also wrote the initial fix
+  (GHSA-8wrm-4mmq-6fx3, GHSA-9pc7-p6cr-942h).
+- Chromium now runs with its sandbox wherever the system can start it. Where it cannot
+  (Ubuntu 23.10 and later, most containers, root), the page is rendered without it, a warning
+  on stderr says why, and the JSON result carries `sandbox: false`. Set
+  `CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX=1` to fail instead; `CLAUDE_SEO_CHROMIUM_NO_SANDBOX=1`
+  skips the sandbox. Reported by stephaneRR and shayanabbas
+  (GHSA-4fm4-49gc-r4pf, GHSA-mh4v-hwxp-8fg3).
+- Report values from Search Console, PageSpeed, CrUX, URL Inspection and audit JSON are
+  HTML-escaped everywhere in the PDF and HTML report, and PDF rendering can load only the
+  chart images generated for that report and the bundled logo. Other local files and all
+  network URLs are refused. Reported by samnguyen80 and namaserajesh
+  (GHSA-f8h8-fv8r-g2wh, GHSA-x43m-h8x6-rr52).
+- On Windows the PDF renderer no longer contacts a network share when report markup contains
+  a `file:` URL that points at a UNC or device path. Such URLs are refused before any file
+  access.
+- The XLSX export stores every text value as plain text, so values starting with `=`, `+`,
+  `-` or `@` can no longer run as formulas. Reported by 0xGenesi (GHSA-gc25-jx72-jj4q).
+- `parse_html.py --url` reads the page under the 10 MB cap instead of loading the whole
+  response into memory, and behind an HTTP proxy every redirect is validated before it is
+  followed. Reported by samnguyen80 (GHSA-f8h8-fv8r-g2wh).
+- `youtube_search.py` removes the Google API key from every error it prints or returns.
+  Reported by georgekhananaev (GHSA-xgff-93hv-6369).
+- `verify_release.py` refuses manifest entries that are absolute or point outside the
+  checkout, including through `..` or a symlink. Reported by tangzheng202202
+  (GHSA-hxhx-mm7f-q4qm).
+- The Google sign-in is read-only by default (`webmasters.readonly` and
+  `analytics.readonly`). The Indexing API scope is granted only with
+  `google_auth.py --auth --indexing`, and the unused Search Console write scope is no longer
+  requested. Existing sign-ins keep working. Reported by namaserajesh (GHSA-xhpf-w7hf-f6ph).
+
+### Changed
+
+- A render, screenshot or visual analysis that ends on a blank page, a browser error page or
+  a blocked address is reported as an error instead of being returned as the page.
+  `render_page.py` keeps the raw fetch in that case.
+- The browser guard tries every validated address of a host under one 10 second connect
+  budget, and requires a random per-run credential from Chromium so other local programs
+  cannot use it. The Unlighthouse guard stays unauthenticated (see SECURITY.md).
+- Browser commands behind a proxy support `http://` proxies on public addresses. A SOCKS
+  proxy, an `https://` proxy URL or a proxy on a local address gives a clear error.
+- `indexing_notify.py` and `google_auth.py --check indexing` say when the saved sign-in lacks
+  the Indexing scope and print the command to grant it.
+
+### Fixed
+
+- Charts were missing from the PDF report when the output directory was a relative path.
+- The XLSX report file name is sanitised like the PDF name.
+- Reports no longer fail when a search query or other chart label contains a dollar sign (for
+  example "ca$$h app"). Chart labels are also shortened to a sensible length, and if one chart
+  cannot be drawn the report is still produced without it.
+- The Excel export accepts text with invalid Unicode characters and numbers that are not finite
+  or are too large. If the workbook cannot be written, the PDF and HTML are still delivered.
+- Reports no longer fail when audit scores, quick-win positions or Search Console totals are
+  null.
+- `verify_release.py` fails cleanly on a malformed manifest, fails when the manifest lists no
+  files, and prints manifest values in quoted form so a manifest cannot forge output lines.
+- `parse_html.py --url` stops after 60 seconds in total, so a server that sends data very
+  slowly can no longer hold it open.
+- Reports for domains with characters Windows does not allow in file names are written under
+  a safe name, and a report file that cannot be written returns a clear error.
+- The browser guard gives a plain-HTTP response head one 30 second deadline and drops a
+  request as soon as its client disconnects.
+
+## [2.6.0] - 2026-11-10
+
+Deterministic checks ported from web-obs, the sister crawler project. Work
+that the skills asked the model to do by hand (count sitemap URLs, compare
+served and rendered HTML, read a certificate, check a page's basics) is now
+done by scripts with tests. Two new scripts, 63 in total.
+
+**After updating, run `/seo setup` once** (one new dependency, PySocks).
+
+**Drift baselines:** a page whose JSON-LD script tag is typed in upper case or
+with a parameter (`application/ld+json; charset=utf-8`) was skipped before and
+is read now, so it shows one schema change. Re-baseline after updating.
+
+### Added
+
+- **`page_checks.py`: 47 on-page checks in one script.** Title, description,
+  headings, canonical, robots, hreflang, document basics, images, links, URL
+  hygiene, size, Open Graph, JSON-LD validity and thin content. Each finding
+  has a stable id, a severity, a message and trimmed evidence. Length
+  thresholds follow `quality-gates.md` and are worded as display heuristics,
+  not Google rules. `/seo page` runs it first.
+- **`transport_check.py`: TLS certificate, security headers and redirects.**
+  Certificate validity, days to expiry, host and www coverage and trust;
+  grades for HSTS, CSP and the other security headers plus cookie flags (by
+  cookie name, never the value); the http to https and www redirects. The TLS
+  socket connects only to the address the safety layer validated and is
+  skipped behind a proxy. `/seo technical` runs it for its security section.
+- **`sitemap_discovery.py --expand`.** Follows a sitemap index one level and
+  reports, per file and in total: URL counts, lastmod quality (missing,
+  oldest, newest, share of identical dates), entries on another host,
+  duplicates, and the 50,000 URL and 50 MiB limits. `--max-children`
+  (default 50) and `--sample` (default 20) bound the run. `sample_urls` are
+  exact and can be status-checked; URLs carrying a token or session
+  parameter are counted and shown redacted, never sampled.
+- **`js_gap` in `render_page.py`.** Words, links, schema types, H1, title,
+  canonical and meta robots, served versus rendered, with plain-language
+  reasons. A title, canonical or robots value that changes after JavaScript
+  runs is called out.
+- **`parse_html.py` reads more.** Per image: `resolved_src` (the real source
+  of a lazy-loaded image), `srcset_candidates` and `decorative`. Per page:
+  `heading_outline` (h1 to h6 in order), `schema_invalid` (JSON-LD blocks that
+  do not parse) and `hidden_text` (text hidden by an attribute or inline
+  style, a spam signal and the usual hiding place for prompt injection; it
+  does not see hiding done through CSS classes).
+- **llms.txt format notes** in `agentic_check.py`: line-level notes against
+  the llmstxt.org proposal. The Lighthouse verdict is unchanged, and the
+  notes are format hygiene, not a ranking factor.
+- **Fetch timing.** `fetch_page.py` reports `ttfb_ms`, `response_time_ms` and
+  `fetch_duration_ms` (measured from your machine, not Core Web Vitals) and
+  stops at `--max-time` (default twice `--timeout`, at least 60 seconds).
+  `content_bytes` is the size of the body as served, before character
+  decoding.
+- **IPv6-only hosts can be audited.** The safety layer resolves A and AAAA,
+  checks every record, and pins IPv6 only when a host has no A record.
+- `capture_screenshot.py --full` scrolls through the page first so lazy
+  images load; `--no-scroll` turns that off. Each page-side step has a
+  timeout enforced by the Playwright driver (9 seconds for the whole scroll);
+  a page that stops answering is reported as `scroll_timed_out` and the
+  picture is still attempted. This needs a Playwright that has
+  `Locator.wait_for_function` (1.65 has it); on an older one the scroll is
+  skipped and the output says so. New opt-in `--hide-overlays` and `--json`.
+
+### Changed
+
+- **Robots user-agent lines match by product token**, case-insensitive and
+  whole. `GPTBot/1.1` and `ClaudeBot*` now select their own group (Google's
+  documented reading), and `GPTBot` never matches a `GPTBot-Image` group.
+- **A 429 on robots.txt is inconclusive**, not "no robots.txt, everything
+  allowed". Google treats 429 as a server error. `agentic_fix.py` no longer
+  drafts a blank file for it.
+- **Gzip sitemaps are read in every mode**, inflated under the 50 MiB cap.
+  They were reported as unsupported.
+- Hosts that differ only by `www.` count as the same site when `parse_html.py`
+  sorts links into internal and external.
+- A JSON-LD script type is matched case-insensitively and with parameters.
+- Paths that redirect to the same sitemap are listed once, and a malformed
+  `Sitemap:` line in robots.txt is recorded and skipped instead of ending the
+  run.
+- Google API calls honour `HTTPS_PROXY` (#339, PySocks) and the GA4 client
+  uses the REST transport (#340), both by @lciolecki. GA4 errors are
+  classified by their status, not by digits in the message.
+
+### Security
+
+- IPv6 special ranges are refused by an explicit list that holds on every
+  Python version: site-local, ORCHIDv2 and zone-scoped addresses are newly
+  refused; NAT64, 6to4, Teredo, documentation, unique-local and link-local
+  stay refused. A host is refused if any A or AAAA record is non-public.
+- On a DNS64 network a synthesized `64:ff9b::/96` AAAA record is ignored when
+  the host also has an A record. The pin is then IPv4 and that address is
+  never dialled, so IPv4-only sites keep resolving.
+- **Hostile pages cannot stall or crash a check.** An independent review of
+  this release found inputs that made parsing take minutes: a robots.txt rule
+  made of many `*`, an llms.txt of blank lines, a long run of punctuation in
+  link text, a crafted `Link` header. All are parsed in linear time now, and
+  each has a test with a megabyte-sized input. A JSON-LD block nested deeper
+  than 64 levels is counted as invalid instead of raising, and page-controlled
+  names in `js_gap` are cut at 80 characters.
+
+## [2.5.1] - 2026-11-10
+
+Community fixes: 39 pull requests from 18 contributors, 6 dependency updates,
+and the follow-up fixes found while reviewing them. No new commands.
+
+**After updating, run `/seo setup` once.** The dependency floors changed
+(urllib3 2.8.0 fixes three advisories), so the managed runtime rebuilds.
+
+**Drift baselines:** three parser fixes change stored values once. A page with
+a JSON-LD `@graph` shows one `schema_modified` warning, and a heading that
+holds an inline tag or a `<br>` shows one heading change. Re-baseline after
+updating.
+
+### Security
+
+- **urllib3 floor raised to 2.8.0** (#323). It fixes GHSA-8988-9cw3-xx77
+  (HTTPS proxy TLS settings ignored), GHSA-vxq7-64xx-v4gw (unbounded
+  chunk-size buffering) and GHSA-gh4c-6fx4-qh6g (chunked deflate loop).
+- **A `host:port` entry in `CLAUDE_SEO_LOCAL_TARGETS` now holds for the whole
+  request.** The DNS pin on a non-public address answered for every port, so a
+  redirect from the allowed dev server could reach another service on that
+  host. It now answers only for the validated port, or another port the
+  allowlist names. Public hosts are unchanged. The port-bound pin was first
+  proposed by @joachimBrindeau in #318.
+- **Google property selection is bound to the audited domain** (#387 by
+  @dajiaohuang, issue #337 by @tomkor). `gsc_query.py`, `gsc_inspect.py` and
+  `ga4_report.py` take `--domain` and refuse to use another site's property.
+  `www.` and subdomains of a domain property match their `sites` entry,
+  lookalike hosts are refused, and an empty `--domain` is an error (raised by
+  @agammann). With a `sites` mapping and no flag, the scripts stop and ask
+  for `--domain` or `--property`; `gsc_inspect.py --batch` needs one of
+  `--site-url` or `--domain`.
+- **IndexNow key check compares hosts, not URL substrings** (#371 by
+  @rudycelekli). `example.com` no longer matches `notexample.com`. The key
+  file must be on the submitted host exactly.
+- `commoncrawl_graph.py --release` rejects a value with a trailing newline
+  (#392 by @connabyss).
+- The banana setup scripts print whether an API key is set, never part of it.
+
+### Fixed
+
+Schema and JSON-LD
+- **The schema hook no longer crashes on a list-valued `@type`** such as
+  `["LocalBusiness", "FinancialService"]` (#389 by @deosiree; issues #357 by
+  @unterholzfrank and #382 by @soulalpaca-ctrl). A malformed `@type` now gets
+  a warning. `@graph` tests come from #365 by @rudycelekli and #358 by
+  @lab1207, who was first with a fix.
+- **A valid `@graph` document is no longer reported as missing `@context`**
+  (#359 by @lab1207, issue #333 by @nickdumitru; same parser fix proposed in
+  #367 by @rudycelekli). `parse_html.py` keeps the inherited `@context` on
+  flattened entries.
+- Product validation accepts a list of `priceSpecification` objects (#372 by
+  @rudycelekli, issue #394 by @unisone), also when the price specification
+  has a list-valued `@type` (raised by @hydraxman). An offer that is not an
+  object is reported as `malformed-offer` instead of crashing.
+- `validate_backlink_report.py` flags a deprecated type inside an `@type` list.
+- The hook launcher skips Python for files that cannot hold JSON-LD (#414 by
+  @AdityaWagh06); the skip applies to the schema hook only.
+- `seo-schema` links its deprecated-types reference (#413 by @AdityaWagh06,
+  issue #412 by @namaserajesh).
+
+Fetching and parsing
+- Headings and link text keep spaces around inline tags (#345 by
+  @switchcasestudio, issue #330 by @osmosphuket-hub); `<br>` reads as a space.
+- Links and images resolve against `<base href>` (#385 by @HelloWorld3326),
+  for http and https bases only. Fragment-only links follow a base that points
+  elsewhere (raised by @agammann).
+- One malformed URL in an image or link no longer aborts the parse; bad
+  values are listed under `malformed_urls`.
+- `charset=` inside another meta attribute is no longer taken as the page
+  encoding (#375 by @rudycelekli). Unquoted meta values are read correctly,
+  and the scan stays fast on hostile markup.
+- **Image format is judged by what is served, not the URL extension** (#332 by
+  @whatcodehaveyougit, issue #331). `parse_html.py --probe-images` reads the
+  first bytes of each image through the safe fetcher. A malformed `src` or a
+  non-image response is reported as unverified.
+- A brand suffix is matched at word boundaries in templated-metadata checks
+  (#405 by @Afloat16).
+
+Sitemaps and indexing
+- Sitemap discovery handles a UTF-8 BOM in XML and plain-text sitemaps (#384
+  by @HelloWorld3326) and a `Sitemap:` line followed by a comment (#373 by
+  @rudycelekli).
+- News sitemap validation keeps the 50,000 URL limit (#368 by @rudycelekli,
+  issue #335 by @nickdumitru).
+- Indexing API batches stop on a quota response (#409 by @zhangkom), and the
+  batch-truncation warning is no longer overwritten (#379 by @rudycelekli).
+- IndexNow reports submission errors in text mode instead of raising (#408 by
+  @zhangkom).
+
+Backlinks
+- **A backlink is "lost" only after a GET confirms 404 or 410.** The exact
+  target link is matched, a page-level `nofollow` is reported as
+  `page_nofollow`, and GET is used when HEAD is refused (#364 by @hboon). A
+  5xx is `server_error`. In `--head-only` mode an https or www redirect stays
+  "exists"; "moved" means the host or path changed. A redirect that the
+  safety layer blocks is never retried.
+- Common Crawl: the newest web graph release is discovered from
+  `graphinfo.json`, with the built-in list as fallback (#418 by @pucilpet).
+
+Google, analytics and data APIs
+- GA4 and Matomo `top-pages` reports surface a failed query instead of an
+  empty success (#406 by @xunguangzlj-cloud; #396 by @Ethereal49, issue #395
+  by @unisone).
+- CrUX History reports a rise from a zero CLS baseline as degrading (#393 by
+  @xunguangzlj-cloud); the PDF report shows the undefined percentage as "n/a".
+- `nlp_analyze.py` sends `language` to the v1 endpoint, so entity extraction
+  works again (#346 by @switchcasestudio, issue #322 by @toquedemidas). New
+  `--language` option; the default is auto-detect instead of English.
+- `pagespeed_check.py --psi-only` exits non-zero when a strategy fails (#380
+  by @rudycelekli).
+- Merchant searches keep polling while a task is handed or queued (#386 by
+  @angelocastellani), and a failed task is an error, not a success with 0
+  results.
+- DataForSEO normalization maps currency symbols to ISO codes (#400 by
+  @rudycelekli).
+- The GBP checklist scores verified status from DataForSEO `is_claimed` (#370
+  by @rudycelekli, issue #334 by @nickdumitru).
+
+Content checks
+- `content_verify.py` detects a bare percentage as a statistic (#377) and
+  requires a proper noun only after "per" (#378), both by @rudycelekli.
+  "according to a study" and "Source:" count as citations.
+- A filler phrase is not scored again inside a longer one (#374 by
+  @rudycelekli).
+- Drift: `none` counts as noindex and semicolon-separated directives are read
+  (#404), and IPv6 hosts keep their brackets (#403), both by @Afloat16.
+- `preload_check.py` tolerates a speculation rules body that is not an object
+  (#376 by @rudycelekli).
+
+Commands and install
+- **`/seo` keeps the command word** (#369 by @rudycelekli, issue #342 by
+  @zachlagden). The hub skill used `$1 $2`, which Claude Code counts from 0.
+- `/seo setup` no longer fails on Windows with WinError 5 at the final venv
+  swap (#383 by @harshdazz, issue #348 by @Krtgya).
+- `seo_updates.py --since` rejects a malformed date with a clear error (#381
+  by @rudycelekli).
+- `seo-local` and `seo-maps` reference paths are anchored to the plugin root
+  (issue #252 by @Docrichards1).
+
+### Changed
+
+- `seo-geo` states third-party findings as correlations and labels its score
+  weights as the skill's own heuristic (#362 by @canermoral5-sys).
+- Google updates ledger verified through 2026-11-10: three Search Central
+  documentation changes added (URL word separation on 23 Oct, user-generated
+  spam prevention on 26 Oct, "things to do" queries in aggregator and supplier
+  units on 9 Nov). No ranking update since the September 2026 spam update.
+- PageSpeed examples use a placeholder key instead of an environment variable
+  in a `curl` line, which a third-party skill scanner blocked (issue #402 by
+  @upfastai).
+- The house-style test also scans `tests/`.
+- Dependency floors: lxml 6.1.3, google-auth 2.58.1, google-ads 33.0.0,
+  playwright 1.63.0 (#327, #324, #325, #326); CI uses setup-python 7.1.0
+  (#399).
+
 ## [2.5.0] - 2026-10-22
 
 Security and accuracy fixes from a full audit, and Claude Desktop installs again.
@@ -184,6 +868,13 @@ seo-cockpit, Google sign-in through your own account, and a schema-hook fix.
   PostToolUse hook runs after the file is written.
 - `ai_opt_llm_ment_search` costs about $0.103 per the official response
   example, not $0.05 (`dataforseo_costs.py` and both `cost-tiers.md`).
+- Image format is judged by what the server sends, not the URL extension
+  (#331). `parse_html.py --probe-images` fetches each image with a browser
+  `Accept` header and adds `served_format`, `served_bytes`, `negotiated` and
+  `probe_error` to every image entry. `seo-images` and `seo-page` now flag
+  "Wrong Format" only from `served_format`, so a `.jpg` URL that a WebP plugin,
+  Cloudflare Polish or an image CDN already serves as WebP is no longer told to
+  "convert to WebP".
 
 ## [2.4.1] - 2026-09-29
 

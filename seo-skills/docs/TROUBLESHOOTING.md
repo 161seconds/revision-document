@@ -112,6 +112,86 @@ interpreter and persistent browser directory:
 
 ---
 
+### Chromium Sandbox Warning
+
+**Symptom:** rendering, screenshots or visual analysis work, but stderr shows
+`claude-seo warning: Chromium's sandbox is unavailable on this system, so the
+page is rendered without it` (or `running as root`, or `disabled by
+CLAUDE_SEO_CHROMIUM_NO_SANDBOX`), and the JSON result has `"sandbox": false`.
+
+**Cause:** Claude SEO starts Chromium with its sandbox wherever the system can
+start it. Some systems cannot:
+
+- **Ubuntu 23.10 and later** (and GitHub's Ubuntu runners): AppArmor blocks
+  unprivileged user namespaces by default, which the sandbox needs.
+- **Docker and other containers:** the default seccomp profile blocks user
+  namespaces, and most images run as root.
+- **root:** Chromium does not run sandboxed as root.
+
+There the browser is launched once more without the sandbox, behind the same
+egress guard. The audit still works, but a browser exploit served by an audited
+page is not contained (as root, it runs as root).
+
+**Solution:** to get the sandbox back:
+
+- Ubuntu: follow Chromium's guide on AppArmor user namespace restrictions:
+  <https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md>
+- Containers: run as a non-root user and allow user namespaces (Playwright's
+  Docker guide ships a seccomp profile for this).
+- root: run Claude SEO as a regular user.
+
+Two environment variables change the policy:
+
+| Variable | Effect |
+|----------|--------|
+| `CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX=1` | Strict mode: never render without the sandbox; fail instead |
+| `CLAUDE_SEO_CHROMIUM_NO_SANDBOX=1` | Skip the sandbox attempt (the warning still appears) |
+
+Accepted values are `1`, `true`, `yes` and `on`.
+
+---
+
+### Chromium Sandbox Required but Unavailable
+
+**Symptom:** the result's `error` says `Chromium's sandbox could not start on
+this system` (or `cannot start as root`) `and CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX
+is set, so nothing was rendered`, or that both variables are set and contradict
+each other.
+
+**Cause:** strict mode is on and the sandbox cannot start (see the entry above
+for why). With both variables set, strict mode wins and the launch is refused.
+
+**Solution:** enable the sandbox as described above, or unset
+`CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX` to allow the automatic fallback with a
+warning. For the conflict, unset one of the two variables.
+
+---
+
+### Refusing Configured HTTP Proxy
+
+**Symptom:** every live fetch, or every browser command (`--render`, screenshots, Unlighthouse), fails with one of:
+
+```text
+Refusing configured HTTP proxy '127.0.0.1': non-public address 127.0.0.1. ... name it in CLAUDE_SEO_TRUSTED_PROXIES (host:port).
+Unsupported proxy for browser rendering: scheme 'socks5'. Only http:// proxies are supported
+```
+
+**Cause:** `HTTPS_PROXY`, `HTTP_PROXY` or `ALL_PROXY` points at a proxy on loopback or a private address. That is refused by default, because anything that can set an environment variable could otherwise route every audit through a local service. Claude Code cloud and sandbox sessions, cntlm and px all work this way.
+
+**Solution:** if the proxy is yours or your platform's, name it, with its port:
+
+```bash
+export CLAUDE_SEO_TRUSTED_PROXIES=127.0.0.1:3128
+```
+
+- The value is a comma-separated list of `host` or `host:port`. No scheme, no credentials, no wildcard, no CIDR range: such an entry is ignored. Use the host exactly as the proxy variable spells it (`localhost:3128` for `http://localhost:3128`), and brackets for IPv6 with a port (`[::1]:3128`).
+- It trusts the proxy only. The site you audit, every redirect and everything a rendered page loads must still be public. To audit a local or staging host over raw HTTP, see `CLAUDE_SEO_LOCAL_TARGETS` in SECURITY.md.
+- A proxy on a link-local address or a cloud metadata address (`169.254.169.254`, `100.100.100.200`, `192.0.0.192`, `fd00:ec2::254`, `fd20:ce::254`, the `metadata.*` names, and these addresses wrapped in IPv4-mapped or 6to4 form) is refused even when listed. The message then does not mention the variable.
+- The browser needs an `http://` proxy. A SOCKS or `https://` proxy URL is refused for browser commands even when listed; plain fetches are not affected by that limit.
+- claude-seo still resolves each destination itself before it hands the request to the proxy, so "DNS resolution failed" behind a proxy means this machine cannot resolve public names, and listing the proxy will not change that.
+
+See "Trusting a local proxy" in SECURITY.md for what the proxy is trusted with.
+
 ### Permission Denied Errors
 
 **Symptom:** `Permission denied` when running scripts

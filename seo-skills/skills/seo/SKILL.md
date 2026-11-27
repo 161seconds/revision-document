@@ -6,13 +6,13 @@ argument-hint: "[command] [url]"
 license: MIT
 metadata:
   author: AgriciDaniel
-  version: "2.5.0"
+  version: "2.6.3"
   category: seo
 ---
 
 # SEO: Universal SEO Analysis Skill
 
-**Invocation:** `/seo $1 $2` where `$1` is the command and `$2` is the URL or argument.
+**Invocation:** `/seo $ARGUMENTS`, where the first word is the command and the rest is the URL or argument.
 
 **Runtime:** Run bundled Python tools through
 `"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run <script.py>`. That is the single
@@ -25,8 +25,8 @@ directory because hosted marketplaces reject one. Repository users run
 with a bare Python interpreter.
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
-e-commerce, publishers, agencies). Orchestrates 25 sub-skills (22 core + 1 framework
-integration + 2 extension mirrors) and 19 sub-agents. A separate optional Firecrawl
+e-commerce, publishers, agencies). Orchestrates 28 sub-skills (22 core + 1 framework
+integration + 5 extension mirrors) and 20 sub-agents. A separate optional Firecrawl
 extension is also installable (see "Optional Extensions" below).
 
 ## Quick Reference
@@ -58,9 +58,12 @@ extension is also installable (see "Optional Extensions" below).
 | `/seo drift history <url>` | Show drift history over time |
 | `/seo ecommerce <url>` | E-commerce SEO: product schema, marketplace intelligence |
 | `/seo matomo [command] [args]` | Matomo Reporting API: GA4 alternative or supplement (extension) |
+| `/seo posthog [command]` | PostHog via MCP: GA4 alternative or supplement (extension) |
 | `/seo firecrawl [command] <url>` | Full-site crawling and site mapping (extension) |
 | `/seo dataforseo [command]` | Live SEO data via DataForSEO (extension) |
 | `/seo image-gen [use-case] <description>` | AI image generation for SEO assets (extension) |
+| `/seo bing [command] <url>` | Bing Webmaster Tools link data and IndexNow URL submission (extension) |
+| `/seo shopify [crawl\|check] <url>` | Uncapped signed crawl of a Shopify store you administer, then the audit pipeline (extension) |
 | `/seo flow [stage] [url\|topic]` | FLOW framework: evidence-led prompts for Find, Leverage, Optimize, Win, or Local stages |
 | `/seo setup` | Explicitly create or refresh the isolated Python runtime and Chromium |
 | `/seo doctor` | Check runtime readiness without changing the system |
@@ -84,18 +87,19 @@ When the user invokes `/seo audit`, delegate to subagents in parallel:
 2. Spawn subagents: seo-technical, seo-content, seo-schema, seo-sitemap, seo-performance, seo-visual, seo-geo, seo-agentic
 3. If Google API credentials detected (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run google_auth.py --check`), also spawn seo-google agent
 4. If Matomo credentials detected (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run matomo_auth.py --check`), also spawn seo-matomo agent (alternative or complement to seo-google's GA4 reports)
-5. If local business detected, also spawn seo-local agent
-6. If local business detected AND DataForSEO MCP available, also spawn seo-maps agent
-7. Spawn seo-backlinks agent for Common Crawl domain-level metrics, adding Moz and Bing data when their credentials are detected (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run backlinks_auth.py --check`)
-8. If Firecrawl MCP available, use `firecrawl_map` to discover all site URLs before analysis
-9. If content strategy signals detected (blog, pillar pages, topic clusters), also spawn seo-cluster agent
-10. If e-commerce detected, also spawn seo-ecommerce agent
-11. If drift baseline exists for this URL (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run drift_history.py <url>`), also spawn seo-drift agent
-12. Always include seo-sxo in full audits (search experience applies to all sites)
-13. Collect results and generate unified report with SEO Health Score (0-100)
-14. **Synthesize via the 10-principle framework** (see "Synthesis Methodology" below), walk PERCEIVE → ANALYZE → VALIDATE → ACT before bucketing findings into Critical / High / Medium / Low
-15. Create prioritized action plan with dependency sequencing + falsifiability per recommendation
-16. **Offer PDF report**: "Generate a professional PDF report? Use `/seo google report full`"
+5. If the PostHog MCP `exec` tool is available, also spawn seo-posthog agent (alternative or complement to seo-google's GA4 reports). The tool is `mcp__posthog__exec` when the server is registered in lowercase, as the extension installer does, or `mcp__PostHog__exec` otherwise; either spelling counts
+6. If local business detected, also spawn seo-local agent
+7. If local business detected AND DataForSEO MCP available, also spawn seo-maps agent. Subagents have no MCP tools, so seo-maps on its own runs the free tier (Tier 0). First obtain the paid maps data (business listings, Maps SERP geo-grid, GBP profile, reviews) through the seo-dataforseo agent or your own DataForSEO MCP tools, within its cost guardrails, then pass that data in the seo-maps prompt. The maps section of the report must say which tier was used
+8. Spawn seo-backlinks agent for Common Crawl domain-level metrics, adding Moz and Bing data when their credentials are detected (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run backlinks_auth.py --check`)
+9. If Firecrawl MCP available, use `firecrawl_map` to discover all site URLs before analysis
+10. If content strategy signals detected (blog, pillar pages, topic clusters), also spawn seo-cluster agent
+11. If e-commerce detected, also spawn seo-ecommerce agent
+12. If drift baseline exists for this URL (`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run drift_history.py <url>`), also spawn seo-drift agent
+13. Always include seo-sxo in full audits (search experience applies to all sites)
+14. Collect results and generate unified report with SEO Health Score (0-100)
+15. **Synthesize via the 10-principle framework** (see "Synthesis Methodology" below), walk PERCEIVE → ANALYZE → VALIDATE → ACT before bucketing findings into Critical / High / Medium / Low
+16. Create prioritized action plan with dependency sequencing + falsifiability per recommendation
+17. **Offer PDF report**: "Generate a professional PDF report? Use `/seo google report full`"
 
 For individual commands, load the relevant sub-skill directly.
 After any analysis command completes, offer to generate a PDF report via `"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run google_report.py`.
@@ -103,9 +107,12 @@ After any analysis command completes, offer to generate a PDF report via `"${CLA
 **Google update history questions** (core, spam, policy, product changes; "is the
 spam update finished?"): answer from the bundled primary-source ledger, not from
 memory or other copies on disk. Run
-`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run seo_updates.py --kind spam --json`
+`"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run seo_updates.py --kind spam --limit 500 --json`
 (or `--since <yyyy-mm>`; add `--unverified` for third-party claims that are not
-confirmed). If the output reports the ledger as stale, check
+confirmed). The default `--limit` is 10, so keep the explicit `--limit 500`
+whenever the answer needs every matching update; if the JSON reports
+`truncated: true`, `total_matching` is the full count and the list is partial.
+If the output reports the ledger as stale, check
 status.search.google.com before stating that a rollout is complete.
 
 ## Synthesis Methodology
@@ -233,8 +240,8 @@ Weighted aggregate of all categories:
 
 ## Sub-Skills
 
-This skill orchestrates 25 sub-skills (22 core + 1 framework integration + 2 extension
-mirrors). The orchestrator itself (`seo`) is the 26th in `skills/`, but does not
+This skill orchestrates 28 sub-skills (22 core + 1 framework integration + 5 extension
+mirrors). The orchestrator itself (`seo`) is the 29th in `skills/`, but does not
 orchestrate itself, so it is not enumerated below.
 
 1. **seo-audit** -- Full website audit with parallel delegation
@@ -262,6 +269,9 @@ orchestrate itself, so it is not enumerated below.
 23. **seo-image-gen** -- AI image generation for SEO assets via Gemini (extension mirror)
 24. **seo-flow** -- FLOW framework integration (Find -> Leverage -> Optimize -> Win, 41 AI prompts, CC BY 4.0)
 25. **seo-agentic** -- Agent readiness: Lighthouse Agentic Browsing, accessibility tree for agents, AI agent access policy, llms.txt, Markdown, ai-catalog.json, WebMCP
+26. **seo-bing** -- Bing Webmaster Tools link data and IndexNow URL submission (extension mirror)
+27. **seo-shopify** -- Uncapped signed crawl of a Shopify store you administer, then the audit pipeline (extension mirror)
+28. **seo-posthog** -- PostHog analytics via the PostHog MCP server (extension mirror)
 
 ### Optional Extensions
 
@@ -270,9 +280,12 @@ installer to activate (see each extension's `install.sh`/`install.ps1`):
 
 All optional extensions are reachable through `/seo` subcommands once
 installed: firecrawl, dataforseo, and image-gen, plus `/seo ahrefs`,
-`/seo bing`, `/seo matomo`, `/seo profound`, `/seo seranking`, and
-`/seo unlighthouse`. Each installs as its own sub-skill, so the model also
-auto-routes to their descriptions without the `/seo` prefix.
+`/seo bing`, `/seo matomo`, `/seo posthog`, `/seo profound`, `/seo seranking`,
+`/seo shopify`, and `/seo unlighthouse`. Each installs as its own sub-skill,
+so the model also auto-routes to their descriptions without the `/seo` prefix.
+The seo-dataforseo, seo-image-gen, seo-bing, seo-shopify and seo-posthog skills
+already ship in `skills/` as mirrors; their installers only add what the skill
+needs (an MCP server, API keys, or a `.shopify-env` template).
 
 - **seo-firecrawl** -- Full-site crawling and site mapping via Firecrawl MCP. Install
   via `extensions/firecrawl/install.sh` (Unix) or `extensions/firecrawl/install.ps1`
@@ -296,7 +309,7 @@ For parallel analysis during audits:
 - `seo-geo` -- AI crawler access, llms.txt, citability, brand mention signals
 - `seo-agentic` -- Lighthouse Agentic Browsing fraction, accessibility tree for agents, AI agent access policy, Markdown, discovery files, WebMCP (always in full audits)
 - `seo-local` -- GBP signals, NAP consistency, reviews, local schema, industry-specific local factors (conditional: spawned when Local Service detected)
-- `seo-maps` -- Geo-grid rank tracking, GBP audit, review intelligence, competitor radius mapping (conditional: spawned when Local Service detected AND DataForSEO MCP available)
+- `seo-maps` -- Geo-grid rank tracking, GBP audit, review intelligence, competitor radius mapping (conditional: spawned when Local Service detected AND DataForSEO MCP available; it has no MCP tools, so pass the DataForSEO maps data in its prompt or it runs the free tier)
 - `seo-google` -- CWV field data, URL indexation status, organic traffic trends (conditional: spawned when Google API credentials detected)
 - `seo-backlinks` -- Backlink profile data: DA/PA, referring domains, anchor text, toxic links (conditional: spawned when Moz/Bing API keys detected or always for CC domain-level metrics)
 - `seo-cluster` -- Semantic clustering analysis (conditional: content strategy detected)
@@ -306,6 +319,7 @@ For parallel analysis during audits:
 - `seo-flow` -- FLOW framework prompts (conditional: spawned for content strategy workflows)
 - `seo-dataforseo` -- Live SERP, keyword, backlink, local SEO data (extension, optional)
 - `seo-image-gen` -- SEO image audit and generation plan (extension, optional)
+- `seo-posthog` -- Organic traffic, landing pages, device, country and referrer reports via the PostHog MCP (extension, optional; conditional: spawned when the PostHog MCP `exec` tool is available)
 
 ## Error Handling
 

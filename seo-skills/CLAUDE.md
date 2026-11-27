@@ -4,15 +4,15 @@
 
 This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehensive
 SEO analysis across all industries. It follows the Agent Skills open standard and the
-3-layer architecture (directive, orchestration, execution). 26 sub-skills (22 core +
-1 orchestrator + 1 framework integration + 2 extension mirrors), 19 sub-agents (16 core +
-1 framework integration + 2 extension mirrors), and an extensible reference
+3-layer architecture (directive, orchestration, execution). 29 sub-skills (22 core +
+1 orchestrator + 1 framework integration + 5 extension mirrors), 20 sub-agents (16 core +
+1 framework integration + 3 extension mirrors), and an extensible reference
 system cover technical SEO, content quality,
 schema markup, image optimization, sitemap architecture, AI search optimization,
 local SEO (GBP, citations, reviews, map pack), maps intelligence, semantic topic
 clustering, search experience optimization (SXO), SEO drift monitoring, e-commerce
-SEO, and international SEO with cultural adaptation profiles. Matomo is available
-as an optional extension for self-hosted analytics.
+SEO, and international SEO with cultural adaptation profiles. Matomo and PostHog are
+available as optional analytics extensions (GA4 alternative or complement).
 
 ## Architecture
 
@@ -22,9 +22,9 @@ claude-seo/
   CONTRIBUTORS.md                    # Community credits (Pro Hub Challenge)
   AGENTS.md                          # Multi-platform agent instructions (Cursor, Antigravity)
   .claude-plugin/
-    plugin.json                    # Plugin manifest (v2.5.0)
+    plugin.json                    # Plugin manifest (v2.6.3)
     marketplace.json               # Marketplace catalog for distribution
-  skills/                            # 26 sub-skills (auto-discovered)
+  skills/                            # 29 sub-skills (auto-discovered)
     seo/                           # Main orchestrator skill
       SKILL.md                     # Entry point, routing table, core rules
       references/                  # On-demand knowledge files (13 files)
@@ -68,7 +68,10 @@ claude-seo/
     seo-image-gen/              # AI image generation for SEO assets (extension mirror)
       SKILL.md
       references/                # Image gen reference files (7 files)
-  agents/                          # 19 subagents (auto-discovered)
+    seo-bing/SKILL.md           # Bing Webmaster Tools and IndexNow (extension mirror)
+    seo-shopify/SKILL.md        # Shopify Crawler Access signed crawl (extension mirror)
+    seo-posthog/SKILL.md        # PostHog analytics via MCP (extension mirror)
+  agents/                          # 20 subagents (auto-discovered)
     seo-technical.md             # Crawlability, indexability, security
     seo-content.md               # E-E-A-T, readability, thin content
     seo-schema.md                # Structured data validation
@@ -83,6 +86,7 @@ claude-seo/
     seo-backlinks.md             # Backlink profile analyst (Moz, Bing, CC, verify)
     seo-dataforseo.md            # DataForSEO data analyst
     seo-image-gen.md             # SEO image audit analyst
+    seo-posthog.md               # PostHog analytics analyst (read-only HogQL via MCP)
     seo-cluster.md               # Semantic clustering analysis
     seo-sxo.md                   # Search experience optimization
     seo-drift.md                 # SEO drift monitoring
@@ -90,8 +94,10 @@ claude-seo/
     seo-flow.md                  # FLOW framework integration
   hooks/                           # Quality gate hooks
     hooks.json                   # PostToolUse schema validation
-  scripts/                         # 60 Python execution scripts
+  scripts/                         # 67 Python execution scripts
     google_auth.py               # Credential management (OAuth, SA, API key, 4-tier detection)
+    google_properties.py         # Picks the GSC/GA4 property for the audited domain, fails closed on a mismatch
+    profile_paths.py             # Credential directory (CLAUDE_SEO_PROFILE_DIR, default ~/.config/claude-seo)
     backlinks_auth.py            # Backlink API credential management (Moz, Bing)
     moz_api.py                   # Moz Link Explorer API (DA/PA, spam, domains, anchors)
     bing_webmaster.py            # Bing Webmaster Tools API (registered-site links/comparison)
@@ -112,6 +118,8 @@ claude-seo/
     keyword_planner.py           # Google Ads Keyword Planner
     fetch_page.py                # Page fetcher with UA rotation
     parse_html.py                # HTML parser for SEO elements
+    page_checks.py               # Deterministic single-page on-page checker (47 checks, JSON findings)
+    transport_check.py           # TLS certificate, security header and HTTPS redirect checker
     capture_screenshot.py        # Playwright screenshots
     analyze_visual.py            # Visual analysis helper
     drift_baseline.py            # SEO drift baseline capture (SQLite)
@@ -123,6 +131,7 @@ claude-seo/
     dataforseo_normalize.py      # DataForSEO response normalization utility
     sync_flow.py                 # FLOW prompt library sync (GitHub API, CC BY 4.0 headers, --dry-run, --ref)
     url_safety.py                # Canonical URL/SSRF safety module (validate, DNS-pin, safe fetch)
+    browser_proxy.py             # Local egress guard for the headless browser: validates and pins every Chromium connection
     render_page.py               # Shared headless renderer (SPA-aware, Playwright)
     lcp_subparts.py              # LCP subparts breakdown via CrUX API
     preload_check.py             # Speculation Rules / bfcache / prerender / preload detector
@@ -143,24 +152,29 @@ claude-seo/
     seo_updates.py               # Primary-source Google updates query tool
     indexnow_submit.py           # IndexNow submitter
     ucp_check.py                 # UCP (Universal Commerce Protocol) profile auditor
-    unlighthouse_run.py          # Unlighthouse CLI wrapper (site-wide Lighthouse)
+    unlighthouse_run.py          # Unlighthouse CLI wrapper (site-wide Lighthouse, runs behind the egress guard via unlighthouse_http_proxy.cjs)
     validate_backlink_report.py  # Backlink report validation
     portability_check.py         # Cross-platform portability lint for SKILL.md files
     consistency_check.py         # Reference-graph gate: dead refs, routing, lock, orphans
     release_sign.py              # SHA-256 manifest generator for release signing
     verify_release.py            # Verify checkout integrity against a release manifest
     sitemap_discovery.py         # Sitemap discovery (robots.txt, common paths)
+    shopify_env.py               # .shopify-env reader and Crawler Access precheck
+    shopify_crawl.py             # Signed sitemap-driven Shopify storefront crawl
     runtime.py                   # Managed runtime behind the claude-seo launcher
   schema/                          # Schema.org JSON-LD templates
-  extensions/                      # Optional add-on install helpers
+  extensions/                      # 11 optional add-ons (5 MCP, 6 non-MCP)
     dataforseo/                  # DataForSEO MCP install scripts
     firecrawl/                   # Firecrawl MCP install scripts
     banana/                      # Banana MCP install scripts
     ahrefs/                      # Ahrefs MCP install scripts
-    bing-webmaster/              # Bing Webmaster and IndexNow install scripts
-    profound/                    # Profound MCP install scripts
-    seranking/                   # SE Ranking MCP install scripts
-    unlighthouse/                # Unlighthouse install scripts
+    posthog/                     # PostHog MCP install scripts (skill and agent mirrored)
+    bing-webmaster/              # Bing Webmaster and IndexNow key setup (API keys, no MCP)
+    matomo/                      # Matomo Reporting API skill, agent and install scripts (no MCP)
+    profound/                    # Profound API key install scripts (no MCP)
+    seranking/                   # SE Ranking API key install scripts (no MCP)
+    unlighthouse/                # Unlighthouse install scripts (local CLI, no MCP)
+    shopify/                     # Shopify Crawler Access crawl extension (no MCP, skill mirrored)
   docs/                            # Extended documentation
 ```
 
@@ -199,7 +213,10 @@ claude-seo/
 | `/seo seranking [command]` | AI Share-of-Voice across ChatGPT, Gemini, Perplexity, AI Overviews, AI Mode (extension) |
 | `/seo profound [command]` | LLM citation tracking with time-series data (extension) |
 | `/seo bing [command] <url>` | Bing Webmaster Tools + IndexNow URL submission (extension) |
+| `/seo matomo [command] [args]` | Matomo Reporting API: GA4 alternative or complement (extension) |
+| `/seo posthog [command]` | PostHog via MCP: GA4 alternative or complement (extension) |
 | `/seo unlighthouse <url>` | Multi-page Lighthouse runner, runs locally (extension) |
+| `/seo shopify [crawl\|check] <url>` | Uncapped signed crawl of a Shopify store you administer, then the audit (extension) |
 
 ## Development Rules
 
@@ -218,7 +235,7 @@ claude-seo/
 - **URL validation**: All scripts that connect to user-supplied URLs must use `scripts/url_safety.py` (`validate_url_strict()` plus the pinned safe request helpers). This blocks private IPs, loopback, metadata endpoints, redirect rebinding, and DNS rebinding.
 - **OAuth tokens**: Never store `client_secret` in the token file. Read it from the client_secret.json file at runtime.
 - **No hardcoded paths**: Use `os.path.dirname(os.path.abspath(__file__))` for relative paths, never a user-specific absolute path
-- **Config location**: `~/.config/claude-seo/google-api.json` and `~/.config/claude-seo/backlinks-api.json` (user-space, not in repo)
+- **Config location**: `~/.config/claude-seo/google-api.json` and `~/.config/claude-seo/backlinks-api.json`; `CLAUDE_SEO_PROFILE_DIR` moves them, with `oauth-token.json` and `matomo.json`, into a per-project directory (user-space, not in repo)
 
 ## Report Generation Rules
 
@@ -247,7 +264,7 @@ Part of the Claude Code skill family:
 1. **Progressive Disclosure**: Metadata always loaded, instructions on activation, resources on demand
 2. **Industry Detection**: Auto-detect SaaS, e-commerce, local, publisher, agency
 3. **Parallel Execution**: Full audits spawn up to 17 subagents simultaneously
-4. **Extension System**: DataForSEO, Firecrawl, Banana, Ahrefs, SE Ranking, Profound, Bing Webmaster, and Unlighthouse extensions
+4. **Extension System**: 11 extensions. DataForSEO, Firecrawl, Banana, Ahrefs, and PostHog connect an MCP server; SE Ranking, Profound, Bing Webmaster, Matomo, Unlighthouse, and Shopify do not
 
 ## Repository Topology (public + private)
 

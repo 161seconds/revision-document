@@ -9,7 +9,7 @@ argument-hint: "[url or generate]"
 license: MIT
 metadata:
   author: AgriciDaniel
-  version: "2.5.0"
+  version: "2.6.3"
   category: seo
 ---
 
@@ -17,33 +17,58 @@ metadata:
 
 ## Mode 1: Analyze Existing Sitemap
 
-Discover candidates before reporting a sitemap missing:
+Discover candidates before reporting a sitemap missing, and read every sitemap
+found in the same run:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run sitemap_discovery.py <url> --json
+"${CLAUDE_PLUGIN_ROOT}/scripts/claude-seo" run sitemap_discovery.py <url> --expand --json
 ```
 
 The helper reads every bounded `Sitemap:` declaration in robots.txt, validates
 cross-host targets through the shared SSRF-safe fetch layer, and still probes
 common paths when a declared sitemap is stale or invalid. Use only entries in
 `found`; preserve declared failures as findings instead of treating a robots.txt
-line alone as proof that a sitemap works.
+line alone as proof that a sitemap works. Gzip sitemaps (`.xml.gz`) are inflated
+and classified by their content; such an entry carries `gzip: true`.
+
+With `--expand` it also follows a sitemap index one level down to its child
+sitemaps and counts every entry. `expanded.files` has one
+object per sitemap file and `expanded.totals` sums them. Read these checks from
+the output; do not count or parse sitemap files by hand:
+
+| Check | Fields in `expanded` |
+|-------|----------------------|
+| Valid XML, file reachable | `files[].valid`, `error`, `status_code`, `kind` |
+| Per-file limit: **≤50,000 URLs AND ≤50MB uncompressed** | `url_count`, `bytes`, `decompressed_bytes`; `findings` holds `over_50000_urls`, `over_50000_sitemaps` or `over_50mib_uncompressed` |
+| Index structure | `child_count`, child files carry `parent`; `nested_sitemap_index` in `findings` means an index lists another index (not allowed, not followed) |
+| `<lastmod>` present and valid **W3C Datetime** | `lastmod_count` against `url_count`, `lastmod_invalid_count` |
+| `<lastmod>` suspiciously uniform | `lastmod_identical_share` near 1.0 on a file with many URLs, with `lastmod_most_common`, `lastmod_oldest`, `lastmod_newest` |
+| URLs on another host than their sitemap | `cross_host_url_count`, `cross_host_url_examples`; a child file on another host has `cross_host` |
+| Duplicate or malformed URLs | `duplicate_count` (repeats inside one file), `totals.duplicates_across_files` (URL already listed by an earlier file; each entry is counted one way only), `invalid_loc_count`, `totals.unique_urls` against `totals.total_urls` |
+| Tokens or session IDs in listed URLs | `redacted_url_count`, `redacted_url_examples` (values replaced) |
+| Sitemap referenced in robots.txt | `source` is `robots.txt` (top-level `declared` lists every directive) |
+| Run cut short | `truncated`, `children.skipped`; rerun with a higher `--max-children` (default 50) |
+
+Sitemap file URLs (`url`, `parent`) and `cross_host_url_examples` are printed
+without their query string (`query_redacted` refers to the file URL). Every
+page URL is counted, but only `--sample` distinct URLs per file (default 20) are
+printed in `sample_urls`. Those keep their query string and can be requested as
+printed. URLs in `redacted_url_examples` had a value replaced: report them, do
+not status-check them.
 
 ### Validation Checks
-- Valid XML format
-- Per-file limit: **≤50,000 URLs AND ≤50MB uncompressed** (whichever is hit first)
-- All URLs return HTTP 200
-- `<lastmod>` accurate: must be a valid **W3C Datetime** and reflect the **last
-  significant content change** (main content, structured data, links, not
-  copyright/boilerplate edits). Google only honours `<lastmod>` when consistently
-  and verifiably accurate, so warn when values are suspiciously uniform or newer
-  than the page's real content.
+The script cannot judge these; check them yourself:
+- URLs return HTTP 200: spot-check `sample_urls` from each file (never
+  `redacted_url_examples` or `cross_host_url_examples`, which are not exact URLs)
+- `<lastmod>` accuracy: it must reflect the **last significant content change**
+  (main content, structured data, links, not copyright/boilerplate edits).
+  Google only honours `<lastmod>` when consistently and verifiably accurate, so
+  warn when values are newer than the page's real content.
 - No deprecated tags: `<priority>` and `<changefreq>` are ignored by Google
-- Sitemap referenced in robots.txt
 - Compare crawled pages vs sitemap; flag missing pages
 
 ### Quality Signals
-- Sitemap index file if >50k URLs
+- Sitemap index file if >50k URLs (`totals.total_urls`, `kind`)
 - Split by content type (pages, posts, images, videos)
 - No non-canonical URLs in sitemap
 - No noindexed URLs in sitemap
@@ -73,12 +98,13 @@ Google documents three subtypes with their own rules, validate per-subtype:
   `<video:player_loc>`; mRSS also supported. Flag deprecated/removed tags
   (`<video:category>`, `<video:gallery_loc>`, `<video:price>`, `<video:tvshow>`,
   player autoplay/allow_embed) as info-level removable; recheck Google docs before citing a removal date.
-- **News**: max **1,000** `<news:news>` per file (not 50,000); include only
-  articles from the **last 2 days**; required `<news:publication>`/`<news:name>`/
-  `<news:language>`/`<news:publication_date>`/`<news:title>`; submit/discover through
-  Search Console or robots.txt/sitemap index; use Publisher Center only for
-  publication management where relevant. When the `news:` namespace is detected, override the generic
-  50k check with the 1,000 cap.
+- **News**: max **1,000** `<news:news>` tags per file. Keep the 50,000 URL and
+  50 MB checks; do not replace them when the `news:` namespace is present
+  (https://developers.google.com/search/docs/crawling-indexing/sitemaps/news-sitemap).
+  Include `<news:news>` only on articles from the **last 2 days**; required
+  `<news:publication>`/`<news:name>`/`<news:language>`/`<news:publication_date>`/
+  `<news:title>`; submit/discover through Search Console or robots.txt/sitemap
+  index; use Publisher Center only for publication management where relevant.
 
 ## Mode 2: Generate New Sitemap
 

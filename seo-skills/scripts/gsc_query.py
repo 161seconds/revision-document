@@ -20,6 +20,7 @@ from typing import Optional
 
 try:
     from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
 except ImportError:
     print(
         "Error: google-api-python-client required. "
@@ -30,10 +31,12 @@ except ImportError:
 
 try:
     from google_auth import get_oauth_credentials, load_config
+    from google_properties import resolve_site_property
 except ImportError:
     import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from google_auth import get_oauth_credentials, load_config
+    from google_properties import resolve_site_property
 
 GSC_SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
 INDEXATION_NOTE = (
@@ -72,6 +75,22 @@ def _validate_dimensions(dimensions: Optional[list]) -> list[str]:
 def _parse_dimensions(raw: str) -> list[str]:
     """Parse a comma-separated CLI dimension list, preserving an empty list."""
     return _validate_dimensions([item.strip() for item in raw.split(",") if item.strip()])
+
+
+def _resolve_date_range(
+    start_date: Optional[str], end_date: Optional[str], days: int = 28,
+) -> tuple[str, str]:
+    """Count inclusive dates back from the explicit or data-lag end date."""
+    end_date = end_date or (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+    if not start_date:
+        if days < 1:
+            raise ValueError("days must be a positive integer")
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+        except (TypeError, ValueError) as exc:
+            raise ValueError("end_date must use YYYY-MM-DD") from exc
+        start_date = (end - timedelta(days=days - 1)).strftime("%Y-%m-%d")
+    return start_date, end_date
 
 
 def _totals_from_row(row: dict) -> dict:
@@ -159,7 +178,8 @@ def query_search_analytics(
 
     Args:
         site_url: GSC property (e.g., 'sc-domain:example.com' or 'https://example.com/').
-        start_date: Start date (YYYY-MM-DD). Default: 28 days ago.
+        start_date: Start date (YYYY-MM-DD). Default: 27 days before end_date
+            for an inclusive 28-day period.
         end_date: End date (YYYY-MM-DD). Default: 3 days ago (data lag).
         dimensions: List of dimensions: query, page, country, device, date, searchAppearance.
         search_type: web, image, video, news, discover, googleNews.
@@ -189,6 +209,7 @@ def query_search_analytics(
 
     try:
         dimensions = _validate_dimensions(dimensions)
+        start_date, end_date = _resolve_date_range(start_date, end_date)
     except ValueError as exc:
         result["error"] = str(exc)
         return result
@@ -198,10 +219,6 @@ def query_search_analytics(
         result["error"] = "Could not build GSC service. Check service account credentials."
         return result
 
-    if not start_date:
-        start_date = (datetime.now() - timedelta(days=28)).strftime("%Y-%m-%d")
-    if not end_date:
-        end_date = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
     result["date_range"] = {"start": start_date, "end": end_date}
     if _date_range_overlaps(start_date, end_date, GSC_ANOMALY_START, GSC_ANOMALY_END):
         result["warnings"].append(GSC_ANOMALY_WARNING)
@@ -252,8 +269,8 @@ def query_search_analytics(
                 break
 
     except Exception as e:
-        error_str = str(e)
-        if "403" in error_str:
+        status = e.resp.status if isinstance(e, HttpError) else None
+        if status == 403:
             hint = (
                 " A domain property is written sc-domain:example.com."
                 if not site_url.startswith(("sc-domain:", "http://", "https://"))
@@ -266,7 +283,7 @@ def query_search_analytics(
                 "Settings > Users and permissions, or use your own account with "
                 "CLAUDE_SEO_GOOGLE_AUTH=adc after gcloud auth application-default login."
             )
-        elif "404" in error_str:
+        elif status == 404:
             result["error"] = (
                 f"Property '{site_url}' not found. "
                 "Use 'sc-domain:example.com' for domain properties or "
@@ -340,7 +357,7 @@ def query_search_analytics(
     # Quick wins: position 4-10 with high impressions
     if "query" in dimensions:
         sorted_by_impressions = sorted(all_rows, key=lambda r: r.get("impressions", 0), reverse=True)
-        for row in sorted_by_impressions[:200]:
+        for row in sorted_by_impressions:
             pos = row.get("position", 0)
             if 4 <= pos <= 10 and row.get("impressions", 0) > 50:
                 result["quick_wins"].append({
@@ -351,8 +368,9 @@ def query_search_analytics(
                     "ctr": round(row.get("ctr", 0) * 100, 2),
                     "opportunity": "Position 4-10 with high impressions -- small ranking improvement yields significant traffic gain",
                 })
-
-        result["quick_wins"] = result["quick_wins"][:20]
+                # Limit eligible opportunities, not the rows searched for them.
+                if len(result["quick_wins"]) == 20:
+                    break
 
     return result
 
@@ -436,11 +454,19 @@ def main():
         choices=["query", "sitemaps", "sites"],
         help="Command: query (default), sitemaps, sites",
     )
-    parser.add_argument(
+    property_group = parser.add_mutually_exclusive_group()
+    property_group.add_argument(
         "--property", "-p",
-        help="GSC property (e.g., sc-domain:example.com). Uses default from config if not specified.",
+        help="Explicit GSC property (e.g., sc-domain:example.com). Without --property or --domain the config default is used, unless a sites mapping is configured.",
     )
-    parser.add_argument("--days", "-d", type=int, default=28, help="Number of days (default: 28)")
+    property_group.add_argument(
+        "--domain",
+        help="Audited site domain/URL; resolves its sites entry and refuses another site's default.",
+    )
+    parser.add_argument(
+        "--days", "-d", type=int, default=28,
+        help="Inclusive days ending at --end-date or 3 days ago (default: 28); ignored when --start-date is set",
+    )
     parser.add_argument("--start-date", help="Start date (YYYY-MM-DD)")
     parser.add_argument("--end-date", help="End date (YYYY-MM-DD)")
     parser.add_argument(
@@ -460,11 +486,37 @@ def main():
 
     args = parser.parse_args()
 
-    # Resolve property
+    # Resolve property. An empty flag value (an unset shell variable, say) must
+    # not fall through to the global default and report another site's data.
+    for flag, value in (("--property", args.property), ("--domain", args.domain)):
+        if value is not None and not value.strip():
+            print(f"Error: {flag} was given an empty value.", file=sys.stderr)
+            sys.exit(1)
     prop = args.property
-    if not prop:
+    if prop is None and args.command != "sites":
         config = load_config()
-        prop = config.get("default_property")
+        if args.domain is not None:
+            try:
+                prop = resolve_site_property(config, "gsc", args.domain)
+            except ValueError as error:
+                print(f"Error: {error}", file=sys.stderr)
+                sys.exit(1)
+        elif config.get("sites"):
+            print(
+                "Error: A sites mapping is configured, so the default property is "
+                "not assumed. Pass --domain <audited-domain> or --property <property>.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        else:
+            prop = config.get("default_property")
+            if prop:
+                print(
+                    f"Note: no --domain or --property given; using the default GSC "
+                    f"property {prop} from config. Pass --domain <audited-domain> to "
+                    "bind the query to the audited site.",
+                    file=sys.stderr,
+                )
     if not prop and args.command != "sites":
         print("Error: No property specified. Use --property or set default_property in config.", file=sys.stderr)
         sys.exit(1)
@@ -474,9 +526,8 @@ def main():
     elif args.command == "sitemaps":
         result = list_sitemaps(prop)
     else:
-        start = args.start_date or (datetime.now() - timedelta(days=args.days)).strftime("%Y-%m-%d")
-        end = args.end_date or (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
         try:
+            start, end = _resolve_date_range(args.start_date, args.end_date, args.days)
             dims = _parse_dimensions(args.dimensions)
         except ValueError as exc:
             parser.error(str(exc))

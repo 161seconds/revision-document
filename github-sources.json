@@ -22,7 +22,11 @@
     {
       "repository": "AgriciDaniel/claude-seo",
       "status": "existing",
-      "path": "seo-skills"
+      "path": "seo-skills",
+      "commit": "5d7d85ef32ade08dd4265cb678af8357ca6e6098",
+      "branch": "main",
+      "files": 608,
+      "bytes": 8869810
     },
     {
       "repository": "Nutlope/hallmark",

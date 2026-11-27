@@ -205,15 +205,26 @@ def query_history(
     return result
 
 
+# Trend windows: calendar weeks per window and the values each one needs.
+TREND_WINDOW_WEEKS = 4
+TREND_WINDOW_MIN_VALUES = 3
+
+
 def detect_trends(metrics: dict) -> dict:
     """
     Analyze p75 timeseries to detect trends.
 
-    Compares the average of the last 4 weeks to the average of the first 4 weeks.
+    Compares the average of the last 4 calendar weeks to the average of the
+    first 4 calendar weeks that follow any leading weeks without data (a page
+    or origin that became CrUX-eligible partway through the window). Each
+    window needs at least 3 values and is averaged over the values present.
+    The windows must not overlap, so fewer than 8 calendar weeks after the
+    trim, or a window with 2 or more missing weeks, is insufficient_data.
 
     Returns:
         Dictionary mapping metric names to trend info:
         direction (improving/stable/degrading), change_pct, latest, earliest.
+        change_pct is None for an increase from zero, where a percentage is undefined.
     """
     trends = {}
 
@@ -221,27 +232,37 @@ def detect_trends(metrics: dict) -> dict:
         p75s = data.get("p75_values", [])
         valid = [v for v in p75s if v is not None]
 
-        if len(valid) < 8:
+        # Keep the calendar positions. Dropping every missing week first can
+        # label old measurements as the latest four-week window. Only the
+        # leading gap is trimmed: the series starts at the first week with data.
+        start = next((i for i, v in enumerate(p75s) if v is not None), len(p75s))
+        series = p75s[start:]
+        first_4 = [v for v in series[:TREND_WINDOW_WEEKS] if v is not None]
+        last_4 = [v for v in series[-TREND_WINDOW_WEEKS:] if v is not None]
+        if (
+            len(series) < 2 * TREND_WINDOW_WEEKS
+            or len(first_4) < TREND_WINDOW_MIN_VALUES
+            or len(last_4) < TREND_WINDOW_MIN_VALUES
+        ):
             trends[metric_name] = {
                 "direction": "insufficient_data",
                 "label": data.get("label", metric_name),
             }
             continue
 
-        # First 4 valid vs last 4 valid
-        first_4 = valid[:4]
-        last_4 = valid[-4:]
         avg_first = sum(first_4) / len(first_4)
         avg_last = sum(last_4) / len(last_4)
 
         if avg_first == 0:
-            change_pct = 0
+            change_pct = 0 if avg_last == 0 else None
         else:
             change_pct = ((avg_last - avg_first) / avg_first) * 100
 
         # For CWV, lower is better (except CLS where lower is also better)
         # So a negative change_pct means improvement
-        if abs(change_pct) < 5:
+        if change_pct is None:
+            direction = "degrading"
+        elif abs(change_pct) < 5:
             direction = "stable"
         elif change_pct < 0:
             direction = "improving"
@@ -250,7 +271,7 @@ def detect_trends(metrics: dict) -> dict:
 
         trends[metric_name] = {
             "direction": direction,
-            "change_pct": round(change_pct, 1),
+            "change_pct": round(change_pct, 1) if change_pct is not None else None,
             "earliest_avg": round(avg_first, 3) if data.get("unit") == "" else round(avg_first),
             "latest_avg": round(avg_last, 3) if data.get("unit") == "" else round(avg_last),
             "label": data.get("label", metric_name),
@@ -325,7 +346,8 @@ def main():
             change = trend.get("change_pct", 0)
             earliest = trend.get("earliest_avg")
             latest = trend.get("latest_avg")
-            print(f"  {label}: {arrow} ({change:+.1f}%) | {earliest} -> {latest}")
+            change_text = f"{change:+.1f}%" if change is not None else "n/a: zero baseline"
+            print(f"  {label}: {arrow} ({change_text}) | {earliest} -> {latest}")
 
 
 if __name__ == "__main__":

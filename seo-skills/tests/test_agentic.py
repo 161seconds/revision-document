@@ -15,7 +15,10 @@ from __future__ import annotations
 import copy
 import json
 import os
+import random
+import re
 import sys
+import time
 from pathlib import Path
 from unittest.mock import patch
 
@@ -172,6 +175,110 @@ def test_robots_5xx_is_a_p0_failure():
     with patch.object(ac, "fetch", return_value=_rec(503)):
         checks, _ = ac.audit_robots("https://example.com")
     assert checks[0]["status"] == "fail" and checks[0]["priority"] == "P0"
+
+
+def test_robots_429_is_inconclusive_not_all_allowed():
+    with patch.object(ac, "fetch", return_value=_rec(429, "", {"retry-after": "120"})):
+        checks, data = ac.audit_robots("https://example.com")
+    assert [c["id"] for c in checks] == ["robots-reachable"]
+    check = checks[0]
+    assert check["status"] == "warn" and check["priority"] == "P0"
+    assert check["evidence"] == {"status": 429, "inconclusive": True, "retry_after": "120"}
+    assert check["fix"].startswith("Inconclusive") and "not a missing file" in check["fix"]
+    assert "everything is allowed" not in check["fix"]
+    # Nothing was read, so no per-agent verdicts and no empty parse are reported.
+    assert data["inconclusive"] is True and "parsed" not in data and "agents" not in data
+
+
+@pytest.mark.parametrize("status", [401, 403, 404, 410])
+def test_other_4xx_robots_still_mean_no_robots_file(status):
+    with patch.object(ac, "fetch", return_value=_rec(status)):
+        checks, data = ac.audit_robots("https://example.com")
+    assert checks[0]["title"] == "robots.txt present" and checks[0]["status"] == "warn"
+    assert "everything is allowed" in checks[0]["fix"]
+    assert data["parsed"]["groups"] == [] and "inconclusive" not in data
+
+
+# RFC 9309 section 2.2.1 product tokens: case-insensitive, compared whole.
+
+
+@pytest.mark.parametrize(("value", "token"), [
+    ("GPTBot", "gptbot"),
+    ("gptbot", "gptbot"),
+    ("GPTBot/1.1", "gptbot"),          # version suffix is not part of the token
+    ("ClaudeBot*", "claudebot"),       # Google: googlebot* is equivalent to googlebot
+    ("GPTBot-Image", "gptbot-image"),  # "-" is a token character
+    ("Some_Bot 2.0", "some_bot"),
+    ("*", "*"),
+    (" * ", "*"),
+    ("*bot", ""),
+    ("008", ""),
+    ("", ""),
+])
+def test_product_token(value, token):
+    assert ac.product_token(value) == token
+
+
+def test_versioned_and_cased_user_agent_lines_select_the_named_group():
+    parsed = ac.parse_robots("User-agent: *\nAllow: /\n\n"
+                             "User-agent: GPTBot/1.1\nDisallow: /\n\n"
+                             "User-agent: cLaUdEbOt\nDisallow: /private\n")
+    gpt = ac.select_group(parsed, "GPTBot")
+    assert gpt["matched"] == "named" and not ac.is_allowed(gpt["rules"], "/")
+    claude = ac.select_group(parsed, "ClaudeBot")
+    assert claude["matched"] == "named" and claude["rules"] == [("disallow", "/private")]
+    assert ac.select_group(parsed, "PerplexityBot")["matched"] == "star"
+
+
+def test_trailing_star_in_a_user_agent_line_matches_the_bare_token():
+    parsed = ac.parse_robots("User-agent: *\nAllow: /\n\nUser-agent: ClaudeBot*\nDisallow: /\n")
+    claude = ac.select_group(parsed, "ClaudeBot")
+    assert claude["matched"] == "named" and not ac.is_allowed(claude["rules"], "/")
+    # It is not a wildcard: a longer token is a different product token.
+    assert ac.select_group(parsed, "ClaudeBot-Extra")["matched"] == "star"
+
+
+def test_a_token_that_is_a_prefix_of_another_bot_does_not_match():
+    parsed = ac.parse_robots("User-agent: *\nAllow: /\n\n"
+                             "User-agent: GPTBot-Image\nDisallow: /\n\n"
+                             "User-agent: Claude\nDisallow: /\n\n"
+                             "User-agent: OAI\nDisallow: /\n")
+    for token in ("GPTBot", "ClaudeBot", "Claude-User", "OAI-SearchBot"):
+        selected = ac.select_group(parsed, token)
+        assert selected["matched"] == "star" and ac.is_allowed(selected["rules"], "/"), token
+    assert ac.select_group(parsed, "gptbot-image")["matched"] == "named"
+
+
+def test_versioned_groups_merge_with_plain_ones():
+    parsed = ac.parse_robots("User-agent: GPTBot\nDisallow: /a\n\n"
+                             "User-agent: GPTBot/2.0\nDisallow: /b\n")
+    assert ac.select_group(parsed, "GPTBot")["rules"] == [("disallow", "/a"), ("disallow", "/b")]
+
+
+def test_audit_robots_uses_token_matching_and_lists_nonstandard_lines():
+    robots = ("User-agent: *\nContent-Signal: search=yes\nAllow: /\n\n"
+              "User-agent: OAI-SearchBot/1.3\nUser-agent: ClaudeBot*\nDisallow: /\n\n"
+              "User-agent: GPTBot-Image\nDisallow: /\n")
+    with patch.object(ac, "fetch", return_value=_rec(200, robots)):
+        checks, data = ac.audit_robots("https://example.com")
+    agents = {a["token"]: a for a in data["agents"]}
+    assert agents["OAI-SearchBot"]["group"] == "named" and not agents["OAI-SearchBot"]["root_allowed"]
+    assert agents["ClaudeBot"]["group"] == "named" and not agents["ClaudeBot"]["root_allowed"]
+    assert agents["GPTBot"]["group"] == "star" and agents["GPTBot"]["root_allowed"]
+    by_id = {c["id"]: c for c in checks}
+    evidence = by_id["robots-ai-groups"]["evidence"]
+    assert evidence["search_crawlers_blocked_at_root"] == ["OAI-SearchBot"]
+    assert evidence["nonstandard_user_agent_lines"] == ["OAI-SearchBot/1.3", "ClaudeBot*"]
+    assert data["nonstandard_user_agent_lines"] == ["OAI-SearchBot/1.3", "ClaudeBot*"]
+    # The named groups carry no Content-Signal while the star group does.
+    assert set(by_id["content-signal"]["evidence"]["named_groups_without_signal"]) == {
+        "OAI-SearchBot", "ClaudeBot"}
+
+
+def test_plain_robots_has_no_nonstandard_lines():
+    with patch.object(ac, "fetch", return_value=_rec(200, ROBOTS)):
+        checks, data = ac.audit_robots("https://example.com")
+    assert data["nonstandard_user_agent_lines"] == []
 
 
 # --------------------------------------------------------------------------- llms.txt
@@ -531,3 +638,109 @@ def test_content_signal_policy_equivalence_randomized() -> None:
         robots = rng.choice(["\n", "\r\n"]).join(lines) + "\n"
         draft = af.add_content_signal(robots, "search=yes")["robots_txt"]
         assert _policy(draft) == _policy(robots), robots
+
+
+def test_fix_robots_refuses_to_draft_from_nothing_on_429(monkeypatch):
+    """A rate-limited robots.txt is not a missing one: no blank-slate draft."""
+    monkeypatch.setattr(af, "fetch", lambda url: {"status": 429, "text": "", "error": None})
+    monkeypatch.setattr(sys, "argv", ["agentic_fix.py", "robots", "https://example.com/"])
+    with pytest.raises(SystemExit) as exc:
+        af.main()
+    assert "Could not read robots.txt" in str(exc.value)
+
+
+# --------------------------------------------------------------------------- hostile input
+#
+# Fetched text is hostile and one body is at most ac.MAX_BODY (2,000,000 bytes).
+# Each case below was quadratic or worse before the parser was made linear.
+
+HOSTILE_CHARS = 2_000_000
+# Headers are not bodies: http.client stops a header line at 65,536 bytes, and
+# repeated Link headers are joined, so three full lines stand in for a long one.
+HOSTILE_HEADER_CHARS = 200_000
+
+
+def _seconds(fn, *args) -> float:
+    started = time.monotonic()
+    fn(*args)
+    return time.monotonic() - started
+
+
+def _repeat(unit: str, chars: int = HOSTILE_CHARS) -> str:
+    return unit * (chars // len(unit))
+
+
+@pytest.mark.parametrize("pattern", [
+    _repeat("*") + "x", "/" + _repeat("*") + "x$", _repeat("*a"), _repeat("*/") + "x",
+    _repeat("/*") + "$", _repeat("a"), _repeat("$"),
+])
+def test_a_hostile_robots_wildcard_rule_is_matched_in_linear_time(pattern):
+    """The rule used to become a regex such as ``^.*.*.*x``."""
+    assert _seconds(ac.is_allowed, [("disallow", pattern)], "/" * 64) < 2
+    robots = f"User-agent: *\nDisallow: {pattern}\nAllow: {pattern}\n"
+    with patch.object(ac, "fetch", return_value=_rec(200, robots)):
+        assert _seconds(ac.audit_robots, "https://example.com") < 2
+
+
+def _robots_regex_reference(pattern: str, path: str) -> bool:
+    """The wildcard match as first written: a regex built from the rule."""
+    anchored = pattern.endswith("$")
+    body = pattern[:-1] if anchored else pattern
+    regex = "^" + ".*".join(re.escape(part) for part in body.split("*"))
+    regex += "$" if anchored else ""
+    return re.match(regex, path) is not None
+
+
+def test_robots_wildcard_match_agrees_with_the_original_regex():
+    rng = random.Random(260)
+    for _ in range(40_000):
+        pattern = "".join(rng.choice("/ab*$.") for _ in range(rng.randint(0, 7)))
+        path = "".join(rng.choice("/ab.$") for _ in range(rng.randint(0, 9)))
+        assert ac._pattern_matches(pattern, path) is _robots_regex_reference(pattern, path), (
+            pattern, path)
+
+
+@pytest.mark.parametrize("unit", [
+    "<div ", "<div", '<div id="root" ', "<div>", "></div>", '<div a id="app">\n',
+    'id="root"', "<div x>   ",
+])
+def test_a_hostile_page_is_checked_for_a_js_shell_in_linear_time(unit):
+    for html in (_repeat(unit), _repeat(unit) + ">", '<div id="root" ' + _repeat(unit) + "></span>"):
+        assert _seconds(ac.js_shell_marker, html) < 2
+    assert ac.js_shell_marker('<div id="root" ' + _repeat("<div ") + "> </div>")
+    assert not ac.js_shell_marker('<div id="root" ' + _repeat("<div ") + "> x</div>")
+
+
+def test_js_shell_marker_agrees_with_the_original_regex():
+    pieces = ["<div", "<DIV", " ", "\n", ">", "</div>", "</DIV>", 'id="root"', "id='app'",
+              'id="__next"', 'ID="__NUXT"', 'id="roots"', 'data-id="app"', "x", "<", "<p>",
+              "Enable JavaScript", "you need to enable javascript", 'class="a"', "<divider"]
+    rng = random.Random(260)
+    for _ in range(40_000):
+        html = "".join(rng.choice(pieces) for _ in range(rng.randint(0, 10)))
+        assert ac.js_shell_marker(html) is bool(ac.JS_SHELL.search(html)), html
+    assert ac.js_shell_marker('<div class="app" id="root" data-x="1">\n  </div>')
+    assert not ac.js_shell_marker('<div id="root"><p>Rendered</p></div>')
+
+
+@pytest.mark.parametrize("unit", ["<", "<a", "<a>", "<a>;", '<a>; rel="', "<a>;a ", ">", ";a="])
+def test_a_hostile_link_header_is_parsed_in_linear_time(unit):
+    header = _repeat(unit, HOSTILE_HEADER_CHARS)
+    assert _seconds(ac.parse_link_header, header) < 2
+    assert _seconds(ac.parse_link_header, '</c.json>; rel="ai-catalog", ' + header) < 2
+
+
+def test_many_catalog_links_do_not_stall_the_link_signals():
+    """Each catalog link used to rebuild the list of every header link."""
+    count = 5_000
+    header = ", ".join(f'<https://e.test/c{n}.json>; rel="ai-catalog"' for n in range(count))
+    html = "".join(f'<link rel="ai-catalog" href="/h{n}.json">' for n in range(count))
+    started = time.monotonic()
+    signals = ac._link_signals(ac._soup(html), header, "https://e.test/")
+    assert time.monotonic() - started < 2
+    assert len(signals["ai_catalog_links"]) == 2 * count
+    assert signals["ai_catalog_html"] == [f"https://e.test/h{n}.json" for n in range(count)]
+
+
+def test_the_hostile_cases_are_full_size():
+    assert HOSTILE_CHARS >= ac.MAX_BODY

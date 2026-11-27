@@ -44,7 +44,7 @@
 - **50% - 80% Token Reduction for AI Agents**: Native integration of token optimization tools (`RTK`, `Headroom`, `Caveman`, `Ponytail`) combined with the `ECC` engineering workflow.
 - **RMIT Hackathon 2026 Master Handbook**: A curated curriculum featuring 15 technical modules, starter pipelines, mock datasets, 5-minute pitching scripts, and Kaggle OOM emergency runbooks.
 - **Hallmark UI Design**: A complete upstream source snapshot with 48 themes, custom design guidance, redesign and audit workflows, and browser-based interface checks.
-- **Claude SEO**: A complete upstream source snapshot with 26 skills, 19 specialist agents, and 9 extensions for technical SEO, content, structured data, and AI search.
+- **Claude SEO**: A complete upstream source snapshot with 29 skills, 20 specialist agents, and 11 extensions for technical SEO, content, structured data, and AI search.
 - **Superpowers**: A complete upstream source snapshot with 15 development skills covering brainstorming, implementation plans, TDD, debugging, code review, and Git worktrees.
 - **Imported GitHub Projects**: 12 additional source snapshots in root directories, with a Vietnamese catalog, pinned commits, and integrity checks; existing projects and integrations are skipped.
 
@@ -278,10 +278,10 @@ See [usage and installation](HARNESS.md#khởi-động-dự-án) and [source att
 
 ### Claude SEO
 
-[Claude SEO](seo-skills/README.md) covers technical audits, Core Web Vitals, E-E-A-T content analysis, Schema.org markup, AI search/GEO, local SEO, hreflang, e-commerce, and Google API integrations. The snapshot includes 26 skills, 19 specialist agents, and 9 optional extensions.
+[Claude SEO](seo-skills/README.md) covers technical audits, Core Web Vitals, E-E-A-T content analysis, Schema.org markup, AI search/GEO, local SEO, hreflang, e-commerce, and Google API integrations. The snapshot includes 29 skills, 20 specialist agents, and 11 optional extensions.
 
-- **Source snapshot**: [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo), version `2.5.0`, imported on **2026-10-28**, pinned to commit [`6be93f45064ffbadced572b5d5c95f55fd263af0`](https://github.com/AgriciDaniel/claude-seo/tree/6be93f45064ffbadced572b5d5c95f55fd263af0).
-- **Integrity**: All 467 upstream files (7,001,813 bytes), including hidden configuration, assets, scripts, tests, and licenses, were copied and verified against their Git blob hashes.
+- **Source snapshot**: [AgriciDaniel/claude-seo](https://github.com/AgriciDaniel/claude-seo), version `2.6.3`, updated on **2026-11-27**, pinned to commit [`5d7d85ef32ade08dd4265cb678af8357ca6e6098`](https://github.com/AgriciDaniel/claude-seo/tree/5d7d85ef32ade08dd4265cb678af8357ca6e6098).
+- **Integrity**: All 608 upstream files (8,869,810 bytes), including hidden configuration, assets, scripts, tests, and licenses, were copied and verified against their Git blob hashes.
 - **Start here**: [Skill guide](seo-skills/skills/seo/SKILL.md), [command reference](seo-skills/docs/COMMANDS.md), and [architecture](seo-skills/docs/ARCHITECTURE.md).
 - **Installation**: Source is stored in `seo-skills/`; plugin activation and runtime setup remain separate. Follow the [upstream installation guide](seo-skills/docs/INSTALLATION.md). Skills are not registered in `.agents/skills/`.
 - **Usage after installation**: `/seo page <url>`, `/seo audit <url>`, `/seo schema <url>`, or `/seo geo <url>`.

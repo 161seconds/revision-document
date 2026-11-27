@@ -12,7 +12,8 @@ Usage:
     python google_auth.py --check --json            # JSON output
     python google_auth.py --setup                   # Show setup instructions
     python google_auth.py --tier                    # Show detected credential tier
-    python google_auth.py --auth --creds /path/to/client_secret.json  # OAuth browser flow
+    python google_auth.py --auth --creds /path/to/client_secret.json  # OAuth browser flow (read-only)
+    python google_auth.py --auth --indexing --creds /path/to/client_secret.json  # also grant the Indexing API
 """
 
 import argparse
@@ -27,13 +28,18 @@ import sys
 import time
 from typing import Optional
 
-CONFIG_PATH = os.path.expanduser("~/.config/claude-seo/google-api.json")
-TOKEN_PATH = os.path.expanduser("~/.config/claude-seo/oauth-token.json")
+_SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+from profile_paths import config_dir_fields, describe_config_dir, profile_dir_or_exit  # noqa: E402
+
+_PROFILE_DIR = profile_dir_or_exit()
+CONFIG_PATH = str(_PROFILE_DIR / "google-api.json")
+TOKEN_PATH = str(_PROFILE_DIR / "oauth-token.json")
 
 # Service-to-scope mapping
 SCOPES = {
     "gsc_readonly": "https://www.googleapis.com/auth/webmasters.readonly",
-    "gsc_write": "https://www.googleapis.com/auth/webmasters",
     "indexing": "https://www.googleapis.com/auth/indexing",
     "ga4": "https://www.googleapis.com/auth/analytics.readonly",
 }
@@ -48,10 +54,13 @@ SERVICE_AUTH = {
     "ga4": "oauth_or_sa",
 }
 
-OAUTH_SCOPES = (
-    "https://www.googleapis.com/auth/indexing "
-    "https://www.googleapis.com/auth/webmasters "
-    "https://www.googleapis.com/auth/analytics.readonly"
+# Least privilege: the default sign-in can only read. No script calls a
+# Search Console write method, and only indexing_notify.py publishes, so the
+# Indexing scope is granted on request with `--auth --indexing`.
+OAUTH_SCOPES = f"{SCOPES['gsc_readonly']} {SCOPES['ga4']}"
+INDEXING_SCOPE = SCOPES["indexing"]
+INDEXING_AUTH_COMMAND = (
+    "python scripts/google_auth.py --auth --indexing --creds /path/to/client_secret.json"
 )
 OAUTH_REDIRECT_URI = "http://localhost:8085"
 # How long --auth waits for the browser redirect, and how long the pending
@@ -104,8 +113,9 @@ def load_config() -> dict:
     """
     Load configuration from config file with environment variable fallbacks.
 
-    Reads ~/.config/claude-seo/google-api.json first. Any missing fields
-    are filled from environment variables.
+    Reads CONFIG_PATH (google-api.json in the profile directory, see
+    profile_paths.py) first. Any missing fields are filled from environment
+    variables.
 
     Returns:
         Dictionary with keys: service_account_path, api_key,
@@ -189,7 +199,7 @@ def get_service_account_credentials(scopes: list):
 
 def _gcloud_adc_path() -> str:
     """Where `gcloud auth application-default login` writes the user's credentials."""
-    config_dir = os.environ.get("CLOUDSDK_CONFIG")
+    config_dir = os.path.expanduser(os.environ.get("CLOUDSDK_CONFIG", ""))
     if not config_dir:
         if sys.platform == "win32" and os.environ.get("APPDATA"):
             config_dir = os.path.join(os.environ["APPDATA"], "gcloud")
@@ -271,13 +281,20 @@ def _load_oauth_token() -> Optional[dict]:
     _chmod_quiet(TOKEN_PATH, 0o600)
     try:
         with open(TOKEN_PATH, "r") as f:
-            return json.load(f)
+            token_data = json.load(f)
     except (json.JSONDecodeError, IOError):
         return None
+    # A token file holding a JSON string or list is not a token.
+    return token_data if isinstance(token_data, dict) else None
 
 
 def _save_oauth_token(token_data: dict):
-    """Save OAuth token to TOKEN_PATH with secure (0o600) permissions."""
+    """Save OAuth token to TOKEN_PATH with secure (0o600) permissions.
+
+    The client secret never belongs in the token file. It is dropped here, so
+    a hand-edited or foreign token file is cleaned on the next save.
+    """
+    token_data = {k: v for k, v in token_data.items() if k != "client_secret"}
     _write_private_json(TOKEN_PATH, token_data)
 
 
@@ -528,7 +545,53 @@ def get_oauth_credentials(scopes: list):
     return get_service_account_credentials(scopes) or get_gcloud_credentials(scopes)
 
 
-def run_oauth_flow(creds_path: str):
+def oauth_scopes(include_indexing: bool = False) -> str:
+    """The space-separated scopes --auth asks for: read-only unless
+    ``include_indexing`` adds the Indexing API (`--auth --indexing`)."""
+    if include_indexing:
+        return f"{OAUTH_SCOPES} {INDEXING_SCOPE}"
+    return OAUTH_SCOPES
+
+
+def _token_has_scope(token_data: Optional[dict], scope: str) -> Optional[bool]:
+    """Whether a saved OAuth token was granted ``scope``.
+
+    None when the token does not record its scopes, so the caller can let
+    the API decide instead of refusing a token that may well be valid.
+    """
+    if not isinstance(token_data, dict):
+        return None
+    granted = token_data.get("scope")
+    if isinstance(granted, (list, tuple)):
+        granted = " ".join(str(item) for item in granted)
+    if not isinstance(granted, str) or not granted.strip():
+        return None
+    return scope in granted.split()
+
+
+def indexing_scope_error() -> Optional[str]:
+    """A message with the command to run when the saved sign-in cannot use
+    the Indexing API, or None when it can or when that cannot be told here.
+
+    Mirrors the order in get_oauth_credentials: a chosen gcloud sign-in and a
+    service account are not judged (their scopes are not recorded in a file
+    this module reads); a saved OAuth token is, because it is used first.
+    """
+    if _prefers_gcloud() and _load_gcloud_adc() is not None:
+        return None
+    token_data = _load_oauth_token()
+    if not token_data or not token_data.get("access_token"):
+        return None
+    if _token_has_scope(token_data, INDEXING_SCOPE) is not False:
+        return None
+    return (
+        "The saved Google sign-in is read-only and was not granted the Indexing "
+        f"API scope ({INDEXING_SCOPE}). To grant it, sign in again with:\n"
+        f"  {INDEXING_AUTH_COMMAND}"
+    )
+
+
+def run_oauth_flow(creds_path: str, include_indexing: bool = False):
     """
     Run OAuth browser-based authentication flow.
 
@@ -537,6 +600,8 @@ def run_oauth_flow(creds_path: str):
 
     Args:
         creds_path: Path to the OAuth client_secret JSON file.
+        include_indexing: Also ask for the Indexing API scope. Off by
+            default, so a plain sign-in is read-only.
     """
     import http.server
     import urllib.parse
@@ -562,7 +627,7 @@ def run_oauth_flow(creds_path: str):
             "client_id": client["client_id"],
             "redirect_uri": OAUTH_REDIRECT_URI,
             "response_type": "code",
-            "scope": OAUTH_SCOPES,
+            "scope": oauth_scopes(include_indexing),
             "access_type": "offline",
             "prompt": "consent",
             "state": state,
@@ -730,9 +795,6 @@ def validate_url(url: str) -> bool:
     # Lazy import: avoids a hard requirement on url_safety for callers that
     # only need google_auth's other helpers (e.g. token refresh) and keeps
     # the import graph one-directional.
-    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
-    if _scripts_dir not in sys.path:
-        sys.path.insert(0, _scripts_dir)
     from url_safety import validate_url as _validate_url
 
     return _validate_url(url)
@@ -833,6 +895,11 @@ def check_credentials(service: str) -> dict:
             elif expired:
                 result["available"] = False
                 result["error"] = "OAuth token expired and no refresh_token. Re-run --auth."
+            if service == "indexing" and result["available"]:
+                scope_error = indexing_scope_error()
+                if scope_error:
+                    result["available"] = False
+                    result["error"] = scope_error
         else:
             # Fall back to service account
             sa_path = config.get("service_account_path")
@@ -866,11 +933,16 @@ def check_credentials(service: str) -> dict:
         # GA4 also needs property ID
         if service == "ga4" and result["available"]:
             ga4_id = config.get("ga4_property_id")
-            if not ga4_id:
+            site_map = config.get("sites") or {}
+            has_site_ga4 = isinstance(site_map, dict) and any(
+                isinstance(site, dict) and site.get("ga4_property_id")
+                for site in site_map.values()
+            )
+            if not ga4_id and not has_site_ga4:
                 result["available"] = False
                 result["error"] = (
                     "Credentials found but no GA4 property ID configured. "
-                    f"Set GA4_PROPERTY_ID or add 'ga4_property_id' to {CONFIG_PATH}"
+                    f"Set GA4_PROPERTY_ID or add 'ga4_property_id' or a sites mapping to {CONFIG_PATH}"
                 )
     else:
         result["error"] = f"Unknown service: {service}"
@@ -913,8 +985,16 @@ def detect_tier() -> dict:
                 except (json.JSONDecodeError, IOError):
                     pass
 
-    if has_authenticated and config.get("ga4_property_id"):
+    site_map = config.get("sites") or {}
+    has_site_ga4 = isinstance(site_map, dict) and any(
+        isinstance(site, dict) and site.get("ga4_property_id")
+        for site in site_map.values()
+    )
+    if has_authenticated and (config.get("ga4_property_id") or has_site_ga4):
         has_ga4 = True
+
+    # A read-only sign-in (the default --auth) cannot use the Indexing API.
+    indexing = [] if has_authenticated and indexing_scope_error() else ["Indexing API"]
 
     if has_ga4:
         return {
@@ -923,7 +1003,7 @@ def detect_tier() -> dict:
             "capabilities": [
                 "PageSpeed Insights", "CrUX", "CrUX History",
                 "Search Console", "URL Inspection", "Sitemaps",
-                "Indexing API", "GA4 Organic Traffic",
+                *indexing, "GA4 Organic Traffic",
             ],
             "missing": None,
         }
@@ -934,7 +1014,7 @@ def detect_tier() -> dict:
             "capabilities": [
                 "PageSpeed Insights", "CrUX", "CrUX History",
                 "Search Console", "URL Inspection", "Sitemaps",
-                "Indexing API",
+                *indexing,
             ],
             "missing": "Add 'ga4_property_id' to unlock GA4 organic traffic reports",
         }
@@ -999,8 +1079,8 @@ FASTEST, FOR PROPERTIES YOU OWN: use your own Google account
      Paste email, set Viewer role
 
 6. CREATE CONFIG FILE
-   mkdir -p ~/.config/claude-seo
-   Save to ~/.config/claude-seo/google-api.json:
+   mkdir -p """ + '"' + os.path.dirname(CONFIG_PATH) + '"' + """
+   Save to """ + CONFIG_PATH + """:
 
    {
      "service_account_path": "/path/to/service_account.json",
@@ -1052,6 +1132,14 @@ def main():
         help="Run OAuth browser-based authentication flow",
     )
     parser.add_argument(
+        "--indexing",
+        action="store_true",
+        help=(
+            "With --auth: also grant the Indexing API scope (needed only by "
+            "indexing_notify.py). Without it the sign-in is read-only"
+        ),
+    )
+    parser.add_argument(
         "--exchange",
         action="store_true",
         help="Manually exchange an auth code for tokens",
@@ -1067,11 +1155,15 @@ def main():
 
     args = parser.parse_args()
 
+    if args.indexing and not args.auth:
+        print("Error: --indexing only applies together with --auth", file=sys.stderr)
+        sys.exit(1)
+
     if args.auth:
         if not args.creds:
             print("Error: --creds is required with --auth", file=sys.stderr)
             sys.exit(1)
-        run_oauth_flow(args.creds)
+        run_oauth_flow(args.creds, include_indexing=args.indexing)
         return
 
     if args.exchange:
@@ -1117,13 +1209,25 @@ def main():
                 continue
             results[svc] = check_credentials(svc)
 
+        site_map = load_config().get("sites") or {}
+        site_summary = {
+            domain: [name for name, key in (("GSC", "gsc_property"), ("GA4", "ga4_property_id"))
+                     if isinstance(site, dict) and site.get(key)]
+            for domain, site in site_map.items()
+        } if isinstance(site_map, dict) else {}
         if args.json:
             tier_info = detect_tier()
-            output = {"tier": tier_info, "services": results}
+            output = {
+                "tier": tier_info,
+                **config_dir_fields(CONFIG_PATH),
+                "services": results,
+                "sites": site_summary,
+            }
             print(json.dumps(output, indent=2))
         else:
             tier_info = detect_tier()
             print(f"Credential Tier: {tier_info['tier']} -- {tier_info['description']}")
+            print(f"Config directory: {describe_config_dir(CONFIG_PATH)}")
             print()
             for svc, result in results.items():
                 status = "OK" if result["available"] else "MISSING"
@@ -1132,6 +1236,10 @@ def main():
                     print(f"         {result['error']}")
                 if result.get("client_email"):
                     print(f"         Service account: {result['client_email']}")
+            if site_summary:
+                print("Configured site properties:")
+                for domain, services_for_site in sorted(site_summary.items()):
+                    print(f"  {domain}: {', '.join(services_for_site) or 'no Google properties'}")
             print()
             if tier_info["missing"]:
                 print(f"Tip: {tier_info['missing']}")

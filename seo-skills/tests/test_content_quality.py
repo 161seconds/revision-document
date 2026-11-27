@@ -61,6 +61,22 @@ def test_content_quality_filler_heavy_text_scores_low() -> None:
     assert result["ai_pattern_score"] >= 40
 
 
+def test_longer_filler_phrase_is_not_scored_twice() -> None:
+    """``let's dive in`` is a prefix of ``let's dive into``. One sentence
+    must not count as both, which pushes filler_score from 25 to 50 and
+    raises the filler flag.
+    """
+    text = "Let's dive into the details of this topic today. " * 40
+    result = content_quality.analyse(text)
+    assert result["matches"]["filler"] == ["let's dive into"]
+    assert result["filler_score"] == 25
+    assert "filler" not in result["flags"]
+
+    shorter = "Let's dive in and review the details of this topic today. " * 40
+    short_result = content_quality.analyse(shorter)
+    assert short_result["matches"]["filler"] == ["let's dive in"]
+
+
 def test_content_quality_rich_content_scores_high() -> None:
     # 300+ tokens with specific numbers, named entities, no filler.
     text = (
@@ -211,6 +227,66 @@ def test_content_quality_cjk_human_output_notes_partial_coverage() -> None:
     assert "not directly comparable" in result.stdout
 
 
+def test_content_quality_tokenises_greek() -> None:
+    """Greek is space-delimited and alphabetic, like Latin, but was not in
+    [A-Za-z] or any CJK/Hangul/kana range, so the Latin-only tokeniser saw
+    zero tokens, ``information_density`` collapsed to 0.0, and a real
+    content-quality signal was silently discarded for every Greek page
+    (issue surfaced auditing simposio.news, a Greek-language site)."""
+    text = (
+        "Είναι σημαντικό να γνωρίζουμε τη διαφορά ανάμεσα σε χορτοφάγους "
+        "και vegan καταναλωτές. Η χορτοφαγία έχει πολλές μορφές και κανόνες."
+    )
+    result = content_quality.analyse(text)
+    assert result["tokens"] > 0, result
+    assert result["unique_tokens"] > 0, result
+
+
+def test_content_quality_cjk_distinguishes_documents_in_greek_too() -> None:
+    """Regression guard mirroring the Korean case: two different Greek
+    documents of different length must not collapse to the same token
+    count."""
+    short = "Ο χορτοφάγος δεν τρώει κρέας."
+    long = (
+        "Ο χορτοφάγος δεν τρώει κρέας, ψάρι ή πουλερικά, αλλά μπορεί να "
+        "καταναλώνει γαλακτοκομικά και αυγά ανάλογα με την κατηγορία. "
+        "Ο vegan αποκλείει κάθε ζωικό προϊόν, συμπεριλαμβανομένου του "
+        "μελιού, της ζελατίνης και του δέρματος."
+    )
+    assert content_quality.analyse(long)["tokens"] > content_quality.analyse(short)["tokens"]
+
+
+def test_content_quality_greek_output_carries_coverage_object() -> None:
+    """A Greek score must be flagged as partial coverage too, with its own
+    script label, not silently compared to an English score."""
+    text = (
+        "Είναι σημαντικό να γνωρίζουμε τη διαφορά ανάμεσα σε χορτοφάγους "
+        "και vegan καταναλωτές. Η χορτοφαγία έχει πολλές μορφές και κανόνες "
+        "που αξίζει να κατανοήσουμε καλύτερα."
+    )
+    result = content_quality.analyse(text)
+    assert result["coverage"] == {
+        "script": "non_latin_alphabetic",
+        "entity_density": "not_computed",
+        "phrase_lists": "english_only",
+    }
+
+
+def test_content_quality_greek_human_output_notes_partial_coverage() -> None:
+    """The CLI's human-readable summary must call out partial coverage for
+    a non-Latin-alphabetic script with a distinct label from CJK's."""
+    script = Path(__file__).resolve().parents[1] / "scripts" / "content_quality.py"
+    text = "Είναι σημαντικό να γνωρίζουμε τη διαφορά ανάμεσα σε vegan και vegetarian. " * 5
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        input=text, capture_output=True, encoding="utf-8", errors="replace", env=env,
+    )
+    assert result.returncode in (0, 1)
+    assert "non-Latin-script text detected" in result.stdout
+    assert "not directly comparable" in result.stdout
+
+
 # ---------------------------------------------------------------------------
 # content_humanize
 # ---------------------------------------------------------------------------
@@ -310,6 +386,123 @@ def test_verify_empty_text_returns_zero_claims() -> None:
     result = content_verify.verify("")
     assert result["claim_count"] == 0
     assert result["uncited_ratio"] == 0.0
+
+
+def test_verify_detects_a_bare_percentage_statistic() -> None:
+    # A bare percentage not followed by "of ..." is the canonical unsourced
+    # statistic this tool exists to flag. A trailing \b after "%" in the
+    # pattern could never match (a percentage is followed by a space or
+    # punctuation, both non-word), so these claims were silently missed.
+    for text in ("The bounce rate hit 85%.", "Conversions rose by 30% overall.",
+                 "Prices rose 3.5% this quarter."):
+        result = content_verify.verify(text)
+        assert result["claim_count"] == 1, text
+        assert result["claims"][0]["kind"] == "statistic", text
+
+
+def test_verify_bare_percentage_does_not_double_count_percent_of() -> None:
+    # "47% of marketers" must still be one claim, not two (the longer
+    # "% of ..." match wins over the bare-"%" match on the same span).
+    result = content_verify.verify("47% of marketers report gains.")
+    assert result["claim_count"] == 1
+
+
+def test_verify_standalone_per_followed_by_a_common_word_is_not_a_citation() -> None:
+    # The citation pattern requires "per" + a Proper Noun, but re.IGNORECASE
+    # made the [A-Z] anchor match lowercase too, so "per week" and "per page"
+    # were counted as citations. A claim near such a phrase was then wrongly
+    # reported as cited.
+    result = content_verify.verify("Fully 80% of users churned, measured per week.")
+    assert result["claim_count"] == 1
+    claim = result["claims"][0]
+    assert claim["has_citation"] is False
+    assert result["uncited_count"] == 1
+
+
+def test_verify_per_followed_by_a_proper_noun_is_still_a_citation() -> None:
+    result = content_verify.verify("Fully 80% of users churned, per Gartner.")
+    assert result["claims"][0]["has_citation"] is True
+
+
+@pytest.mark.parametrize(
+    "attribution",
+    [
+        "according to a Stanford study",
+        "according to the CDC",
+        "Source: https://example.org/x",
+        "(source: internal survey)",
+        "cited by the World Bank",
+        "via: nielsen.com",
+    ],
+)
+def test_verify_attribution_prefixes_count_without_a_capitalised_next_word(
+    attribution: str,
+) -> None:
+    # Only "per" needs a capitalised next word. The other attribution forms
+    # are citations whatever follows them: an article, a URL, a lowercase
+    # domain or a bracketed lowercase "source:".
+    result = content_verify.verify(f"Fully 80% of users churned, {attribution}.")
+    assert result["claims"][0]["kind"] == "statistic"
+    assert result["claims"][0]["has_citation"] is True, attribution
+
+
+def test_verify_per_is_case_insensitive_but_its_proper_noun_is_not() -> None:
+    cited = content_verify.verify("Fully 80% of users churned. Per Gartner.")
+    assert cited["claims"][0]["has_citation"] is True
+    uncited = content_verify.verify("Fully 80% of users churned. Per week.")
+    assert uncited["claims"][0]["has_citation"] is False
+
+
+def test_verify_bare_percentage_claim_is_found_in_greek_text() -> None:
+    """The numeric claim patterns (bare %, $ amounts, "Nx faster") need no
+    English words, so they already worked in Greek before this fix; this
+    guards that the new coverage note does not also suppress real claims."""
+    result = content_verify.verify(
+        "Το 47% των καταναλωτών προτιμά vegan προϊόντα, σύμφωνα με μια έρευνα."
+    )
+    assert result["claim_count"] == 1
+    assert result["claims"][0]["kind"] == "statistic"
+
+
+def test_verify_english_output_has_no_coverage_key() -> None:
+    """English text must keep its exact pre-fix output shape: no
+    ``coverage`` key when every claim pattern is meaningful for the text."""
+    result = content_verify.verify("47% of marketers report better results.")
+    assert "coverage" not in result
+
+
+def test_verify_greek_output_carries_coverage_object() -> None:
+    """A zero or low claim_count in Greek text must be flagged as partial
+    coverage, not read as "this draft has no unsupported claims": the
+    English-worded patterns (temporal "in 2025", comparative "3x faster",
+    "% of ...") cannot fire on Greek wording even though the bare-number
+    patterns can."""
+    result = content_verify.verify(
+        "Η vegan διατροφή αποκλείει όλα τα προϊόντα ζωικής προέλευσης, "
+        "συμπεριλαμβανομένου του μελιού και της ζελατίνης."
+    )
+    assert result["coverage"] == {
+        "script": "non_latin_alphabetic",
+        "claim_patterns": "english_only",
+    }
+
+
+def test_verify_greek_human_output_notes_partial_coverage() -> None:
+    """The CLI's human-readable summary must call out partial coverage for
+    Greek text, so a near-zero claim count is never read as "clean"."""
+    script = Path(__file__).resolve().parents[1] / "scripts" / "content_verify.py"
+    text = (
+        "Η vegan διατροφή αποκλείει όλα τα προϊόντα ζωικής προέλευσης, "
+        "συμπεριλαμβανομένου του μελιού και της ζελατίνης στη ζαχαροπλαστική."
+    )
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    result = subprocess.run(
+        [sys.executable, str(script)],
+        input=text, capture_output=True, encoding="utf-8", errors="replace", env=env,
+    )
+    assert result.returncode in (0, 1)
+    assert "non-Latin-script text detected" in result.stdout
+    assert "does not mean the draft has no unsupported claims" in result.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -433,6 +626,35 @@ def test_seo_updates_filter_by_year() -> None:
     data = seo_updates._load()
     since_2025 = seo_updates._filter(data["updates"], since="2025")
     assert all(u["date"] >= "2025-01-01" for u in since_2025)
+
+
+def test_seo_updates_since_accepts_a_non_zero_padded_month() -> None:
+    # "2025-9" is 6 chars, so the old length-based dispatch fell through to
+    # date.fromisoformat("2025-9") and raised ValueError. A non-padded month
+    # is unambiguous September and must filter the same as "2025-09".
+    data = seo_updates._load()
+    padded = seo_updates._filter(data["updates"], since="2025-09")
+    unpadded = seo_updates._filter(data["updates"], since="2025-9")
+    assert [u["date"] for u in unpadded] == [u["date"] for u in padded]
+
+
+def test_seo_updates_parse_since_rejects_garbage_cleanly() -> None:
+    # An out-of-range month (length 7, so it used to reach date(2025, 13, 1)
+    # and crash) and non-date text both raise a clear ValueError.
+    for bad in ("2025-13", "garbage", "2025-02-30"):
+        with pytest.raises(ValueError):
+            seo_updates._parse_since(bad)
+
+
+def test_seo_updates_cli_reports_a_bad_since_without_a_traceback() -> None:
+    script = Path(__file__).resolve().parents[1] / "scripts" / "seo_updates.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--since", "2025-13", "--json"],
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 2
+    assert "Traceback" not in result.stderr
+    assert "invalid --since" in result.stderr
 
 
 def test_seo_updates_cli_accepts_every_known_kind() -> None:

@@ -368,12 +368,93 @@ def test_organic_report_builds_daily_and_pages(monkeypatch):
     assert len(data["top_pages"]) == 2
     top = data["top_pages"][0]
     assert top["url"] == "en"
-    assert top["visits"] == 146
+    assert top["visits"] == 111
     assert top["actions"] == 583
     assert top["hits"] == 181
     # 23 bounces / 111 entry visits
     assert top["bounce_rate"] == 20.7
     assert top["bounce_rate"] == round(23 / 111 * 100, 1)
+
+
+def test_top_pages_report_propagates_entry_page_error():
+    """A failed entry-page query must not become an empty success report."""
+    daily = {
+        "2026-01-01": {"nb_visits": 100, "nb_uniq_visitors": 80,
+                       "nb_actions": 150, "nb_pageviews": 200,
+                       "bounce_count": 30, "sum_visit_length": 6000},
+    }
+    responses = [
+        _mock_response(200, daily),
+        _mock_response(200, {
+            "result": "error",
+            "message": "You cannot access Actions",
+        }),
+    ]
+    with _patch_session(side_effect=responses):
+        env = matomo_report.top_pages_report(
+            "1", "https://m.test", SECRET_TOKEN, days=2
+        )
+    assert env["status"] == "error"
+    assert env["error"] == "You cannot access Actions"
+    assert env["data"] is None
+    assert env["metadata"]["method"] == "Actions.getEntryPageUrls"
+
+
+def test_top_pages_report_keeps_success_path():
+    """The successful top-pages envelope remains unchanged."""
+    daily = {
+        "2026-01-01": {"nb_visits": 100, "nb_uniq_visitors": 80,
+                       "nb_actions": 150, "nb_pageviews": 200,
+                       "bounce_count": 30, "sum_visit_length": 6000},
+    }
+    pages = [
+        {"label": "/landing", "nb_visits": 42, "nb_hits": 50,
+         "entry_nb_visits": 40, "entry_nb_actions": 80,
+         "entry_bounce_count": 4},
+    ]
+    responses = [_mock_response(200, daily), _mock_response(200, pages)]
+    with _patch_session(side_effect=responses):
+        env = matomo_report.top_pages_report(
+            "1", "https://m.test", SECRET_TOKEN, days=2
+        )
+    assert env["status"] == "success"
+    assert env["error"] is None
+    assert env["data"]["total_organic_visits"] == 100
+    assert env["data"]["pages"][0]["url"] == "/landing"
+    assert env["data"]["pages"][0]["visits"] == 40
+
+
+def test_top_pages_cli_reports_failure_in_human_and_json_modes(
+        monkeypatch, capsys):
+    """The CLI must exit nonzero and keep JSON valid on an entry-page error."""
+    monkeypatch.setenv("MATOMO_URL", "https://m.test")
+    monkeypatch.setenv("MATOMO_API_TOKEN", SECRET_TOKEN)
+    monkeypatch.setenv("MATOMO_SITE_ID", "1")
+    daily = {
+        "2026-01-01": {"nb_visits": 100, "nb_uniq_visitors": 80,
+                       "nb_actions": 150, "nb_pageviews": 200,
+                       "bounce_count": 30, "sum_visit_length": 6000},
+    }
+    error = _mock_response(200, {
+        "result": "error",
+        "message": "You cannot access Actions",
+    })
+
+    with _patch_session(side_effect=[_mock_response(200, daily), error]), \
+            patch("sys.argv", ["matomo_report.py", "top-pages"]):
+        rc = matomo_report.main()
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "You cannot access Actions" in captured.err
+
+    with _patch_session(side_effect=[_mock_response(200, daily), error]), \
+            patch("sys.argv", ["matomo_report.py", "top-pages", "--json"]):
+        rc = matomo_report.main()
+    captured = capsys.readouterr()
+    assert rc == 1
+    payload = json.loads(captured.out)
+    assert payload["status"] == "error"
+    assert payload["error"] == "You cannot access Actions"
 
 
 def test_device_breakdown_handles_matomo5_array(monkeypatch):
@@ -829,7 +910,7 @@ def test_installers_pass_credentials_through_env_not_source_or_argv():
     # PowerShell here-strings: @" ... "@ interpolates, so the credential must
     # arrive in the environment, never inside the here-string or on argv.
     assert "sys.argv" in ps1
-    assert "$TokenPlain" not in ps1.split('@"')[1].split('"@')[0]
+    assert "$TokenPlain" not in _installer_ps1_writer()
     assert "$env:CLAUDE_SEO_SECRET = $TokenPlain" in ps1
     assert "python - $MatomoAuth $MatomoUrl $SiteId" in ps1
     assert 'CLAUDE_SEO_SECRET="${MATOMO_TOKEN}" python3 -' in sh
@@ -840,6 +921,34 @@ def test_uninstall_removes_the_config_and_the_legacy_env_entry():
     assert ".config/claude-seo/matomo.json" in text
     assert "MATOMO_API_TOKEN" in text, "must still clear the pre-v2.4.0 env entry"
     assert "os.replace" in text, "the settings.json rewrite must stay atomic"
+
+
+def _run_uninstall(tmp_path: Path, profile: str | None) -> Path:
+    home = tmp_path / "home"
+    default = home / ".config" / "claude-seo" / "matomo.json"
+    default.parent.mkdir(parents=True)
+    default.write_text("{}")
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_SEO_PROFILE_DIR"}
+    env["HOME"] = str(home)
+    if profile is not None:
+        env["CLAUDE_SEO_PROFILE_DIR"] = profile
+    proc = subprocess.run(
+        ["bash", str(UNINSTALL_SH)], capture_output=True, text=True, env=env
+    )
+    assert proc.returncode == 0, proc.stderr
+    return default
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash uninstaller")
+def test_uninstall_keeps_the_default_config_when_a_profile_is_set(tmp_path):
+    default = _run_uninstall(tmp_path, str(tmp_path / "profile"))
+    assert default.exists()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash uninstaller")
+def test_uninstall_removes_the_default_config_without_a_profile(tmp_path):
+    default = _run_uninstall(tmp_path, None)
+    assert not default.exists()
 
 
 def test_installers_warn_about_a_private_instance_address():
@@ -858,6 +967,11 @@ def _installer_writer() -> str:
     match = _HEREDOC_RE.search(INSTALL_SH.read_text(encoding="utf-8"))
     assert match, "install.sh has no quoted <<'PY' heredoc"
     return match.group(1)
+
+
+def _installer_ps1_writer() -> str:
+    """The credential-writing Python in install.ps1's @" ... "@ here-string."""
+    return INSTALL_PS1.read_text(encoding="utf-8").split('@"')[1].split('"@')[0]
 
 
 @pytest.mark.skipif(
@@ -899,3 +1013,42 @@ def test_installer_writer_survives_a_dropped_optional_argument(tmp_path):
     stored = json.loads((home / ".config" / "claude-seo" / "matomo.json").read_text())
     assert stored["matomo_token"] == SECRET_TOKEN
     assert "matomo_site_id" not in stored
+
+
+def test_installer_writer_follows_the_profile_directory(tmp_path):
+    """With CLAUDE_SEO_PROFILE_DIR set, the installer writes into that profile only."""
+    home = tmp_path / "home"
+    home.mkdir()
+    profile = tmp_path / "profiles" / "project-xyz"
+    proc = subprocess.run(
+        [sys.executable, "-c", _installer_writer(),
+         str(ROOT / "scripts" / "matomo_auth.py"),
+         "https://analytics.example.com", "3"],
+        capture_output=True, text=True,
+        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home),
+             "CLAUDE_SEO_SECRET": SECRET_TOKEN, "CLAUDE_SEO_PROFILE_DIR": str(profile)},
+    )
+    assert proc.returncode == 0, proc.stderr
+    stored = json.loads((profile / "matomo.json").read_text())
+    assert stored["matomo_token"] == SECRET_TOKEN
+    assert not (home / ".config" / "claude-seo" / "matomo.json").exists()
+    assert str(profile.resolve() / "matomo.json") in proc.stdout
+
+
+def test_ps1_installer_writer_follows_the_profile_directory(tmp_path):
+    """The PowerShell installer's writer also writes into CLAUDE_SEO_PROFILE_DIR only."""
+    home = tmp_path / "home"
+    home.mkdir()
+    profile = tmp_path / "profiles" / "project-xyz"
+    proc = subprocess.run(
+        [sys.executable, "-c", _installer_ps1_writer(),
+         str(ROOT / "scripts" / "matomo_auth.py"),
+         "https://analytics.example.com", "3"],
+        capture_output=True, text=True,
+        env={**os.environ, "HOME": str(home), "USERPROFILE": str(home),
+             "CLAUDE_SEO_SECRET": SECRET_TOKEN, "CLAUDE_SEO_PROFILE_DIR": str(profile)},
+    )
+    assert proc.returncode == 0, proc.stderr
+    stored = json.loads((profile / "matomo.json").read_text())
+    assert stored["matomo_token"] == SECRET_TOKEN
+    assert not (home / ".config" / "claude-seo" / "matomo.json").exists()

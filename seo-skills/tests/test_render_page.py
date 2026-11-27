@@ -32,6 +32,19 @@ if _SCRIPTS not in sys.path:
 
 pytest.importorskip("requests")
 import render_page  # noqa: E402
+import url_safety  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _browser_launch_environment(monkeypatch):
+    """The fake browser launches the same for any user, proxy or opt-out."""
+    import browser_proxy
+
+    monkeypatch.setattr(browser_proxy.os, "geteuid", lambda: 1000, raising=False)
+    monkeypatch.setattr(url_safety.requests.utils, "getproxies", lambda: {})
+    monkeypatch.delenv(browser_proxy.NO_SANDBOX_ENV, raising=False)
+    monkeypatch.delenv(browser_proxy.REQUIRE_SANDBOX_ENV, raising=False)
+    monkeypatch.setattr(browser_proxy, "_warned_reasons", set())
 
 # ---------------------------------------------------------------------------
 # _is_spa: SPA shell detector
@@ -395,6 +408,7 @@ def _render_with_fake_browser(page, *, extract_accessibility=False):
     spa_html = '<html><body><div id="root"></div></body></html>'
     with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
          patch.object(render_page, "safe_requests_get", return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "require_public_page", return_value=None), \
          patch.object(render_page, "sync_playwright", lambda: _FakePlaywrightManager(page)):
         return render_page.render_page(
             "https://app.example/",
@@ -575,9 +589,81 @@ def test_render_page_result_dict_has_all_documented_fields() -> None:
         "extracted_text", "publication_date", "accessibility_tree",
         "accessibility_error", "accessibility_partial",
         "headers", "redirect_chain", "console_errors", "render_engine",
-        "render_diagnostics", "render_ms", "mode_used", "too_large", "error",
+        "render_diagnostics", "render_ms", "mode_used", "too_large", "js_gap",
+        "sandbox", "error",
     }
     assert set(result.keys()) == expected_fields
+    # No render happened, so there is nothing to compare.
+    assert result["js_gap"] is None
+
+
+def test_rendered_result_carries_the_js_gap() -> None:
+    """A rendered page compares the raw shell with the hydrated DOM."""
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    result = _render_with_fake_browser(page)
+    gap = result["js_gap"]
+    assert result["mode_used"] == "rendered"
+    assert gap["raw"]["words"] == 0
+    assert gap["rendered"]["words"] == 40
+    assert gap["diff"]["words_only_rendered_share"] == 1.0
+    assert gap["raw_truncated"] is False
+    assert gap["significant"] is True
+    # The CLI JSON is built from the full strings, before --max-text cuts them.
+    summary = render_page._json_summary(result, max_text=10)
+    assert summary["js_gap"] == gap
+    json.dumps(summary)
+
+
+def test_js_gap_in_the_cli_json_is_bounded_without_max_text() -> None:
+    """--max-text does not cut js_gap, so js_gap has to be small on its own."""
+    big = "A" * 200_000
+    blocks = "".join(
+        f'<script type="application/ld+json">{{"@type": "{big}{i}"}}</script>' for i in range(5)
+    )
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    page.content = lambda: (
+        f"<html><head><title>{big}</title>{blocks}</head>"
+        f"<body><h1>{big}</h1>" + ("hydrated content " * 20) + "</body></html>"
+    )
+    result = _render_with_fake_browser(page)
+    gap = result["js_gap"]
+    assert gap["diff"]["schema_types_only_rendered"]
+    for max_text in (0, 2000):
+        summary = render_page._json_summary(result, max_text=max_text)
+        assert summary["js_gap"] == gap
+        assert len(json.dumps(summary["js_gap"], indent=2)) < 5_000
+
+
+def test_js_gap_stays_null_when_the_render_fails() -> None:
+    spa_html = '<html><body><div id="root"></div></body></html>'
+    with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
+         patch.object(render_page, "safe_requests_get",
+                      return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "sync_playwright", None):
+        result = render_page.render_page("https://app.example/", mode="auto")
+    assert result["error"] is not None
+    assert result["js_gap"] is None
+
+
+def test_js_gap_is_skipped_for_oversized_html(monkeypatch) -> None:
+    monkeypatch.setattr(render_page, "JS_GAP_MAX_HTML_CHARS", 100)
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    result = _render_with_fake_browser(page)
+    assert result["error"] is None
+    assert result["js_gap"] is None
+    assert result["render_diagnostics"] == [
+        "js_gap skipped: HTML is larger than 100 characters"
+    ]
+
+
+def test_js_gap_failure_is_a_diagnostic_not_an_error() -> None:
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    with patch.object(render_page, "js_gap", side_effect=RuntimeError("boom")):
+        result = _render_with_fake_browser(page)
+    assert result["error"] is None
+    assert result["js_gap"] is None
+    assert result["content"].startswith("<html>")
+    assert any("js_gap comparison failed" in item for item in result["render_diagnostics"])
 
 
 def test_cdp_accessibility_nodes_are_bounded_and_rebuilt(monkeypatch) -> None:
@@ -688,3 +774,162 @@ def test_json_and_output_are_composable(tmp_path, monkeypatch, capsys) -> None:
     assert payload["content"] == "<html><b"
     assert payload["truncation"]["fields"]["content"]["truncated"] is True
     assert output.read_text(encoding="utf-8") == result["content"]
+
+
+# ---------------------------------------------------------------------------
+# What a finished navigation may be reported as (browser egress guard)
+# ---------------------------------------------------------------------------
+
+
+def _render_checking_the_page(page, monkeypatch):
+    """Like _render_with_fake_browser, with the real require_public_page."""
+    import browser_proxy
+    import url_safety
+
+    monkeypatch.setattr(url_safety.requests.utils, "getproxies", lambda: {})
+    monkeypatch.delenv(browser_proxy.NO_SANDBOX_ENV, raising=False)
+    spa_html = '<html><body><div id="root"></div></body></html>'
+    with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
+         patch.object(render_page, "safe_requests_get", return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "sync_playwright", lambda: _FakePlaywrightManager(page)):
+        return render_page.render_page("https://app.example/", mode="auto", timeout_ms=1000)
+
+
+@pytest.mark.parametrize("url", ["about:blank", "chrome-error://chromewebdata/"])
+def test_render_that_never_loaded_is_an_error_with_the_raw_fetch_kept(monkeypatch, url) -> None:
+    """A blank or error page is not the site's DOM. Before, it was reported
+    as a successful render (or as "Invalid URL scheme: 'about'")."""
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)], navigation_timeout=True)
+    page.url = url
+    result = _render_checking_the_page(page, monkeypatch)
+    assert result["error"].startswith("render failed: ")
+    assert "Invalid URL scheme" not in result["error"]
+    assert result["content"] is None
+    assert result["raw_fallback_available"] is True
+    assert result["status_code"] == 200 and result["raw_content"]
+    assert any("DOMContentLoaded timed out" in item for item in result["render_diagnostics"])
+    assert result["render_ms"] is not None
+
+
+@pytest.mark.parametrize(
+    "url", ["http://127.0.0.1:9000/", "http://169.254.169.254/latest/", "data:text/html,x"]
+)
+def test_render_that_ended_on_a_non_public_page_is_refused(monkeypatch, url) -> None:
+    """After a refused redirect the browser shows the guard's error page at
+    the refused URL. That page is never returned as rendered content."""
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    page.url = url
+    result = _render_checking_the_page(page, monkeypatch)
+    assert result["error"].startswith("url_safety: ")
+    assert result["content"] is None
+    assert result["url"] == "https://x.example/"  # the raw fetch's URL, not the refused one
+    assert result["raw_fallback_available"] is True
+
+
+SANDBOX_LOG = "[pid] zygote_host_impl_linux.cc(128)] No usable sandbox! If you are running on Ubuntu"
+
+
+def _render_in_sandbox_mode(page, monkeypatch, mode):
+    """Render through the real launch helper; returns (result, launches).
+
+    ``mode``: 'sandboxed', 'fallback' (the sandboxed launch fails with
+    Chromium's message) or 'opt_out' (the variable is set).
+    """
+    import browser_proxy
+
+    launches: list[bool] = []
+
+    def manager():
+        fake = _FakePlaywrightManager(page)
+        real_launch = fake.playwright.chromium.launch
+
+        def launch(**kwargs):
+            launches.append(kwargs["chromium_sandbox"])
+            if mode == "fallback" and kwargs["chromium_sandbox"]:
+                raise RuntimeError(SANDBOX_LOG)
+            return real_launch(**kwargs)
+
+        fake.playwright.chromium.launch = launch
+        return fake
+
+    if mode == "opt_out":
+        monkeypatch.setenv(browser_proxy.NO_SANDBOX_ENV, "1")
+    spa_html = '<html><body><div id="root"></div></body></html>'
+    with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
+         patch.object(render_page, "safe_requests_get", return_value=_fake_response(spa_html)), \
+         patch.object(render_page, "require_public_page", return_value=None), \
+         patch.object(render_page, "sync_playwright", manager):
+        result = render_page.render_page("https://app.example/", mode="auto", timeout_ms=1000)
+    return result, launches
+
+
+@pytest.mark.parametrize(
+    "mode,sandbox,launches,warning",
+    [
+        ("sandboxed", True, [True], ""),
+        ("fallback", False, [True, False], "sandbox is unavailable on this system"),
+        ("opt_out", False, [False], "disabled by CLAUDE_SEO_CHROMIUM_NO_SANDBOX"),
+    ],
+)
+def test_render_json_says_whether_chromium_was_sandboxed(
+    monkeypatch, capsys, mode, sandbox, launches, warning
+) -> None:
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    result, seen = _render_in_sandbox_mode(page, monkeypatch, mode)
+    assert result["error"] is None
+    assert seen == launches
+    payload = json.loads(json.dumps(render_page._json_summary(result), default=str))
+    assert payload["sandbox"] is sandbox
+    err = capsys.readouterr().err
+    assert (warning in err) if warning else (err == "")
+
+
+def test_render_as_root_falls_back_and_says_so(monkeypatch, capsys) -> None:
+    import browser_proxy
+
+    monkeypatch.setattr(browser_proxy.os, "geteuid", lambda: 0, raising=False)
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    result, launches = _render_in_sandbox_mode(page, monkeypatch, "sandboxed")
+    assert result["error"] is None and result["content"]
+    assert result["sandbox"] is False
+    assert launches == [False]
+    assert "a browser exploit would run as root" in capsys.readouterr().err
+
+
+def test_raw_mode_launches_no_browser_and_reports_no_sandbox_state() -> None:
+    with patch.object(render_page, "validate_url_strict", side_effect=_mock_validate_strict), \
+         patch.object(render_page, "safe_requests_get", return_value=_fake_response("<html></html>")):
+        result = render_page.render_page("https://x.example/", mode="never")
+    assert result["mode_used"] == "raw"
+    assert result["sandbox"] is None
+
+
+def test_render_error_after_launch_keeps_the_sandbox_state(monkeypatch, capsys) -> None:
+    """A page error that quotes Chromium's sandbox message is not a launch
+    failure: no relaunch, no fallback, and the result still says sandboxed."""
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+
+    def goto(_url, **_kwargs):
+        raise RuntimeError("Page.goto: Target crashed\n" + SANDBOX_LOG)
+
+    page.goto = goto
+    result, launches = _render_in_sandbox_mode(page, monkeypatch, "sandboxed")
+    assert result["error"].startswith("playwright error: Page.goto: Target crashed")
+    assert launches == [True]
+    assert result["sandbox"] is True
+    assert result["raw_fallback_available"] is True
+    assert capsys.readouterr().err == ""
+
+
+def test_render_in_strict_mode_reports_the_sandbox_failure(monkeypatch) -> None:
+    import browser_proxy
+
+    monkeypatch.setenv(browser_proxy.REQUIRE_SANDBOX_ENV, "1")
+    monkeypatch.setattr(browser_proxy.os, "geteuid", lambda: 0, raising=False)
+    page = _FakeBrowserPage([(200, 20), (200, 20), (200, 20)])
+    result = _render_checking_the_page(page, monkeypatch)
+    assert "CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX" in result["error"]
+    assert "CLAUDE_SEO_CHROMIUM_NO_SANDBOX=1" in result["error"]
+    assert result["raw_fallback_available"] is True
+    assert result["sandbox"] is None  # no browser was launched
+    assert page.goto_options is None  # the browser never started

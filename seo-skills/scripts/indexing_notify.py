@@ -33,11 +33,21 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from google_auth import get_oauth_credentials, validate_url
+    from google_auth import (
+        INDEXING_AUTH_COMMAND,
+        get_oauth_credentials,
+        indexing_scope_error,
+        validate_url,
+    )
 except ImportError:
     import os
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-    from google_auth import get_oauth_credentials, validate_url
+    from google_auth import (
+        INDEXING_AUTH_COMMAND,
+        get_oauth_credentials,
+        indexing_scope_error,
+        validate_url,
+    )
 
 INDEXING_SCOPES = ["https://www.googleapis.com/auth/indexing"]
 DAILY_QUOTA = 200
@@ -48,6 +58,31 @@ SCOPE_WARNING = (
     "an indexing guarantee; abuse can revoke access. Use URL Inspection or "
     "sitemaps for ordinary URLs."
 )
+
+
+# How Google words a 403 caused by a token without the needed scope.
+_SCOPE_403_MARKERS = (
+    "access_token_scope_insufficient",
+    "insufficient authentication scopes",
+    "insufficientpermissions",
+)
+
+
+def _is_missing_scope_error(error_str: str) -> bool:
+    """True when an API error says the token lacks the scope, as opposed to
+    the account lacking Owner access to the property."""
+    lowered = error_str.lower()
+    return any(marker in lowered for marker in _SCOPE_403_MARKERS)
+
+
+def _missing_scope_message() -> str:
+    return (
+        "The Google credentials in use were not granted the Indexing API scope "
+        f"({INDEXING_SCOPES[0]}). With the OAuth sign-in, grant it with:\n"
+        f"  {INDEXING_AUTH_COMMAND}\n"
+        "With a gcloud sign-in, add that scope to --scopes when you run "
+        "gcloud auth application-default login."
+    )
 
 
 def _build_indexing_service():
@@ -87,6 +122,12 @@ def notify_url(
         result["error"] = "URL rejected: only public http/https URLs are accepted (SSRF protection)"
         return result
 
+    scope_error = indexing_scope_error()
+    if scope_error:
+        result["error_code"] = "missing_indexing_scope"
+        result["error"] = scope_error
+        return result
+
     service = _build_indexing_service()
     if not service:
         result["error"] = (
@@ -104,17 +145,22 @@ def notify_url(
     try:
         response = service.urlNotifications().publish(body=body).execute()
         metadata = response.get("urlNotificationMetadata", {})
-        latest = metadata.get("latestUpdate", {}) or metadata.get("latestRemove", {})
+        notification_field = "latestRemove" if action == "URL_DELETED" else "latestUpdate"
+        latest = metadata.get(notification_field, {})
         result["notify_time"] = latest.get("notifyTime")
     except Exception as e:
         error_str = str(e)
-        if "403" in error_str:
+        if _is_missing_scope_error(error_str):
+            result["error_code"] = "missing_indexing_scope"
+            result["error"] = _missing_scope_message()
+        elif "403" in error_str:
             result["error"] = (
                 "Permission denied. The service account must be added as an "
                 "Owner in Google Search Console for this domain. "
                 "Also ensure the Indexing API is enabled in your GCP project."
             )
         elif "429" in error_str:
+            result["error_code"] = "quota_exceeded"
             result["error"] = (
                 f"Quota exceeded. Daily limit: {DAILY_QUOTA} publish requests. "
                 "Check your quota in the Google API Console "
@@ -150,6 +196,12 @@ def get_notification_metadata(url: str) -> dict:
         result["error"] = "URL rejected: only public http/https URLs are accepted (SSRF protection)"
         return result
 
+    scope_error = indexing_scope_error()
+    if scope_error:
+        result["error_code"] = "missing_indexing_scope"
+        result["error"] = scope_error
+        return result
+
     service = _build_indexing_service()
     if not service:
         result["error"] = "Could not build Indexing service."
@@ -173,7 +225,10 @@ def get_notification_metadata(url: str) -> dict:
                 "notify_time": remove.get("notifyTime"),
             }
     except Exception as e:
-        if "404" in str(e):
+        if _is_missing_scope_error(str(e)):
+            result["error_code"] = "missing_indexing_scope"
+            result["error"] = _missing_scope_message()
+        elif "404" in str(e):
             result["error"] = "No notification metadata found for this URL."
         else:
             result["error"] = f"Error fetching metadata: {e}"
@@ -212,8 +267,7 @@ def batch_notify(
             f"Only the first {DAILY_QUOTA} URLs will be submitted."
         )
         urls = urls[:DAILY_QUOTA]
-
-    if len(urls) > 50:
+    elif len(urls) > 50:
         result["quota_warning"] = (
             f"Submitting {len(urls)} URLs will use {len(urls)}/{DAILY_QUOTA} "
             f"of your daily quota."
@@ -232,8 +286,14 @@ def batch_notify(
         if notification.get("error"):
             result["summary"]["error"] += 1
             # Stop on quota errors
-            if "429" in str(notification.get("error", "")):
+            if notification.get("error_code") == "quota_exceeded" or "429" in str(
+                notification.get("error", "")
+            ):
                 result["error"] = "Stopped: daily quota exceeded."
+                break
+            # No point repeating a request the credentials cannot make.
+            if notification.get("error_code") == "missing_indexing_scope":
+                result["error"] = notification["error"]
                 break
         else:
             result["summary"]["success"] += 1

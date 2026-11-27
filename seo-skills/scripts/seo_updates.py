@@ -15,8 +15,15 @@ Usage::
     python scripts/seo_updates.py                  # latest 10
     python scripts/seo_updates.py --since 2025-06  # ISO yyyy or yyyy-mm filter
     python scripts/seo_updates.py --kind core
+    python scripts/seo_updates.py --since 2025 --limit 0   # every match, no cap
     python scripts/seo_updates.py --json
     python scripts/seo_updates.py --unverified     # show 3rd-party claims awaiting check
+
+Only ``--limit`` entries (default 10, newest first) are shown. JSON output
+carries ``total_matching`` and ``truncated`` so a caller can tell a short list
+from a cut one; text output prints a note when entries were left out. Pass
+``--limit 0`` whenever the full list matters, for example when checking a
+date window for a core update.
 
 JSON output carries ``freshness`` (age in days, ``stale`` after 30 days). Text
 output prints a warning to stderr when the ledger is stale.
@@ -69,6 +76,29 @@ def _load() -> dict:
         return json.load(fh)
 
 
+def _parse_since(since: str) -> date:
+    """Parse a ``--since`` value into a date.
+
+    Accepts ``yyyy``, ``yyyy-mm`` and ``yyyy-mm-dd``; the month and day may be
+    given without a leading zero (``2025-9`` means September 2025). Any other
+    shape, or an out-of-range month/day, raises ``ValueError`` with a message
+    the CLI turns into a clean error instead of a traceback.
+    """
+    parts = since.split("-")
+    try:
+        if len(parts) == 1:
+            return date(int(parts[0]), 1, 1)
+        if len(parts) == 2:
+            return date(int(parts[0]), int(parts[1]), 1)
+        if len(parts) == 3:
+            return date(int(parts[0]), int(parts[1]), int(parts[2]))
+    except ValueError:
+        pass
+    raise ValueError(
+        f"invalid --since value: {since!r} (expected yyyy, yyyy-mm, or yyyy-mm-dd)"
+    )
+
+
 def _filter(
     updates: Iterable[dict],
     *,
@@ -77,14 +107,7 @@ def _filter(
 ) -> list[dict]:
     out = list(updates)
     if since:
-        # Accept yyyy or yyyy-mm
-        if len(since) == 4:
-            since_date = date(int(since), 1, 1)
-        elif len(since) == 7:
-            y, m = since.split("-")
-            since_date = date(int(y), int(m), 1)
-        else:
-            since_date = date.fromisoformat(since)
+        since_date = _parse_since(since)
         out = [u for u in out if date.fromisoformat(u["date"]) >= since_date]
     if kinds:
         # A combined "core+spam" rollout is both a core and a spam update, so
@@ -113,7 +136,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--limit", type=int, default=10,
-        help="Maximum number of entries to show (default 10).",
+        help="Maximum number of entries to show (default 10); 0 shows every match.",
     )
     parser.add_argument(
         "--unverified",
@@ -123,6 +146,8 @@ def main() -> int:
     )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
+    if args.limit < 0:
+        parser.error("--limit must be 0 (no limit) or a positive number")
 
     data = _load()
     fresh = freshness(data.get("last_verified"))
@@ -154,7 +179,14 @@ def main() -> int:
         return 0
 
     kinds = set(args.kind) if args.kind else None
-    filtered = _filter(data["updates"], since=args.since, kinds=kinds)[: args.limit]
+    try:
+        matching = _filter(data["updates"], since=args.since, kinds=kinds)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 2
+    # Keep the full match count: a silently cut list reads as "no such update".
+    filtered = matching[: args.limit] if args.limit else matching
+    truncated = len(filtered) < len(matching)
 
     if args.json:
         json.dump(
@@ -164,6 +196,8 @@ def main() -> int:
                 "freshness": fresh,
                 "filter": {"since": args.since, "kinds": list(kinds or [])},
                 "count": len(filtered),
+                "total_matching": len(matching),
+                "truncated": truncated,
                 "updates": filtered,
             },
             sys.stdout,
@@ -177,6 +211,9 @@ def main() -> int:
     print(f"Showing {len(filtered)} updates"
           f"{' since ' + args.since if args.since else ''}"
           f"{' kind=' + '/'.join(kinds) if kinds else ''}")
+    if truncated:
+        print(f"Note: {len(matching) - len(filtered)} older matching updates not shown "
+              f"({len(filtered)} of {len(matching)}); pass --limit 0 to list them all.")
     print()
     for u in filtered:
         print(f"  {u['date']}  [{u['kind']:<10}]  {u['name']}")

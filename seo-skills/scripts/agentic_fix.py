@@ -89,7 +89,8 @@ def add_content_signal(robots_text: str, signal: str) -> dict:
             current["last_ua"] = idx
             in_ua_block = True
             continue
-        in_ua_block = False
+        if field in ("allow", "disallow"):
+            in_ua_block = False
         if current is not None and field == "content-signal":
             current["has_signal"] = True
 
@@ -117,8 +118,8 @@ def add_content_signal(robots_text: str, signal: str) -> dict:
 def _field(line: str) -> str:
     """Lower-cased field name; "" for blank or comment lines.
 
-    A line with a colon but no name (': junk') is a non-user-agent field, as in
-    agentic_check.parse_robots, so it ends a user-agent block.
+    A line with a colon but no name (': junk') is an unknown record, as in
+    agentic_check.parse_robots; it does not end a user-agent block.
     """
     body = line.lstrip("\ufeff").split("#", 1)[0]
     if ":" not in body:
@@ -351,11 +352,12 @@ def main() -> None:
             rec = fetch(f"{root.scheme}://{root.netloc}/robots.txt")
             if rec["status"] == 200:
                 text = rec["text"]
-            elif rec["status"] and 400 <= rec["status"] < 500:
+            elif rec["status"] and 400 <= rec["status"] < 500 and rec["status"] != 429:
                 text = ""  # 4xx: no robots.txt, so start a new one
             else:
-                # A 5xx, WAF block or network error is not "no file"; drafting from
-                # nothing here would propose replacing the real policy.
+                # A 5xx, a 429 (rate limited, which Google treats as a server
+                # error), a WAF block or a network error is not "no file";
+                # drafting from nothing here would propose replacing the real policy.
                 raise SystemExit(f"Could not read robots.txt ({rec['error'] or rec['status']}). "
                                  "Retry, or pass the current file with --file.")
         else:

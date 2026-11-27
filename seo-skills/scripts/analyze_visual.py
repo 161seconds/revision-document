@@ -2,6 +2,14 @@
 """
 Analyze visual aspects of a web page using Playwright.
 
+Chromium is launched through browser_proxy.guarded_chromium: sandboxed where
+the host can start the Chromium sandbox, with every connection forced through
+a local proxy that refuses non-public destinations, redirect hops included.
+Where the sandbox cannot start (Ubuntu 23.10 and later, most containers,
+root) the browser runs without it, with a warning on stderr and
+"sandbox": false in the result. CLAUDE_SEO_CHROMIUM_REQUIRE_SANDBOX=1 makes
+that an error; CLAUDE_SEO_CHROMIUM_NO_SANDBOX=1 skips the sandbox attempt.
+
 Usage:
     python analyze_visual.py https://example.com
 """
@@ -22,6 +30,12 @@ except ImportError:
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
+from browser_proxy import (  # noqa: E402
+    PageNotLoadedError,
+    chromium_sandboxed,
+    guarded_chromium,
+    require_public_page,
+)
 from url_safety import (  # noqa: E402  (sys.path massage above is intentional)
     URLSafetyError,
     make_safe_playwright_route_handler,
@@ -76,6 +90,9 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
             "base_size": None,
             "readable": True,
         },
+        # True or False once a browser was launched (False: no Chromium
+        # sandbox on this system); None when none was.
+        "sandbox": None,
         "error": None,
     }
 
@@ -96,14 +113,15 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
     route_handler = make_safe_playwright_route_handler()
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+        with sync_playwright() as p, guarded_chromium(p.chromium, url) as browser:
+            result["sandbox"] = chromium_sandboxed(browser)
 
             # Desktop analysis
             desktop = new_guarded_context(browser, route_handler, viewport={"width": 1920, "height": 1080})
             page = desktop.new_page()
             page.route("**/*", route_handler)
             page.goto(url, wait_until="networkidle", timeout=timeout)
+            require_public_page(page)
 
             # Check H1 visibility above fold
             h1 = page.query_selector("h1")
@@ -159,6 +177,7 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
             page = mobile.new_page()
             page.route("**/*", route_handler)
             page.goto(url, wait_until="networkidle", timeout=timeout)
+            require_public_page(page)
 
             # Check viewport meta
             viewport_meta = page.query_selector('meta[name="viewport"]')
@@ -181,10 +200,14 @@ def analyze_visual(url: str, timeout: int = 30000) -> dict:
             result["fonts"]["readable"] = base_font_size >= 16
 
             mobile.close()
-            browser.close()
 
     except PlaywrightTimeout:
         result["error"] = f"Page load timed out after {timeout}ms"
+    except URLSafetyError as e:
+        # The browser ended on a non-public document (a refused redirect).
+        result["error"] = f"url_safety: {e}"
+    except PageNotLoadedError as e:
+        result["error"] = f"Page did not load: {e}"
     except Exception as e:
         result["error"] = str(e)
 

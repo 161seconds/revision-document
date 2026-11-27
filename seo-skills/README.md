@@ -1,7 +1,7 @@
 <!--
   Claude SEO (claude-seo): free, open-source SEO audit plugin for Claude Code by Agrici Daniel.
   Technical SEO, Core Web Vitals, E-E-A-T, Schema.org, AI search (GEO), local SEO, e-commerce and international SEO.
-  26 sub-skills and 19 specialist agents. MIT licensed.
+  29 sub-skills and 20 specialist agents. MIT licensed.
 -->
 
 <img src="assets/readme/v3/hero.svg" width="1200" height="420" alt="Claude SEO: rank in Google, get cited by AI. Three bots climb from #48 to #1 by fixing crawl, speed, schema, AI access and authority, then Google, ChatGPT, Perplexity, Gemini and Claude cite the site." />
@@ -28,7 +28,7 @@
   <a href="https://claude.com/product/claude-code"><img src="https://img.shields.io/badge/Claude%20Code-Plugin-blue" alt="Claude Code plugin" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://github.com/AgriciDaniel/claude-seo/releases"><img src="https://img.shields.io/github/v/release/AgriciDaniel/claude-seo" alt="Version" /></a>
-  <a href="tests/"><img src="https://img.shields.io/badge/tests-1077%20passing-brightgreen" alt="Tests" /></a>
+  <a href="tests/"><img src="https://img.shields.io/badge/tests-4311%20passing-brightgreen" alt="Tests" /></a>
   <a href="https://github.com/AgriciDaniel/claude-seo"><img src="https://img.shields.io/github/stars/AgriciDaniel/claude-seo?style=flat" alt="GitHub stars" /></a>
   <a href="https://www.skool.com/ai-marketing-hub-pro"><img src="https://img.shields.io/badge/AI%20Marketing%20Hub-Pro%20community-purple" alt="AI Marketing Hub Pro community" /></a>
 </p>
@@ -47,9 +47,20 @@ It checks everything a good SEO consultant would:
 - **AI search (GEO).** How likely Google AI Overviews, AI Mode, ChatGPT, Perplexity and Gemini are to cite your pages.
 - **Local and e-commerce SEO.** Google Business Profile, reviews, map pack, product pages and international sites.
 
-Claude SEO is built from 26 sub-skills and 19 specialist agents, and up to 17 agents work on your site at the same time. Every recommendation explains why it matters and how you will know it worked.
+Claude SEO is built from 29 sub-skills and 20 specialist agents, and up to 17 agents work on your site at the same time. Every recommendation explains why it matters and how you will know it worked.
 
 ## See it in action
+
+Two videos. The tour takes under four minutes: Coral, Violet and Red install Claude SEO, audit a real site and read the plan. The masterclass is the full walkthrough: 47 minutes, two live sites, a team of AI agents and every step explained.
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=1VQvcKMcVsk"><img src="assets/readme/homies-tour.jpg" width="49%" alt="Watch the Claude SEO video tour on YouTube: a full SEO team in your terminal, presented by Coral, Violet and Red" /></a>
+  <a href="https://www.youtube.com/watch?v=ahcFBHCOk_Y"><img src="assets/readme/masterclass-mega-seo.jpg" width="49%" alt="Watch the Claude SEO masterclass on YouTube: a full site audit of two live websites with AI agents, 47 minutes" /></a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=1VQvcKMcVsk">The tour (4 min)</a> · <a href="https://www.youtube.com/watch?v=ahcFBHCOk_Y">The masterclass (47 min)</a>
+</p>
 
 Type `/seo` in Claude Code to see every command:
 
@@ -69,10 +80,10 @@ The project's own site, [claude-seo.md](https://claude-seo.md), audited with Cla
 
 ## Meet the team
 
-<img src="assets/readme/v3/team.svg" width="1200" height="420" alt="The Claude SEO team: 19 specialist agents on a website, each standing on the part it checks, shown one at a time with its role, model, ability and command." />
+<img src="assets/readme/v3/team.svg" width="1200" height="420" alt="The Claude SEO team: 19 of the 20 specialist agents on a website, each standing on the part it checks, shown one at a time with its role, model, ability and command." />
 
 <details>
-<summary><b>All 19 agents</b></summary>
+<summary><b>All 20 agents</b></summary>
 <br />
 
 | Agent | Role | Model | Command |
@@ -91,6 +102,7 @@ The project's own site, [claude-seo.md](https://claude-seo.md), audited with Cla
 | `seo-backlinks` | Link Analyst | Sonnet | `/seo backlinks` |
 | Live data (extension) | Live Data Analyst | Sonnet | `/seo audit` |
 | `seo-image-gen` | Image Producer (extension) | Sonnet | `/seo image-gen` |
+| `seo-posthog` | PostHog Analyst (extension) | Sonnet | `/seo posthog` |
 | `seo-cluster` | Topic Strategist | Opus | `/seo cluster` |
 | `seo-sxo` | Search Experience Designer | Opus | `/seo sxo` |
 | `seo-drift` | Change Monitor | Opus | `/seo drift` |
@@ -192,7 +204,7 @@ Want the details? Read the [methodology](skills/seo/references/thinking-framewor
 
 ## Install
 
-<img src="assets/readme/v3/install.svg" width="1200" height="420" alt="Installing Claude SEO: add the marketplace, install the plugin, 26 skills and 19 agents arrive, /seo setup readies the browser, then /seo audit starts the first level." />
+<img src="assets/readme/v3/install.svg" width="1200" height="420" alt="Installing Claude SEO: add the marketplace, install the plugin, 29 skills and 20 agents arrive, /seo setup readies the browser, then /seo audit starts the first level." />
 
 You need [Claude Code](https://claude.com/product/claude-code) 1.0.33 or newer. Run these three commands inside it:
 
@@ -347,8 +359,12 @@ Optional add-ons that bring in more data. Claude SEO works fully without them.
 - **Profound:** tracks when AI models cite your site
 - **Bing Webmaster:** Bing data plus instant IndexNow submission
 - **Unlighthouse:** Lighthouse scores for every page of your site
+- **Shopify Crawler Access:** a complete, sitemap-driven crawl of a Shopify store you
+  administer, signed with the store's own Crawler Access signature
 
 Setup guides live in [`extensions/`](extensions/).
+
+Integrations built and maintained by other people, in their own repositories, are listed in [Community integrations](docs/COMMUNITY-INTEGRATIONS.md). They are not part of Claude SEO and are not audited by it.
 
 ## Star history
 
@@ -368,7 +384,6 @@ Setup guides live in [`extensions/`](extensions/).
 | [Claude Banana](https://github.com/AgriciDaniel/banana-claude) | AI image generation for SEO assets and posts |
 | [ChatGPT SEO](https://github.com/AgriciDaniel/chatgpt-seo) | Turns a page, draft or SEO export into a sourced fix plan inside ChatGPT |
 | [FLOW](https://github.com/AgriciDaniel/flow) | An evidence-led SEO framework with 42 AI prompts |
-| [AI Marketing Claude](https://github.com/zubair-trabzada/ai-marketing-claude) | Community suite for copy, email, ads and funnels |
 
 **Docs:** [Installation](docs/INSTALLATION.md) · [Commands](docs/COMMANDS.md) · [Architecture](docs/ARCHITECTURE.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) · [Extensions setup](docs/MCP-INTEGRATION.md) · [Security](SECURITY.md) · [Privacy](PRIVACY.md) · [Contributors](CONTRIBUTORS.md)
 
