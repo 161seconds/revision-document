@@ -108956,13 +108956,13 @@
       "repository": "public-apis/public-apis",
       "status": "import",
       "path": "public-apis",
-      "commit": "88706670ac0ffaad7bf3c6307747e2515f638bed",
+      "commit": "9fb3bdb62643400aaebee03a2ecce0cd1ec934eb",
       "branch": "master",
       "files": 23,
-      "bytes": 486216,
+      "bytes": 518197,
       "license": "MIT",
       "description": "A collective list of free APIs",
-      "archive_sha256": "18a799d2f5b50efd1288c7c90986996f67c8f37637a42ac4b7c6153036d8c0eb",
+      "archive_sha256": "cd0038730de35fb18306ee05456483c499a9dd0c5ee9ac6dba16d594fe1d3c14",
       "entries": [
         {
           "path": ".gitattributes",
@@ -109044,9 +109044,9 @@
         },
         {
           "path": "README.md",
-          "sha": "340599b11181467835c66b38581f066f9b1671e4",
+          "sha": "dfaa4c5092c918fcb64558b34c0d4c29156d07c0",
           "mode": "100644",
-          "size": 351859
+          "size": 383840
         },
         {
           "path": "scripts/README.md",
