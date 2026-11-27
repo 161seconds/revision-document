@@ -64008,13 +64008,13 @@
       "repository": "JCodesMore/ai-website-cloner-template",
       "status": "import",
       "path": "ai-website-cloner-template",
-      "commit": "5426e0e2ec35dbc173a7a18f47a3dfe2a765313e",
+      "commit": "14085f8ba2a15b5e7f509c78dfc4017dbbfced6d",
       "branch": "master",
       "files": 49,
-      "bytes": 1321217,
+      "bytes": 1206442,
       "license": "MIT",
       "description": "Clone any website with one command using AI coding agents",
-      "archive_sha256": "df5d810fd3caaf689a5360a7f44e745ba257147a2d262ba8f87fd6e6c4258c8d",
+      "archive_sha256": "3b9000f3e1f5548c0941c0a48d2a51731bb9c14076586181590321e2f37fd3d6",
       "entries": [
         {
           "path": ".agents/skills/clone-website/SKILL.md",
@@ -64083,16 +64083,22 @@
           "size": 313
         },
         {
-          "path": ".github/copilot-setup-steps.yml",
-          "sha": "e50d1df3962480eb4cd86086c4af188369efa1fc",
+          "path": ".github/dependabot.yml",
+          "sha": "8bcb8dd0d5ccdbf413249a5e5be2ebd55306dc2f",
           "mode": "100644",
-          "size": 54
+          "size": 753
         },
         {
           "path": ".github/workflows/ci.yml",
           "sha": "e9b5140328192143a3a7ecedb73adfd0d57447b1",
           "mode": "100644",
           "size": 568
+        },
+        {
+          "path": ".github/workflows/star-history.yml",
+          "sha": "ee4ac1a16b313fcd871cd537d09c8ca58e66755c",
+          "mode": "100644",
+          "size": 1795
         },
         {
           "path": ".github/workflows/token-badge.yml",
@@ -64120,9 +64126,9 @@
         },
         {
           "path": "CHANGELOG.md",
-          "sha": "2dc2c3b55f01972ad16491dc7ad9ab0dee627d12",
+          "sha": "d2bc3391af6104f77d52c38133b3098d8eaba75b",
           "mode": "100644",
-          "size": 8084
+          "size": 8788
         },
         {
           "path": "CLAUDE.md",
@@ -64156,9 +64162,9 @@
         },
         {
           "path": "README.md",
-          "sha": "0234b66ae1896b94dad0b13db82d82f8b84be82c",
+          "sha": "c494cc47d816d9e30de90d49e5ae22ce0a877d08",
           "mode": "100644",
-          "size": 8300
+          "size": 8566
         },
         {
           "path": "SECURITY.md",
@@ -64174,21 +64180,15 @@
         },
         {
           "path": "docker-compose.yml",
-          "sha": "39fc6f9c81ba5d8caf8a71d41476708237dcc5cf",
+          "sha": "038fd269fee7daaa6a58b818209ec08b14826b35",
           "mode": "100644",
-          "size": 1235
+          "size": 1381
         },
         {
           "path": "docs/assets/sponsors/swiftproxy-banner.webp",
           "sha": "5d63bd4046ada65b8742ec5a693345780de94826",
           "mode": "100644",
           "size": 54226
-        },
-        {
-          "path": "docs/assets/star-history.png",
-          "sha": "f7c1f9ed142d62fd4e5500bbbdca296de43969d1",
-          "mode": "100644",
-          "size": 83493
         },
         {
           "path": "docs/design-references/.gitkeep",
@@ -64216,15 +64216,15 @@
         },
         {
           "path": "package-lock.json",
-          "sha": "e398d99aafce8880da4631be7561aefe1b822dac",
+          "sha": "965296da0000134d01791eaaf51125ba12da7233",
           "mode": "100644",
-          "size": 351980
+          "size": 317086
         },
         {
           "path": "package.json",
-          "sha": "520ca195c6c37c0a6912bc90acb3669e7e700fe4",
+          "sha": "b54e541692bd5c308b0859339b9ea4a0fa419092",
           "mode": "100644",
-          "size": 1492
+          "size": 1494
         },
         {
           "path": "postcss.config.mjs",
