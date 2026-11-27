@@ -22,7 +22,9 @@ const SponsorsPage = lazy(loadSponsors);
 const ToolsPage = lazy(loadTools);
 const ProPage = lazy(loadPro);
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const AdventGiftPage = lazy(() => import('./pages/AdventGiftPage'));
 const AnnouncementModal = lazy(() => import('./components/common/AnnouncementModal/AnnouncementModal'));
+const AdventGift = lazy(() => import('./components/common/AdventCalendar/AdventGift'));
 const ChakraScope = lazy(loadChakra);
 
 const withChakra = load => () => Promise.all([load(), loadChakra()]);
@@ -52,6 +54,7 @@ function AppContent() {
       <Route exact path="/changelog" element={<Navigate to="/get-started/changelog" replace />} />
       <Route path="/tools/:toolId?" element={<ToolsRoute />} />
       <Route exact path="/pro" element={<ProPage />} />
+      <Route path="/advent/:day" element={<AdventGiftPage />} />
       <Route path="/c/:category" element={<CategoryIndexRoute />} />
       <Route path="/c/:category/:subcategory" element={<DocsRoute prefix="/c" />} />
       <Route path="/:category/:subcategory" element={<DocsRoute />} />
@@ -67,6 +70,11 @@ function AppContent() {
         <Suspense fallback={null}>
           <AnnouncementModal />
         </Suspense>
+        {!pathname.startsWith('/tools') && (
+          <Suspense fallback={null}>
+            <AdventGift />
+          </Suspense>
+        )}
       </Providers>
     </>
   );

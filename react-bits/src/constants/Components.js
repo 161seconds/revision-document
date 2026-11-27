@@ -44,6 +44,7 @@ const animations = {
   'dither-veil': () => import('../demo/Animations/DitherVeilDemo'),
   'electric-logo': () => import('../demo/Animations/ElectricLogoDemo'),
   'crystalized-ball': () => import('../demo/Animations/CrystalizedBallDemo'),
+  'neon-logo': () => import('../demo/Animations/NeonLogoDemo'),
 };
 
 const textAnimations = {
@@ -235,7 +236,9 @@ const backgrounds = {
   'sliced-waves': () => import('../demo/Backgrounds/SlicedWavesDemo.jsx'),
   'acid-squares': () => import('../demo/Backgrounds/AcidSquaresDemo.jsx'),
   'scanner': () => import('../demo/Backgrounds/ScannerDemo.jsx'),
-  'gradient-ascii': () => import('../demo/Backgrounds/GradientASCIIDemo.jsx')
+  'gradient-ascii': () => import('../demo/Backgrounds/GradientASCIIDemo.jsx'),
+  'holo-mosaic': () => import('../demo/Backgrounds/HoloMosaicDemo.jsx'),
+  'neon-glyphs': () => import('../demo/Backgrounds/NeonGlyphsDemo.jsx')
 };
 
 export const componentMap = {

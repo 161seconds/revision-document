@@ -169,13 +169,21 @@ React Bits is supported by these sponsors. [Become a sponsor](https://reactbits.
       <img src="public/assets/sponsors/shadcnstudio-lightmode.svg" alt="Shadcn Studio" height="30">
     </picture>
   </a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://beste.co/?utm_source=reactbits&utm_medium=sponsor&utm_campaign=silver&ref=reactbits">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="public/assets/sponsors/beste.svg">
+      <source media="(prefers-color-scheme: light)" srcset="public/assets/sponsors/beste-lightmode.svg">
+      <img src="public/assets/sponsors/beste-lightmode.svg" alt="Beste" height="30">
+    </picture>
+  </a>
 </p>
 
 ## Community
 
 **Contributing.** Ideas and fixes are welcome. Browse the [open issues](https://github.com/DavidHDev/react-bits/issues), suggest something with the [feature request template](https://github.com/DavidHDev/react-bits/issues/new?template=2-feature-request.yml), and read the [contribution guide](https://github.com/DavidHDev/react-bits/blob/main/CONTRIBUTING.md) before opening a pull request.
 
-**Official ports.** React Bits is also available for [Vue](https://vue-bits.dev/) and [Svelte](https://sveltebits.xyz/).
+**Official ports.** React Bits is also available for [Vue](https://vue-bits.dev/), [Svelte](https://sveltebits.xyz/) and [Solid](https://solid-bits.dev/).
 
 **Contributors.** Thanks to everyone who has helped build React Bits.
 
