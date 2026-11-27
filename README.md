@@ -292,8 +292,8 @@ See [usage and installation](HARNESS.md#khởi-động-dự-án) and [source att
 
 [Superpowers](superpowers/README.md) provides 15 composable development skills for clarifying requirements, writing implementation plans, TDD, debugging, review, Git worktrees, parallel execution, and authoring skills. The snapshot retains the upstream hooks, harness integrations, documentation, assets, and tests.
 
-- **Source snapshot**: [obra/superpowers](https://github.com/obra/superpowers), version `7.0.1`, imported on **2026-10-28**, pinned to commit [`2ce8aa15d05bd57213e6f746f953aafb7ded7a8b`](https://github.com/obra/superpowers/tree/2ce8aa15d05bd57213e6f746f953aafb7ded7a8b).
-- **Integrity**: All 231 upstream files (1,534,073 bytes) were copied and verified against their Git blob hashes, with executable Git modes preserved.
+- **Source snapshot**: [obra/superpowers](https://github.com/obra/superpowers), version `7.0.2`, updated on **2026-11-27**, pinned to commit [`22f0b463e7a5e579904dd6211a520321035526f7`](https://github.com/obra/superpowers/tree/22f0b463e7a5e579904dd6211a520321035526f7).
+- **Integrity**: All 236 upstream files (1,600,920 bytes) were copied and verified against their Git blob hashes, with executable Git modes preserved.
 - **Start here**: [Skill guide](superpowers/skills/using-superpowers/SKILL.md), [skill library](superpowers/skills/), and [testing guide](superpowers/docs/testing.md).
 - **Installation**: Source is stored in `superpowers/`; enable the plugin through the [installation instructions for your harness](superpowers/README.md#installation). Plugin activation and runtime tests have not been performed here.
 - **Existing integration**: The older `systematic-debugging` and `verification-before-completion` copies in `.agents/skills/` remain unchanged. Their pinned source and local adaptations are documented in [HARNESS.md](HARNESS.md); this snapshot does not replace or activate additional skills there.

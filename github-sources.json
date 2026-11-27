@@ -13,7 +13,11 @@
     {
       "repository": "obra/superpowers",
       "status": "existing",
-      "path": "superpowers"
+      "path": "superpowers",
+      "commit": "22f0b463e7a5e579904dd6211a520321035526f7",
+      "branch": "main",
+      "files": 236,
+      "bytes": 1600920
     },
     {
       "repository": "AgriciDaniel/claude-seo",
