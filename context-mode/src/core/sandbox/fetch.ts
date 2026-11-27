@@ -1,14 +1,19 @@
 // impl/03 §6, impl/05 §4, TECH-SPEC GP5 (proxy env, SSRF per hop), DECISIONS-r3 Q19, DECISIONS-r4 A8/A52/B57,
-// DEVIATIONS D-M2-T5-2. One path: resolve the connect target, check every address, connect to the
-// checked address (no second DNS lookup), follow redirects as new hops.
+// DEVIATIONS D-M2-T5-2, D-1403-PROXY-NOT-TARGET-1, D-SSRF-FAKEIP-1. One path: resolve the URL's own host and check every address on
+// every hop (with or without a proxy), connect to the checked address or to the proxy the environment names (no second
+// DNS lookup of the target), follow redirects as new hops.
+import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { lookup } from "node:dns/promises";
 import http from "node:http";
 import https from "node:https";
 import { BlockList, isIP } from "node:net";
 import type { Socket } from "node:net";
+import { join } from "node:path";
 import { connect as tlsConnect } from "node:tls";
-import { FETCH_MAX_HOPS } from "../contracts/constants.ts";
+import { D1_PACKAGE_FILE, FETCH_MAX_HOPS } from "../contracts/constants.ts";
 import { CtxError } from "../contracts/errors.ts";
+import { ownBundleDir } from "../ops/bundle-dir.ts";
 
 // impl/03 §6 step 3 / "Constants used": fixed protocol data, not tunable, written inline.
 const PRIVATE_RANGES: ReadonlyArray<readonly [string, number, "ipv4" | "ipv6"]> = [
@@ -32,10 +37,58 @@ const PRIVATE_RANGES: ReadonlyArray<readonly [string, number, "ipv4" | "ipv6"]> 
 const BLOCKED = new BlockList();
 for (const [net, prefix, type] of PRIVATE_RANGES) BLOCKED.addSubnet(net, prefix, type);
 
+// D-SSRF-FAKEIP-1 (#1403): a Fake-IP DNS (Mihomo, OpenClash, Clash) answers every name with an address in the RFC 2544
+// pool. The guard learns this once per process: it resolves a random name under .invalid, which RFC 6761 says never
+// resolves. A normal resolver answers NXDOMAIN; only an answer inside the pool turns on the exemption, and it covers
+// DNS-resolved names in the pool only. IP literals and every other range stay blocked.
+const FAKE_IP_POOL = new BlockList();
+FAKE_IP_POOL.addSubnet("198.18.0.0", 15, "ipv4");
+const FAKE_IP_PROBE_TLD = ".invalid";
+const FAKE_IP_PROBE_BYTES = 8;
+const FAKE_IP_PROBE_MS = 1500;
+let fakeIpProbe: Promise<boolean> | undefined;
+
+function inFakeIpPool(address: string): boolean {
+  return isIP(address) === 4 && FAKE_IP_POOL.check(address, "ipv4");
+}
+
+// One shared probe per process, started only when a name resolves into the pool. A timeout or an error is "no".
+function fakeIpResolver(): Promise<boolean> {
+  fakeIpProbe ??= new Promise<boolean>((resolve) => {
+    const timer = setTimeout(() => resolve(false), FAKE_IP_PROBE_MS);
+    timer.unref();
+    lookup(randomBytes(FAKE_IP_PROBE_BYTES).toString("hex") + FAKE_IP_PROBE_TLD, { all: true }).then(
+      (addrs) => resolve(addrs.length > 0 && addrs.every((a) => inFakeIpPool(a.address))),
+      () => resolve(false),
+    ).finally(() => clearTimeout(timer));
+  });
+  return fakeIpProbe;
+}
+
 // RFC 9110 status classes (fixed protocol data, D-M2-T5-2).
 const STATUS_OK_FIRST = 200;
 const STATUS_OK_END = 300;
 const STATUS_REDIRECT: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
+
+// D-1380-FETCH-UA-1 (#1380): every request names itself, as v1's undici fetch did (user-agent and accept). Some
+// hosts (en.wikipedia.org) answer 403 to a request with no user-agent. The version comes once from the bundle's
+// package.json; the dev tree has none, so it is "dev".
+const UA_HOME = "https://github.com/mksglu/context-mode";
+const UA_DEV_VERSION = "dev";
+let namedHeaders: Readonly<Record<string, string>> | undefined;
+function baseHeaders(): Readonly<Record<string, string>> {
+  if (namedHeaders === undefined) {
+    let version = UA_DEV_VERSION;
+    try {
+      const v: unknown = JSON.parse(readFileSync(join(ownBundleDir(), D1_PACKAGE_FILE), "utf8")).version;
+      if (typeof v === "string" && v !== "") version = v;
+    } catch {
+      // no package.json next to the bundle: the dev tree
+    }
+    namedHeaders = Object.freeze({ "user-agent": "context-mode/" + version + " (+" + UA_HOME + ")", accept: "*/*" });
+  }
+  return namedHeaders;
+}
 
 type Target = { host: string; port: number; address: string };
 type Proxy = { url: URL; auth: string | undefined };
@@ -141,9 +194,19 @@ function checkAddress(hostname: string, address: string): void {
   }
 }
 
-// Steps 2-3: resolve in this process, reject if any address is private; return the checked address.
-async function resolveTarget(u: URL, signal: AbortSignal): Promise<Target> {
-  const host = bare(u.hostname);
+// Step 3 for a name: every address must pass; an address in the Fake-IP pool passes only behind a Fake-IP resolver.
+async function checkResolved(host: string, addrs: { address: string }[], signal: AbortSignal): Promise<void> {
+  const pooled = isIP(host) === 0 ? addrs.filter((a) => inFakeIpPool(a.address)) : [];
+  for (const a of addrs) if (!pooled.includes(a)) checkAddress(host, a.address);
+  if (pooled.length === 0) return;
+  const fakeIp = await fakeIpResolver();
+  if (signal.aborted) throw fail("ABORT_ERR");
+  if (!fakeIp) checkAddress(host, (pooled[0] as { address: string }).address);
+}
+
+// Steps 2-3: resolve in this process; for the URL's own host, reject if any address is private. The proxy the
+// environment names is where the socket goes, not a target the model chose (#1403), so it is resolved unchecked.
+async function lookupAll(host: string, signal: AbortSignal): Promise<{ address: string }[]> {
   let addrs: { address: string }[];
   try {
     addrs = await lookup(host, { all: true });
@@ -152,8 +215,30 @@ async function resolveTarget(u: URL, signal: AbortSignal): Promise<Target> {
   }
   if (signal.aborted) throw fail("ABORT_ERR");
   if (addrs.length === 0) throw fail("ENOTFOUND");
-  for (const a of addrs) checkAddress(host, a.address);
+  return addrs;
+}
+
+async function resolveTarget(u: URL, signal: AbortSignal, checked: boolean): Promise<Target> {
+  const host = bare(u.hostname);
+  const addrs = await lookupAll(host, signal);
+  if (checked) await checkResolved(host, addrs, signal);
   return { host, port: u.port === "" ? defaultPort(u.protocol) : Number(u.port), address: addrs[0].address };
+}
+
+// D-1403-PROXY-NOT-TARGET-1: through a proxy, the target is still checked on every hop. An IP literal and a name that
+// resolves here are checked on every address; a name only the proxy can resolve (a proxy-only network) goes to the
+// proxy, as D-M2-T5-2 had it.
+async function checkProxiedTarget(u: URL, signal: AbortSignal): Promise<void> {
+  const host = bare(u.hostname);
+  if (isIP(host) !== 0) return checkAddress(host, host);
+  let addrs: { address: string }[];
+  try {
+    addrs = await lookupAll(host, signal);
+  } catch (err) {
+    if (signal.aborted) throw err;
+    return;
+  }
+  await checkResolved(host, addrs, signal);
 }
 
 function tlsName(host: string): string | undefined {
@@ -169,11 +254,12 @@ function request(u: URL, conn: Target, proxy: Proxy | undefined, signal: AbortSi
     const onErr = (err: unknown) => reject(fail(causeCode(err)));
     if (proxy === undefined) {
       const mod = u.protocol === "https:" ? https : http;
-      const req = mod.request({ host: conn.address, port, path, signal, servername: tlsName(host), headers: { host: u.host } });
+      const req = mod.request({ host: conn.address, port, path, signal, servername: tlsName(host), headers: { ...baseHeaders(), host: u.host } });
       req.on("response", resolve).on("error", onErr).end();
       return;
     }
-    const proxyHeaders: Record<string, string> = proxy.auth === undefined ? {} : { "proxy-authorization": proxy.auth };
+    const proxyHeaders: Record<string, string> = proxy.auth === undefined ? { ...baseHeaders() }
+      : { ...baseHeaders(), "proxy-authorization": proxy.auth };
     if (u.protocol === "http:") {
       const req = http.request({ host: conn.address, port: conn.port, path: u.href, signal, headers: { host: u.host, ...proxyHeaders } });
       req.on("response", resolve).on("error", onErr).end();
@@ -189,7 +275,7 @@ function request(u: URL, conn: Target, proxy: Proxy | undefined, signal: AbortSi
         return;
       }
       const req = https.request({
-        host, port, path, signal, headers: { host: u.host },
+        host, port, path, signal, headers: { ...baseHeaders(), host: u.host },
         createConnection: () => tlsConnect({ socket, host, servername: tlsName(host) }),
       });
       req.on("response", resolve).on("error", onErr).end();
@@ -213,10 +299,10 @@ export async function safeFetch(url: string, signal: AbortSignal): Promise<{ bod
   for (let hop = 0; ; hop += 1) {
     if (signal.aborted) throw fail("ABORT_ERR");
     const proxy = pickProxy(current);
-    // D-M2-T5-2: through a proxy the proxy resolves the origin name; an IP-literal origin is still checked here.
-    const origin = bare(current.hostname);
-    if (proxy !== undefined && isIP(origin) !== 0) checkAddress(origin, origin);
-    const conn = await resolveTarget(proxy === undefined ? current : proxy.url, signal);
+    // D-1403-PROXY-NOT-TARGET-1: the target is checked on every hop; a private proxy from env (a Docker sandbox, a
+    // corporate proxy) is where the socket goes and carries public targets only.
+    if (proxy !== undefined) await checkProxiedTarget(current, signal);
+    const conn = await resolveTarget(proxy === undefined ? current : proxy.url, signal, proxy === undefined);
     const res = await request(current, conn, proxy, signal);
     const status = res.statusCode ?? 0;
     const location = res.headers.location;
@@ -234,7 +320,8 @@ export async function safeFetch(url: string, signal: AbortSignal): Promise<{ bod
     }
     if (status < STATUS_OK_FIRST || status >= STATUS_OK_END) {
       res.resume();
-      throw fail(status);
+      // D-1380-FETCH-UA-1: name the host that refused, so the user knows which hop failed.
+      throw fail(status + " from " + bare(current.hostname));
     }
     const body = await readBody(res);
     // finalUrl labels the indexed source and is echoed in replies: never carry userinfo (a secret).

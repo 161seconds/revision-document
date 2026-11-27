@@ -7,7 +7,8 @@ import { CONC } from "./_lib/concurrency.mjs";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path, { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
 import { AGENT_IDS } from "../src/core/contracts/agents.ts";
 import * as C from "../src/core/contracts/constants.ts";
 import { HOOK_HOST_FILE } from "../src/core/contracts/constants.ts";
@@ -32,9 +33,9 @@ describe("ADR-0018: contracts (concurrent)", { concurrency: CONC }, () => {
 
     const SRC = join(dirname(fileURLToPath(import.meta.url)), "../src/core/contracts");
 
-    test("AGENT_IDS has the 10 agents in PRD §3 order", () => {
-      assert.deepEqual([...AGENT_IDS], ["claude-code", "codex", "gemini", "qwen", "copilot-cli", "vscode", "kiro", "zcode", "pi", "opencode"]);
-      assert.equal(AGENT_IDS.length, 10);
+    test("AGENT_IDS has the 10 agents in PRD §3 order, then omp as the 11th (ADR-0026 T17)", () => {
+      assert.deepEqual([...AGENT_IDS], ["claude-code", "codex", "gemini", "qwen", "copilot-cli", "vscode", "kiro", "zcode", "pi", "opencode", "omp"]);
+      assert.equal(AGENT_IDS.length, 11);
     });
 
     test("TOOL_ORDER has the 9 tool names in order", () => {
@@ -59,7 +60,7 @@ describe("ADR-0018: contracts (concurrent)", { concurrency: CONC }, () => {
         DATA_ROOT: "~/.context-mode", LIVE_MODEL: "claude-sonnet-5", LIVE_EFFORT: "low", LIVE_BUDGET_USD: 0.25,
         LIVE_SKIP_LIMIT: 3, RRF_K: 60, SEARCH_P95_MS: 30, HOOK_TIMEOUT_MS: 5000,
         // store additions (impl/02 §0, DEVIATIONS D-M1-3)
-        PROJECT_KEY_HEX_LEN: 16, SCHEMA_VERSION: 6, // D-PATH-LABEL-1: v6 = path labels with forward slashes; r3-ledger: v5 = line_units; D-M5-arch-2: v2 = cost dedup index; D-SEARCH-3: v3 = chunks title + porter; D-SEARCH-4: v4 = trigram table
+        PROJECT_KEY_HEX_LEN: 16, SCHEMA_VERSION: 7, // D-1401-UNITS-SPAN-1: v7 = per-source line unit rowid span; D-PATH-LABEL-1: v6 = path labels with forward slashes; r3-ledger: v5 = line_units; D-M5-arch-2: v2 = cost dedup index; D-SEARCH-3: v3 = chunks title + porter; D-SEARCH-4: v4 = trigram table
         RETENTION_IDLE_DAYS: 30, RETENTION_SIZE_CAP_BYTES: 524288000,
         PROJECT_DEAD_IDLE_DAYS: 14, MS_PER_DAY: 86400000,
       };
@@ -118,7 +119,7 @@ describe("ADR-0018: contracts (concurrent)", { concurrency: CONC }, () => {
       NO_GIT_BASH: "Git Bash not found. Fix: install Git for Windows.",
       FETCH_FAILED: "Fetch failed: ENOTFOUND. Fix: check the URL or proxy.",
       SSRF: "Blocked private address 127.0.0.1. Fix: use a public URL.",
-      OUTSIDE_ROOT: "Path /etc/passwd is outside the project. Fix: use a path inside /repo.",
+      OUTSIDE_ROOT: "Path /etc/passwd is outside the project and the folders added to this session. Fix: use a path inside /repo, or add its folder to the session (Claude Code /add-dir, Codex --add-dir).", // #1398
       INVALID_ARGS: 'Invalid argument offset. Fix: drop offset with sort:"timeline".',
       ONE_OF_INPUT: "Pass exactly one of code, file. Fix: drop the extra field.",
       SPAWN_FAILED: "Failed to start the process: ENOENT. Fix: check the command and PATH.",
@@ -567,12 +568,15 @@ describe("ADR-0018: contracts (concurrent)", { concurrency: CONC }, () => {
   });
 });
 
-// D-R48-TRIGGER-1 (#1326 coreycoburn): REPLACE_TRIGGER_BYTES is a documented setting, env CTX_REPLACE_TRIGGER_BYTES.
-test("D-R48-TRIGGER-1: CTX_REPLACE_TRIGGER_BYTES sets the replace trigger; a bad value keeps 4096 (#1326)", () => {
-  assert.equal(C.REPLACE_TRIGGER_ENV, "CTX_REPLACE_TRIGGER_BYTES");
-  assert.equal(C.REPLACE_TRIGGER_BYTES_DEFAULT, 4096);
-  assert.equal(C.readReplaceTrigger(undefined), 4096);
-  assert.equal(C.readReplaceTrigger(""), 4096);
-  assert.equal(C.readReplaceTrigger("8192"), 8192);
-  for (const bad of ["0", "-5", "1.5", "abc", "1e400"]) assert.equal(C.readReplaceTrigger(bad), 4096, bad);
+// D-REPLACE-TRIGGER-CONST-1 (amends D-R48-TRIGGER-1, #1326): owner rule "ana kural hicbir zaman flag env kullanmiyoruz".
+// REPLACE_TRIGGER_BYTES is the constant 4096 (the bench default); no env value changes it, in any process.
+test("D-REPLACE-TRIGGER-CONST-1: REPLACE_TRIGGER_BYTES is 4096 whatever CTX_REPLACE_TRIGGER_BYTES holds", () => {
+  assert.equal(C.REPLACE_TRIGGER_BYTES, 4096);
+  const url = pathToFileURL(join(dirname(fileURLToPath(import.meta.url)), "..", "src", "core", "contracts", "constants.ts")).href;
+  const probe = `const m = await import(${JSON.stringify(url)}); process.stdout.write(String(m.REPLACE_TRIGGER_BYTES));`;
+  for (const value of ["8192", "1e9", "1"]) {
+    const r = spawnSync(process.execPath, ["--input-type=module", "-e", probe], { encoding: "utf8", env: { ...process.env, CTX_REPLACE_TRIGGER_BYTES: value } });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout, "4096", `CTX_REPLACE_TRIGGER_BYTES=${value} must not change the trigger`);
+  }
 });

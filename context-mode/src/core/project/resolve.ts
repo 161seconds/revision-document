@@ -4,7 +4,7 @@
 // then the hook payload cwd, then process.cwd(). Every other host: its one source; missing -> NO_PROJECT.
 // D-CI-PERF-3: node:fs through getBuiltinModule; a static ESM import of node:fs also loads fs/promises, readline and streams.
 const { existsSync, readFileSync, realpathSync, statSync } = process.getBuiltinModule("node:fs") as typeof import("node:fs");
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import type { AgentId } from "../contracts/agents.ts";
 import {
   DB_FILE_NAME, GIT_COMMONDIR_FILE, GIT_DIR_NAME, GIT_HEAD_FILE, GIT_WORKTREE_LINE_PREFIX, GITDIR_FILE_PREFIX,
@@ -41,6 +41,7 @@ function sourceOf(agent: AgentId): ProjectSourceKind {
     case "opencode":
       return "spawn-cwd";
     case "pi":
+    case "omp": // ADR-0026: OMP passes ctx.cwd like Pi
       return "pi:ctx.cwd";
   }
 }
@@ -73,14 +74,10 @@ function dirOf(kind: ProjectSourceKind, src: ProjectSourceInput): string | undef
 // git dir. worktree = <d>. Same answers as `git rev-parse --git-common-dir --show-toplevel`.
 // D-M7-NG-1: no .git up to the filesystem root -> null; the caller keys the project by realpath(dir).
 // D-CI-PERF-8: also returns the realpath of dir (`start`), so the non-git case does not realpath it twice.
+// D-1409-MISSING-CWD-1 (#1409): an absolute dir that does not exist yet (Codex sends the workdir of "mkdir -p x && cd x")
+// starts the walk at its nearest existing parent; NO_GIT_DIR for a relative name that does not exist, or when no dir up to the root exists.
 function gitDirs(dir: string): { commonDir: string; worktree: string; start: string } | { commonDir: null; start: string } {
-  let cur: string;
-  try {
-    // .native: one canonical letter case, so one repo always hashes to one projectKey (review-M1 #1).
-    cur = realpathSync.native(dir);
-  } catch {
-    throw new CtxError("NO_GIT_DIR", { path: dir });
-  }
+  let cur = nearestRealDir(dir);
   const start = cur;
   for (;;) {
     const gitDir = gitDirAt(join(cur, GIT_DIR_NAME));
@@ -91,6 +88,23 @@ function gitDirs(dir: string): { commonDir: string; worktree: string; start: str
     const up = dirname(cur);
     if (up === cur) return { commonDir: null, start };
     cur = up;
+  }
+}
+
+// realpath of dir, or of its nearest existing parent when dir does not exist yet (D-1409-MISSING-CWD-1).
+// Only an absolute dir walks up: a host sends its workdir absolute, and a relative name that does not exist
+// names no place of its own (walking it up would pick this process's own cwd), so it stays NO_GIT_DIR.
+function nearestRealDir(dir: string): string {
+  const walk = isAbsolute(dir);
+  for (let d = walk ? resolve(dir) : dir; ; ) {
+    try {
+      // .native: one canonical letter case, so one repo always hashes to one projectKey (review-M1 #1).
+      return realpathSync.native(d);
+    } catch {
+      const up = dirname(d);
+      if (!walk || up === d) throw new CtxError("NO_GIT_DIR", { path: dir });
+      d = up;
+    }
   }
 }
 
@@ -151,7 +165,8 @@ export function resolveProject(agent: AgentId, src: ProjectSourceInput): Project
   if (dir === undefined) throw new CtxError("NO_PROJECT", { kind: source });
   // D-M7-NG-1, impl/02 §2: one fixed rule. A .git found walking up -> the project is its git common
   // dir and worktree is the dir that holds the .git. None -> the project is realpath(dir) itself:
-  // worktree and containmentRoot are that dir, and no git process runs.
+  // worktree and containmentRoot are that dir, and no git process runs. A dir that does not exist
+  // yet counts as its nearest existing parent (D-1409-MISSING-CWD-1).
   const repo = gitDirs(dir);
   const plain = repo.commonDir === null ? repo.start : undefined;
   const commonDir = repo.commonDir ?? repo.start;
@@ -180,7 +195,7 @@ export function resolveProject(agent: AgentId, src: ProjectSourceInput): Project
     },
     worktree,
     get containmentRoot(): string {
-      root ??= plain ?? containmentRootOf(dir, commonDir);
+      root ??= plain ?? containmentRootOf(worktree, commonDir);
       return root;
     },
     agent,

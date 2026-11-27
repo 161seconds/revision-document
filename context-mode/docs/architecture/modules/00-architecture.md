@@ -84,7 +84,7 @@ Owner column = module id (§2).
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `build/build.mjs` | esbuild: 7 bundles (server, hook, run, search, pi, opencode, cli), inline prompt md; the hook bundle is minified (D-CI-PERF-4); writes the ADR-0019 D1 `package.json` out | build-release |
+| `build/build.mjs` | esbuild: 7 bundles (server, hook, run, search, pi, opencode, cli) plus the `omp/index.js` wrapper over pi (ADR-0026), inline prompt md; the hook bundle is minified (D-CI-PERF-4); writes the ADR-0019 D1 `package.json` out | build-release |
 | `build/manifests.ts` | generate every manifest + hook config from `adapters/table.ts` | build-release |
 | `build/hash.mjs` | `SHA256SUMS` over the release tree | build-release |
 | `build/check-removed.mjs` | GS5: fail if a removed path or routing file exists | v1-transition |
@@ -161,7 +161,7 @@ No cycle: contracts → store → sandbox → tools-index → tools-exec; adapte
 ### 3.1 Types (`src/core/contracts/types.ts`, `agents.ts`)
 
 ```ts
-export const AGENT_IDS = ["claude-code","codex","gemini","qwen","copilot-cli","vscode","kiro","zcode","pi","opencode"] as const; // TECH-SPEC §2
+export const AGENT_IDS = ["claude-code","codex","gemini","qwen","copilot-cli","vscode","kiro","zcode","pi","opencode","omp"] as const; // TECH-SPEC §2; omp is the 11th (ADR-0026)
 export type AgentId = typeof AGENT_IDS[number];
 
 export type CanonicalEventName = "SessionStart" | "UserPromptSubmit" | "PreToolUse" | "PostToolUse"; // ADR-0001, PRD §10.1
@@ -301,8 +301,8 @@ All errors are one line: `<cause>. Fix: <action>` (P1, PRD §13). Table keys are
 | `NO_RUNTIME` | `No <lang> runtime on PATH. Fix: install it or pick another language.` |
 | `FETCH_FAILED` | `Fetch failed: <code>. Fix: check the URL or proxy.` (#1135) |
 | `SSRF` | `Blocked private address <host>. Fix: use a public URL.` |
-| `OUTSIDE_ROOT` | `Path <p> is outside the project. Fix: use a path inside <root>.` |
-| `INVALID_ARGS` | `Invalid argument <field>. Fix: <action>.` (`ctx_search` `offset` with `sort:"timeline"`, or `after` with `sort:"relevance"`; DECISIONS-r9 M23) |
+| `OUTSIDE_ROOT` | `Path <p> is outside the project and the folders added to this session. Fix: use a path inside <root>, or add its folder to the session (Claude Code /add-dir, Codex --add-dir).` (D-1398-HOST-ROOTS-1) |
+| `INVALID_ARGS` | `Invalid argument <field>. Fix: <action>.` (`ctx_search` non-zero `offset` with `sort:"timeline"`, or non-zero `after` with `sort:"relevance"`; `0` is accepted; DECISIONS-r9 M23, D-R54-SEARCH-ZERO-1) |
 | `ONE_OF_INPUT` | `Pass exactly one of <names>. Fix: drop the extra field.` (DECISIONS-r9 M23) |
 | `SPAWN_FAILED` | `Failed to start the process: <detail>. Fix: check the command and PATH.` (DECISIONS-r9 M23) |
 

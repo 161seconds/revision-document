@@ -8,14 +8,16 @@ import {
   D1_CAUSE_JOIN, D1_DEFAULT_TAG, D1_DEV_BUILD_DETAIL, D1_GIT_CANCEL, D1_GIT_CHECK_FIX, D1_GIT_EXIT, D1_GIT_MISSING, D1_GIT_NO_START,
   D1_GIT_NO_TAG, D1_GIT_TIMEOUT, D1_LATEST_AHEAD, D1_LATEST_PASS, D1_LATEST_UNKNOWN, D1_LATEST_UPDATE, D1_NO_VERSION, D1_NPM_CHECK_FIX,
   D1_NPM_ERROR, D1_NPM_HTTP, D1_NPM_NO_TAG, D1_NPM_TIMEOUT, D1_PACKAGE_FILE, D1_PREFIX, D1_PRERELEASE_SEP, D1_SOURCE_NPM, D1_SOURCE_TAGS,
-  D10_DETAIL, D10_PERMISSION_DETAIL, D10_PERMISSION_FIX, D10_PERMISSION_MISSING_DETAIL, D11_PASS_DETAIL, D11_POSIX_DETAIL, D11_POSIX_FIX, D11_WIN_DETAIL, D11_WIN_FIX, D2_BUN_DETAIL, D2_NODE_DETAIL, D2_NODE_FIX,
-  D2_SQLITE_DETAIL, D2_SQLITE_FIX, D4_REASON_JOIN, D6_IN_PROCESS_DETAIL, D6_UNKNOWN_DETAIL, D7_DETAIL, D7_FIX, DOCTOR_FIX_UPGRADE,
+  D10_DETAIL, D10_PERMISSION_DETAIL, D10_PERMISSION_FIX, D10_PERMISSION_MISSING_DETAIL, D11_PASS_DETAIL, D11_POSIX_DETAIL, D11_POSIX_FIX, D11_RUNTIME_DETAIL, D11_RUNTIME_FIX, D11_WIN_DETAIL, D11_WIN_FIX, D2_BUN_DETAIL, D2_NODE_DETAIL, D2_NODE_FIX,
+  D2_SQLITE_DETAIL, D2_SQLITE_FIX, D4_REASON_JOIN, D6_IN_PROCESS_DETAIL, D6_UNKNOWN_DETAIL, D7_DETAIL, D7_FIX, D7_NO_PROJECT_DETAIL, DOCTOR_FIX_UPGRADE, DOCTOR_NEEDS_PROJECT_DETAIL,
   DOCTOR_GIT_TIMEOUT_MS, DOCTOR_LABEL, DOCTOR_PASS_DETAIL, GIT_BIN, GIT_LS_REMOTE, GIT_LS_REMOTE_TAG_ARGS, GIT_NO_PROMPT_ENV, GIT_SHA_HEX_LEN,
   LS_REMOTE_FIELD_SEP, NODE_MIN, NODE_VERSION_PREFIX, NODE_VERSION_SEP, RELEASE_REPO_URL, RELEASE_TAG_PATTERN, RELEASE_TAG_REF_PREFIX,
+  EXEC_LANGUAGES,
   SQLITE_MODULE,
 } from "../contracts/constants.ts";
 import type { AdapterRow, DoctorCheckId, DoctorRow, HostPermission, ProjectContext, ToolContext } from "../contracts/types.ts";
-import { findRuntime } from "../sandbox/runtimes.ts";
+import { CtxError } from "../contracts/errors.ts";
+import { findRuntime, lookupRuntime } from "../sandbox/runtimes.ts";
 import { runProcess, type RunResult } from "../sandbox/spawn.ts";
 
 function pass(id: DoctorCheckId, detail: string = DOCTOR_PASS_DETAIL): DoctorRow {
@@ -242,7 +244,7 @@ export async function checkNode(i: NodeInput): Promise<DoctorRow> {
 }
 
 // D6: client name and protocol version from the live request. Missing both is UNKNOWN, never FAIL (PRD §13).
-// D-R49-DOCTOR-1339-3 (#1339): an in-process plugin (OpenCode, Pi) has no MCP session; the tool call that built this row
+// D-R49-DOCTOR-1339-3 (#1339): an in-process plugin (OpenCode, Pi, OMP) has no MCP session; the tool call that built this row
 // ran inside the agent, which is the channel it checks, so that is a PASS that says so.
 export function checkMcp(ctx: Pick<ToolContext, "clientInfo" | "protocolVersion">, adapter?: Pick<AdapterRow, "installMode">): DoctorRow {
   const named = ctx.clientInfo !== undefined && ctx.clientInfo.name !== "";
@@ -272,6 +274,26 @@ export function checkProject(i: ProjectInput): DoctorRow {
   return pass("D7");
 }
 
+/** D-1410-DOCTOR-NO-PROJECT-1 (ADR-0014 §1): the project, or the source kind NO_PROJECT named. Any other error stays thrown. */
+export function projectOrMissing(ctx: Pick<ToolContext, "project">): { project: ProjectContext } | { missing: string } {
+  try {
+    return { project: ctx.project };
+  } catch (err) {
+    if (err instanceof CtxError && err.code === "NO_PROJECT") return { missing: String(err.vars.kind) };
+    throw err;
+  }
+}
+
+/** D7 when the project did not resolve: a FAIL that names the missing source, so ctx_doctor answers (D-1410-DOCTOR-NO-PROJECT-1). */
+export function noProjectRow(kind: string): DoctorRow {
+  return fail("D7", D7_NO_PROJECT_DETAIL(kind), D7_FIX);
+}
+
+/** A project-scoped check while the project did not resolve: UNKNOWN, D7 carries the cause (D-1410-DOCTOR-NO-PROJECT-1). */
+export function needsProjectRow(id: DoctorCheckId): DoctorRow {
+  return unknown(id, DOCTOR_NEEDS_PROJECT_DETAIL);
+}
+
 // D10: the adapter's denyChannel as row data, always PASS (D-M5-arch-3: no enforcement import).
 // D-1331-OC-PERM-1 (#1331): an OpenCode plugin session also reports its permission wiring; "missing" is FAIL.
 export function checkMode(adapter: Pick<AdapterRow, "denyChannel">, hostPermission?: HostPermission): DoctorRow {
@@ -287,4 +309,17 @@ export function checkShell(env: NodeJS.ProcessEnv): DoctorRow {
   const shell = findRuntime("shell", env);
   if (shell !== null) return pass("D11", D11_PASS_DETAIL(shell, win));
   return win ? fail("D11", D11_WIN_DETAIL, D11_WIN_FIX) : fail("D11", D11_POSIX_DETAIL, D11_POSIX_FIX);
+}
+
+// D-1373-STAT-1: D11 also resolves each sandbox language. A language whose lookup finds nothing while a PATH candidate
+// exists but cannot be read (the Windows Store app alias) is a WARN naming the language and the paths. A FAIL or WARN
+// shell row stays as it is; a language that is simply not installed is not a finding.
+export function checkRuntimes(env: NodeJS.ProcessEnv, shellRow: DoctorRow): DoctorRow {
+  if (shellRow.status !== "PASS") return shellRow;
+  for (const lang of EXEC_LANGUAGES) {
+    if (lang === "shell") continue;
+    const r = lookupRuntime(lang, env);
+    if (r.found === null && r.unreadable.length > 0) return warn("D11", D11_RUNTIME_DETAIL(lang, r.unreadable), D11_RUNTIME_FIX(lang));
+  }
+  return shellRow;
 }

@@ -3,11 +3,12 @@
 // ctx_search: relevance (ContentStore, BM25 / RRF for scope "project", session first) or timeline
 // (ContentStore + SessionDB + auto-memory, oldest first, epoch-ms `after` cursor).
 import { z } from "zod/v4";
-import { DECISION_SOURCE, LABEL_PAGE_BYTES, OUTPUT_CAP, SEARCH_PAGE_SIZE, SEARCH_REPLY_HITS, SNIPPET_MAX_BYTES } from "../contracts/constants.ts";
+import { DECISION_SOURCE, LABEL_PAGE_BYTES, MAX_CHUNK_BYTES, OUTPUT_CAP, SEARCH_PAGE_SIZE, SEARCH_REPLY_HITS, SNIPPET_MAX_BYTES } from "../contracts/constants.ts";
 import { formatError } from "../contracts/errors.ts";
 import type { CtxSearchInput, DbHandle, Hit, SearchScope, TimelineRow, ToolContext, ToolReply } from "../contracts/types.ts";
 import { capBytes } from "../sandbox/cap.ts";
 import { closeDb, openDb } from "../store/db.ts";
+import { betKeyOfLabel, isLostBet, markLostBet } from "../store/lost-bet.ts";
 import { collisionLine, ftsListSource, ftsQuery, ftsQueryTimeline, groupDigits, isLongLabel, labelPage, pickSource, rankTexts, shownLabel, sourceCardRow, sourceHandle, type SourcePick } from "../store/fts.ts";
 import { memoryChunks, memoryFileNamed, memoryHits, readAutoMemory } from "../index/auto-memory.ts";
 import { fitRow, jsonRows, namedKeys } from "../index/shape.ts";
@@ -61,23 +62,59 @@ function sourceCount(db: DbHandle, scope: SearchScope, ctx: ToolContext, source:
 // names, or none; `named` = the source names a memory file (its hits page with `offset` like content hits).
 interface MemorySide { rows: TimelineRow[]; named: boolean }
 
-function zeroHits(db: DbHandle, scope: SearchScope, ctx: ToolContext, source: string | undefined, mem: MemorySide, offset = 0): ToolReply {
+function zeroHits(db: DbHandle, scope: SearchScope, ctx: ToolContext, source: string | undefined, mem: MemorySide, nm: Named, queries: string[], offset = 0): ToolReply {
   // D-MEMORY-SOURCE-1: the count holds the memory files in the scope with the indexed sources.
-  const n = sourceCount(db, scope, ctx, source) + mem.rows.length;
-  // D-LABEL-HANDLE-2: past the last hit the reply says so (the hits are behind, not missing).
-  if (offset > 0) return reply("No more hits past offset " + offset + ' in scope "' + scope + '" across ' + n + " source(s).", false);
-  return reply('No hits in scope "' + scope + '" across ' + n + " source(s).", false);
+  const inScope = sourceCount(db, scope, ctx, source);
+  const n = inScope + mem.rows.length;
+  const head = 'No hits in scope "' + scope + '" across ' + n + " source(s).";
+  // D-SEARCH-UNKNOWN-SOURCE-1 (#1390): an explicit source with no stored row in the scope names where it is, or the
+  // stored sources and how to store one, with or without `offset`. A memory file or source:"decision" keeps its own reply.
+  const pick = nm.pick;
+  if (pick === null || mem.named || inScope > 0) {
+    // D-LABEL-HANDLE-2: past the last hit the reply says so (the hits are behind, not missing).
+    return reply(offset > 0 ? "No more hits past offset " + offset + ' in scope "' + scope + '" across ' + n + " source(s)." : head, false);
+  }
+  if (pick.id !== null) {
+    const wider: SearchScope = scope === "session" && sourceCount(db, "worktree", ctx, source) > 0 ? "worktree" : "project";
+    return reply(head + "\nSource " + JSON.stringify(nm.arg) + ' is stored in scope "' + wider + '": ' + callText(queries, wider, nm.arg, "") + " searches it.", false);
+  }
+  return reply(head + "\n" + unknownSource(db, scope, ctx, nm.arg as string), true);
+}
+
+// D-SEARCH-UNKNOWN-SOURCE-1: the newest stored sources in a scope, one row per label.
+const STORED_SOURCES = `
+SELECT MAX(id) AS id, label FROM sources
+WHERE (:scope <> 'session' OR session_id = :session_id)
+  AND (:scope <> 'worktree' OR worktree = :worktree)
+GROUP BY label ORDER BY MAX(id) DESC LIMIT :limit`;
+const STORED_SOURCES_SHOWN = 5;
+
+function unknownSource(db: DbHandle, scope: SearchScope, ctx: ToolContext, given: string): string {
+  const line = "Source " + JSON.stringify(given) + ' is not a stored source in scope "' + scope + '".';
+  const rows = db.raw.prepare(STORED_SOURCES).all({
+    scope,
+    session_id: ctx.sessionId,
+    worktree: ctx.project.worktree,
+    limit: STORED_SOURCES_SHOWN + 1,
+  }) as Array<{ id: number; label: string }>;
+  if (rows.length === 0) return line + "\nctx_index stores one: ctx_index({content:\"...\", source:" + JSON.stringify(given) + "}).";
+  const names = rows.slice(0, STORED_SOURCES_SHOWN).map((r) => (isLongLabel(r.label) ? sourceHandle(Number(r.id)) : JSON.stringify(r.label)));
+  const more = rows.length > STORED_SOURCES_SHOWN ? ", ..." : "";
+  return line + "\nStored sources, newest first: " + names.join(", ") + more + ". " + callText([], scope, undefined, 'sort:"timeline"') + " lists them all.";
 }
 
 // D-LABEL-HANDLE-1/2: how one call names its source to the user: `arg` is the value a paging line repeats (the
 // handle of a long label, else what the user typed); `note` is the collision line, when the value was a label
 // here and another source's handle.
-interface Named { arg: string | undefined; note: string | null }
+// `pick` is the stored source the value named (null = no source, or source:"decision").
+// `lost` is the lost bet an ordered read found (D-0027-LOSTBET-1); the handler writes it after its read-only pass.
+interface Named { arg: string | undefined; note: string | null; pick: SourcePick | null; lost: LostBet | null }
+interface LostBet { sessionId: string; key: string; source: string }
 
 function named(given: string | undefined, pick: SourcePick | null): Named {
-  if (given === undefined || pick === null) return { arg: given, note: null };
+  if (given === undefined || pick === null) return { arg: given, note: null, pick: null, lost: null };
   const arg = pick.id !== null && isLongLabel(given) ? sourceHandle(pick.id) : given;
-  return { arg, note: collisionLine(given, pick) };
+  return { arg, note: collisionLine(given, pick), pick, lost: null };
 }
 
 // D-LABEL-HANDLE-2: empty `queries` on one stored source -> its card: handle, label size, chunks, bytes, then the
@@ -113,7 +150,10 @@ function pageSize(input: CtxSearchInput): number {
 }
 
 // `extra` asks for hits past the page, so the caller knows whether a `More:` line has anything behind it.
-function page(db: DbHandle, q: string, input: CtxSearchInput, scope: SearchScope, ctx: ToolContext, offset: number, extra = 0): Hit[] {
+// `h9` counts the queries that take the H9 path (no query word in the source); with `list` false that path returns no
+// rows, so relevance() can read the source in order first and lists by position only when it does not
+// (D-1372-ORDERED-READ-1).
+function page(db: DbHandle, q: string, input: CtxSearchInput, scope: SearchScope, ctx: ToolContext, offset: number, extra = 0, h9 = { n: 0, list: true }): Hit[] {
   const size = pageSize(input) + extra;
   if (input.source === DECISION_SOURCE && q.trim() === "") {
     return ftsListSource(db, DECISION_SOURCE, scope, ctx.project, ctx.sessionId, size, offset);
@@ -124,6 +164,8 @@ function page(db: DbHandle, q: string, input: CtxSearchInput, scope: SearchScope
   if (hits.length > 0 || input.source === undefined) return hits;
   const any = offset === 0 ? hits : ftsQuery(db, q, scope, ctx.project, ctx.sessionId, 1, 0, input.source);
   if (any.length > 0) return hits;
+  h9.n++;
+  if (!h9.list) return [];
   return ftsListSource(db, input.source, scope, ctx.project, ctx.sessionId, size, offset);
 }
 
@@ -236,19 +278,32 @@ function relevance(db: DbHandle, given: CtxSearchInput, scope: SearchScope, ctx:
   const mem = ms.named || offset === 0 ? memoryChunks(ms.rows) : [];
   const count = (hits: Hit[], n: number): number => (ms.named ? Math.min(n, hits.length) : contentIn(hits, n));
   // One hit past the page: a `More:` line is printed only when a hit is left behind it (D-SEARCH-SMALL-1).
-  const fetched: Hit[][] = input.queries.map((q) => {
+  const h9 = { n: 0, list: false };
+  const listed: number[] = []; // queries on the H9 path, listed by position below unless the source is read in order
+  const fetched: Hit[][] = input.queries.map((q, qi) => {
     if (ms.named) {
       const want = offset + size + 1;
       const content = indexed ? ftsQuery(db, q, scope, ctx.project, ctx.sessionId, want, 0, input.source) : [];
       return mergeMemory(content, memoryHits(mem, q, want)).slice(offset, want);
     }
-    const content = page(db, q, input, scope, ctx, offset, 1);
+    const before = h9.n;
+    const content = page(db, q, input, scope, ctx, offset, 1, h9);
+    if (h9.n > before) listed.push(qi);
     return mem.length === 0 ? content : mergeMemory(content, memoryHits(mem, q, MEMORY_HITS));
   });
+  // D-1372-ORDERED-READ-1: no query word in the named source -> its text in order (the ranked path is unchanged).
+  if (listed.length > 0 && listed.length === input.queries.length) {
+    const ordered = orderedRead(db, input, scope, ctx, nm);
+    if (ordered !== null) return ordered;
+  }
+  for (const qi of listed) {
+    const content = ftsListSource(db, input.source as string, scope, ctx.project, ctx.sessionId, size + 1, offset);
+    fetched[qi] = mem.length === 0 ? content : mergeMemory(content, memoryHits(mem, input.queries[qi], MEMORY_HITS));
+  }
   const take: number[] = fetched.map((h) => replyHits(h, size));
   const pages: Hit[][] = fetched.map((h, i) => h.slice(0, take[i]));
   // Step 9: every query had zero hits.
-  if (pages.every((p) => p.length === 0)) return zeroHits(db, scope, ctx, input.source, ms, offset);
+  if (pages.every((p) => p.length === 0)) return zeroHits(db, scope, ctx, input.source, ms, nm, input.queries, offset);
 
   // D-LABEL-HANDLE-2: the cursor names a long label by its handle, so the line is short and whole.
   const moreLine = (q: string, pos: number): string =>
@@ -319,6 +374,61 @@ function relevance(db: DbHandle, given: CtxSearchInput, scope: SearchScope, ctx:
   return reply(lines.concat(moreLines).join("\n"), false);
 }
 
+// D-1372-ORDERED-READ-1 (#1372): a `source` call whose queries hold no word of that source (a blank query, or the MCP
+// pointer's tool name) reads the stored text in order, not a ranked listing of short chunks. One head line, then the
+// next stored bytes up to OUTPUT_CAP, then a `More:` line with the byte offset of the next page. The pages put together
+// are the source text: chunks are spans of it, so they join with nothing, except after a block end (a chunk that is
+// neither line-ended nor a full-size cut of a long line), where the chunker dropped the blank-line gap; that gap comes
+// back as one blank line. A query with a word in the source keeps the ranked reply.
+const ORDERED_LINE_BACK = 512; // a page ends after its last newline when one is this close to the cut
+const SOURCE_IN_SCOPE = `
+SELECT session_id FROM sources WHERE id = :id
+  AND (:scope <> 'session' OR session_id = :session_id)
+  AND (:scope <> 'worktree' OR worktree = :worktree)`;
+
+function sourceText(db: DbHandle, id: number): string {
+  const rows = db.raw.prepare("SELECT body FROM chunks WHERE source_id = ? ORDER BY CAST(ord AS INTEGER)").all(id) as unknown as Array<{ body: string }>;
+  const parts: string[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const body = rows[i].body;
+    parts.push(body);
+    if (i + 1 < rows.length && !body.endsWith("\n") && bytes(body) < MAX_CHUNK_BYTES - 3) parts.push("\n\n");
+  }
+  return parts.join("");
+}
+
+// Called by relevance() when every query took the H9 path of page() (no query word in the source).
+function orderedRead(db: DbHandle, input: CtxSearchInput, scope: SearchScope, ctx: ToolContext, nm: Named): ToolReply | null {
+  const pick = nm.pick;
+  if (pick === null || pick.id === null || input.source === undefined || input.source === DECISION_SOURCE) return null;
+  const where = { id: pick.id, scope, session_id: ctx.sessionId, worktree: ctx.project.worktree };
+  const row = db.raw.prepare(SOURCE_IN_SCOPE).get(where) as { session_id: string } | undefined;
+  if (row === undefined) return null;
+  const buf = Buffer.from(sourceText(db, pick.id), "utf8");
+  const total = buf.length;
+  if (total === 0) return null;
+  const name = isLongLabel(pick.label) ? shownLabel(pick.label, pick.id) : JSON.stringify(pick.label);
+  let start = Math.min(input.offset ?? 0, total);
+  while (start < total && (buf[start] & 0xc0) === 0x80) start++;
+  if (start >= total) return reply("No more text past offset " + start + " in source " + name + " (" + total + " B).", false);
+  const note = nm.note === null ? "" : " " + nm.note;
+  const headOf = (end: number): string => "Source " + name + " in order, bytes " + start + "-" + end + " of " + total + ":" + note;
+  const moreOf = (end: number): string => "More: " + callText([""], scope, nm.arg, "offset:" + end);
+  let end = total;
+  if (bytes(headOf(total)) + 1 + (total - start) > OUTPUT_CAP) {
+    end = start + OUTPUT_CAP - bytes(headOf(total)) - 1 - bytes(moreOf(total)) - 1;
+    while (end > start && (buf[end] & 0xc0) === 0x80) end--;
+    const nl = buf.lastIndexOf(0x0a, end - 1);
+    if (nl >= start && nl + 1 > end - ORDERED_LINE_BACK) end = nl + 1;
+  }
+  const text = buf.subarray(start, end).toString("utf8");
+  // D-0027-LOSTBET-1 case a (ADR-0027 FR5): the in-order page-in of a replaced output reached 50% or more of its bytes,
+  // so the bet on its tool key (the command, or server + tool) was lost in the session that made it. Marked once.
+  const key = end * 2 >= total ? betKeyOfLabel(pick.label) : null;
+  if (key !== null && !isLostBet(db, row.session_id, key)) nm.lost = { sessionId: row.session_id, key, source: sourceHandle(pick.id) };
+  return reply(headOf(end) + "\n" + text + (end < total ? "\n" + moreOf(end) : ""), false);
+}
+
 // ADR-0009 §8.1 rule 8 line; `#<seq>` only for journal rows (D-M2-T9-2).
 function timelineLine(r: TimelineRow): string {
   const nl = r.text.indexOf("\n");
@@ -332,7 +442,7 @@ function timelineLine(r: TimelineRow): string {
 function timeline(db: DbHandle, input: CtxSearchInput, scope: SearchScope, ctx: ToolContext, nm: Named, ms: MemorySide): ToolReply {
   // D-M2-T9-1: memory files belong to the worktree, not to a session (ms.rows is empty for scope "session").
   const page = ftsQueryTimeline(db, scope, ctx.project, ctx.sessionId, SEARCH_PAGE_SIZE, input.after ?? null, input.source, ms.rows);
-  if (page.rows.length === 0) return zeroHits(db, scope, ctx, input.source, ms);
+  if (page.rows.length === 0) return zeroHits(db, scope, ctx, input.source, ms, nm, input.queries);
 
   const moreLine = (ts: number): string =>
     "more: " + callText(input.queries, scope, nm.arg, 'sort:"timeline", after:' + ts);
@@ -377,19 +487,28 @@ function answer(db: DbHandle, input: CtxSearchInput, scope: SearchScope, ctx: To
 
 async function handler(input: CtxSearchInput, ctx: ToolContext): Promise<ToolReply> {
   const sort = input.sort ?? "relevance";
-  // DECISIONS-r9 M23, ADR-0009 §8.1 rule 6.
-  if (sort === "timeline" && input.offset !== undefined) {
+  // DECISIONS-r9 M23, ADR-0009 §8.1 rule 6. 0 is the first page of either cursor, so only a non-zero
+  // value pages; whole-schema clients send offset:0 and after:0 (D-R54-SEARCH-ZERO-1, #1354).
+  if (sort === "timeline" && (input.offset ?? 0) !== 0) {
     return invalid("offset", 'drop offset; page a timeline with "after"');
   }
-  if (sort === "relevance" && input.after !== undefined) {
+  if (sort === "relevance" && (input.after ?? 0) !== 0) {
     return invalid("after", 'drop after, or pass sort:"timeline"');
+  }
+  // A blank source names no source: whole-schema clients send source:"" too (D-R54-SEARCH-ZERO-1, #1354).
+  if (input.source !== undefined && input.source.trim() === "") {
+    const { source: _blank, ...rest } = input;
+    input = rest;
   }
   const scope: SearchScope = input.scope ?? "worktree";
   const db = await openDb(ctx.project, { readOnly: true });
+  let lost: LostBet | null = null;
   try {
-    // D-LABEL-HANDLE-1: a stored label wins, then a short id, then a label without its "#" suffix (pickSource).
+    // D-LABEL-HANDLE-1: a stored label wins, then a short id, then a label without its "#" suffix (pickSource),
+    // inside the asked scope first (D-SEARCH-SCOPE-PICK-1, #1390).
     const given = input.source;
-    const pick = given !== undefined && given !== DECISION_SOURCE ? pickSource(db, given) : null;
+    const within = { scope, sessionId: ctx.sessionId, worktree: ctx.project.worktree };
+    const pick = given !== undefined && given !== DECISION_SOURCE ? pickSource(db, given, true, within) : null;
     if (pick !== null) input = { ...input, source: pick.label };
     const nm = named(given, pick);
     const indexed = pick !== null && pick.id !== null;
@@ -402,12 +521,29 @@ async function handler(input: CtxSearchInput, ctx: ToolContext): Promise<ToolRep
       nm.note = nm.note === null ? both : nm.note + "\n" + both;
     }
     const out = answer(db, input, scope, ctx, nm, ms, indexed, sort, pick);
+    lost = nm.lost;
     if (file === null || scope !== "session") return out;
     // D-MEMORY-SOURCE-1: scope "session" holds no memory file; one line names the scope that holds it.
     const call = callText(input.queries, "worktree", nm.arg, sort === "timeline" ? 'sort:"timeline"' : "");
     return reply(out.text + "\nMemory file " + file.label + ' is in scope "worktree": ' + call + " searches it.", out.isError);
   } finally {
     closeDb(db);
+    if (lost !== null) await recordLostBet(ctx, lost);
+  }
+}
+
+// D-0027-LOSTBET-1: the one write of a ctx_search call, only when an ordered read found a lost bet. A failure leaves
+// the bet as today (ADR-0027 section 12) and never changes the reply.
+async function recordLostBet(ctx: ToolContext, lost: LostBet): Promise<void> {
+  try {
+    const w = await openDb(ctx.project);
+    try {
+      markLostBet(w, lost.sessionId, lost.key, "ordered-read", lost.source);
+    } finally {
+      closeDb(w);
+    }
+  } catch {
+    // never blocks the reply
   }
 }
 

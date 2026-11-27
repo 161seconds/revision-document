@@ -44,7 +44,7 @@ MCP server process can both read and write it without stepping on each other (`0
 2. **During the call**: for `ctx_execute`/`ctx_batch`, code runs in a sandboxed child process, inside the
    project directory, with a kill switch on the whole process tree if it times out or is cancelled
    (`docs/algorithms.md` §9). Only what the code prints comes back, up to `OUTPUT_CAP` (16,384 bytes).
-   This is Thinking in Code: the agent writes a script that prints only the answer, instead of reading the data
+   This is called Code Mode: the agent writes a script that prints only the answer, instead of reading the data
    ([tools.md](tools.md#ctx_execute)).
 3. **After the call** (`PostToolUse`): if the real output from a host tool (not `ctx_*`) is over
    `REPLACE_TRIGGER_BYTES` (4,096), the hook chunks it, indexes it whole, and replaces what the agent sees with
@@ -108,8 +108,8 @@ agent runs ctx_search(queries, scope)
 
 ## Adapters: one mechanism per host
 
-Every coding agent host (Claude Code, Codex, Gemini, Qwen, Copilot CLI, VS Code, Kiro, ZCode, Pi,
-OpenCode) wires hooks and the MCP server in a different way. The adapter table names, per host: how
+Every agent host (Claude Code, Codex, Gemini, Qwen, Copilot CLI, VS Code, Kiro, ZCode, Pi,
+OpenCode, OMP) wires hooks and the MCP server in a different way. The adapter table names, per host: how
 context-mode installs (`installMode`), how it finds the project root (`projectSource`), what its MCP tool
 names are prefixed with (`toolNamePrefix`), how a compaction-recovery block is delivered
 (`compactDelivery`), and how deny messages reach the host (`denyChannel`) (`docs/architecture/modules/10-adapters.md`
@@ -123,9 +123,9 @@ names are prefixed with (`toolNamePrefix`), how a compaction-recovery block is d
 | Qwen | extension | spawn cwd | `SessionStart(source=compact)` |
 | Kiro | MCP entry | `--agent` + cwd | none |
 | ZCode | hooks + MCP | spawn cwd | `SessionStart(source=compact)` (unverified) |
-| Pi, OpenCode | plugin inside the agent | the agent's own cwd | agent-specific flag/cache |
+| Pi, OpenCode, OMP | plugin inside the agent | the agent's own cwd | agent-specific flag/cache |
 
-One mechanism, ten adapters: the rules in the sections above (deny, chunk, search, compact) are the same
+One mechanism, 11 agents: the rules in the sections above (deny, chunk, search, compact) are the same
 everywhere; only how a host is told about them changes.
 
 ## Engineering details

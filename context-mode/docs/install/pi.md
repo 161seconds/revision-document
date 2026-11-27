@@ -18,6 +18,8 @@ Pi-Bolt (the Pi coding agent compiled to native code) runs Pi extensions unchang
 
 Pi gets the hooks and the skills from the package. Restart Pi after the install.
 
+OMP (oh-my-pi) has its own plugin store and its own commands: `omp plugin install context-mode`. See [OMP](./omp.md).
+
 `npm i -g context-mode` also gives the `context-mode` command for doctor.
 
 Setup is the fallback and the repair for what the native step cannot do:
@@ -34,9 +36,21 @@ To do the setup step by hand, run `context-mode setup --print pi` and follow wha
 
 - Runs `pi install` on the installed package folder. It writes `~/.pi/agent/settings.json`.
 - Pi gets the extension (`pi/index.js`), which runs the hooks as the plugin's own event handlers inside Pi (session_start, input, tool_call, tool_result), and the shipped skills `/ctx-doctor`, `/ctx-stats` and `/ctx-upgrade`. Pi needs no MCP entry.
-- Effect: the call runs, then a large result is replaced by a short selection that names `ctx_search` (replace). tool_result sets new content and details.
+- Effect: the call runs, then a large result is replaced by a short selection that names `ctx_search` (replace). tool_result sets the new content and sends the tool's own `structuredContent` back with it. Pi keeps the tool's `details` as they were.
 - Backs up each file first. A failed step is rolled back byte for byte.
 - Never edits `CLAUDE.md`, `AGENTS.md` or other instruction files.
+
+## Keep a tool's result whole
+
+Some Pi tools put state in their result that a later call needs, such as a `responseId`. To keep a tool's result whole, add its exact name to `contextMode.excludeTools` in `~/.pi/agent/settings.json` (or `.pi/settings.json` in the project):
+
+```json
+{
+  "contextMode": { "excludeTools": ["fetch_content", "session_search"] }
+}
+```
+
+context-mode still records the call, but it does not replace the result. A missing or malformed list keeps the default. The full output of a replaced result stays searchable with `ctx_search`.
 
 ## Verify
 

@@ -5,11 +5,11 @@ import { randomUUID } from "node:crypto";
 import { existsSync, realpathSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { McpServer, type ServerContext, type StandardSchemaWithJSON } from "@modelcontextprotocol/server";
+import { CLIENT_CAPABILITIES_META_KEY, McpServer, inputRequired, inputResponse, type ServerContext, type StandardSchemaWithJSON } from "@modelcontextprotocol/server";
 import { serveStdio, type StdioServerHandle } from "@modelcontextprotocol/server/stdio";
 import { AGENT_IDS, type AgentId } from "../core/contracts/agents.ts";
 import {
-  HOST_SESSION_ENV, INTERNAL_ERROR_LINE, NODE_MIN, OWNER_STOP_EXT, OWNERS_DIR_NAME, PROJECTS_DIR_NAME, RUN_SESSION_PREFIX, SERVER_KEY, TOOLS_TTL_MS,
+  HOST_SESSION_ENV, HOST_SESSION_META, INTERNAL_ERROR_LINE, NODE_MIN, OWNER_STOP_EXT, OWNERS_DIR_NAME, PROJECTS_DIR_NAME, RUN_SESSION_PREFIX, SERVER_KEY, TOOLS_TTL_MS,
   UPGRADE_STOP_DELAY_MS, DOCTOR_TOOL_NAME, JOURNAL_SKIPPED_LINE, ROOTS_TIMEOUT_MS, VSCODE_WORKSPACE_VAR, WORKSPACE_FOLDER_FLAG,
 } from "../core/contracts/constants.ts";
 import { CtxError } from "../core/contracts/errors.ts";
@@ -85,11 +85,15 @@ function metaNumber(meta: Record<string, unknown> | undefined, key: string): num
   return typeof v === "number" && Number.isSafeInteger(v) ? v : undefined;
 }
 
-// D-CR2-SID-1: _meta.sessionId, else the session id the host put in the server env (the id its hooks
-// journal under, so scope:"session" finds hook-indexed rows), else the process-local mcp:<serverId>.
+// D-CR2-SID-1: _meta.sessionId, else the host's own _meta session key (D-1411-ZCODE-SID-1: zcode session_id), else the
+// session id the host put in the server env (the id its hooks journal under, so scope:"session" finds hook-indexed rows),
+// else the process-local mcp:<serverId>.
 export function sessionIdOf(meta: Record<string, unknown> | undefined, agent: AgentId | undefined, env: NodeJS.ProcessEnv, serverId: string): string {
   const fromMeta = metaString(meta, "sessionId");
   if (fromMeta !== undefined) return fromMeta;
+  const metaKey = agent === undefined ? undefined : HOST_SESSION_META[agent];
+  const fromHostMeta = metaKey === undefined ? undefined : metaString(meta, metaKey);
+  if (fromHostMeta !== undefined) return fromHostMeta;
   const key = agent === undefined ? undefined : HOST_SESSION_ENV[agent];
   const fromHost = key === undefined ? undefined : env[key];
   if (typeof fromHost === "string" && fromHost !== "") return fromHost;
@@ -112,6 +116,49 @@ function workspaceFromMeta(meta: Record<string, unknown> | undefined): string | 
   } catch {
     return undefined;
   }
+}
+
+// D-1398-HOST-ROOTS-1 (#1398): the folders the host granted this call besides the project, so ctx_index and
+// ctx_execute(file=) accept what the host itself lets the agent use (#852: the boundary the host enforces), with no
+// setting. Codex: the {type:"path"} entries with write access in sandbox-state-meta permissionProfile (--add-dir,
+// writable_roots); the read-only disk root and the tmp specials grant nothing. Claude Code (2026-07-28): roots/list,
+// asked as an MRTR input request only after a path fell outside the project (/add-dir, --add-dir, additionalDirectories).
+const HOST_ROOTS_INPUT_KEY = "roots";
+const WRITE_ACCESS = "write";
+
+function grantedFromMeta(meta: Record<string, unknown> | undefined): string[] {
+  const state = meta?.[CODEX_SANDBOX_STATE_META];
+  const profile = typeof state === "object" && state !== null ? (state as { permissionProfile?: unknown }).permissionProfile : undefined;
+  const fs = typeof profile === "object" && profile !== null ? (profile as { file_system?: unknown }).file_system : undefined;
+  const entries = typeof fs === "object" && fs !== null ? (fs as { entries?: unknown }).entries : undefined;
+  if (!Array.isArray(entries)) return [];
+  const out: string[] = [];
+  for (const e of entries as Array<{ path?: { type?: unknown; path?: unknown }; access?: unknown } | null>) {
+    const path = e?.path;
+    if (e?.access === WRITE_ACCESS && path?.type === "path" && typeof path.path === "string" && path.path !== "") out.push(path.path);
+  }
+  return out;
+}
+
+function grantedFromInput(responses: Record<string, unknown> | undefined): string[] | undefined {
+  const view = inputResponse(responses, HOST_ROOTS_INPUT_KEY);
+  if (view.kind !== "roots") return undefined;
+  const out: string[] = [];
+  for (const root of view.roots) {
+    if (!root.uri.startsWith(FILE_URL_PREFIX)) continue;
+    try {
+      out.push(fileURLToPath(root.uri));
+    } catch {
+      // not a local file URL: grants nothing
+    }
+  }
+  return out;
+}
+
+// The SDK types the 2026-07-28 envelope as {}; the client capabilities ride in it under CLIENT_CAPABILITIES_META_KEY.
+function listsRoots(envelope: object | undefined): boolean {
+  const caps = (envelope as Record<string, unknown> | undefined)?.[CLIENT_CAPABILITIES_META_KEY];
+  return typeof caps === "object" && caps !== null && (caps as { roots?: unknown }).roots !== undefined;
 }
 
 function realOrSame(p: string): string {
@@ -233,6 +280,9 @@ export async function startServer(argv: string[], env: NodeJS.ProcessEnv): Promi
       // each call, so a folder the user opens later is the project of the next call.
       const fromRoots = agent === "vscode" && !hasWorkspaceFolder(argv) ? await workspaceFromRoots(server) : undefined;
       const callArgv = fromRoots === undefined ? argv : [...argv, WORKSPACE_FOLDER_FLAG, fromRoots];
+      // D-1398-HOST-ROOTS-1: Codex sends its grants on every call; Claude Code's roots arrive on the MRTR retry.
+      const fromInput = grantedFromInput(req.mcpReq.inputResponses);
+      const hostRoots = [...grantedFromMeta(meta), ...(fromInput ?? [])];
       // §5 step 6a, 7a: resolved lazily, at most once per call, never cached across calls.
       let project: ProjectContext | undefined;
       const projectOf = (): ProjectContext => {
@@ -244,6 +294,8 @@ export async function startServer(argv: string[], env: NodeJS.ProcessEnv): Promi
         get project(): ProjectContext {
           return projectOf();
         },
+        ...(agent === undefined ? {} : { agent }), // D-1410-DOCTOR-NO-PROJECT-1
+        ...(hostRoots.length === 0 ? {} : { hostRoots }), // D-1398-HOST-ROOTS-1
         sessionId: sessionIdOf(meta, agent, env, serverId),
         turn: metaNumber(meta, "turn") ?? 0,
         signal: req.mcpReq.signal,
@@ -261,6 +313,11 @@ export async function startServer(argv: string[], env: NodeJS.ProcessEnv): Promi
         } catch (err) {
           reply = errorReply(err);
         }
+      }
+      // D-1398-HOST-ROOTS-1: a path outside the project on a host that lists its roots (2026-07-28 envelope) asks once
+      // for them; the host retries the same call with the answer. A call inside the project never gets here.
+      if (reply.outsideRoot === true && fromInput === undefined && listsRoots(req.mcpReq.envelope)) {
+        return inputRequired({ inputRequests: { [HOST_ROOTS_INPUT_KEY]: inputRequired.listRoots() } });
       }
       // impl/07 uninstall step 1, D-M5-R1-1: a call that left this server's own stop marker (ctx_upgrade
       // mode "uninstall") writes no journal row (the project data is going away) and ends the process

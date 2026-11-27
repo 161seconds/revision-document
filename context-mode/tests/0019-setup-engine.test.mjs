@@ -11,7 +11,7 @@ import path from "node:path";
 import ts from "typescript";
 import { ADAPTERS } from "../src/adapters/table.ts";
 import { TOOL_ORDER } from "../src/core/contracts/constants.ts";
-import { OVERHEAD_P95_MS } from "../src/setup/engine.ts";
+import { NOT_SET_UP_REASON, OVERHEAD_P95_MS } from "../src/setup/engine.ts";
 import { hookCommandString, stableNodePath, SETUP_NODE } from "../src/setup/registry.ts";
 import { qwenHooksOff } from "../src/setup/qwen-gate.ts";
 import { hookHashOf, pluginTrustEntries } from "../src/setup/codex-trust.ts";
@@ -20,6 +20,7 @@ import { generateManifests } from "../build/manifests.ts";
 import { FAKE_APP_SERVER, PLUGIN_EVENTS, PLUGIN_ID, PLUGIN_KEY, hashOf } from "./_lib/codex-fake.mjs";
 import { vscodeUserDirOf } from "../src/core/project/config-dir.ts";
 import { detectV1 } from "../src/core/ops/detect-v1.ts";
+import { runUninstall } from "../src/core/ops/uninstall.ts";
 
   // serial: runSetup and runDoctor share in-process state; the tests fail when they overlap
 describe("ADR-0019 section 3: setup engine (setup, doctor, remove, spawn, lock, backup)", () => {
@@ -150,7 +151,7 @@ rl.on("line", (l) => {
     const reg = buildRegistry({ home: "/h", pkgDir: "/abs/pkg", env: {} });
     for (const r of reg.filter((x) => x.hookCommand)) {
       // D-C166-WIN-FIRE-2: codex on Windows writes bare node (0.166 runs hooks in PowerShell); the doctor runs hookRunCommand
-      const node = (r.id === "codex" || r.id === "qwen") && process.platform === "win32" ? "node" : NODE; // D-R44-QWEN-WIN-1
+      const node = ["codex", "qwen", "copilot-cli", "vscode"].includes(r.id) && process.platform === "win32" ? "node" : NODE; // D-R44-QWEN-WIN-1, #1375
       assert.deepEqual(r.hookCommand, [node, path.join("/abs/pkg", "hook.mjs"), "--agent", r.id]);
       assert.equal(r.hookRunCommand[0], NODE);
     }
@@ -237,6 +238,23 @@ rl.on("line", (l) => {
     const again = await runSetup({ home: s.home, pkgDir: s.pkgDir, env, agents: ["codex"], runId: "r2" });
     assert.deepEqual(again.agents[0].changes, []);
     assert.equal(readFileSync(toml, "utf8"), text);
+  });
+
+  // #1359 (HengYangDS, D-1359-CODEX-TOOLS-1): re-running `setup --yes --agents codex` deleted the user's
+  // [mcp_servers.context-mode.tools.<tool>] approval_mode tables (Codex-native user config) from config.toml.
+  test("[#1359] setup again keeps the user's [mcp_servers.context-mode.tools.*] approval tables and their values", async (t) => {
+    const s = sandbox(t);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "r1" });
+    assert.equal(res.exitCode, 0, JSON.stringify(res.agents));
+    const toml = path.join(s.home, ".codex", "config.toml");
+    const approvals = '\n[mcp_servers.context-mode.tools.ctx_execute]\napproval_mode = "auto"\n\n[mcp_servers.context-mode.tools.ctx_batch]\napproval_mode = "prompt"\n';
+    writeFileSync(toml, readFileSync(toml, "utf8") + approvals);
+    const before = readFileSync(toml, "utf8");
+    const again = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "r2" });
+    assert.equal(again.exitCode, 0, JSON.stringify(again.agents));
+    assert.deepEqual(again.agents[0].v1.filter((f) => f.file === toml), []);
+    assert.deepEqual(again.agents[0].changes, []);
+    assert.equal(readFileSync(toml, "utf8"), before);
   });
 
   // #1328 / #1329 (lisandroprada, fingerprint 2e26442450f2): on Node v23.9.0 setup failed with "mcp: tools/list returned
@@ -386,7 +404,8 @@ exit 0`;
   test("[H8] setup: a shim first on PATH is skipped; setup and doctor run the real claude behind it and name it", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
     const s = sandbox(t);
     const ran = path.join(s.root, "shim-ran");
-    const real = fakeClaude(s.root, s.bin, CLAUDE_FAKE(path.join(s.root, "claude.state")));
+    fakeClaude(s.root, s.bin, CLAUDE_FAKE(path.join(s.root, "claude.state")));
+    const real = path.join(s.bin, "claude"); // #1335: the PATH file that passed the check, not its realpath
     const env = { ...s.env, PATH: [claudeShim(s.root, ran), s.env.PATH].join(path.delimiter) };
     const opts = { home: s.home, pkgDir: s.pkgDir, env, agents: ["claude-code"] };
     const res = await runSetup({ ...opts, runId: "r" });
@@ -416,11 +435,26 @@ exit 0`;
     mkdirSync(native);
     symlinkSync(process.execPath, path.join(native, "claude"));
     const env = { PATH: [shims, native].join(path.delimiter) };
-    assert.deepEqual(hostBin("claude", env), { file: realpathSync(process.execPath), shims: [path.join(shims, "claude")] });
+    assert.deepEqual(hostBin("claude", env), { file: path.join(native, "claude"), shims: [path.join(shims, "claude")] });
     assert.deepEqual(hostBin("claude", { PATH: shims }), { file: undefined, shims: [path.join(shims, "claude")] });
     writeFileSync(path.join(shims, "codex"), "#!/bin/sh\n");
     chmodSync(path.join(shims, "codex"), 0o755);
     assert.deepEqual(hostBin("codex", env), { file: path.join(shims, "codex"), shims: [] });
+  });
+
+  test("[H8] hostBin #1335: a mise-style shim (claude -> multi-call native launcher) runs as the PATH file, so argv[0] stays claude", { skip: process.platform === "win32" && "symlinks need admin on Windows" }, (t) => {
+    // mise layout: ~/.local/share/mise/shims/claude -> ../bin/mise. mise reads argv[0] to pick the tool; run through the
+    // realpath it sees argv[0] "mise" and answers `claude plugin marketplace add` with "unrecognized subcommand".
+    // process.execPath is a native multi-call stand-in: node prints the argv[0] it was started with.
+    const s = sandbox(t);
+    const shimDir = path.join(s.root, "mise", "shims");
+    mkdirSync(shimDir, { recursive: true });
+    const shim = path.join(shimDir, "claude");
+    symlinkSync(process.execPath, shim);
+    const got = hostBin("claude", { PATH: shimDir });
+    assert.deepEqual(got, { file: shim, shims: [] }, "the PATH file passed the native check and is the file that runs");
+    const r = spawnSync(got.file, ["-e", "process.stdout.write(process.argv0)"], { encoding: "utf8" });
+    assert.equal(path.basename(r.stdout), "claude", "the launcher sees the name the user typed");
   });
 
   test("[M7] setup/doctor: a report-only v1 finding (shared OS temp file) does not fail an agent that is set up", async (t) => {
@@ -441,6 +475,30 @@ exit 0`;
     const res = await runDoctor(opts);
     assert.equal(res.exitCode, 0, JSON.stringify(res.agents));
     assert.ok(res.agents[0].v1.length > 0, "the temp finding is still reported");
+  });
+
+  // #1383: v1.0.169 wrote ~/.claude/context-mode/sessions/stats-pid-<n>.json. Setup keeps user data (ADR-0017 R6: nothing
+  // is deleted without a prompt), so doctor names the folder as a note and the agent that setup set up stays PASS.
+  // A v1 hook is a form setup owns: it still fails doctor.
+  test("[M7] setup/doctor #1383: a v1 data dir setup keeps is a doctor note, not a FAIL; a v1 hook still fails", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const { runDoctor } = await import("../src/setup/index.ts");
+    const s = sandbox(t);
+    fakeClaude(s.root, s.bin, CLAUDE_FAKE(path.join(s.root, "claude.state")));
+    const sessions = path.join(s.home, ".claude", "context-mode", "sessions");
+    put(path.join(sessions, "stats-pid-1.json"), JSON.stringify({ version: "1.0.169" }));
+    const opts = { home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["claude-code"] };
+    const set = await runSetup({ ...opts, runId: "r" });
+    assert.equal(set.agents[0].status, "PASS", JSON.stringify(set.agents[0], null, 2));
+    const doc = await runDoctor(opts);
+    assert.equal(doc.agents[0].status, "PASS", JSON.stringify(doc.agents[0], null, 2));
+    assert.equal(doc.exitCode, 0);
+    assert.ok(doc.agents[0].v1.some((f) => f.file === path.dirname(sessions)), "doctor still names the kept data dir");
+    assert.ok(existsSync(path.join(sessions, "stats-pid-1.json")), "setup keeps the user's data");
+    // Control: a v1 hook command in settings.json is an old form, so doctor fails and names setup.
+    put(path.join(s.home, ".claude", "settings.json"), JSON.stringify({ hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node /x/context-mode/hooks/pretooluse.mjs" }] }] } }));
+    const hook = await runDoctor(opts);
+    assert.equal(hook.agents[0].status, "FAIL");
+    assert.equal(hook.agents[0].reason, "old context-mode entry, run: context-mode setup");
   });
 
   test("whichBin: on Windows only PATHEXT names match (npm's <bin>.cmd shim), PATH key in any case", (t) => {
@@ -602,6 +660,97 @@ exit 0`);
     assert.ok(text.includes("answer=y"), text);
   });
 
+  // ADR-0026 M5 (T23-T26, D-OMP-SETUP-1): OMP installs by name from its own plugin store with its own verbs; setup and
+  // uninstall never touch ~/.pi; `disabledServers` gets our name only when OMP imports a context-mode server from Claude.
+  function ompSandbox(t) {
+    const s = sandbox(t);
+    const log = path.join(s.root, "omp.log");
+    const state = path.join(s.root, "omp.state");
+    fakeBin(s.root, "omp", `echo "$@" >> "${log}"
+case "$1 $2" in
+  "plugin list") if [ -f "${state}" ]; then echo "context-mode 2.0.0"; fi ;;
+  "plugin install") touch "${state}" ;;
+  "plugin uninstall") rm -f "${state}" ;;
+esac
+exit 0`);
+    const agentDir = path.join(s.home, ".omp", "agent");
+    return { ...s, log, agentDir, mcpJson: path.join(agentDir, "mcp.json") };
+  }
+  const ompCommands = (res) => res.agents[0].changes.flatMap((c) => c.command ? [c.command.join(" ")] : []);
+  const CLAUDE_JSON_WITH_US = JSON.stringify({ mcpServers: { "context-mode": { command: "node", args: ["server.mjs"] } } });
+
+  test("T23 setup --agents omp plans `omp plugin install context-mode`, no npm, no @next, nothing under ~/.pi (ADR-0026 M5)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = ompSandbox(t);
+    const dry = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "d", dryRun: true });
+    assert.deepEqual(ompCommands(dry), ["omp plugin install context-mode"]);
+    for (const c of ompCommands(dry)) { assert.ok(!c.includes("npm") && !c.includes("@next"), c); }
+    await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "r" });
+    const lines = readFileSync(s.log, "utf8").split("\n");
+    assert.ok(lines.includes("plugin install context-mode"), lines.join("\n"));
+    assert.equal(existsSync(path.join(s.home, ".pi")), false);
+  });
+
+  test("T24 uninstall plans `omp plugin uninstall context-mode` (ADR-0026 M5)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const rows = Object.fromEntries(buildRegistry({ home: "/h", pkgDir: "/p/context-mode", env: {} }).map((r) => [r.id, r]));
+    assert.deepEqual(rows.omp.cli.remove, [["plugin", "uninstall", "context-mode"]]);
+    const s = ompSandbox(t);
+    await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "r" });
+    runRemove({ home: s.home, env: s.env });
+    assert.ok(readFileSync(s.log, "utf8").split("\n").includes("plugin uninstall context-mode"));
+    assert.equal(existsSync(path.join(s.home, ".pi")), false);
+  });
+
+  test("T25 OMP imports Claude MCP servers -> setup merges disabledServers [context-mode]; import off -> no write (ADR-0026 M5)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    for (const config of ["theme: dark\nenabledProviders: [claude]\n", "enabledProviders:\n  - codex\n  - claude\n"]) {
+      const s = ompSandbox(t);
+      put(path.join(s.agentDir, "config.yml"), config);
+      put(path.join(s.home, ".claude.json"), CLAUDE_JSON_WITH_US);
+      put(s.mcpJson, JSON.stringify({ mcpServers: { x: { command: "x" } }, disabledServers: ["other"] }, null, 2));
+      const dry = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "d", dryRun: true });
+      assert.ok(dry.agents[0].changes.some((c) => c.file === s.mcpJson), JSON.stringify(dry.agents[0].changes));
+      const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "r" });
+      assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
+      assert.deepEqual(JSON.parse(readFileSync(s.mcpJson, "utf8")), { mcpServers: { x: { command: "x" } }, disabledServers: ["other", "context-mode"] });
+      assert.equal(existsSync(path.join(s.home, ".pi")), false);
+    }
+    // Import off (OMP's default) or no context-mode entry in ~/.claude.json: no mcp.json write.
+    for (const [config, claude] of [[undefined, CLAUDE_JSON_WITH_US], ["enabledProviders: [codex]\n", CLAUDE_JSON_WITH_US], ["enabledProviders: [claude]\n", JSON.stringify({ mcpServers: {} })]]) {
+      const s = ompSandbox(t);
+      if (config !== undefined) put(path.join(s.agentDir, "config.yml"), config);
+      put(path.join(s.home, ".claude.json"), claude);
+      await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["omp"], runId: "r" });
+      assert.equal(existsSync(s.mcpJson), false, String(config));
+    }
+  });
+
+  // #1415: OMP's agent dir is <HOME>/<PI_CONFIG_DIR or .omp>/agent (OMP 19.1.1 pi-utils src/dirs.ts); XDG_DATA_HOME moves only
+  // the plugin store, never mcp.json or config.yml. Setup and uninstall edit the mcp.json OMP reads.
+  test("T25 [#1415] PI_CONFIG_DIR=.config/pi: setup merges disabledServers into OMP's own <root>/agent/mcp.json, uninstall drops only our name; XDG_DATA_HOME never moves it", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = ompSandbox(t);
+    const agentDir = path.join(s.home, ".config", "pi", "agent");
+    const mcpJson = path.join(agentDir, "mcp.json");
+    const xdg = path.join(s.home, ".local", "share");
+    put(path.join(xdg, "omp", "plugins", "package.json"), JSON.stringify({ name: "omp-plugins", private: true }));
+    const env = { ...s.env, PI_CONFIG_DIR: ".config/pi", XDG_DATA_HOME: xdg };
+    put(path.join(agentDir, "config.yml"), "enabledProviders: [claude]\n");
+    put(path.join(s.home, ".claude.json"), CLAUDE_JSON_WITH_US);
+    put(mcpJson, JSON.stringify({ mcpServers: { x: { command: "x" } }, disabledServers: ["other"] }, null, 2));
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env, agents: ["omp"], runId: "r" });
+    assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
+    assert.deepEqual(JSON.parse(readFileSync(mcpJson, "utf8")), { mcpServers: { x: { command: "x" } }, disabledServers: ["other", "context-mode"] });
+    assert.equal(existsSync(path.join(s.home, ".omp", "agent", "mcp.json")), false);
+    runUninstall({ adapter: { id: "omp", installMode: "in-process" }, project: { projectKey: "abcdef0123456789" }, env: { HOME: s.home, USERPROFILE: s.home, PI_CONFIG_DIR: ".config/pi", XDG_DATA_HOME: xdg }, confirmDelete: false });
+    assert.deepEqual(JSON.parse(readFileSync(mcpJson, "utf8")), { mcpServers: { x: { command: "x" } }, disabledServers: ["other"] });
+  });
+
+  test("T26 uninstall removes only our name from OMP disabledServers (ADR-0026 M5)", (t) => {
+    const s = sandbox(t);
+    const mcpJson = put(path.join(s.home, ".omp", "agent", "mcp.json"), JSON.stringify({ mcpServers: { x: { command: "x" } }, disabledServers: ["other", "context-mode"] }, null, 2));
+    runUninstall({ adapter: { id: "omp", installMode: "in-process" }, project: { projectKey: "abcdef0123456789" }, env: { HOME: s.home, USERPROFILE: s.home }, confirmDelete: false });
+    assert.deepEqual(JSON.parse(readFileSync(mcpJson, "utf8")), { mcpServers: { x: { command: "x" } }, disabledServers: ["other"] });
+    assert.equal(existsSync(path.join(s.home, ".pi")), false);
+  });
+
   // D-SETUP-SLOW-1: a first run of an agent CLI can unpack its own package before `mcp add` answers (copilot on a fresh
   // Windows runner took over 10 s, so spawnSync gave status null and setup rolled back). Install steps get a longer limit.
   test("setup: an agent CLI whose install step takes 11 s still installs (D-SETUP-SLOW-1)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
@@ -633,18 +782,107 @@ exit 0`);
   // D-HF-OPENCODE-LIST-1: with our plugin entry in opencode.json, OpenCode 1.19.4 first installs @opencode-ai/plugin
   // (30-60 s, network) before `mcp list` prints, so the 10 s list check timed out and setup rolled back on a fresh
   // HOME. `mcp list --pure` (run without external plugins) lists the MCP servers without that install.
-  test("setup: the opencode list check does not load plugins (D-HF-OPENCODE-LIST-1)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
-    const s = sandbox(t);
-    const log = path.join(s.root, "opencode.log");
+  // D-OC1-LIST-2 (#1362): `mcp list` connects every MCP server of the user, so one user server that never answers holds
+  // it past the 10 s budget: "opencode FAIL list: opencode mcp list --pure does not list context-mode (rolled back)",
+  // while the real `opencode mcp list --pure` (1.19.5) printed "✓ context-mode connected / ✗ slowsrv failed" after 32.6 s.
+  // On 1.x the list check reads `opencode debug config --pure` (the config the CLI loaded, no server started, no plugin
+  // load), as D-OC2-LIST-1 does on 2.x.
+  const SKIP_SH_1413 = { skip: process.platform === "win32" && "fake agent binaries are sh scripts" };
+  function fakeOpencode1(s, log, { version = `echo "1.19.5"`, config } = {}) {
+    const file = path.join(s.home, ".config", "opencode", "opencode.json");
+    const dump = path.join(s.root, "dump.mjs");
+    writeFileSync(dump, config ?? `import { readFileSync } from "node:fs"; let d = {}; try { d = JSON.parse(readFileSync(${JSON.stringify(file)}, "utf8")); } catch {}
+process.stdout.write(JSON.stringify({ ...d, agent: {}, plugin: d.plugin ?? [] }, null, 2));\n`);
     fakeBin(s.root, "opencode", `echo "$@" >> "${log}"
-case " $* " in
-  *" --pure "*) echo "context-mode connected" ;;
-  *) exit 1 ;;
+case "$1 $2" in
+  "--version ") ${version} ;;
+  "mcp list") sleep 15; echo "context-mode connected" ;;
+  "debug config") "${NODE}" "${dump}" ;;
 esac
 exit 0`);
+    return dump;
+  }
+
+  test("setup: on OpenCode 1.x a slow user MCP server does not fail the list check; it reads debug config --pure (D-OC1-LIST-2, #1362)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "opencode.log");
+    fakeOpencode1(s, log);
     const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"], runId: "r" });
     assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
-    assert.ok(readFileSync(log, "utf8").includes("mcp list --pure"), readFileSync(log, "utf8"));
+    const ran = readFileSync(log, "utf8");
+    assert.ok(ran.includes("debug config --pure"), ran); // D-HF-OPENCODE-LIST-1: --pure, so no plugin install is waited on
+    assert.ok(!ran.includes("mcp list"), ran);
+  });
+
+  test("setup: on OpenCode 1.x the list check FAILs when the loaded config has no mcp.context-mode, and names what it loaded (D-OC1-LIST-2, #1362)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "opencode.log");
+    fakeOpencode1(s, log, { config: `process.stdout.write(JSON.stringify({ mcp: { slowsrv: { type: "local" } }, plugin: [] }));\n` });
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"], runId: "r" });
+    assert.equal(res.agents[0].status, "FAIL", JSON.stringify(res.agents[0], null, 2));
+    const list = res.agents[0].checks.find((c) => c.name === "list");
+    assert.ok(list && !list.ok && list.detail.includes("debug config --pure") && list.detail.includes("mcp.context-mode") && list.detail.includes("slowsrv"), JSON.stringify(res.agents[0].checks));
+  });
+
+  test("setup: when opencode --version prints no version the list check says so and runs no --pure fallback (D-OC1-LIST-2, #1362)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "opencode.log");
+    fakeOpencode1(s, log, { version: `echo "error: unknown option"; exit 1` });
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"], runId: "r" });
+    assert.equal(res.agents[0].status, "FAIL", JSON.stringify(res.agents[0], null, 2));
+    const list = res.agents[0].checks.find((c) => c.name === "list");
+    assert.ok(list && !list.ok && list.detail.includes("opencode --version printed no version") && list.detail.includes("error: unknown option"), JSON.stringify(res.agents[0].checks));
+    assert.ok(!readFileSync(log, "utf8").includes("--pure"), readFileSync(log, "utf8"));
+  });
+
+  // #1413 (D-1413-CODEX-LIST-1, Codex on darwin-arm64): "list: codex mcp list does not list context-mode" (rolled back),
+  // while parse, mcp, hook, hook-registered, hook-runs and skills passed. `codex mcp list` (codex-rs/cli/src/mcp_cmd.rs
+  // run_list) builds the AuthManager and runs OAuth discovery for every server over the network (5 s cap each) and
+  // reads the keyring, so it ran past the 10 s budget (live, codex 0.172.0: 5.17 s for one unreachable HTTP server).
+  // `codex mcp get context-mode --json` (run_get) loads the configured servers, plugin servers included, and looks up
+  // the exact name: no auth, no network (0.02 s). It exits 1 with "Error: No MCP server named '<name>' found." on stderr.
+  const CODEX_GET_JSON = JSON.stringify({ name: "context-mode", enabled: true, disabled_reason: null, transport: { type: "stdio", command: NODE, args: ["server.mjs", "--agent", "codex"], env: null, env_vars: [], cwd: null }, enabled_tools: null, disabled_tools: null, startup_timeout_sec: null, tool_timeout_sec: null }, null, 2);
+  function fakeCodexMcp(s, log, { get } = {}) {
+    fakeBin(s.root, "codex", `echo "$@" >> "${log}"
+case "$1 $2" in
+  "mcp list") sleep 12; echo "context-mode  node  server.mjs --agent codex  -  -  enabled  Unsupported" ;;
+  "mcp get") ${get ?? `if [ "$3" = context-mode ]; then printf '%s\\n' '${CODEX_GET_JSON}'; else echo "Error: No MCP server named '$3' found." >&2; exit 1; fi`} ;;
+  "plugin list") printf '%s\\n' '{"installed":[],"available":[]}' ;;
+esac
+exit 0`);
+  }
+
+  test("[#1413] setup: a slow codex mcp list does not fail the list check; it reads codex mcp get context-mode --json (D-1413-CODEX-LIST-1)", SKIP_SH_1413, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "codex.log");
+    fakeCodexMcp(s, log);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "r" });
+    assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
+    assert.ok(res.agents[0].checks.some((c) => c.name === "list" && c.ok), JSON.stringify(res.agents[0].checks));
+    const ran = readFileSync(log, "utf8");
+    assert.ok(ran.includes("mcp get context-mode --json"), ran);
+    assert.ok(!ran.includes("mcp list"), ran);
+  });
+
+  test("[#1413] setup: codex mcp get that has no context-mode is a FAIL that quotes the host's line (D-1413-CODEX-LIST-1)", SKIP_SH_1413, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "codex.log");
+    fakeCodexMcp(s, log, { get: `echo "Error: No MCP server named '$3' found." >&2; exit 1` });
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "r" });
+    assert.equal(res.agents[0].status, "FAIL", JSON.stringify(res.agents[0], null, 2));
+    const list = res.agents[0].checks.find((c) => c.name === "list");
+    assert.ok(list && !list.ok && !list.warn, JSON.stringify(res.agents[0].checks));
+    assert.equal(list.detail, "codex mcp get context-mode --json does not find context-mode: Error: No MCP server named 'context-mode' found.");
+  });
+
+  test("[#1413] setup: a codex list command that does not answer in time names the timeout, not \"does not list\" (D-1413-CODEX-LIST-1)", SKIP_SH_1413, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "codex.log");
+    fakeCodexMcp(s, log, { get: "sleep 12" });
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "r" });
+    const list = res.agents[0].checks.find((c) => c.name === "list");
+    assert.ok(list && !list.ok, JSON.stringify(res.agents[0].checks));
+    assert.equal(list.detail, "codex mcp get context-mode --json did not answer in 10 s (SIGTERM); run it in a terminal");
   });
 
   // D-OC2-LIST-1 (#1308, Raidan-Ai, Windows, OpenCode 2): "list: opencode mcp list --standalone does not list
@@ -674,6 +912,47 @@ exit 0`);
     assert.match(doc.agents[0].reason, /mcp\.servers\.context-mode.*\/elsewhere\/opencode/);
   });
 
+  // #1386 (Android arm64, Termux, OpenCode 2): "list: opencode debug config --standalone exited 1: ERROR" (rolled back),
+  // while parse, mcp, hook-registered, hook-runs and skills passed. Real opencode 2.2.6 exits 1 with "ERROR" on the first
+  // stderr line and the reason after it (an XDG data dir it cannot write: PermissionDenied FileSystem.makeDirectory .../log).
+  // ADR-0019 verify + D-SETUP-HOST-BROKEN-1 + D-1378-GEMINI-DISK-1: a host CLI that cannot run its own list command keeps a
+  // working install; the list check is a WARN that quotes the host's own reason, and doctor names no setup loop.
+  const OC_HOST_ERR = "PlatformError: PermissionDenied: FileSystem.makeDirectory (/data/data/com.termux/files/home/.local/share/opencode/log)";
+  function fakeOpencode2Broken(s) {
+    fakeBin(s.root, "opencode", `case "$1 $2" in
+  "--version ") echo "opencode v2.2.6" ;;
+  "debug config") printf 'ERROR\\n${OC_HOST_ERR}\\n' >&2; exit 1 ;;
+esac
+exit 0`);
+    return path.join(s.home, ".config", "opencode", "opencode.json");
+  }
+
+  test("[#1386] setup: OpenCode 2 whose debug config --standalone exits 1 keeps the working install; list is a WARN with the host's reason, no rollback", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    const file = fakeOpencode2Broken(s);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"], runId: "r" });
+    const a = res.agents[0];
+    assert.equal(a.rolledBack, undefined, JSON.stringify(a, null, 2));
+    assert.equal(a.status, "PASS", JSON.stringify(a, null, 2));
+    assert.equal(res.exitCode, 0);
+    const list = a.checks.find((c) => c.name === "list");
+    assert.ok(list && list.ok && list.warn && `${list.detail}`.includes("debug config --standalone") && `${list.detail}`.includes(OC_HOST_ERR), JSON.stringify(a.checks, null, 2));
+    for (const n of ["mcp", "hook-registered", "hook-runs"]) assert.ok(a.checks.some((c) => c.name === n && c.ok), `${n}: ${JSON.stringify(a.checks, null, 2)}`);
+    assert.ok(JSON.parse(readFileSync(file, "utf8")).mcp, "the MCP entry setup wrote stays on disk");
+  });
+
+  test("[#1386] doctor: OpenCode 2 whose debug config --standalone exits 1 passes the install checks with a WARN that quotes the host's reason, no setup fix line", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    fakeOpencode2Broken(s);
+    await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"], runId: "r" });
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["opencode"] });
+    const a = doc.agents[0];
+    assert.equal(a.status, "PASS", JSON.stringify(a, null, 2));
+    assert.equal(a.fix, undefined, JSON.stringify(a, null, 2));
+    const list = a.checks.find((c) => c.name === "list");
+    assert.ok(list && list.ok && list.warn && `${list.detail}`.includes(OC_HOST_ERR), JSON.stringify(a.checks, null, 2));
+  });
+
   // D-SETUP-HOST-BROKEN-1 (#1308): "copilot mcp add ... exited 1: GitHub Copilot CLI: no platform package found.
   // Reinstall with `npm install -g @github/copilot`". The Copilot install itself is broken: setup reports SKIPPED with the
   // host's own fix line first, writes nothing, rolls nothing back, and the run does not fail on it.
@@ -694,6 +973,36 @@ exit 1`);
     const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["copilot-cli"] });
     assert.equal(doc.agents[0].status, "SKIPPED", JSON.stringify(doc.agents[0], null, 2));
   });
+
+  // D-SETUP-COPILOT-SHIM-1 (#1360, dup #1361): VS Code puts its own `copilot` launcher on PATH (microsoft/vscode
+  // copilot_shim, Linux /usr/bin/copilot). With no Copilot CLI installed and no terminal it prints "GitHub Copilot CLI
+  // was not found. ..." and exits 127 (app.rs l.42, l.485). That is a missing host, not a setup fault of ours: SKIPPED
+  // with Copilot CLI's own npm install as the fix line, nothing written, no mcp add, run exit 0, doctor SKIPPED too.
+  const COPILOT_SHIM_TEXTS = [
+    ["no terminal (app.rs l.485)", "GitHub Copilot CLI was not found. Run copilot in a terminal to install it, or see https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/install-copilot-cli"],
+    ["policy (app.rs l.475)", "GitHub Copilot CLI was not found. Installing it from VS Code is turned off by the CopilotCliCommand policy; contact your administrator."],
+  ];
+  for (const [variant, text] of COPILOT_SHIM_TEXTS) {
+    test(`setup: VS Code's copilot launcher with no Copilot CLI is SKIPPED with npm install -g @github/copilot, nothing written, run exit 0 (${variant}; D-SETUP-COPILOT-SHIM-1, #1360)`, { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+      const s = sandbox(t);
+      const log = path.join(s.root, "copilot.log");
+      fakeBin(s.root, "copilot", `echo "$@" >> "${log}"
+echo "${text}" >&2
+exit 127`);
+      const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["copilot-cli"], runId: "r" });
+      const a = res.agents[0];
+      assert.equal(a.status, "SKIPPED", JSON.stringify(a, null, 2));
+      assert.equal(a.rolledBack, undefined);
+      assert.ok(a.reason.startsWith("copilot not installed: run npm install -g @github/copilot"), a.reason);
+      assert.ok(a.reason.includes("GitHub Copilot CLI was not found"), `the reason holds the host line: ${a.reason}`);
+      assert.equal(res.exitCode, 0);
+      assert.equal(existsSync(path.join(s.home, ".copilot")), false, "nothing written for a missing host (no empty hooks/skills dirs)");
+      assert.equal(readFileSync(log, "utf8").includes("mcp add"), false, readFileSync(log, "utf8"));
+      const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["copilot-cli"] });
+      assert.equal(doc.agents[0].status, "SKIPPED", JSON.stringify(doc.agents[0], null, 2));
+      assert.ok(doc.agents[0].reason.startsWith("copilot not installed: run npm install -g @github/copilot"), doc.agents[0].reason);
+    });
+  }
 
   // D-US-1 (upgrade-sync): Claude Code runs a copy of the package under ~/.claude/plugins/cache/<mp>/context-mode/<version>
   // and records it in ~/.claude/plugins/installed_plugins.json. npm i -g does not refresh that copy.
@@ -989,6 +1298,91 @@ exit 0`);
     assert.equal(again.agents[0].status, "PASS", JSON.stringify(again.agents[0], null, 2));
   });
 
+  // #1376 (D-1376-CODEX-PLUGIN-CACHE-1): `codex plugin add` puts the bundle in <codex home>/plugins/cache/context-mode/
+  // context-mode/<ver>/. With codex not on PATH, setup run from that dir wrote <ver>/server.mjs into config.toml and
+  // node <ver>/hook.mjs --agent codex into hooks.json (4 events). A plugin update replaces <ver>/, so the MCP server and
+  // every hook fail "Cannot find module", and the plugin's own ${PLUGIN_ROOT} hooks run a second copy (D-NI-CODEX-DOCTOR-1).
+  const CODEX_CACHE_EVENTS = ["PreToolUse", "PostToolUse", "SessionStart", "UserPromptSubmit"];
+  function codexCachePkg(s, ver) {
+    const dir = path.join(s.home, ".codex", "plugins", "cache", "context-mode", "context-mode", ver);
+    cpSync(s.pkgDir, dir, { recursive: true });
+    return dir;
+  }
+  const pinnedToml = (dir) => `[mcp_servers.context-mode]\ncommand = ${JSON.stringify(NODE)}\nargs = [${JSON.stringify(path.join(dir, "server.mjs"))}, "--agent", "codex"]\n`;
+  const pinnedHooks = (dir, user) => {
+    const hooks = structuredClone(user);
+    for (const ev of CODEX_CACHE_EVENTS) (hooks[ev] ??= []).push({ hooks: [{ type: "command", command: `"${NODE}" "${path.join(dir, "hook.mjs")}" --agent codex` }] });
+    return JSON.stringify({ hooks }, null, 2) + "\n";
+  };
+  const CACHE_USER_TOML = `model = "o3"\n\n[mcp_servers.other]\ncommand = "other-server"\n\n`;
+  const CACHE_USER_HOOKS = { PreToolUse: [{ hooks: [{ type: "command", command: "my-pre-hook" }] }], Stop: [{ hooks: [{ type: "command", command: "my-own-hook" }] }] };
+
+  test("[#1376] setup from the Codex plugin cache with codex not on PATH writes no version-pinned server.mjs or hook.mjs path", async (t) => {
+    const s = sandbox(t);
+    const ver = codexCachePkg(s, "2.1.10");
+    const res = await runSetup({ home: s.home, pkgDir: ver, env: s.env, agents: ["codex"], runId: "c1" });
+    for (const f of ["config.toml", "hooks.json"]) {
+      const file = path.join(s.home, ".codex", f);
+      const text = existsSync(file) ? readFileSync(file, "utf8") : "";
+      assert.ok(!text.includes(ver), `${f} pins ${ver}\n${text}\n${JSON.stringify(res.agents[0], null, 2)}`);
+    }
+  });
+
+  test("[#1376] setup from the Codex plugin cache removes our older pinned entries and keeps every user entry", async (t) => {
+    const s = sandbox(t);
+    const old = path.join(s.home, ".codex", "plugins", "cache", "context-mode", "context-mode", "2.1.8");
+    const ver = codexCachePkg(s, "2.1.10");
+    const toml = put(path.join(s.home, ".codex", "config.toml"), CACHE_USER_TOML + pinnedToml(old));
+    const hooks = put(path.join(s.home, ".codex", "hooks.json"), pinnedHooks(old, CACHE_USER_HOOKS));
+    const res = await runSetup({ home: s.home, pkgDir: ver, env: s.env, agents: ["codex"], runId: "c2" });
+    const detail = JSON.stringify(res.agents[0], null, 2);
+    assert.equal(readFileSync(toml, "utf8"), CACHE_USER_TOML, detail);
+    assert.deepEqual(JSON.parse(readFileSync(hooks, "utf8")).hooks, CACHE_USER_HOOKS, detail);
+  });
+
+  test("[#1376] doctor: hooks.json and config.toml that name a missing pinned file FAIL with that path and the fix context-mode setup", async (t) => {
+    const s = sandbox(t);
+    const old = path.join(s.home, ".codex", "plugins", "cache", "context-mode", "context-mode", "2.1.8");
+    const ver = codexCachePkg(s, "2.1.10");
+    put(path.join(s.home, ".codex", "config.toml"), CACHE_USER_TOML + pinnedToml(old));
+    put(path.join(s.home, ".codex", "hooks.json"), pinnedHooks(old, CACHE_USER_HOOKS));
+    const doc = await runDoctor({ home: s.home, pkgDir: ver, env: s.env, agents: ["codex"] });
+    const a = doc.agents[0];
+    const detail = JSON.stringify(a, null, 2);
+    assert.equal(a.status, "FAIL", detail);
+    assert.notEqual(a.reason, NOT_SET_UP_REASON, detail);
+    for (const missing of [path.join(old, "server.mjs"), path.join(old, "hook.mjs")]) {
+      const bad = a.checks.find((c) => !c.ok && c.detail.includes(missing));
+      assert.ok(bad, `no failing check names ${missing}\n${detail}`);
+      assert.ok(bad.detail.includes("context-mode setup"), `fix line: ${bad.detail}`);
+    }
+  });
+
+  test("[#1376] doctor from the npm package dir: config.toml and hooks.json that name a missing pinned file FAIL with that path and the fix context-mode setup", async (t) => {
+    const s = sandbox(t);
+    const old = path.join(s.home, ".codex", "plugins", "cache", "context-mode", "context-mode", "2.1.8");
+    put(path.join(s.home, ".codex", "config.toml"), CACHE_USER_TOML + pinnedToml(old));
+    put(path.join(s.home, ".codex", "hooks.json"), pinnedHooks(old, CACHE_USER_HOOKS));
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"] });
+    const a = doc.agents[0];
+    const detail = JSON.stringify({ reason: a.reason, checks: a.checks }, null, 2);
+    assert.equal(a.status, "FAIL", detail);
+    for (const missing of [path.join(old, "server.mjs"), path.join(old, "hook.mjs")]) {
+      const bad = a.checks.find((c) => !c.ok && c.detail.includes(missing));
+      assert.ok(bad, `no failing check names ${missing}\n${detail}`);
+      assert.ok(bad.detail.includes("context-mode setup"), `fix line: ${bad.detail}`);
+    }
+  });
+
+  test("[#1376] setup from the npm package dir (outside the Codex plugin cache) still writes absolute server.mjs and hook.mjs paths", async (t) => {
+    const s = sandbox(t);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["codex"], runId: "n1" });
+    assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
+    assert.ok(readFileSync(path.join(s.home, ".codex", "config.toml"), "utf8").includes(JSON.stringify(path.join(s.pkgDir, "server.mjs"))));
+    const hookText = readFileSync(path.join(s.home, ".codex", "hooks.json"), "utf8");
+    for (const ev of CODEX_CACHE_EVENTS) assert.ok(JSON.parse(hookText).hooks[ev]?.some((m) => m.hooks.some((h) => h.command.includes(path.join(s.pkgDir, "hook.mjs")))), `${ev}\n${hookText}`);
+  });
+
   // D-NI-EXT-DOCTOR-1 (ADR-0023): `qwen extensions install <source>` (Qwen Code 0.26.1) and `gemini extensions install
   // <source>` (gemini-cli 0.65.0) copy the package to ~/.<host>/extensions/context-mode; the extension ships the MCP server,
   // the hooks and skills/. Live run (temp HOME): qwen doctor said "not set up" because setup still planned ~/.qwen/skills.
@@ -1034,6 +1428,95 @@ exit 0`;
       assert.equal(doc.agents[0].status, "PASS", JSON.stringify(doc.agents[0], null, 2));
     });
   }
+
+  // #1378 (D-NI-EXT-DOCTOR-1, ADR-0023 point 4): `gemini extensions install` left ~/.gemini/extensions/context-mode, but
+  // `gemini extensions list` answered with an auth error (402, exit 0) and no list. Doctor said "not set up" and named the
+  // install command again. Doctor tells the truth: it names the host's list answer, and setup links no second copy.
+  test("[D-NI-EXT-DOCTOR-1] doctor: a gemini extension on disk with a list that prints an auth error names that error (#1378)", { skip: process.platform === "win32" && "fake agent binaries are sh scripts" }, async (t) => {
+    const s = sandbox(t);
+    const log = path.join(s.root, "gemini.log");
+    const ext = path.join(s.home, ".gemini", "extensions", "context-mode");
+    mkdirSync(ext, { recursive: true });
+    cpSync(path.join(import.meta.dirname, "..", "gemini-extension.json"), path.join(ext, "gemini-extension.json"));
+    writeFileSync(path.join(s.home, ".gemini", "extensions", "extension-enablement.json"), JSON.stringify({ "context-mode": { overrides: [`${s.home}/*`] } }));
+    const err = `{"error":{"code":402,"message":"Billing required: no API key or auth configured","status":"PAYMENT_REQUIRED"}}`;
+    fakeBin(s.root, "gemini", `echo "$@" >> "${log}"\ncase "$1 $2" in\n  "extensions list") echo '${err}' >&2 ;;\n  "extensions link") exit 7 ;;\nesac\nexit 0`);
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"] });
+    const a = doc.agents[0];
+    const text = [a.reason ?? "", ...a.checks.map((c) => `${c.name}: ${c.detail ?? ""}`)].join("\n");
+    assert.ok(!text.includes(NOT_SET_UP_REASON), `an installed extension is not "not set up": ${JSON.stringify(a, null, 2)}`);
+    assert.ok(text.includes("gemini extensions list") && text.includes("402"), `doctor names the list answer: ${JSON.stringify(a, null, 2)}`);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"], runId: "r" });
+    assert.ok(!readFileSync(log, "utf8").includes("extensions link"), `setup links no second copy: ${readFileSync(log, "utf8")}`);
+    assert.equal(existsSync(path.join(s.home, ".gemini", "settings.json")), false, `setup writes no second hook copy: ${JSON.stringify(res.agents[0], null, 2)}`);
+  });
+
+  // #1378 part 2 (ADR-0023 point 4, D-1378-GEMINI-DISK-1): the list printed an auth error, but the extension is on disk as
+  // `gemini extensions install` left it. Doctor reads extension-enablement.json (Gemini's rule: enabled by default, the last
+  // matching override wins, a leading ! disables, a trailing * covers subdirs) and runs the MCP, hook and skill checks from disk.
+  const GEMINI_402 = `{"error":{"code":402,"message":"Billing required: no API key or auth configured","status":"PAYMENT_REQUIRED"}}`;
+  function geminiDiskExt(s, enablement) {
+    const log = path.join(s.root, "gemini.log");
+    const ext = path.join(s.home, ".gemini", "extensions", "context-mode");
+    const repo = path.join(import.meta.dirname, "..");
+    mkdirSync(path.join(ext, "hooks"), { recursive: true });
+    mkdirSync(path.join(ext, "plugins", "claude-code"), { recursive: true });
+    cpSync(path.join(repo, "gemini-extension.json"), path.join(ext, "gemini-extension.json"));
+    cpSync(path.join(repo, "hooks", "hooks.json"), path.join(ext, "hooks", "hooks.json"));
+    cpSync(path.join(repo, "skills"), path.join(ext, "skills"), { recursive: true });
+    for (const f of ["server.mjs", "hook.mjs"]) cpSync(path.join(s.pkgDir, f), path.join(ext, "plugins", "claude-code", f));
+    if (enablement !== undefined) writeFileSync(path.join(s.home, ".gemini", "extensions", "extension-enablement.json"), enablement);
+    fakeBin(s.root, "gemini", `echo "$@" >> "${log}"\ncase "$1 $2" in\n  "extensions list") echo '${GEMINI_402}' >&2 ;;\n  "extensions link") exit 7 ;;\nesac\nexit 0`);
+    return { ext, log };
+  }
+  const geminiDiskSkip = { skip: process.platform === "win32" && "fake agent binaries are sh scripts" };
+  const CWD_RULE = `${process.cwd()}/*`;
+
+  test("[D-1378-GEMINI-DISK-1] doctor: an enabled gemini extension on disk passes its disk checks with a WARN that quotes the list error (#1378)", geminiDiskSkip, async (t) => {
+    const s = sandbox(t);
+    const { log } = geminiDiskExt(s, JSON.stringify({ "context-mode": { overrides: [`!${CWD_RULE}`, CWD_RULE] } }));
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"] });
+    const a = doc.agents[0];
+    assert.equal(a.status, "PASS", JSON.stringify(a, null, 2));
+    const ok = a.checks.filter((c) => c.ok).map((c) => c.name);
+    for (const n of ["mcp", "hook-registered", "hook-runs", "skills"]) assert.ok(ok.includes(n), `${n}: ${JSON.stringify(a.checks, null, 2)}`);
+    const warn = a.checks.find((c) => c.warn && `${c.detail}`.includes("gemini extensions list") && `${c.detail}`.includes("402"));
+    assert.ok(warn, `a WARN quotes the list answer: ${JSON.stringify(a.checks, null, 2)}`);
+    const res = await runSetup({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"], runId: "r" });
+    assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
+    assert.deepEqual(res.agents[0].changes, []);
+    assert.ok(!readFileSync(log, "utf8").includes("extensions link"), `setup links no second copy: ${readFileSync(log, "utf8")}`);
+    assert.equal(existsSync(path.join(s.home, ".gemini", "settings.json")), false, "setup writes no second hook copy");
+  });
+
+  test("[D-1378-GEMINI-DISK-1] doctor: a gemini extension on disk that extension-enablement.json disables fails and names the enable command (#1378)", geminiDiskSkip, async (t) => {
+    const s = sandbox(t);
+    geminiDiskExt(s, JSON.stringify({ "context-mode": { overrides: [CWD_RULE, `!${CWD_RULE}`] } }));
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"] });
+    const a = doc.agents[0];
+    assert.equal(a.status, "FAIL", JSON.stringify(a, null, 2));
+    assert.ok(a.reason.includes("disabled") && a.reason.includes("gemini extensions enable context-mode"), a.reason);
+  });
+
+  test("[D-1378-GEMINI-DISK-1] doctor: unreadable extension-enablement.json fails and names that file (#1378)", geminiDiskSkip, async (t) => {
+    const s = sandbox(t);
+    geminiDiskExt(s, "{ not json");
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"] });
+    const a = doc.agents[0];
+    assert.equal(a.status, "FAIL", JSON.stringify(a, null, 2));
+    assert.ok(a.reason.includes(path.join(s.home, ".gemini", "extensions", "extension-enablement.json")), a.reason);
+  });
+
+  test("[D-1378-GEMINI-DISK-1] doctor: a gemini extension on disk without its hook file fails on hook-registered (#1378)", geminiDiskSkip, async (t) => {
+    const s = sandbox(t);
+    const { ext } = geminiDiskExt(s, undefined); // no extension-enablement.json: Gemini's default is enabled
+    rmSync(path.join(ext, "hooks", "hooks.json"));
+    const doc = await runDoctor({ home: s.home, pkgDir: s.pkgDir, env: s.env, agents: ["gemini"] });
+    const a = doc.agents[0];
+    assert.equal(a.status, "FAIL", JSON.stringify(a, null, 2));
+    const hr = a.checks.find((c) => c.name === "hook-registered");
+    assert.ok(hr && !hr.ok && `${hr.detail}`.includes(path.join("hooks", "hooks.json")), JSON.stringify(a.checks, null, 2));
+  });
 
   // D-R44-ZCODE-NATIVE-1 (host audit zcode-1/2): `zcode plugins install` lists as JSON; setup writes nothing, doctor passes.
   const ZC_LIST = (enabled, agent) => JSON.stringify([{ id: "context-mode@context-mode", enabled, hookDetails: [{ event: "PreToolUse", command: `node "\${CLAUDE_PLUGIN_ROOT}/hook.mjs" --agent ${agent}` }] }]);

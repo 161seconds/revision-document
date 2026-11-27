@@ -79,7 +79,7 @@ Absolute path to the interpreter binary, or `null` if none is found on PATH.
    - `"javascript"` / `"typescript"` → `["node", "node.exe"]`.
    - `"python"` → on Windows: `["python.exe", "py.exe"]`. On POSIX: `["python3", "python"]`.
    - any other `lang` → `[lang, lang + ".exe"]` on Windows, `[lang]` on POSIX.
-2. Read `PATH` from `process.env.PATH` (the parent's PATH — PRD §9: "PATH = the parent's PATH"). Split on `path.delimiter` (`:` POSIX, `;` Windows).
+2. Read `PATH` from `process.env.PATH` (the parent's PATH — PRD §9: "PATH = the parent's PATH"). Split on `path.delimiter` (`:` POSIX, `;` Windows). On Windows the `PATH` and `PATHEXT` keys are read without case (`Path` from PowerShell or cmd under a Bun host, #1371, DEVIATIONS D-1371-PATH-CASE-1); POSIX reads the exact key.
 3. On Windows, also split `process.env.PATHEXT` (fallback `.COM;.EXE;.BAT;.CMD`) for the case where a candidate name in step 1 has no extension; try each `candidate + ext` in `PATHEXT` order inside each PATH directory before moving to the next PATH directory.
 4. For each PATH directory, for each candidate name (in the step-1 order), build the full path and check existence with a sync stat call. Do this **lazily**: only when `findRuntime` is actually called for that `lang` — never at server boot (PRD §9: "found by PATH lookup … lazily on first use, never at boot"; 00 rule list P5: "no boot probes").
 5. On POSIX, a file found in step 4 must also pass an executable-bit check (`fs.accessSync(p, fs.constants.X_OK)`) before being accepted; a `#!/bin/sh`-shim script with the exec bit set is accepted as-is (PRD §9: "including `#!/bin/sh` shims") — do not read or parse the shebang line, the OS exec call handles it.
@@ -93,7 +93,7 @@ Absolute path to the interpreter binary, or `null` if none is found on PATH.
 
 ### Error cases
 
-None inside `findRuntime` — absence is a valid `null` return, not a thrown error. The caller (`src/core/tools/execute.ts`, outside this module) turns a `null` into the `NO_RUNTIME` error text.
+None inside `findRuntime` — absence is a valid `null` return, not a thrown error. A PATH candidate whose stat fails for any reason (EACCES on the Windows Store app alias, EPERM, UNKNOWN, ELOOP) is skipped like an absent one (DEVIATIONS D-1373-STAT-1); `lookupRuntime` also returns those paths so doctor D11 can name them. The caller (`src/core/tools/execute.ts`, outside this module) turns a `null` into the `NO_RUNTIME` error text.
 
 ### Constants used
 
@@ -266,6 +266,7 @@ export function safeFetch(url: string, signal: AbortSignal): Promise<{ body: Buf
 1. Read proxy env in this priority order (per-scheme): for an `https:` URL, `HTTPS_PROXY` then `https_proxy`; for an `http:` URL, `HTTP_PROXY` then `http_proxy`. Read `NO_PROXY`/`no_proxy` as a comma-separated host list; if `url`'s host matches an entry (exact host or `.`-suffix match), no proxy is used for this call (PRD §9: "proxy env … is honoured").
 2. Resolve the **target that will actually be connected to** for this hop: the proxy host:port if step 1 selected one, otherwise `url`'s own host. DNS-resolve that target's hostname to its IP addresses now, in this function, in the same process as the fetch — never as a separate pre-check in a different process or an earlier call (TECH-SPEC GP5 row: "the SSRF check runs on the resolved proxy target, in the same process as the fetch, after proxy env vars are applied, never as a separate parent pre-check", closing v1 #476's gap).
 3. Reject (see Error cases) if any resolved address is private/loopback/link-local/unspecified per standard ranges (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `::1`, `fc00::/7`, `fe80::/10`, `0.0.0.0`) — this is decision Q19's SSRF check, run on the resolved target per PRD §9.
+   - D-SSRF-FAKEIP-1 (#1403): a DNS-resolved name whose address is in `198.18.0.0/15` passes only behind a Fake-IP resolver. Once per process, on the first such address, the fetch resolves a random name under `.invalid` (RFC 6761); only an answer inside `198.18.0.0/15` within 1500 ms marks the resolver as Fake-IP. IP literals in that range and all other ranges stay blocked on every hop.
 4. Issue the HTTP(S) request with Node's `fetch()`, passing `signal`, and if step 1 selected a proxy, dispatch through it (Node's `fetch` needs an explicit proxy-aware dispatcher here — not a bare `fetch(url)` — because Node does not read `HTTP_PROXY` env itself).
 5. On a redirect response (3xx with `Location`), repeat steps 1–4 for the new URL **as a new hop** — i.e. re-resolve and re-check SSRF for every hop, not just the first (PRD §9: "SSRF check running on the resolved target … per hop"). Cap redirect-following at 5 hops; exceeding it is a `FETCH_FAILED` error (step below).
 6. On the final non-redirect response, read the full body into a `Buffer`, read `Content-Type` (default `""`), and return `{ body, contentType, finalUrl: <URL of the final hop> }`.

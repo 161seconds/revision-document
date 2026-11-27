@@ -6,10 +6,10 @@ const { lstatSync, readFileSync } = process.getBuiltinModule("node:fs") as typeo
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { AGENT_IDS, type AgentId } from "../contracts/agents.ts";
 import {
-  COMPACTED_META_PREFIX, COMPACT_POINTER_LINE, COMPACT_STATE_KEY, DECISION_OPTION_KEY, DECISION_SOURCE, DECISION_TOOL, EDIT_PATH_KEYS, EDIT_TOOLS, EXIT_CODE_LINE_PREFIX,
-  OWN_TOOL_PREFIX, prefixToolNames, REPLACE_CHUNK_BYTES, REPLACE_HANDLE_LINE, REPLACE_RETURN_BYTES, REPLACE_TRIGGER_BYTES, RANGE_READ_TOOLS, READ_PATH_KEYS, READ_RANGE_KEYS, SHAPE_RETURN_BYTES, PARSE_ERROR_DENY_LINE, PENDING_COMPACT_FLAG, PENDING_COMPACT_KEY,
+  COMPACTED_META_PREFIX, COMPACT_POINTER_LINE, OUTPUT_CAP, COMPACT_STATE_KEY, DECISION_OPTION_KEY, DECISION_SOURCE, DECISION_TOOL, EDIT_PATH_KEYS, EDIT_TOOLS, EXIT_CODE_LINE_PREFIX,
+  OWN_TOOL_PREFIX, MCP_SERVER_TOOL_PREFIX, PLUGIN_CALL_ID_PREFIX, prefixToolNames, MAX_CHUNK_BYTES, REPLACE_CHUNK_BYTES, REPLACE_HANDLE_LINE, REPLACE_RETURN_BYTES, REPLACE_TRIGGER_BYTES, RANGE_READ_TOOLS, READ_PATH_KEYS, SKILL_LOAD_TOOLS, READ_RANGE_KEYS, SHAPE_RETURN_BYTES, PARSE_ERROR_DENY_LINE, PENDING_COMPACT_FLAG, PENDING_COMPACT_KEY,
   PENDING_COMPACT_META_PREFIX, POLICY_UNREADABLE_LINE, RECALL_KEY, RECALL_MAX_ROWS, RECALL_SEEN_META_PREFIX, RECALL_UNIT_CANDIDATES, RECALL_UNITS_SEEN_META_PREFIX, RESUME_HINT, RESUME_HINT_KEY, RUN_WRAPPER_FILE,
-  RUN_WRAPPER_NODE, SHELL_TOOL, SOURCE_LABEL_MAX_CHARS, SUBAGENT_SOURCE_PREFIX, SYNC_INDEX_MAX_BYTES, TOOL_PREFIX_SLOT,
+  RUN_WRAPPER_AGENT, RUN_WRAPPER_NODE, PERSISTED_FILE_LINE, SEARCH_TWIN_LINE, SEARCH_WRAPPER_FILE, SUBAGENT_HANDLE_LINE, ECHO_MAX_BYTES, SHELL_TOOL, SOURCE_LABEL_MAX_CHARS, SUBAGENT_SOURCE_PREFIX, SYNC_INDEX_MAX_BYTES, TOOL_PREFIX_SLOT,
   USER_DENY_REASON_PREFIX,
   SUBAGENT_RUN_DENY, WORKSPACE_FOLDER_FLAG, PROJECTS_DIR_NAME, CLAUDE_TOOL_RESULTS_DIR_NAME, PERSISTED_OUTPUT_MAX_BYTES,
 } from "../contracts/constants.ts";
@@ -19,28 +19,28 @@ import type {
 import { getAdapter, hasRecall, hasReplace } from "../../adapters/table.ts";
 import { decide } from "../policy/decide.ts";
 import { isOwnFile } from "../policy/own-file.ts";
-import { isSubagentCall, pickSubagentCase, toolSetForAgentType } from "../policy/subagent.ts";
+import { isSubagentCall, pickSubagentCase, toolSetForAgentType, type ToolSetSources } from "../policy/subagent.ts";
 import { readUserDeny } from "../policy/user-deny.ts";
 import { resolveProject } from "../project/resolve.ts";
 import { claudeDirOf, homeDirOf } from "../project/config-dir.ts";
 import { isInside } from "../project/contain.ts";
-import { metaGet, metaSet, metaTake, openDb } from "../store/db.ts";
-import { appendEvent, canonicalKey } from "../journal/append.ts";
-import { hasAgentRows, hasSessionRows, readLastPrompt, readRecallRows, readSessionEvents } from "../journal/read.ts";
-import { finishReserved, insertChunks, insertUnits, queryUnits, recallQueryText, reserveSource, sourceHandle, type SourceDraft } from "../store/fts.ts";
-import { buildUnits } from "../index/units.ts";
+import { metaGet, metaSet, metaTake } from "../store/db.ts";
+import { betKeyOfLabel, clearLostBets, hasBet, isLostBet, markLostBet, noteBet } from "../store/lost-bet.ts";
+import { canonicalKey } from "../journal/append.ts";
+import { hasAgentRows, hasSessionRows, lastSessionSeq, readLastPrompt, readMaxSeq, readRecallRows, readSessionEvents } from "../journal/read.ts";
+import { queryUnits, readMaxSourceId, recallQueryText, reserveSource, sourceHandle, type SourceDraft } from "../store/fts.ts";
 import { renderState } from "../compaction/render.ts";
 import { pickRecall } from "../compaction/recall.ts";
 import { chunkText } from "../index/chunk.ts";
 import { moreLine, selectChunksInMemory } from "../index/select.ts";
 import { shapeDigest } from "../index/shape.ts";
-import { indexText } from "../index/text.ts";
 import { appendDetached } from "./detached.ts";
+import { hookDb, isBusy, readSeen, spool, writeDetached, writeOrSpool, type SpoolOp } from "./spool.ts";
 import { askedWords } from "./handle-query.ts";
 import { answerDecisions, askOptionLabels, optionEchoDecision, type DecisionPart } from "./decision.ts";
 import { shouldHint } from "./throttle.ts";
 import { CtxError } from "../contracts/errors.ts";
-import { failureOutput, fault, logHookError, nodeTooOld } from "./fallback.ts";
+import { allowOutput, failureOutput, fault, logHookError, nodeTooOld } from "./fallback.ts";
 
 export { failureOutput, logHookError } from "./fallback.ts"; // D-HNE-GUARD-1: the entry's last-resort catch
 export { readStdin, writeOut } from "./io.ts"; // D-M7-HP-1: entry I/O without process.stdin/stdout streams
@@ -69,12 +69,23 @@ export async function handleHook(agent: AgentId, raw: unknown, env: NodeJS.Proce
   }
   const row = getAdapter(agent);
   // D-HNE-GUARD-1: every failure below ends in failureOutput (exit 0, this host's shape, tool table only) and a log line.
-  const fail = (stage: string, err: unknown, line?: string): HookOutput => {
+  const report = (stage: string, err: unknown, line?: string): void => {
     logHookError(env, agent, stage, err);
     process.stderr.write(line ?? "hooks: " + stage + " failed: " + message(err) + "\n");
+  };
+  const fail = (stage: string, err: unknown, line?: string): HookOutput => {
+    report(stage, err, line);
     return failureOutput(agent, raw, err);
   };
-  if (nodeTooOld(process.version)) return fail("node", new CtxError("NODE_TOO_OLD", { v: process.version }));
+  if (nodeTooOld(process.version)) {
+    // D-1370-OLDNODE-ALLOW-1 (#1370): the MCP server runs on this same node and is degraded (PRD §13: ctx_doctor only), so a
+    // redirect to ctx_execute would block the host. Allow, and keep the stderr and log lines (D5). An in-process host
+    // (Pi, OMP, OpenCode) registers its ctx_* tools itself, so its redirect target exists and the D-HNE-GUARD-1 deny stays.
+    const err = new CtxError("NODE_TOO_OLD", { v: process.version });
+    if (row.installMode === "in-process") return fail("node", err);
+    report("node", err);
+    return allowOutput(agent);
+  }
   let ev: CanonicalHookEvent;
   try {
     fault(env, "decode");
@@ -90,7 +101,7 @@ export async function handleHook(agent: AgentId, raw: unknown, env: NodeJS.Proce
     // D-HA-PI-PROJECT-1: on pi the entry puts ctx.cwd into the payload, so ev.cwd is the pi:ctx.cwd source.
     // D-HF-VSCODE-PROJECT-1: a VS Code hook has no launch args; its workspace folder is the payload cwd.
     const argv = agent === "vscode" ? [WORKSPACE_FOLDER_FLAG, ev.cwd] : process.argv;
-    project = resolveProject(agent, { env, argv, cwd: ev.cwd, piCwd: agent === "pi" ? ev.cwd : undefined }); // step 3
+    project = resolveProject(agent, { env, argv, cwd: ev.cwd, piCwd: getAdapter(agent).projectSource === "pi:ctx.cwd" ? ev.cwd : undefined }); // step 3 (pi, omp: ADR-0026)
   } catch (err) {
     // D-FU-PS-1 keeps its one stderr line (code first); the decision part is new.
     return fail("project", err, "hooks: no project: " + String((err as { code?: unknown }).code ?? "ERROR") + " " + message(err) + "\n"); // D-HNE-GUARD-1 supersedes D-FU-PS-1: a flooding call is denied, the rest allowed
@@ -149,14 +160,18 @@ function compactText(db: DbHandle, ev: CanonicalHookEvent, row: AdapterRow): str
 }
 
 async function sessionStart(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext): Promise<Decision> {
-  if (ev.source === "compact" && hasRecall(row)) markCompacted(await openDb(project), ev.sessionId);
+  if (ev.source === "compact" && hasRecall(row)) markCompacted(await hookDb(project), ev.sessionId);
+  if (ev.source === "compact") endLostBets(await hookDb(project), ev.sessionId); // D-0027-LOSTBET-1
   if (ev.source === "compact" && row.compactDelivery === "sessionstart") {
-    const db = await openDb(project);
-    // A23: the throttle marker guards a duplicate SessionStart(compact) in one session.
-    if (!shouldHint(db, ev.sessionId, COMPACT_STATE_KEY)) return ALLOW;
-    return { kind: "hint", text: compactText(db, ev, row), onceKey: COMPACT_STATE_KEY };
+    const db = await hookDb(project);
+    // A23, #1396: the host sends one SessionStart(compact) per compaction with the same session id. The
+    // marker key carries the newest journal seq, so each compaction gets its state block and a duplicate
+    // delivery of the same compaction (no new row in between) stays silent.
+    const onceKey = COMPACT_STATE_KEY + ":" + lastSessionSeq(db, ev.sessionId);
+    if (!shouldHint(db, ev.sessionId, onceKey)) return ALLOW;
+    return { kind: "hint", text: compactText(db, ev, row), onceKey };
   }
-  const db = await openDb(project);
+  const db = await hookDb(project);
   // impl/12 §4.6 step 2, D-M5-P2-4: the OpenCode plugin's one `context` call per session reads and clears
   // the pending-compact marker here (handleHook is the one DB path); its stdout is the cache-stable payload.
   if (row.compactDelivery === "opencode-cache" && metaTake(db, PENDING_COMPACT_META_PREFIX + ev.sessionId) !== null) {
@@ -179,7 +194,7 @@ async function userPromptSubmit(ev: CanonicalHookEvent, row: AdapterRow, project
   });
   echoDetached(ev, project, body);
   if (row.compactDelivery === "pending-flag") {
-    const db = await openDb(project);
+    const db = await hookDb(project);
     // §4.4 step 2.2: DELETE ... RETURNING inside BEGIN IMMEDIATE, so the delivery fires once.
     if (metaTake(db, PENDING_COMPACT_META_PREFIX + ev.sessionId) !== null) {
       return { kind: "hint", text: compactText(db, ev, row), onceKey: PENDING_COMPACT_KEY };
@@ -196,7 +211,7 @@ async function userPromptSubmit(ev: CanonicalHookEvent, row: AdapterRow, project
 // once per session. It fires only when this worktree already holds a journal row of this agent.
 async function firstTurnResume(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext): Promise<Decision | null> {
   if (row.eventMap.SessionStart !== undefined || ev.sessionId === "") return null;
-  const db = await openDb(project);
+  const db = await hookDb(project);
   if (hasSessionRows(db, ev.sessionId)) return null;
   if (!shouldHint(db, ev.sessionId, RESUME_HINT_KEY)) return null;
   if (!hasAgentRows(db, project.worktree, ev.agent)) return null;
@@ -205,27 +220,26 @@ async function firstTurnResume(ev: CanonicalHookEvent, row: AdapterRow, project:
 
 // ---------- DECISIONS-r11 (B) turn-boundary recall ----------
 
+// #1394: the value is the boundary of the latest compaction, {"seq": newest journal seq, "source": newest
+// sources id}. Rows and outputs written after it are still in the model's live context, so recall skips them.
 function markCompacted(db: DbHandle, sessionId: string): void {
-  if (sessionId !== "") metaSet(db, COMPACTED_META_PREFIX + sessionId, PENDING_COMPACT_FLAG);
+  if (sessionId === "") return;
+  metaSet(db, COMPACTED_META_PREFIX + sessionId, JSON.stringify({ seq: readMaxSeq(db), source: readMaxSourceId(db) }));
 }
 
-function seenSeqs(value: string | null): number[] {
-  if (value === null) return [];
+// A value from before #1394 ("1") carries no boundary: every row stays a candidate, as before.
+function compactBoundary(value: string): { seq: number; source: number } {
+  const all = { seq: Number.MAX_SAFE_INTEGER, source: Number.MAX_SAFE_INTEGER };
   try {
     const v = JSON.parse(value) as unknown;
-    return Array.isArray(v) ? v.filter((n): n is number => typeof n === "number") : [];
+    if (typeof v !== "object" || v === null) return all;
+    const { seq, source } = v as { seq?: unknown; source?: unknown };
+    return {
+      seq: typeof seq === "number" ? seq : all.seq,
+      source: typeof source === "number" ? source : all.source,
+    };
   } catch {
-    return [];
-  }
-}
-
-function seenUnitKeys(value: string | null): string[] {
-  if (value === null) return [];
-  try {
-    const v = JSON.parse(value) as unknown;
-    return Array.isArray(v) ? v.filter((k): k is string => typeof k === "string") : [];
-  } catch {
-    return [];
+    return all;
   }
 }
 
@@ -234,18 +248,23 @@ function seenUnitKeys(value: string | null): string[] {
 // prompt; whole rows over RECALL_MIN_SCORE, within RECALL_BUDGET_BYTES; a row goes out once per session.
 async function recall(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext, prompt: string): Promise<Decision> {
   if (!hasRecall(row) || ev.sessionId === "") return ALLOW;
-  const db = await openDb(project);
-  if (metaGet(db, COMPACTED_META_PREFIX + ev.sessionId) === null) return ALLOW;
+  const db = await hookDb(project);
+  const compacted = metaGet(db, COMPACTED_META_PREFIX + ev.sessionId);
+  if (compacted === null) return ALLOW;
+  const boundary = compactBoundary(compacted);
   const seenKey = RECALL_SEEN_META_PREFIX + ev.sessionId;
-  const seen = seenSeqs(metaGet(db, seenKey));
+  const seen = readSeen(project, db, seenKey).filter((n): n is number => typeof n === "number");
   // r3-ledger: one ranked query over this session's line units, by the current prompt only (D-1330-RECALL-PROMPT-1).
   const unitsKey = RECALL_UNITS_SEEN_META_PREFIX + ev.sessionId;
-  const seenUnits = seenUnitKeys(metaGet(db, unitsKey));
-  const units = queryUnits(db, ev.sessionId, recallQueryText(prompt), RECALL_UNIT_CANDIDATES);
-  const picked = pickRecall(readRecallRows(db, ev.sessionId, project.worktree, RECALL_MAX_ROWS), prompt, new Set(seen), units, new Set(seenUnits));
+  const seenUnits = readSeen(project, db, unitsKey).filter((k): k is string => typeof k === "string");
+  const units = queryUnits(db, ev.sessionId, recallQueryText(prompt), RECALL_UNIT_CANDIDATES, boundary.source);
+  const rows = readRecallRows(db, ev.sessionId, project.worktree, RECALL_MAX_ROWS, boundary.seq);
+  const picked = pickRecall(rows, prompt, new Set(seen), units, new Set(seenUnits));
   if (picked.text === "") return ALLOW;
-  if (picked.seqs.length > 0) metaSet(db, seenKey, JSON.stringify([...seen, ...picked.seqs]));
-  if (picked.units !== undefined) metaSet(db, unitsKey, JSON.stringify([...seenUnits, ...picked.units]));
+  // D-1401-SEEN-SPOOL-1 (#1401): the prompt path takes no write lock. The sent-once lists are written detached, like
+  // the prompt row; under another writer's lock they wait in the spool, and readSeen reads them back from there.
+  if (picked.seqs.length > 0) writeDetached(project, { t: "seen", key: seenKey, add: picked.seqs }, "recall");
+  if (picked.units !== undefined) writeDetached(project, { t: "seen", key: unitsKey, add: picked.units }, "recall");
   return { kind: "hint", text: picked.text, onceKey: RECALL_KEY };
 }
 
@@ -275,7 +294,7 @@ function readOptions(value: string): PendingOptions | null {
 function echoDetached(ev: CanonicalHookEvent, project: ProjectContext, prompt: string): void {
   if (ev.sessionId === "") return;
   const key = optionsKey(ev.sessionId);
-  void openDb(project)
+  void hookDb(project)
     .then((db) => {
       if (metaGet(db, key) === null) return;
       const taken = metaTake(db, key);
@@ -290,14 +309,15 @@ function echoDetached(ev: CanonicalHookEvent, project: ProjectContext, prompt: s
 }
 
 // One decision = one kind:"decision" journal row + its body as one chunk under DECISION_SOURCE (D-M4-arch-5).
+// D-1401-SPOOL-1: a busy lock spools the row and the chunk; the next hook write applies them.
 function writeDecisions(db: DbHandle, ev: CanonicalHookEvent, project: ProjectContext, parts: readonly DecisionPart[]): void {
   for (const part of parts) {
-    appendEvent(db, {
+    writeOrSpool(project, db, { t: "row", at: Date.now(), row: {
       session_id: ev.sessionId, worktree: project.worktree, agent: ev.agent, kind: "decision", tool: DECISION_TOOL,
       key: part.key, path: null, ok: 1, exit_code: null, bytes: Buffer.byteLength(part.body), body: part.body,
       turn: ev.turn ?? 0, sandbox_bytes: 0, returned_bytes: 0,
-    });
-    indexText(db, project, ev.sessionId, DECISION_SOURCE, part.body, "text");
+    } });
+    writeOrSpool(project, db, { t: "src", id: null, src: sourceRowOf(project, ev.sessionId, DECISION_SOURCE), text: part.body, max: MAX_CHUNK_BYTES, units: false });
   }
 }
 
@@ -307,7 +327,7 @@ function askDetached(ev: CanonicalHookEvent, project: ProjectContext, tool: Tool
   const parts = answerDecisions(text);
   const labels = parts.length === 0 ? askOptionLabels(tool.input) : [];
   if (parts.length === 0 && labels.length === 0) return;
-  void openDb(project)
+  void hookDb(project)
     .then((db) => {
       if (parts.length > 0) return writeDecisions(db, ev, project, parts);
       const prompts = readSessionEvents(db, ev.sessionId, "prompt");
@@ -318,6 +338,13 @@ function askDetached(ev: CanonicalHookEvent, project: ProjectContext, tool: Tool
     .catch((err: unknown) => {
       process.stderr.write("hooks: decision write failed: " + message(err) + "\n");
     });
+}
+
+// ADR-0016 l.23 (#1348): an in-process host hands the agent's tool set on the event; it is the manifest source.
+function toolSetSources(ev: CanonicalHookEvent, project: ProjectContext, env: NodeJS.ProcessEnv): ToolSetSources {
+  const src: ToolSetSources = { projectDir: project.worktree, env };
+  if (ev.agentTools !== undefined) src.manifestTools = ev.agentTools;
+  return src;
 }
 
 // ---------- §4.5 PreToolUse ----------
@@ -331,7 +358,7 @@ async function preToolUse(ev: CanonicalHookEvent, row: AdapterRow, project: Proj
     // D-SUB-NOCTX-1 (#1311): a deny names only tools the caller has. A caller without ctx_* tools runs the call:
     // a known tool set without them, or a named agent type no source defines on a row that replaces afterwards
     // (PostToolUse case C keeps a large output out). A call with no agent type inherits the session tools (case A).
-    const set = toolSetForAgentType(ev, { projectDir: project.worktree, env });
+    const set = toolSetForAgentType(ev, toolSetSources(ev, project, env));
     const subCase = pickSubagentCase(ev, set);
     const tool = ev.tool;
     const runs = set !== null || ((ev.agentType ?? "") !== "" && hasReplace(row));
@@ -411,7 +438,8 @@ async function postToolUse(ev: CanonicalHookEvent, row: AdapterRow, project: Pro
   const tool = ev.tool;
   if (tool === undefined || tool.canonicalName.startsWith(OWN_TOOL_PREFIX)) return ALLOW; // step 1 (ADR-0009 §0)
   const result = ev.result ?? { isError: false, bytes: 0 };
-  const text = wholeOutput(result, ev.sessionId, env);
+  const whole = wholeOutput(result, ev.sessionId, env);
+  const text = whole.text;
   if (result.persistedPath !== undefined) result.bytes = Buffer.byteLength(text);
   if (tool.canonicalName === DECISION_TOOL) askDetached(ev, project, tool, text); // ADR-0009 §8.2
   const kind = journalKind(tool, row, result.isError); // step 2
@@ -430,7 +458,7 @@ async function postToolUse(ev: CanonicalHookEvent, row: AdapterRow, project: Pro
   };
   let decision: Decision;
   try {
-    decision = await postReplace(ev, row, project, env, tool, result, text);
+    decision = await postReplace(ev, row, project, env, tool, result, text, whole.file);
   } catch (err) {
     journal(result.bytes); // the call still gets its row; the caller turns the throw into the failure output
     throw err;
@@ -444,47 +472,77 @@ async function postToolUse(ev: CanonicalHookEvent, row: AdapterRow, project: Pro
 function ownRead(ev: CanonicalHookEvent, tool: ToolCall, env: NodeJS.ProcessEnv): boolean {
   if (!RANGE_READ_TOOLS.includes(tool.canonicalName)) return false;
   const p = READ_PATH_KEYS.map((k) => tool.input[k]).find((v): v is string => typeof v === "string" && v !== "");
-  return p !== undefined && isOwnFile(ev.agent, resolve(ev.cwd, p), env);
+  return p !== undefined && isOwnFile(ev.agent, ev.cwd, p, env);
 }
 
 async function postReplace(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext, env: NodeJS.ProcessEnv,
-  tool: ToolCall, result: ToolResultInfo, text: string): Promise<Decision> {
+  tool: ToolCall, result: ToolResultInfo, text: string, persistedFile?: string): Promise<Decision> {
   // step 5: replace, DECISIONS-r9 F1 split. Subagent case B/C (ADR-0016), and the main agent on a row
   // with a replace channel ("run, then replace", D-M7-RR-1, DECISIONS-r10 (1)).
+  if (boundedRead(tool)) { // D-R41-READ-OFFSET-1 (#1314): the user asked for these lines
+    await rangedAfterBet(ev, row, project, tool); // D-0027-LOSTBET-1 case b
+    return ALLOW;
+  }
   if (result.bytes <= REPLACE_TRIGGER_BYTES) return ALLOW; // D-M7-SV-1
-  if (boundedRead(tool)) return ALLOW; // D-R41-READ-OFFSET-1 (#1314): the user asked for these lines
+  if (ompRangedRead(ev, tool)) return ALLOW; // D-1392-OMP-RANGE-1 (#1392): the same window, written in the path
   if (ownRead(ev, tool, env)) return ALLOW; // D-R48-OWN-FILE-1 (#1326): a skill or rule file reaches the model whole
+  if (SKILL_LOAD_TOOLS.includes(tool.canonicalName)) return ALLOW; // D-1404-SKILL-LOAD-1 (#1404): a loaded skill joins the prompt whole
   if (result.keep === true) return ALLOW; // D-M2-MCP-1: an MCP result with a non-text block stays as the host made it
   // ADR-0001: one path per row, no runtime fallback. A row with no replace channel gets no replace decision on
   // any path, the subagent one too (D-STATS-RET-2): its encoder drops it, so the model gets the whole output.
   if (!hasReplace(row)) return ALLOW;
+  // D-CC-POINTER-1 (#1342, ADR-0016 line 16): every caller keeps the same replace budget; case A is no passthrough.
+  // The pointer names only what the caller can call: ctx_search for the main session and case A, the plain
+  // SUBAGENT_HANDLE_LINE for case B and C. D-CC-POINTER-4: the subagent label carries the call id, as mainLabel does.
   let label: string;
+  let caller: Caller = { ctx: true, shell: true, read: false };
+  let canRead = true; // D-CC-POINTER-6: the main session has Read; a subagent only when its tool set holds it
   if (isSubagentCall(ev)) {
-    const subCase = pickSubagentCase(ev, toolSetForAgentType(ev, { projectDir: project.worktree, env }));
-    if (subCase === "A") return ALLOW;
-    label = SUBAGENT_SOURCE_PREFIX + tool.canonicalName + ":" + String(ev.turn ?? 0);
+    // #1348: toolSetSources carries the OpenCode 2.x agentTools next to the project dir and env.
+    const set = toolSetForAgentType(ev, toolSetSources(ev, project, env));
+    const subCase = pickSubagentCase(ev, set);
+    const has = (names: readonly string[]): boolean => set !== null && names.some((n) => set.includes(n));
+    canRead = has(row.nativeTools.read ?? []);
+    caller = { ctx: subCase === "A", shell: has(row.nativeTools.shell),
+      read: RANGE_READ_TOOLS.includes(tool.canonicalName) && has(row.nativeTools.read ?? []) };
+    // D-1382-NO-ROUTE-1 (#1382, ADR-0016 lines 11 and 16): a known tool set with no ctx tool, no shell and no ranged
+    // Read has no call that opens the handle, so the replace is a dead end: the output reaches it whole.
+    if (set !== null && !caller.ctx && !caller.shell && !caller.read) return ALLOW;
+    label = SUBAGENT_SOURCE_PREFIX + tool.canonicalName + ":" + (tool.callId ?? String(ev.turn ?? 0));
   } else {
     label = mainLabel(tool, ev);
   }
   // D-M7-RR-3: no description -> the command text, file path, pattern or URL, never an empty query.
-  const intent = [tool.input.description, tool.input.command, tool.input.file_path, tool.input.pattern, tool.input.url]
-    .map(str).find((v) => v.trim() !== "") ?? "";
+  // D-CC-POINTER-2 (#1358): an MCP input has none of them, so the tool name is the last field.
+  const intent = [tool.input.description, tool.input.command, tool.input.file_path, tool.input.pattern, tool.input.url, tool.name]
+    .map(str).find((v) => v.trim() !== "") ?? tool.canonicalName;
   // One chunk pass for both forms (D-M7-FT-2): the stored chunks and the selected chunks are the same
   // array, so the in-memory selection equals selectChunks over the stored source without reading it back.
   const chunks = chunkText(text, "text", REPLACE_CHUNK_BYTES); // D-M7-SV-1: small chunks, line-aligned cuts
   // D-CR3-HANDLE-1: the handle is the short id of the stored row. Up to SYNC_INDEX_MAX_BYTES the whole write
   // is sync; above it (F1) only the source row is written now (one small row, D-CR3-HANDLE-2) and the
   // chunks and line units follow detached under that id, so the handle never falls back to the long label.
-  const db = await openDb(project);
-  let sourceId: number;
+  // D-1401-SPOOL-1 (#1401): under another process's write lock the write goes to the project spool and the next
+  // hook write applies it. A source row not written yet has no id, so the handle is its label (pickSource reads both).
+  const db = await hookDb(project);
+  // D-0027-LOSTBET-1 (ADR-0027 D3, FR5): the bet on this tool key was lost in this session, so the output passes
+  // whole up to OUTPUT_CAP (one primary-key lookup). Over OUTPUT_CAP it is still replaced (ADR-0008).
+  const betOn = betKey(ev, tool);
+  if (result.bytes <= OUTPUT_CAP && betOn !== "" && isLostBet(db, ev.sessionId, betOn)) return ALLOW;
+  const op: SpoolOp = { t: "src", id: null, src: sourceRowOf(project, ev.sessionId, label), text, max: REPLACE_CHUNK_BYTES, units: true };
+  let sourceId: number | null;
   if (result.bytes <= SYNC_INDEX_MAX_BYTES) {
-    sourceId = indexText(db, project, ev.sessionId, label, text, "text", chunks).sourceId;
-    insertUnits(db, sourceId, ev.sessionId, buildUnits(text)); // r3-ledger
+    sourceId = writeOrSpool(project, db, op, chunks); // r3-ledger: chunks and line units
   } else {
-    sourceId = reserveSource(db, sourceRowOf(project, ev.sessionId, label), chunks);
-    indexDetached(project, ev.sessionId, sourceId, label, text, chunks);
+    sourceId = reserveOrSpool(project, db, op, chunks);
+    if (sourceId !== null) indexDetached(project, { ...op, id: sourceId }, chunks);
   }
-  const handle = sourceHandle(sourceId);
+  // D-1402-PLUGIN-CALL-1 (#1402): a plugin mod's MCP call (host id prefix toolu_plugin_) returns to the mod, not to the
+  // model, so the mod gets the output whole (it may JSON.parse it). The text is indexed above; model calls stay replaced.
+  if (pluginMcpCall(tool)) return ALLOW;
+  const handle = sourceId === null ? label : sourceHandle(sourceId);
+  // D-0027-LOSTBET-1 case b: note the bet on a full Read of this file, so a later ranged Read of it marks a lost bet.
+  if (RANGE_READ_TOOLS.includes(tool.canonicalName) && betOn !== "" && !hasBet(db, ev.sessionId, betOn)) noteBet(db, ev.sessionId, betOn, handle);
   // D-M7-SV-5: rank by the intent and the session's last user prompt (any word), so a bare cat still
   // returns the line the user asked for. The more line keeps the intent. No prompt -> intent alone.
   const prompt = await lastPrompt(project, ev.sessionId);
@@ -493,19 +551,128 @@ async function postReplace(ev: CanonicalHookEvent, row: AdapterRow, project: Pro
   // within the same budget, plus the handle. No shape or no named rare unit -> the BM25 pick below, unchanged.
   // D-CR3-HANDLE-1: one handle line replaces the more line and counts inside the budget. The budget per
   // replace is the size bound of D-CR3-HANDLE-1 (REPLACE_RETURN_BYTES of selection + the more line with the full
-  // label); the selection gets that budget minus the handle line, so a replace never grows.
+  // label); the selection gets that budget minus the handle line, so the selection plus the handle line never grows.
+  // D-CC-POINTER-2: on claude-code the search.mjs twin comes on top of that bound (two absolute paths, about 120-250 B).
   // D-HA-GEMINI-HINT-1: a second query of the prompt words the output holds, so the call returns the asked line.
-  const handleLine = REPLACE_HANDLE_LINE(intent, handle, result.bytes, row.toolNamePrefix, askedWords(intent, prompt, text));
+  const handleLine = caller.ctx
+    ? REPLACE_HANDLE_LINE(intent, handle, result.bytes, row.toolNamePrefix, askedWords(intent, prompt, text))
+    : SUBAGENT_HANDLE_LINE(handle, result.bytes, caller.read);
   const budget = replaceBudget(handleLine, moreLine(intent, label));
+  // D-CC-POINTER-2 (#1358): on the claude-code row a caller with a shell also gets the MCP-free search.mjs call,
+  // which works when the MCP server is not connected. It sits after the budget: the selection is unchanged.
+  // D-CC-POINTER-6 (#1406): a file the host persisted and this hook read is named after the budget too, for a caller with Read.
+  // The search.mjs twin takes a source id; a spooled source (no id yet) keeps the ctx_search line alone.
+  const pointer = handleLine + (caller.shell && ev.agent === RUN_WRAPPER_AGENT && sourceId !== null ? searchTwin(handle, intent, project) : "")
+    + (persistedFile !== undefined && canRead ? PERSISTED_FILE_LINE(persistedFile) : "");
   const digest = shapeDigest(text, rankQuery ?? intent, SHAPE_RETURN_BYTES); // D-M2-JSON-1
-  if (digest !== null) return { kind: "replace", output: replaceOutput(digest, handleLine) };
+  if (digest !== null) return { kind: "replace", output: replaceOutput(digest, pointer) };
   const selected = selectChunksInMemory(chunks, intent, budget, label, rankQuery);
-  return { kind: "replace", output: selected.more !== null ? replaceOutput(selected.text, handleLine) : selected.text };
+  return { kind: "replace", output: selected.more !== null ? replaceOutput(selected.text, pointer) : selected.text };
+}
+
+type Caller = { ctx: boolean; shell: boolean; read: boolean };
+
+// D-0027-LOSTBET-1: the tool key of an output. A read-like tool: its path, resolved against the cwd, so the full and the
+// ranged Read of one file share it. Any other tool: the key its main-session source label carries (the command for a
+// shell, server + tool for MCP), so the ctx_search page-in (case a) and the hook name the same key. Else "": no memory.
+function betKey(ev: CanonicalHookEvent, tool: ToolCall): string {
+  if (RANGE_READ_TOOLS.includes(tool.canonicalName)) {
+    const p = READ_PATH_KEYS.map((k) => tool.input[k]).find((v): v is string => typeof v === "string" && v !== "");
+    return p === undefined ? "" : tool.canonicalName + ":" + resolve(ev.cwd, p);
+  }
+  return betKeyOfLabel(mainLabel(tool, ev)) ?? "";
+}
+
+// D-0027-LOSTBET-1 case b (ADR-0027 FR5): a ranged Read of a file whose full Read was replaced in this session is a lost
+// bet on that file. Two primary-key lookups; the mark is written once. A failure leaves the bet as today (section 12).
+async function rangedAfterBet(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext, tool: ToolCall): Promise<void> {
+  if (ev.sessionId === "" || !hasReplace(row)) return;
+  const key = betKey(ev, tool);
+  if (key === "") return;
+  try {
+    const db = await hookDb(project);
+    if (hasBet(db, ev.sessionId, key) && !isLostBet(db, ev.sessionId, key)) markLostBet(db, ev.sessionId, key, "ranged-read", tool.callId ?? "");
+  } catch {
+    // ADR-0027 section 12: never blocks the tool
+  }
+}
+
+// D-1402-PLUGIN-CALL-1: MCP tools only. An Agent call a plugin serves for the model may carry the same id prefix.
+function pluginMcpCall(tool: ToolCall): boolean {
+  return tool.callId !== undefined && tool.callId.startsWith(PLUGIN_CALL_ID_PREFIX) && tool.name.startsWith(MCP_SERVER_TOOL_PREFIX);
+}
+
+// search.mjs sits next to hook.mjs (D-M3-arch-3, as caseB's run.mjs). A long intent is not echoed (D-NO-LOSSY-CUT-2).
+function searchTwin(handle: string, intent: string, project: ProjectContext): string {
+  const terms = Buffer.byteLength(intent, "utf8") > ECHO_MAX_BYTES ? "" : intent;
+  return SEARCH_TWIN_LINE(join(dirname(process.argv[1] ?? ""), SEARCH_WRAPPER_FILE), handle, terms, project.worktree);
 }
 
 // D-R41-READ-OFFSET-1 (#1314): a read-like tool called with offset, limit or view_range is a bounded window.
 export function boundedRead(tool: ToolCall): boolean {
   return RANGE_READ_TOOLS.includes(tool.canonicalName) && READ_RANGE_KEYS.some((k) => tool.input[k] !== undefined && tool.input[k] !== null);
+}
+
+// D-1392-OMP-RANGE-1 (#1392, ADR-0026): OMP's read has `path` only and takes the line range inline (OMP 18.21.0
+// read-selector.ts parseSel: :N, :N-M, :N+K, :N-, :-N, comma lists, `raw` before or after the range). A path whose
+// suffix is a range is a bounded window (D-R41-READ-OFFSET-1). A suffix with no range (none, :raw, :img, a drive
+// letter, a colon inside a folder name) is a full read and stays replaced. A file whose literal name holds the suffix
+// is read whole by OMP (path-utils.ts splitPathAndSelPreferringLiteral), so it stays replaced too.
+function ompRangedRead(ev: CanonicalHookEvent, tool: ToolCall): boolean {
+  if (ev.agent !== "omp" || !RANGE_READ_TOOLS.includes(tool.canonicalName)) return false;
+  const p = READ_PATH_KEYS.map((k) => tool.input[k]).find((v): v is string => typeof v === "string" && v !== "");
+  if (p === undefined || !rangedPathSuffix(p)) return false;
+  try {
+    return lstatSync(resolve(ev.cwd, p), { throwIfNoEntry: false }) === undefined;
+  } catch {
+    return false; // an unclear probe keeps the full-read path: the replace stays
+  }
+}
+
+// D-1392-OMP-RANGE-1: plain string parse from the last colon, no regex. `<file>:<range>`, `<file>:<range>:raw` or
+// `<file>:raw:<range>`. The file part is never empty and never one drive letter (`D:50` is a Windows path).
+export function rangedPathSuffix(path: string): boolean {
+  let cut = path.lastIndexOf(":");
+  let sel = path.slice(cut + 1);
+  if (sel.toLowerCase() === "raw") {
+    cut = path.lastIndexOf(":", cut - 1);
+    sel = path.slice(cut + 1, path.length - 4);
+  }
+  if (cut <= 0 || !rangeList(sel)) return false;
+  let file = path.slice(0, cut);
+  if (file.toLowerCase().endsWith(":raw")) file = file.slice(0, -4);
+  return file.length > 1 || !asciiLetter(file);
+}
+
+function rangeList(sel: string): boolean {
+  return sel !== "" && sel.split(",").every(rangeItem);
+}
+
+// One list item: N, N-M, N+K, N- or -N (OMP parseLineRanges and parseTailCount).
+function rangeItem(item: string): boolean {
+  if (item.startsWith("-")) return digitsOnly(item.slice(1));
+  let i = 0;
+  while (i < item.length && digit(item[i])) i++;
+  if (i === 0) return false;
+  if (i === item.length) return true;
+  const op = item[i];
+  const rest = item.slice(i + 1);
+  return (op === "-" && (rest === "" || digitsOnly(rest))) || (op === "+" && digitsOnly(rest));
+}
+
+function digitsOnly(s: string): boolean {
+  if (s === "") return false;
+  for (const c of s) if (!digit(c)) return false;
+  return true;
+}
+
+function digit(c: string): boolean {
+  return c >= "0" && c <= "9";
+}
+
+function asciiLetter(s: string): boolean {
+  const c = s.toLowerCase();
+  return c.length === 1 && c >= "a" && c <= "z";
 }
 
 // D-R4-BUDGET-1: the replace is the body, one newline, the handle line. An empty body (selection budget 0, no
@@ -533,25 +700,26 @@ function hostToolResult(file: string, sessionId: string, env: NodeJS.ProcessEnv)
 }
 
 // D-M2-SHAPE-2: the whole output when the host persisted it to a file; an unreadable or refused file keeps the head.
-function wholeOutput(result: ToolResultInfo, sessionId: string, env: NodeJS.ProcessEnv): string {
+// D-CC-POINTER-6: `file` is set only when the host's file was read, so a refused path is never named to the model.
+function wholeOutput(result: ToolResultInfo, sessionId: string, env: NodeJS.ProcessEnv): { text: string; file?: string } {
   const head = result.text ?? "";
-  if (result.persistedPath === undefined) return head;
+  if (result.persistedPath === undefined) return { text: head };
   try {
     if (!hostToolResult(result.persistedPath, sessionId, env)) {
       // D-SEC-PERSIST-1: doctor shows this line under "Hook errors"; the model still gets the head.
       logHookError(env, "claude-code", "persisted-output", new Error("persisted output path is outside this session's tool-results dir or too large; kept the head"));
-      return head;
+      return { text: head };
     }
-    return readFileSync(result.persistedPath, "utf8");
+    return { text: readFileSync(result.persistedPath, "utf8"), file: result.persistedPath };
   } catch {
-    return head;
+    return { text: head };
   }
 }
 
 // D-M7-SV-5: best effort; a store that cannot open gives "" and the selection uses the intent alone.
 async function lastPrompt(project: ProjectContext, sessionId: string): Promise<string> {
   try {
-    return readLastPrompt(await openDb(project), sessionId);
+    return readLastPrompt(await hookDb(project), sessionId);
   } catch {
     return "";
   }
@@ -567,15 +735,20 @@ function mainLabel(tool: ToolCall, ev: CanonicalHookEvent): string {
 }
 
 // F1: above SYNC_INDEX_MAX_BYTES the FTS5 chunk write never blocks the decision; same rules as appendDetached.
-// The source row is already reserved (D-CR3-HANDLE-2); chunks and line units land under its id.
-function indexDetached(project: ProjectContext, sessionId: string, sourceId: number, label: string, text: string, chunks: Chunk[]): void {
-  void openDb(project)
-    .then((db) => {
-      finishReserved(db, sourceId, sourceRowOf(project, sessionId, label), chunks, buildUnits(text)); // r3-ledger, D-R4-RESERVE-1
-    })
-    .catch((err: unknown) => {
-      process.stderr.write("hooks: index write failed: " + message(err) + "\n");
-    });
+// The source row is already reserved (D-CR3-HANDLE-2); chunks and line units land under its id (D-1401-SPOOL-1).
+function indexDetached(project: ProjectContext, op: SpoolOp, chunks: Chunk[]): void {
+  writeDetached(project, op, "index", chunks);
+}
+
+// D-1401-SPOOL-1: reserve the source row now; a busy lock spools the whole write and gives no id.
+function reserveOrSpool(project: ProjectContext, db: DbHandle, op: SpoolOp & { t: "src" }, chunks: Chunk[]): number | null {
+  try {
+    return reserveSource(db, op.src, chunks);
+  } catch (err) {
+    if (!isBusy(err)) throw err;
+    spool(project, op);
+    return null;
+  }
 }
 
 // The source fields a hook output stores (kind "content"). reserveSource and finishReserved take these only;
@@ -587,10 +760,20 @@ export function sourceRowOf(project: ProjectContext, sessionId: string, label: s
 // ---------- §4.7 PreCompact ----------
 
 async function preCompact(ev: CanonicalHookEvent, row: AdapterRow, project: ProjectContext): Promise<Decision> {
-  const db = await openDb(project);
+  const db = await hookDb(project);
   metaSet(db, PENDING_COMPACT_META_PREFIX + ev.sessionId, PENDING_COMPACT_FLAG);
   if (hasRecall(row)) markCompacted(db, ev.sessionId);
+  endLostBets(db, ev.sessionId); // D-0027-LOSTBET-1
   return ALLOW;
+}
+
+// D-0027-LOSTBET-1 (ADR-0027 10.6): a compaction ends Passing; the next output with a marked key is a bet again.
+function endLostBets(db: DbHandle, sessionId: string): void {
+  try {
+    clearLostBets(db, sessionId);
+  } catch {
+    // ADR-0027 section 12: a failed clear never blocks the compaction; the marks stay
+  }
 }
 
 // ---------- Usage (D-M5-arch-2) ----------

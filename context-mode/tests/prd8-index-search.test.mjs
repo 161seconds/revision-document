@@ -38,6 +38,8 @@ import http, { createServer } from "node:http";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { safeFetch } from "../src/core/sandbox/fetch.ts";
+import dns from "node:dns";
+import { syncBuiltinESMExports } from "node:module";
 import { spawn, execFileSync, spawnSync } from "node:child_process";
 
 // Stage 1 (concurrent): the pure block, the HTML section and the parity section. None of them sets a proxy variable.
@@ -1902,6 +1904,114 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
         }
       });
 
+      // #1390: an explicit source that names no stored source is a different case from zero hits in a real source
+      // set. The reply keeps the zero-hit line, says the source is not stored, and names the fix (the stored
+      // sources, or how to store one). isError:true for this case only; zero hits in a real source stay isError:false.
+      test("ctxSearch with a source that names no stored source says so and lists the stored sources (#1390)", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-se-1390-"));
+        try {
+          const ctx = ctxFor(root);
+          const missing = "https://example.invalid/missing";
+          // Empty store: the reply says the source is not stored and how to store one.
+          const empty = await ctxSearch.handler({ queries: ["alpha-token"], source: missing }, ctx);
+          const el = empty.text.split("\n");
+          assert.equal(empty.isError, true, empty.text);
+          assert.equal(el[0], 'No hits in scope "worktree" across 0 source(s).', empty.text);
+          assert.equal(el[1], 'Source "https://example.invalid/missing" is not a stored source in scope "worktree".', empty.text);
+          assert.ok(empty.text.includes("ctx_index"), empty.text);
+          // Another source is stored: the reply names it, so a typo and an empty store read differently.
+          assert.equal((await ctxIndex.handler({ content: "alpha-token lives here", source: "notes-real" }, ctx)).isError, false);
+          const other = await ctxSearch.handler({ queries: ["alpha-token"], source: missing }, ctx);
+          const ol = other.text.split("\n");
+          assert.equal(other.isError, true, other.text);
+          assert.equal(ol[1], 'Source "https://example.invalid/missing" is not a stored source in scope "worktree".', other.text);
+          assert.ok(other.text.includes("notes-real"), other.text);
+          assert.notEqual(other.text, empty.text);
+          // The same answer with scope "session", sort "timeline" and empty queries.
+          for (const extra of [{ scope: "session" }, { sort: "timeline" }, { queries: [] }]) {
+            const out = await ctxSearch.handler({ queries: ["alpha-token"], source: missing, ...extra }, ctx);
+            assert.equal(out.isError, true, JSON.stringify(extra) + "\n" + out.text);
+            assert.ok(out.text.includes('Source "https://example.invalid/missing" is not a stored source in scope "' + (extra.scope ?? "worktree") + '".'), JSON.stringify(extra) + "\n" + out.text);
+          }
+          // Zero hits in a stored source stays a clean empty result.
+          const real = await ctxSearch.handler({ queries: ["zzznomatchzzz"], source: "notes-real" }, ctx);
+          assert.equal(real.isError, false, real.text);
+          assert.ok(!real.text.includes("is not a stored source"), real.text);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
+      test("ctxSearch with a source stored only in another worktree names the scope that holds it (#1390)", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-se-1390b-"));
+        try {
+          const ctx = ctxFor(root);
+          const elsewhere = { ...ctx, project: { ...ctx.project, worktree: join(root, "other-wt") } };
+          assert.equal((await ctxIndex.handler({ content: "alpha-token lives there", source: "notes-other" }, elsewhere)).isError, false);
+          const out = await ctxSearch.handler({ queries: ["alpha-token"], source: "notes-other" }, ctx);
+          assert.ok(out.text.includes('ctx_search({queries:["alpha-token"], scope:"project", source:"notes-other"})'), out.text);
+          // Scope "project" holds it: the call the reply names finds the hit.
+          const proj = await ctxSearch.handler({ queries: ["alpha-token"], scope: "project", source: "notes-other" }, ctx);
+          assert.equal(proj.isError, false, proj.text);
+          assert.ok(proj.text.includes("alpha-token"), proj.text);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
+      // #1390 follow-up (tester, 2.2.1: "with an unknown explicit source and a nonzero offset ctx_search still returns
+      // isError false and the zero-hit pagination line ... without the unknown-source diagnostic"): `offset` never hides
+      // the unknown-source or other-scope answer; a stored source past its last hit keeps the paging line.
+      test("ctxSearch with offset>0 and a source that names no stored source still says so (#1390)", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-se-1390c-"));
+        try {
+          const ctx = ctxFor(root);
+          const unknown = await ctxSearch.handler({ queries: ["alpha-token"], source: "nope", offset: 5 }, ctx);
+          assert.equal(unknown.isError, true, unknown.text);
+          assert.ok(unknown.text.includes('Source "nope" is not a stored source in scope "worktree".'), unknown.text);
+          // A source stored by another session of this worktree: scope "session" with offset names the worktree scope.
+          const other = { ...ctx, sessionId: "s-other" };
+          assert.equal((await ctxIndex.handler({ content: "alpha-token lives in the other session", source: "notes-wt" }, other)).isError, false);
+          const wider = await ctxSearch.handler({ queries: ["alpha-token"], scope: "session", source: "notes-wt", offset: 5 }, ctx);
+          assert.equal(wider.isError, false, wider.text);
+          assert.ok(wider.text.includes('Source "notes-wt" is stored in scope "worktree"'), wider.text);
+          // A stored source past its last hit keeps the paging line, byte for byte.
+          const past = await ctxSearch.handler({ queries: ["alpha-token"], source: "notes-wt", offset: 5 }, ctx);
+          assert.equal(past.isError, false, past.text);
+          assert.equal(past.text, 'No more hits past offset 5 in scope "worktree" across 1 source(s).');
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
+      // #1390 follow-up (tester, 2.2.1: "ambiguous diagnostics involving label/handle and suffix-alias collisions across
+      // scopes"): a source value names the stored source inside the asked scope first (label, then handle, then the
+      // "#" suffix form); a match in another scope never hides the one in this scope.
+      test("ctxSearch resolves a label, handle or suffix alias inside the asked scope first (#1390)", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-se-1390d-"));
+        try {
+          const a = ctxFor(root);
+          const b = { ...a, sessionId: "s-other" };
+          // Handle s1 belongs to session A; session B stores the label "s1".
+          const first = await ctxIndex.handler({ content: "HANDLETOKEN session a owns handle one", source: "alpha" }, a);
+          assert.equal(first.text.split(" from ")[1].split(".")[0], "s1", first.text);
+          assert.equal((await ctxIndex.handler({ content: "LABELTOKEN session b label s1", source: "s1" }, b)).isError, false);
+          const byHandle = await ctxSearch.handler({ queries: ["HANDLETOKEN"], scope: "session", source: "s1" }, a);
+          assert.equal(byHandle.isError, false, byHandle.text);
+          assert.ok(byHandle.text.includes("HANDLETOKEN session a owns handle one"), byHandle.text);
+          assert.equal(byHandle.text.includes("is stored in scope"), false, byHandle.text);
+          // Suffix alias: doc#a in session A, doc#b (newer) in session B.
+          assert.equal((await ctxIndex.handler({ content: "SUFFIXTOKEN part a of the doc", source: "doc#a" }, a)).isError, false);
+          assert.equal((await ctxIndex.handler({ content: "SUFFIXTOKEN part b of the doc", source: "doc#b" }, b)).isError, false);
+          const bySuffix = await ctxSearch.handler({ queries: ["SUFFIXTOKEN"], scope: "session", source: "doc" }, a);
+          assert.equal(bySuffix.isError, false, bySuffix.text);
+          assert.ok(bySuffix.text.includes("SUFFIXTOKEN part a of the doc"), bySuffix.text);
+          assert.equal(bySuffix.text.includes("is stored in scope"), false, bySuffix.text);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
       test("ctxSearch finds content indexed by ctx_index in the default (worktree) scope", async () => {
         const root = mkdtempSync(join(tmpdir(), "cm-se3-"));
         try {
@@ -1978,6 +2088,8 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
         const declared = new Set(Object.keys(ctxSearchSchema.shape));
         const root = mkdtempSync(join(tmpdir(), "cm-r6a-"));
         try {
+          // #1390: an unknown source is isError:true, so the source this test names is stored first.
+          assert.equal((await ctxIndex.handler({ content: "x row", source: "s" }, ctxFor(root))).isError, false);
           for (const input of [{ queries: ["x"], scope: "project", source: "s", offset: 0 }, { queries: [], sort: "timeline", after: 0, source: "s" }]) {
             const seen = new Set();
             const out = await ctxSearch.handler(recorder(input, seen), ctxFor(root));
@@ -2007,6 +2119,8 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
         assert.deepEqual(Object.keys(ctxSearchSchema.shape).sort(), Object.keys(valid).sort());
         const root = mkdtempSync(join(tmpdir(), "cm-r6b-"));
         try {
+          // #1390: an unknown source is isError:true, so the source this test names is stored first.
+          assert.equal((await ctxIndex.handler({ content: "x row", source: "note" }, ctxFor(root))).isError, false);
           for (const [key, input] of Object.entries(valid)) {
             assert.equal(ctxSearchSchema.safeParse(input).success, true, key);
             const out = await ctxSearch.handler(input, ctxFor(root));
@@ -2295,9 +2409,10 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
         }
       });
 
-      // H9 (OPEN-ITEMS): the replace handle line names the source and the command as the query. When no query word
-      // is in the output, a source query lists that source's chunks by position instead of "No hits".
-      test("H9: a source query whose words match nothing lists that source's chunks, first by position", async () => {
+      // H9 (OPEN-ITEMS), D-1372-ORDERED-READ-1 (#1372): the replace handle line names the source and the command (or the
+      // MCP tool name) as the query. When no query word is in the output, the source is read in order: one head line,
+      // then the stored text from byte 0, not a listing of 5 short chunks.
+      test("H9: a source query whose words match nothing reads that source in order from its first byte", async () => {
         const root = mkdtempSync(join(tmpdir(), "cm-h9-"));
         try {
           const content = Array.from({ length: 30 }, (_, i) => "## part " + i + "\n\nalpha beta gamma " + i).join("\n\n");
@@ -2306,16 +2421,90 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
           const r = await ctxSearch.handler({ queries: ["cat big.log"], source: "big-out" }, ctxFor(root));
           assert.equal(r.isError, false, r.text);
           const lines = r.text.split("\n");
-          assert.equal(lines[0], 'Query "cat big.log":', r.text.slice(0, 300));
-          assert.ok(lines[1].startsWith("big-out #0: "), r.text.slice(0, 300));
-          assert.ok(r.text.includes("big-out #1: "), r.text.slice(0, 300));
-          assert.ok(!r.text.includes("other #"), r.text);
+          assert.equal(lines[1], "## part 0", "the text starts right after one head line: " + r.text.slice(0, 300));
+          assert.ok(r.text.includes("alpha beta gamma 29"), "a small source comes back whole in one reply: " + r.text.slice(-300));
+          assert.ok(!r.text.includes("big-out #"), "an ordered read, not a listing of chunks: " + r.text.slice(0, 300));
+          assert.ok(!r.text.includes("More: "), "nothing is left behind a More: line: " + r.text.slice(-300));
+          assert.ok(!r.text.includes("cat big log other words"), r.text);
           // Words that do match keep the BM25 path.
           const hit = await ctxSearch.handler({ queries: ["gamma 17"], source: "big-out" }, ctxFor(root));
           assert.ok(hit.text.includes("alpha beta gamma 17"), hit.text.slice(0, 300));
           // No source: a query with no match is still zero hits.
           const none = await ctxSearch.handler({ queries: ["zzqq nothing"] }, ctxFor(root));
           assert.ok(none.text.startsWith("No hits"), none.text);
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
+      // D-1372-ORDERED-READ-1 (#1372, ADR-0009 §8.1): a source with no query words is read in order, page by page. Each
+      // reply is one head line, then the next stored bytes, then (when bytes are left) one More: line with the byte
+      // offset. The pages put together give back the stored text byte for byte, a one-line stretch too.
+      const ORDERED_LINES = Array.from({ length: 900 }, (_, i) => "ORDLINE " + String(i).padStart(4, "0") + " status=" + (i % 3 ? "open" : "closed") + " owner=team-" + (i % 7)).join("\n");
+      const ORDERED_ONE_LINE = Array.from({ length: 2400 }, (_, i) => "w" + i).join(" ");
+      const ORDERED_TEXT = ORDERED_LINES + "\n" + ORDERED_ONE_LINE;
+      // A paging line names the call to run next: its arguments as an object (keys unquoted, values JSON).
+      const callArgs = (line) => {
+        let s = line.slice(line.indexOf("({") + 1, line.lastIndexOf("})") + 1);
+        for (const k of ["queries", "scope", "source", "offset"]) s = s.split("{" + k + ":").join('{"' + k + '":').split(", " + k + ":").join(', "' + k + '":');
+        return JSON.parse(s);
+      };
+      // The text of one ordered page: the reply minus its head line and its More: line.
+      const pageText = (reply) => {
+        const body = reply.slice(reply.indexOf("\n") + 1);
+        const at = body.lastIndexOf("\nMore: ");
+        return at < 0 ? body : body.slice(0, at);
+      };
+
+      test("D-1372-ORDERED-READ-1 (#1372): a source with no query words reads back byte for byte, in full pages", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-ord-"));
+        try {
+          const c = ctxFor(root);
+          await ctxIndex.handler({ content: ORDERED_TEXT, source: "ordered-log" }, c);
+          const S = Buffer.byteLength(ORDERED_TEXT);
+          let args = { queries: [""], source: "ordered-log" };
+          let got = "";
+          let calls = 0;
+          const sizes = [];
+          while (args !== null && calls < 50) {
+            const r = await ctxSearch.handler(args, c);
+            calls++;
+            assert.equal(r.isError, false, r.text.slice(0, 300));
+            assert.ok(Buffer.byteLength(r.text) <= C.OUTPUT_CAP, "a page fits OUTPUT_CAP: " + Buffer.byteLength(r.text));
+            const page = pageText(r.text);
+            sizes.push(Buffer.byteLength(page));
+            got += page;
+            const more = r.text.split("\n").find((l) => l.startsWith("More: "));
+            args = more === undefined ? null : callArgs(more);
+            if (args !== null) assert.equal(args.offset, Buffer.byteLength(got), "the More: offset is the byte offset of the next page: " + more);
+          }
+          assert.equal(got, ORDERED_TEXT, "the pages put together are the stored text, byte for byte");
+          for (const n of sizes.slice(0, -1)) assert.ok(n >= C.OUTPUT_CAP - 1024, "every page but the last is full: " + sizes.join(", "));
+          assert.ok(calls <= Math.ceil(S / (C.OUTPUT_CAP - 1024)), calls + " calls for " + S + " B: " + sizes.join(", "));
+        } finally {
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
+      // D-1372-ORDERED-READ-1: a query with words that match stays the ranked reply, byte for byte as on main 47b03fcc
+      // (golden: byte size and sha256 of the reply text, page 1, page 2 and a two-query call with no source).
+      test("D-1372-ORDERED-READ-1: a ranked query reply is unchanged byte for byte", async () => {
+        const root = mkdtempSync(join(tmpdir(), "cm-ord-q-"));
+        try {
+          const { createHash } = await import("node:crypto");
+          const sha = (t) => createHash("sha256").update(t).digest("hex");
+          const c = ctxFor(root);
+          await ctxIndex.handler({ content: ORDERED_LINES + "\n" + Array.from({ length: 700 }, (_, i) => "w" + i).join(" "), source: "ordered-log" }, c);
+          const golden = [
+            [{ queries: ["ORDLINE 0417 closed"], source: "ordered-log" }, 2527, "a39e8368b94e984731ea3a6e7eaeb6ca3e71ab26df9d8af5bf5018d0164ea7be"],
+            [{ queries: ["ORDLINE 0417 closed"], source: "ordered-log", offset: 3 }, 4096, "d0693d360cbe140aac0d6d925eafd814c2310f8e6a44f9cc56e19ae734818564"],
+            [{ queries: ["ORDLINE 0417 closed", "w650"] }, 2980, "9dcef037516b4b262a491051f256bf375113eb0342a6f278218357e6e7b69833"],
+          ];
+          for (const [args, size, hash] of golden) {
+            const r = await ctxSearch.handler(args, c);
+            assert.equal(r.text.split("\n")[0], 'Query "ORDLINE 0417 closed":', r.text.slice(0, 200));
+            assert.deepEqual([Buffer.byteLength(r.text), sha(r.text)], [size, hash], JSON.stringify(args) + "\n" + r.text.slice(0, 400));
+          }
         } finally {
           rmSync(root, { recursive: true, force: true });
         }
@@ -2773,9 +2962,9 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
 
   // Moved from tests/e2e/fetch-index-search-parity.test.mjs
   // Serial inside the concurrent stage: the summary tests read the Map the per-host tests fill, in order.
-  describe("PRD-v2 section 8 / fetch, index, search parity on 10 hosts", { concurrency: 1 }, () => {
+  describe("PRD-v2 section 8 / fetch, index, search parity on 11 hosts", { concurrency: 1 }, () => {
     // Owner scenario (Pi session 2026-10-30): "Fetch the React useEffect docs, index them, and find the cleanup pattern
-    // with code examples." For all 10 hosts: ctx_index {url} then ctx_search {queries}, each the way the host runs it.
+    // with code examples." For all 11 hosts: ctx_index {url} then ctx_search {queries}, each the way the host runs it.
     //   MCP hosts (claude-code, codex, gemini, qwen, copilot-cli, vscode, kiro, zcode): the built server.mjs --agent <host>
     //     over stdio JSON-RPC (vscode also gets --workspace-folder, as setup writes it).
     //   pi: src/entries/pi.ts in process, with the documented ctx object ({cwd, sessionManager}) from before_agent_start.
@@ -2803,7 +2992,7 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
     const QUERY = "useEffect cleanup function return pattern";
     const OUTPUT_CAP = 16384; // src/core/contracts/constants.ts OUTPUT_CAP: the one bound for every reply
     const MCP_HOSTS = ["claude-code", "codex", "gemini", "qwen", "copilot-cli", "vscode", "kiro", "zcode"];
-    const ALL_HOSTS = [...MCP_HOSTS, "pi", "opencode"];
+    const ALL_HOSTS = [...MCP_HOSTS, "pi", "opencode", "omp"]; // ADR-0026: omp runs the Pi factory with its own id
 
     let root, pkg, srv, url, probeUrl;
     const results = new Map(); // host -> { indexText, searchText }
@@ -2883,12 +3072,12 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
     }
 
     /** The pi extension, driven as Pi drives it: before_agent_start with ctx, then tool.execute. */
-    async function piRun(proj, calls) {
-      const { default: piExtension } = await import("../src/entries/pi.ts");
+    async function piRun(proj, calls, host = "pi") {
+      const { hostExtension } = await import("../src/entries/pi.ts");
       const handlers = new Map();
       const tools = new Map();
-      piExtension({ on: (n, f) => handlers.set(n, f), registerTool: (t) => tools.set(t.name, t) });
-      const ctx = { cwd: proj, sessionManager: { getSessionId: () => "parity-pi" } };
+      hostExtension({ on: (n, f) => handlers.set(n, f), registerTool: (t) => tools.set(t.name, t) }, host);
+      const ctx = { cwd: proj, sessionManager: { getSessionId: () => "parity-" + host } };
       await handlers.get("before_agent_start")({ systemPrompt: "" }, ctx);
       const out = [];
       for (const [name, a] of calls) {
@@ -2922,7 +3111,7 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
       const proj = gitRepo(join(root, "proj-" + tag));
       if (mcp) return mcpRun(host, home, proj, calls);
       process.env.HOME = home; process.env.USERPROFILE = home; process.env.PARITY_HOST = HOST;
-      return host === "pi" ? piRun(proj, calls) : opencodeRun(proj, calls);
+      return host === "opencode" ? opencodeRun(proj, calls) : piRun(proj, calls, host); // pi and omp share the factory
     }
 
     const chunksOf = (t) => Number(/(\d+) chunk\(s\)/.exec(t)?.[1]);
@@ -2956,7 +3145,7 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
       assert.equal(out[1].text, results.get("claude-code").searchText);
     });
 
-    test("[parity] all 10 hosts: same chunk count, same hit list, same reply bytes, reply under OUTPUT_CAP", () => {
+    test("[parity] all 11 hosts: same chunk count, same hit list, same reply bytes, reply under OUTPUT_CAP", () => {
       assert.equal(results.size, ALL_HOSTS.length, "every host ran: " + [...results.keys()].join(","));
       const ref = results.get("claude-code");
       const table = ALL_HOSTS.map((h) => `${h}: chunks=${chunksOf(results.get(h).indexText)} bytes=${bytes(results.get(h).searchText)} hits=${hitIds(results.get(h).searchText).length}`);
@@ -3010,6 +3199,46 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
     });
   });
 });
+
+// #1403 (D-1403-PROXY-NOT-TARGET-1) seams for stage 2. withDns maps names to addresses for one call, so a test can give
+// gateway.docker.internal or an internal name a private address with no real DNS. recordingProxy is a local proxy that
+// logs every request and CONNECT it gets: a forward request answers 200 "proxied", a CONNECT answers 403.
+async function withDns(map, fn) {
+  const prev = dns.promises.lookup;
+  dns.promises.lookup = async (name, opts) => {
+    // A function map answers any name (it may throw a DNS error or never settle); an object map answers exact names.
+    const address = typeof map === "function" ? await map(name) : map[name];
+    if (address === undefined) return prev.call(dns.promises, name, opts);
+    const r = { address, family: address.includes(":") ? 6 : 4 };
+    return opts?.all ? [r] : r;
+  };
+  syncBuiltinESMExports();
+  try { return await fn(); } finally {
+    dns.promises.lookup = prev;
+    syncBuiltinESMExports();
+  }
+}
+
+async function recordingProxy(onReq) {
+  const seen = [];
+  let conns = 0;
+  const srv = createServer((req, res) => {
+    seen.push({ method: req.method, url: req.url });
+    if (onReq && onReq(req, res)) return;
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("proxied");
+  });
+  srv.on("connect", (req, sock) => {
+    seen.push({ method: "CONNECT", url: req.url });
+    sock.end("HTTP/1.1 403 Forbidden\r\n\r\n");
+  });
+  srv.on("connection", () => { conns += 1; });
+  await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+  return {
+    port: srv.address().port, seen, conns: () => conns,
+    close: () => new Promise((r) => { srv.closeAllConnections(); srv.close(r); }),
+  };
+}
 
 // Stage 2 (serial): these two sections set HTTP_PROXY/NO_PROXY in process.env. A concurrent fetch or child spawn would see them,
 // so they run after stage 1 and one after the other.
@@ -3141,21 +3370,22 @@ describe("PRD-v2 section 8 / ctx_index", () => {
     }
   }
 
-  test("[M2] GP5/http-proxy-honored: ctx_index url goes to the proxy from env, SSRF-checked there (#1039, #476)", async () => {
+  test("[M2] GP5/http-proxy-honored: ctx_index url goes through a private proxy from env; the proxy is not a target (#1039, #476, #1403)", async () => {
     const root = mkdtempSync(join(tmpdir(), "cm-ix7-"));
-    let hits = 0;
-    const proxy = createServer((req, res) => { hits += 1; res.end("x"); });
-    proxy.on("connection", () => { hits += 1; });
-    await new Promise((r) => proxy.listen(0, "127.0.0.1", r));
+    const p = await recordingProxy();
     try {
-      for (const [key, url] of [["HTTP_PROXY", "http://example.com/"], ["https_proxy", "https://example.com/"]]) {
-        const out = await withProxyEnv({ [key]: `http://127.0.0.1:${proxy.address().port}` }, () => ctxIndex.handler({ url }, ctxFor(root)));
-        assert.equal(out.isError, true, key);
-        assert.equal(out.text, "Blocked private address 127.0.0.1. Fix: use a public URL.", key);
-      }
-      assert.equal(hits, 0, "no socket may reach a private proxy");
+      // The Docker sandbox case: the proxy named by env sits on a private address. The target is public.
+      const out = await withProxyEnv({ HTTP_PROXY: `http://127.0.0.1:${p.port}` }, () =>
+        ctxIndex.handler({ url: "http://docs.parity.test/page" }, ctxFor(root)));
+      assert.equal(out.isError, false, out.text);
+      assert.equal(p.seen[0]?.url, "http://docs.parity.test/page", "the proxy got the absolute URL");
+      const tls = await withDns({ "gateway.docker.internal": "127.0.0.1" }, () =>
+        withProxyEnv({ https_proxy: `http://gateway.docker.internal:${p.port}` }, () =>
+          ctxIndex.handler({ url: "https://docs.parity.test/page" }, ctxFor(root))));
+      assert.equal(tls.text, "Fetch failed: 403. Fix: check the URL or proxy.", "the CONNECT reached the proxy");
+      assert.ok(p.seen.some((x) => x.method === "CONNECT" && x.url === "docs.parity.test:443"), JSON.stringify(p.seen));
     } finally {
-      await new Promise((r) => proxy.close(r));
+      await p.close();
       rmSync(root, { recursive: true, force: true });
     }
   });
@@ -3281,28 +3511,72 @@ describe("PRD-v2 section 8 / safeFetch", () => {
     return { url: `http://127.0.0.1:${srv.address().port}`, hits: () => hits, close: () => new Promise((r) => srv.close(r)) };
   }
 
-  test("GP5/http-proxy-honored: HTTP_PROXY is the connect target and the SSRF check runs on it", async () => {
-    const p = await countingProxy();
+  test("GP5/http-proxy-honored: a private HTTP_PROXY from env is not a target; a public http target goes through it (#1403)", async () => {
+    const p = await recordingProxy();
     try {
-      await withEnv({ HTTP_PROXY: p.url }, () =>
-        assert.rejects(safeFetch("http://example.com/", new AbortController().signal), (err) => {
-          assert.equal(err.code, "SSRF");
-          assert.equal(err.message, "Blocked private address 127.0.0.1. Fix: use a public URL.");
-          return true;
-        }));
-      assert.equal(p.hits(), 0, "no socket may reach a private proxy");
+      const out = await withEnv({ HTTP_PROXY: `http://127.0.0.1:${p.port}` }, () =>
+        safeFetch("http://docs.parity.test/page", AbortSignal.timeout(5000)));
+      assert.equal(out.body.toString("utf8"), "proxied");
+      assert.deepEqual(p.seen, [{ method: "GET", url: "http://docs.parity.test/page" }]);
     } finally { await p.close(); }
   });
 
-  test("GP5/http-proxy-honored: HTTPS_PROXY and lower-case https_proxy are read for https URLs", async () => {
-    for (const key of ["HTTPS_PROXY", "https_proxy"]) {
-      await withEnv({ [key]: "http://localhost:9" }, () =>
-        assert.rejects(safeFetch("https://example.com/", new AbortController().signal), (err) => {
+  test("GP5/http-proxy-honored: HTTPS_PROXY and lower-case https_proxy on a private address get the CONNECT (#1403)", async () => {
+    const p = await recordingProxy();
+    try {
+      for (const key of ["HTTPS_PROXY", "https_proxy"]) {
+        // 127.0.0.1, and gateway.docker.internal as the Docker sandbox names its proxy (a private address).
+        for (const proxy of [`http://127.0.0.1:${p.port}`, `http://gateway.docker.internal:${p.port}`]) {
+          const before = p.seen.length;
+          await withDns({ "gateway.docker.internal": "127.0.0.1" }, () => withEnv({ [key]: proxy }, () =>
+            assert.rejects(safeFetch("https://docs.parity.test/page", AbortSignal.timeout(5000)), (err) => {
+              assert.equal(err.message, "Fetch failed: 403. Fix: check the URL or proxy.", key + " " + proxy);
+              return true;
+            })));
+          assert.deepEqual(p.seen.slice(before), [{ method: "CONNECT", url: "docs.parity.test:443" }], key + " " + proxy);
+        }
+      }
+    } finally { await p.close(); }
+  });
+
+  test("#1403: through a proxy, a private target is still blocked by name and no socket reaches the proxy", async () => {
+    // The guard checks the URL the model chose, on every hop. Literals, localhost, gateway.docker.internal as a TARGET,
+    // and a name that resolves to a private address all stay blocked, behind a private proxy and behind a public one.
+    const dnsMap = { "gateway.docker.internal": "192.168.65.254", "metadata.internal.test": "10.0.0.5", "proxy.public.test": "203.0.113.7" };
+    const targets = ["127.0.0.1", "169.254.169.254", "10.1.2.3", "localhost", "gateway.docker.internal", "metadata.internal.test"];
+    const p = await recordingProxy();
+    try {
+      for (const proxyHost of ["127.0.0.1", "proxy.public.test"]) {
+        for (const scheme of ["http", "https"]) {
+          const key = scheme === "https" ? "HTTPS_PROXY" : "HTTP_PROXY";
+          for (const host of targets) {
+            await withDns(dnsMap, () => withEnv({ [key]: `http://${proxyHost}:${p.port}` }, () =>
+              assert.rejects(safeFetch(`${scheme}://${host}/latest/meta-data`, AbortSignal.timeout(5000)), (err) => {
+                assert.equal(err.message, "Blocked private address " + host + ". Fix: use a public URL.", `${scheme} ${host} via ${proxyHost}`);
+                return true;
+              })));
+          }
+        }
+      }
+      assert.equal(p.conns(), 0, "no socket may reach the proxy for a private target: " + JSON.stringify(p.seen));
+    } finally { await p.close(); }
+  });
+
+  test("#1403: through a private proxy, a redirect to 169.254.169.254 is blocked on its hop", async () => {
+    const p = await recordingProxy((req, res) => {
+      res.writeHead(302, { location: "http://169.254.169.254/latest/meta-data" });
+      res.end();
+      return true;
+    });
+    try {
+      await withEnv({ HTTP_PROXY: `http://127.0.0.1:${p.port}` }, () =>
+        assert.rejects(safeFetch("http://docs.parity.test/start", AbortSignal.timeout(5000)), (err) => {
           assert.equal(err.code, "SSRF");
-          assert.ok(err.message.includes("localhost"), err.message);
+          assert.equal(err.message, "Blocked private address 169.254.169.254. Fix: use a public URL.");
           return true;
         }));
-    }
+      assert.deepEqual(p.seen, [{ method: "GET", url: "http://docs.parity.test/start" }], "only the first hop reaches the proxy");
+    } finally { await p.close(); }
   });
 
   test("HTTP_PROXY is not used for an https URL (per-scheme)", async () => {
@@ -3358,9 +3632,10 @@ describe("PRD-v2 section 8 / safeFetch", () => {
       }));
     }
     for (const ok of ["8.8.8.8", "100.128.0.1", "198.20.0.1", "[2001:4860:4860::8888]", "[64:ff9b::808:808]", "[2002:808:808::]"]) {
-      // Public targets pass the check: through the loopback proxy the block names the proxy, not the origin.
+      // Public targets pass the check and go on to the loopback proxy from env (#1403: the proxy is not a target), which
+      // refuses the connection on port 9.
       await withEnv({ HTTP_PROXY: "http://127.0.0.1:9" }, () => assert.rejects(safeFetch("http://" + ok + "/", new AbortController().signal), (err) => {
-        assert.equal(err.message, "Blocked private address 127.0.0.1. Fix: use a public URL.", ok);
+        assert.equal(err.message, "Fetch failed: ECONNREFUSED. Fix: check the URL or proxy.", ok);
         return true;
       }));
     }
@@ -3385,6 +3660,148 @@ describe("PRD-v2 section 8 / safeFetch", () => {
     } finally { await new Promise((r) => srv.close(r)); }
   });
 
+  // ---- #1403 Fake-IP DNS (D-SSRF-FAKEIP-1, amends D-SSRF-RANGES-1) ----
+  // Mihomo/OpenClash Fake-IP DNS answers every public name with an address in 198.18.0.0/15. safeFetch learns this once
+  // per process: it resolves a random name under .invalid (RFC 6761: never resolves). NXDOMAIN means a normal resolver;
+  // an answer inside 198.18.0.0/15 means Fake-IP, and only then does a DNS-resolved name in 198.18.0.0/15 pass.
+  // Each test imports a fresh fetch.ts, so its per-process probe cache starts empty.
+  let fakeIpRun = 0;
+  async function freshSafeFetch() {
+    fakeIpRun += 1;
+    return (await import(new URL("../src/core/sandbox/fetch.ts?fake-ip=" + fakeIpRun, import.meta.url).href)).safeFetch;
+  }
+  // probe: an address the resolver gives every *.invalid name, "nxdomain", or "hang". names: exact name -> address.
+  function fakeIpDns(probe, names) {
+    const seen = { probes: 0 };
+    const resolve = (name) => {
+      if (name.endsWith(".invalid")) {
+        seen.probes += 1;
+        if (probe === "nxdomain") throw Object.assign(new Error("queryA ENOTFOUND " + name), { code: "ENOTFOUND" });
+        if (probe === "hang") return new Promise(() => {});
+        return probe;
+      }
+      return names[name];
+    };
+    return { resolve, seen };
+  }
+  // The Fake-IP pool address has no host here: a request to it goes to the local server (the guard still runs first).
+  async function withRoute(address, fn) {
+    const prev = http.request;
+    http.request = (opts, ...rest) =>
+      prev.call(http, opts && typeof opts === "object" && opts.host === address ? { ...opts, host: "127.0.0.1" } : opts, ...rest);
+    try { return await fn(); } finally { http.request = prev; }
+  }
+  async function localServer(handler) {
+    let hits = 0;
+    const srv = createServer((req, res) => { hits += 1; handler(req, res); });
+    await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+    return { port: srv.address().port, hits: () => hits, close: () => new Promise((r) => srv.close(r)) };
+  }
+  const FAKE_POOL_HIT = "198.18.0.9";
+  const blockedText = (host) => "Blocked private address " + host + ". Fix: use a public URL.";
+
+  test("#1403 Fake-IP: a public name the Fake-IP resolver puts in 198.18.0.0/15 is fetched; the probe runs once per process", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("198.18.0.1", { "github.test": FAKE_POOL_HIT });
+    const srv = await localServer((req, res) => res.end("fake-ip ok"));
+    try {
+      await withDns(fake.resolve, () => withRoute(FAKE_POOL_HIT, () => withEnv({}, async () => {
+        for (let i = 0; i < 3; i += 1) {
+          const out = await safe(`http://github.test:${srv.port}/`, AbortSignal.timeout(5000));
+          assert.equal(out.body.toString("utf8"), "fake-ip ok");
+        }
+      })));
+      assert.equal(srv.hits(), 3);
+      assert.equal(fake.seen.probes, 1, "one cached probe per process, not one per request");
+    } finally { await srv.close(); }
+  });
+
+  test("#1403 Fake-IP: IP literals in 198.18.0.0/15 and names on loopback, RFC 1918, link-local and 100.64/10 stay blocked", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("198.18.0.1", {
+      "loop.test": "127.0.0.1", "lan.test": "10.0.0.5", "meta.test": "169.254.169.254", "cgnat.test": "100.64.0.1",
+    });
+    for (const host of ["198.18.0.9", "198.19.255.1", "loop.test", "lan.test", "meta.test", "cgnat.test"]) {
+      await withDns(fake.resolve, () => withEnv({}, () =>
+        assert.rejects(safe(`http://${host}/latest/meta-data`, AbortSignal.timeout(5000)), (err) => {
+          assert.equal(err.code, "SSRF", host);
+          assert.equal(err.message, blockedText(host), host);
+          return true;
+        })));
+    }
+  });
+
+  test("#1403 Fake-IP: when the probe gets NXDOMAIN or an address outside 198.18.0.0/15, a name in 198.18.0.0/15 stays blocked", async () => {
+    // NXDOMAIN: a normal resolver. 10.0.0.1 / 203.0.113.9: a resolver that rewrites NXDOMAIN, not a Fake-IP pool.
+    for (const probe of ["nxdomain", "10.0.0.1", "203.0.113.9"]) {
+      const safe = await freshSafeFetch();
+      const fake = fakeIpDns(probe, { "github.test": FAKE_POOL_HIT });
+      await withDns(fake.resolve, () => withEnv({}, () =>
+        assert.rejects(safe("http://github.test/", AbortSignal.timeout(5000)), (err) => {
+          assert.equal(err.message, blockedText("github.test"), probe);
+          return true;
+        })));
+    }
+  });
+
+  test("#1403 Fake-IP: a probe that never answers is bounded and gives no exemption", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("hang", { "github.test": FAKE_POOL_HIT });
+    const t0 = Date.now();
+    await withDns(fake.resolve, () => withEnv({}, () =>
+      assert.rejects(safe("http://github.test/", AbortSignal.timeout(15000)), (err) => {
+        assert.equal(err.message, blockedText("github.test"));
+        return true;
+      })));
+    assert.ok(Date.now() - t0 < 5000, "the probe has a short timeout: " + (Date.now() - t0) + " ms");
+  });
+
+  test("#1403 Fake-IP: the normal path sends no probe", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("nxdomain", {});
+    const srv = await localServer((req, res) => res.end("normal ok"));
+    try {
+      // _parity-net-shim: docs.parity.test resolves to 203.0.113.7 (public) and connects to this server.
+      await withDns(fake.resolve, () => withEnv({}, async () => {
+        const out = await safe(`http://docs.parity.test:${srv.port}/`, AbortSignal.timeout(5000));
+        assert.equal(out.body.toString("utf8"), "normal ok");
+      }));
+      assert.equal(fake.seen.probes, 0, "no address in 198.18.0.0/15, so no probe lookup");
+    } finally { await srv.close(); }
+  });
+
+  test("#1403 Fake-IP: every redirect hop is still checked (link-local, a 198.18 literal, a name on RFC 1918)", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("198.18.0.1", { "github.test": FAKE_POOL_HIT, "lan.test": "10.0.0.5" });
+    for (const [location, host] of [["http://169.254.169.254/latest/meta-data", "169.254.169.254"],
+      ["http://198.18.0.7/", "198.18.0.7"], ["http://lan.test/", "lan.test"]]) {
+      const srv = await localServer((req, res) => { res.writeHead(302, { location }); res.end(); });
+      try {
+        await withDns(fake.resolve, () => withRoute(FAKE_POOL_HIT, () => withEnv({}, () =>
+          assert.rejects(safe(`http://github.test:${srv.port}/start`, AbortSignal.timeout(5000)), (err) => {
+            assert.equal(err.code, "SSRF", location);
+            assert.equal(err.message, blockedText(host), location);
+            return true;
+          }))));
+        assert.equal(srv.hits(), 1, "only the first hop reaches the server: " + location);
+      } finally { await srv.close(); }
+    }
+  });
+
+  test("#1403 Fake-IP: through a proxy from env (the Mihomo mixed port), a Fake-IP name reaches the proxy", async () => {
+    const safe = await freshSafeFetch();
+    const fake = fakeIpDns("198.18.0.1", { "github.test": FAKE_POOL_HIT });
+    const p = await recordingProxy();
+    try {
+      await withDns(fake.resolve, () => withEnv({ HTTPS_PROXY: `http://127.0.0.1:${p.port}` }, () =>
+        assert.rejects(safe("https://github.test/", AbortSignal.timeout(5000)), (err) => {
+          assert.equal(err.message, "Fetch failed: 403. Fix: check the URL or proxy.");
+          return true;
+        })));
+      assert.deepEqual(p.seen, [{ method: "CONNECT", url: "github.test:443" }]);
+    } finally { await p.close(); }
+  });
+
   test("GP5/fetch-error-one-line: every failure is one line, code FETCH_FAILED or SSRF", async () => {
     const cases = ["not a url", "ftp://example.com/x", "http://cm-v2-unreachable.invalid.test/x"];
     for (const u of cases) {
@@ -3405,6 +3822,93 @@ describe("PRD-v2 section 8 / safeFetch", () => {
       assert.equal(err.message, "Fetch failed: ABORT_ERR. Fix: check the URL or proxy.");
       return true;
     }));
+  });
+
+  // ---- #1380 (D-1380-FETCH-UA-1): every request names itself like v1 did (v1 undici sent user-agent and accept) ----
+  // The local server acts like en.wikipedia.org: 403 for a request without a user-agent, else 200 and the headers it
+  // got as JSON. _parity-net-shim moves only the last hop (docs.parity.test -> 127.0.0.1); the SSRF check still runs.
+  const UA_PREFIX = "context-mode/";
+  const UA_SUFFIX = " (+https://github.com/mksglu/context-mode)";
+  function assertNamed(h, where) {
+    const ua = h["user-agent"] ?? "";
+    assert.ok(ua.startsWith(UA_PREFIX) && ua.endsWith(UA_SUFFIX) && ua.length > UA_PREFIX.length + UA_SUFFIX.length, where + ": user-agent " + JSON.stringify(ua));
+    assert.equal(h.accept, "*/*", where + ": accept");
+  }
+  async function uaServer(onReq) {
+    const seen = [];
+    const srv = createServer((req, res) => {
+      seen.push({ method: req.method, url: req.url, headers: req.headers });
+      if (onReq && onReq(req, res, srv)) return;
+      if (!req.headers["user-agent"]) { res.writeHead(403); res.end("forbidden"); return; }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify(req.headers));
+    });
+    srv.on("connect", (req, sock) => {
+      seen.push({ method: "CONNECT", url: req.url, headers: req.headers });
+      sock.end("HTTP/1.1 403 Forbidden\r\n\r\n");
+    });
+    await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+    return { srv, seen, port: srv.address().port, close: () => new Promise((r) => srv.close(r)) };
+  }
+
+  test("#1380: a direct request sends user-agent and accept, so a host that needs them answers 200", async () => {
+    const s = await uaServer();
+    try {
+      const out = await withEnv({}, () => safeFetch("http://docs.parity.test:" + s.port + "/wiki/Node.js", AbortSignal.timeout(5000)));
+      assertNamed(JSON.parse(out.body.toString("utf8")), "direct");
+      assert.equal(s.seen.length, 1);
+    } finally { await s.close(); }
+  });
+
+  test("#1380: a redirect hop sends the same user-agent and accept", async () => {
+    const s = await uaServer((req, res) => {
+      if (req.url !== "/start") return false;
+      res.writeHead(301, { location: "/final" });
+      res.end();
+      return true;
+    });
+    try {
+      const out = await withEnv({}, () => safeFetch("http://docs.parity.test:" + s.port + "/start", AbortSignal.timeout(5000)));
+      assert.ok(out.finalUrl.endsWith("/final"), out.finalUrl);
+      assert.deepEqual(s.seen.map((x) => x.url), ["/start", "/final"]);
+      for (const x of s.seen) assertNamed(x.headers, "hop " + x.url);
+    } finally { await s.close(); }
+  });
+
+  test("#1380: through HTTP_PROXY the proxied request sends user-agent and accept", async () => {
+    const s = await uaServer();
+    try {
+      const proxy = "http://docs.parity.test:" + s.port;
+      const out = await withEnv({ HTTP_PROXY: proxy }, () => safeFetch("http://origin.example/page", AbortSignal.timeout(5000)));
+      assert.equal(s.seen[0].url, "http://origin.example/page", "the proxy got the absolute URL");
+      assertNamed(JSON.parse(out.body.toString("utf8")), "http proxy");
+    } finally { await s.close(); }
+  });
+
+  test("#1380: through HTTPS_PROXY the CONNECT request sends user-agent and accept", async () => {
+    const s = await uaServer();
+    try {
+      const proxy = "http://docs.parity.test:" + s.port;
+      await withEnv({ HTTPS_PROXY: proxy }, () => assert.rejects(safeFetch("https://origin.example/page", AbortSignal.timeout(5000)), (err) => {
+        assert.equal(err.code, "FETCH_FAILED");
+        return true;
+      }));
+      const connect = s.seen.find((x) => x.method === "CONNECT");
+      assert.ok(connect, "the proxy got a CONNECT");
+      assert.equal(connect.url, "origin.example:443");
+      assertNamed(connect.headers, "CONNECT");
+    } finally { await s.close(); }
+  });
+
+  test("#1380: a non-2xx reply names the status and the host in one line", async () => {
+    const s = await uaServer((req, res) => { res.writeHead(403); res.end("forbidden"); return true; });
+    try {
+      await withEnv({}, () => assert.rejects(safeFetch("http://docs.parity.test:" + s.port + "/wiki/x", AbortSignal.timeout(5000)), (err) => {
+        assert.equal(err.code, "FETCH_FAILED");
+        assert.equal(err.message, "Fetch failed: 403 from docs.parity.test. Fix: check the URL or proxy.");
+        return true;
+      }));
+    } finally { await s.close(); }
   });
 
   test("an IP-literal private origin is blocked even when a proxy is set (B57 hop rule)", async () => {

@@ -2,7 +2,7 @@
 // One shared containment predicate for every tool. Never a string-prefix check.
 // D-CI-PERF-3: node:fs through getBuiltinModule; a static ESM import of node:fs also loads fs/promises, readline and streams.
 const { lstatSync, realpathSync } = process.getBuiltinModule("node:fs") as typeof import("node:fs");
-import { dirname, join, relative, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 // D-M1-T3-4: a path that cannot be realpath'd (missing, no access) cannot be proven inside: false.
 function real(p: string): string | undefined {
@@ -33,6 +33,13 @@ export function isInside(root: string, p: string): boolean {
   return true;
 }
 
+/** D-1398-HOST-ROOTS-1 (#1398): the allowed root that holds `p`: the project's containment root first, then a folder the
+ *  host granted this call (Claude Code roots, Codex write entries). undefined when none holds it. */
+export function allowedRootOf(containmentRoot: string, hostRoots: readonly string[] | undefined, p: string): string | undefined {
+  if (isInside(containmentRoot, p)) return containmentRoot;
+  return hostRoots?.find((r) => isInside(r, p));
+}
+
 // D-R48-OWN-FILE-1 (#1326): the realpath of a fixed dir (project root, agent config dir) is asked on every Read the
 // hooks check; only a found realpath is kept, so a dir made later is still seen.
 const rootReal = new Map<string, string>();
@@ -54,6 +61,41 @@ export function isInsideAny(roots: readonly string[], p: string): boolean {
     const r = realRoot(root);
     if (r === undefined) return false;
     const rc = components(r);
+    return qc.length >= rc.length && rc.every((c, i) => c === qc[i]);
+  });
+}
+
+/** D-R54-OWN-FILE-LINK-1 (#1345): true when `p` as the tool gave it, or `cwd` when `p` is relative, has a ".."
+ *  component. path.resolve folds ".." by text, but the OS folds it after a link, so such a path is not "as written". */
+export function hasParentStep(cwd: string, p: string): boolean {
+  const parts = isAbsolute(p) ? components(p) : [...components(cwd), ...components(p)];
+  return parts.includes("..");
+}
+
+/** D-R54-OWN-FILE-LINK-1 (#1345): true when the path as written (path.resolve, no realpath) has every component of a
+ *  root, in order. A link the user made under the root counts. The caller passes a path with no ".." step
+ *  (hasParentStep on the raw tool path, before resolve); a ".." left in `p` still gives false.
+ *  This grants no access: use it only for "is this the agent's own file" (own-file.ts), never for containment. */
+// The roots are fixed dirs (agent config dir, shared skill dir): their resolved components are kept, the same way
+// rootReal keeps their realpaths, so a project-file Read pays only the walk of `p` (review r54 perf finding).
+const rootParts = new Map<string, string[]>();
+function lexicalRoot(root: string): string[] {
+  let rc = rootParts.get(root);
+  if (rc === undefined) {
+    rc = components(resolve(root));
+    rootParts.set(root, rc);
+  }
+  return rc;
+}
+
+export function isLexicallyInsideAny(roots: readonly string[], p: string): boolean {
+  if (roots.length === 0) return false;
+  const raw = components(p);
+  if (raw.includes("..")) return false;
+  // An absolute POSIX path needs no path.resolve: only "." steps are left to drop. Windows paths go through resolve.
+  const qc = sep === "/" && isAbsolute(p) ? raw.filter((c) => c !== ".") : components(resolve(p));
+  return roots.some((root) => {
+    const rc = lexicalRoot(root);
     return qc.length >= rc.length && rc.every((c, i) => c === qc[i]);
   });
 }

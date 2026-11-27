@@ -54,6 +54,7 @@ describe("ADR-0020 adapters", () => {
       kiro: ["mcp-entry", "arg:--agent+cwd", "mcp_context_mode_", "none", "none", 5000, "hint-only"], // D-R33-KIRO-NAMES-1
       zcode: ["hooks+mcp", "spawn-cwd", "mcp__context-mode__", "sessionstart", "none", 5000, "deny-reason"],
       pi: ["in-process", "pi:ctx.cwd", "", "pi-flag", "none", 0, "deny-reason"],
+      omp: ["in-process", "pi:ctx.cwd", "", "pi-flag", "none", 0, "deny-reason"], // ADR-0026 D-OMP-ROW-1
       opencode: ["in-process", "spawn-cwd", "", "opencode-cache", "none", 0, "deny-reason"],
     };
 
@@ -70,6 +71,7 @@ describe("ADR-0020 adapters", () => {
       kiro: { shell: ["execute_bash", "execute_pwsh", "shell"] }, // D-HF-KIRO-SHELL-1, D-N7-KIRO-1
       zcode: CLAUDE_NATIVE,
       pi: { shell: ["bash", "powershell"], read: ["read"] }, // D-HA-PI-NAMES-1, D-R38-PI-PWSH-1
+      omp: { shell: ["bash", "powershell"], read: ["read"] }, // ADR-0026: Pi tool names
       opencode: { shell: ["bash"], read: ["read"] }, // D-HF-OPENCODE-SHELL-1, D-R44-OC-READ-1
     };
 
@@ -85,6 +87,7 @@ describe("ADR-0020 adapters", () => {
       kiro: { SessionStart: "SessionStart", UserPromptSubmit: "UserPromptSubmit", PreToolUse: "PreToolUse", PostToolUse: "PostToolUse" },
       zcode: CLAUDE_EVENTS,
       pi: { SessionStart: "session_start", UserPromptSubmit: "input", PreToolUse: "tool_call", PostToolUse: "tool_result" },
+      omp: { SessionStart: "session_start", UserPromptSubmit: "input", PreToolUse: "tool_call", PostToolUse: "tool_result" },
       // Usage: OpenCode step-finish cost row (DEVIATIONS D-M5-arch-2).
       opencode: { SessionStart: "context", UserPromptSubmit: "prompt", PreToolUse: "execute.before", PostToolUse: "execute.after", PreCompact: "compaction", Usage: "step-finish" },
     };
@@ -124,12 +127,23 @@ describe("ADR-0020 adapters", () => {
       for (const [id, mod] of Object.entries(MODULES)) assert.equal(getAdapter(id).toolNamePrefix, mod.TOOL_NAME_PREFIX, id);
     });
 
-    test("all 10 adapters are wired to their own decode/encode (no not-built stub)", () => {
-      for (const [id, mod] of Object.entries(MODULES)) {
+    test("all 11 adapters are wired to their own decode/encode (no not-built stub); omp uses the Pi pair", () => {
+      for (const [id, mod] of Object.entries({ ...MODULES, omp: { decode: pi.decodeOmp, encode: pi.encode } })) {
         const r = getAdapter(id);
         assert.equal(r.decode, mod.decode, id + " decode");
         assert.equal(r.encode, mod.encode, id + " encode");
       }
+    });
+
+    // D-OMP-FIRE-1 (M7a live run): OMP rows in context.db carried agent "pi" because the omp row used the Pi decode,
+    // which names the agent "pi". The omp row decodes the same Pi payload and names the agent "omp"; Pi stays "pi".
+    test("D-OMP-FIRE-1: the omp row decodes the Pi payload with agent omp; the pi row keeps agent pi", () => {
+      const raw = { type: "tool_call", sessionId: "s", cwd: "/p", toolName: "read", input: { path: "a.txt" }, toolCallId: "c1" };
+      const o = getAdapter("omp").decode(raw);
+      const p = getAdapter("pi").decode(raw);
+      assert.equal(o.agent, "omp");
+      assert.equal(p.agent, "pi");
+      assert.deepEqual({ ...o, agent: "pi" }, p);
     });
 
     test("each newly wired row decodes its own native PreToolUse and encodes allow as empty stdout, exit 0", () => {
@@ -161,6 +175,25 @@ describe("ADR-0020 adapters", () => {
       assert.deepEqual(post.result, { isError: true, bytes: 3, text: "abc" });
       assert.throws(() => r.decode({ type: "turn_end" }), /pi: unknown hook event turn_end/);
       assert.throws(() => r.decode(null), /pi: hook payload is not an object/);
+    });
+
+    test("omp row: the Pi decode and encode, bare tool names, Pi native tools and events (ADR-0026 T22, D-OMP-ROW-1)", () => {
+      const omp = getAdapter("omp");
+      const p = getAdapter("pi");
+      assert.equal(omp.id, "omp");
+      assert.equal(omp.decode, pi.decodeOmp); // D-OMP-FIRE-1: the Pi decode, agent omp
+      assert.equal(omp.encode, pi.encode);
+      assert.equal(omp.checkPermission, pi.checkPermission);
+      assert.equal(omp.toolNamePrefix, "");
+      assert.equal(omp.installMode, "in-process");
+      assert.equal(omp.projectSource, "pi:ctx.cwd");
+      assert.deepEqual(omp.nativeTools, p.nativeTools);
+      assert.deepEqual(omp.eventMap, p.eventMap);
+      assert.equal(omp.compactDelivery, p.compactDelivery);
+      assert.equal(omp.denyChannel, p.denyChannel);
+      assert.deepEqual(omp.hookChannel, { kind: "in-process", path: "omp/index.js" });
+      assert.equal(CLIENT_NAME_TO_PLATFORM["omp-coding-agent"], "omp");
+      assert.ok(AGENT_IDS.includes(CLIENT_NAME_TO_PLATFORM["omp-coding-agent"]));
     });
 
     test("pi encode: allow is the empty shape; injected text is a custom-role message with a timestamp", () => {
@@ -208,7 +241,9 @@ describe("ADR-0020 adapters", () => {
       assert.deepEqual(r.encode({ ...base, event: "PreToolUse" }, { kind: "hint", text: "t", onceKey: "k" }), { stdout: "", exitCode: 0 });
       assert.deepEqual(r.encode({ ...base, event: "PreToolUse" }, { kind: "deny", reason: "why" }), { stdout: "why", exitCode: 2 });
       assert.deepEqual(r.encode({ ...base, event: "UserPromptSubmit" }, { kind: "deny", reason: "why" }), { stdout: "", exitCode: 0 });
-      assert.deepEqual(r.encode({ ...base, event: "PostToolUse" }, { kind: "replace", output: "o" }), { stdout: "", exitCode: 0 });
+      // D-R54-OC-REPLACE-1 (#1347): a PostToolUse replace comes back as stdout; the plugin writes it into the host result.
+      assert.deepEqual(r.encode({ ...base, event: "PostToolUse" }, { kind: "replace", output: "o" }), { stdout: "o", exitCode: 0 });
+      assert.deepEqual(r.encode({ ...base, event: "PreToolUse" }, { kind: "replace", output: "o" }), { stdout: "", exitCode: 0 });
     });
 
     // D-FU-RM-KIRO-2: every native name a row's eventMap emits (the build writes these into hooks/<id>.json) must
@@ -233,6 +268,7 @@ describe("ADR-0020 adapters", () => {
       kiro: { kind: "home-file", path: ".kiro/hooks/context-mode.json" },
       zcode: { kind: "home-file", path: ".zcode/cli/config.json" },
       pi: { kind: "in-process", path: "pi/index.js" },
+      omp: { kind: "in-process", path: "omp/index.js" },
       opencode: { kind: "in-process", path: "opencode/plugin.js" },
     };
     const SKILL_CHANNEL = {
@@ -245,6 +281,7 @@ describe("ADR-0020 adapters", () => {
       kiro: { kind: "home-dir", path: ".kiro/skills" },
       zcode: { kind: "home-dir", path: ".zcode/skills" },
       pi: { kind: "package", path: "pi/skills" },
+      omp: { kind: "package", path: "skills" }, // D-OMP-SKILLS-1
       opencode: { kind: "home-dir", path: ".config/opencode/skills" },
     };
 
@@ -302,6 +339,7 @@ describe("ADR-0020 adapters", () => {
         kiro: ["mcp-entry", "arg:--agent+cwd", "mcp_context_mode_", "none", "none", "hint-only"], // D-R33-KIRO-NAMES-1
         zcode: ["hooks+mcp", "spawn-cwd", "mcp__context-mode__", "sessionstart", "none", "deny-reason"],
         pi: ["in-process", "pi:ctx.cwd", "", "pi-flag", "none", "deny-reason"],
+        omp: ["in-process", "pi:ctx.cwd", "", "pi-flag", "none", "deny-reason"],
         opencode: ["in-process", "spawn-cwd", "", "opencode-cache", "none", "deny-reason"],
       };
       for (const r of ADAPTERS) {
@@ -466,6 +504,14 @@ describe("ADR-0020 adapters", () => {
       assert.throws(() => decode("SessionStart"));
     });
 
+    test("decode PostToolUseFailure (#1408, ADR-0009 §1): canonical PostToolUse, isError, the error text, the tool call", () => {
+      // Payload shape from the Claude Code 2.1.274 binary: tool_name, tool_input, tool_use_id, error, is_interrupt, duration_ms.
+      const ev = decode({ ...base, hook_event_name: "PostToolUseFailure", tool_name: "Glob", tool_input: { pattern: "**/*.zz" }, tool_use_id: "toolu_1", error: "Exit code 1\nno match", is_interrupt: false, duration_ms: 12 });
+      assert.equal(ev.event, "PostToolUse");
+      assert.deepEqual(ev.tool, { name: "Glob", canonicalName: "Glob", input: { pattern: "**/*.zz" }, callId: "toolu_1" });
+      assert.deepEqual(ev.result, { isError: true, bytes: Buffer.byteLength("Exit code 1\nno match"), text: "Exit code 1\nno match", keep: true });
+    });
+
     // ---------- claude-code.ts encode ----------
 
     const pre = { event: "PreToolUse", agent: "claude-code", sessionId: "s-1", cwd: "/tmp/proj" };
@@ -528,6 +574,9 @@ describe("ADR-0020 adapters", () => {
       }
     }
 
+    // D-1409-MISSING-CWD-1: the payload cwd "/tmp/proj" does not exist, and an absolute dir that does not exist now
+    // resolves to its nearest existing parent, so every case runs in the healthy project (temp HOME, never the real one).
+    // A fresh project's first SessionStart gives the once-per-session resume hint (D-M3-H2-2); the rest stay allow.
     test("hook entry: recorded-shape payload -> allow, empty stdout, exit 0", () => {
       for (const [event, extra] of [
         ["SessionStart", { source: "startup" }],
@@ -537,9 +586,10 @@ describe("ADR-0020 adapters", () => {
       ]) {
         const payload = { ...base, hook_event_name: event, ...extra };
         const args = ["--agent", "claude-code", "--event", event];
-        const r = event === "PreToolUse" ? healthyEntry(args, payload) : runEntry(args, JSON.stringify(payload));
+        const r = healthyEntry(args, payload);
         assert.equal(r.status, 0, event + " " + r.stderr);
-        assert.equal(r.stdout, "", event);
+        if (event === "SessionStart") assert.equal(JSON.parse(r.stdout).hookSpecificOutput.hookEventName, "SessionStart", r.stdout);
+        else assert.equal(r.stdout, "", event);
       }
     });
 
@@ -1541,6 +1591,15 @@ describe("ADR-0020 adapters", () => {
       const hintPi = pi.hintFor?.("Read", 60000);
       const hintCc = cc.hintFor?.("Read", 60000);
       assert.equal(hintPi, hintCc);
+    });
+
+    test("[#1352] pi decode: a tool_result with keep: true marks the result keep; any other value leaves it unset", () => {
+      const row = getRow("pi");
+      const base = { type: "tool_result", sessionId: "s", cwd: "/p", toolName: "fetch_content", input: {}, content: "abc", isError: false };
+      assert.deepEqual(row.decode({ ...base, keep: true }).result, { isError: false, bytes: 3, text: "abc", keep: true });
+      for (const keep of [undefined, false, "true", 1]) {
+        assert.equal(Object.hasOwn(row.decode({ ...base, keep }).result, "keep"), false, String(keep));
+      }
     });
 
     test("[M5] adapters/pi-project-permissions-honored: a deny rule in the project permissions file denies with reason (#1019)", () => {

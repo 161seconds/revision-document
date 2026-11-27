@@ -5,8 +5,11 @@
 // in run 40698523886 (setup e2e, windows). This script (1) retries a failed install, (2) prints the npm debug log of
 // every failed try, (3) proves each declared package is on disk, so exit 0 with a missing package is also a failure.
 // Usage: node scripts/ci-install.mjs [--no-package-lock]. Exit 0 = every declared package is installed.
+// D-CI-HOST-INSTALL-1: `node scripts/ci-install.mjs --npm <npm args>` runs one host CLI install (npm i -g <agent CLI>)
+// with 3 tries and a growing wait (HOST_WAITS_MS). When npm names a registry 404/5xx or a network fault (ETIMEDOUT,
+// ECONNRESET, EAI_AGAIN) for a package that is not ours, one line says so. All 3 tries red is exit 1.
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,7 +40,196 @@ export async function installWithRetry({ root, run, attempts = 3, sleep, log = c
   return { ok: false, attempts };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// ---------- D-CI-HOST-INSTALL-1: host CLI installs ----------
+
+/** Waits before try 2 and try 3 of a host CLI install. */
+export const HOST_WAITS_MS = [15_000, 45_000];
+/** Our own npm package names: a fault for one of these is ours to fix, never "not ours". */
+export const OWN_PACKAGES = ["context-mode"];
+const NET_CODES = ["ETIMEDOUT", "ECONNRESET", "ECONNREFUSED", "EAI_AGAIN", "ENOTFOUND", "ESOCKETTIMEDOUT"];
+const REGISTRY = "registry.npmjs.org/";
+
+/** Text between `start` and the first char of `stops` after it, or "" when `start` is absent. */
+function cut(text, start, stops) {
+  const i = text.indexOf(start);
+  if (i < 0) return "";
+  let j = i + start.length;
+  while (j < text.length && !stops.includes(text[j])) j++;
+  return text.slice(i + start.length, j);
+}
+
+/** "@aws-sdk%2fmiddleware-websocket" or "@aws-sdk/middleware-websocket/-/x.tgz" -> "@aws-sdk/middleware-websocket". */
+function registryName(urlPath) {
+  const p = urlPath.split("%2f").join("/").split("%2F").join("/").split("/-/")[0];
+  const parts = p.split("/");
+  return p.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0];
+}
+
+/** "pkg@1.2.3" or "@scope/pkg@1.2.3" -> the name without the version. */
+function specName(spec) {
+  const at = spec.indexOf("@", 1);
+  return at < 0 ? spec : spec.slice(0, at);
+}
+
+/**
+ * One line naming a registry 404/5xx or a network fault npm printed for a package that is not ours, or null.
+ * Reads the npm 10/11 ("npm error") and npm 6-9 ("npm ERR!") forms.
+ */
+export function registryFault(text, own = OWN_PACKAGES) {
+  const t = String(text ?? "").split("npm ERR! ").join("npm error ");
+  let code = "";
+  for (const line of t.split("\n")) {
+    const c = cut(line, "npm error code ", " \r\t").trim();
+    if (c) { code = c; break; }
+  }
+  let status = "";
+  for (const line of t.split("\n")) {
+    const after = cut(line, "npm error ", "\r\n");
+    const head = after.slice(0, 3);
+    if (after[3] === " " && head >= "400" && head <= "599" && head.length === 3 && !Number.isNaN(Number(head))) { status = head; break; }
+  }
+  if (!code && status) code = "E" + status;
+  const http = code.startsWith("E") && code.length === 4 && !Number.isNaN(Number(code.slice(1)));
+  const n = http ? Number(code.slice(1)) : 0;
+  if (!(n === 404 || (n >= 500 && n <= 599) || NET_CODES.includes(code))) return null;
+  let name = cut(t, "The requested resource '", "'");
+  if (name) name = specName(name.split("@http")[0]);
+  if (!name) { const s = cut(t, "404 '", "'"); if (s) name = specName(s); }
+  if (!name) { const u = cut(t, "GET https://" + REGISTRY, " \r\n'"); if (u) name = registryName(u); }
+  if (!name) { const u = cut(t, "request to https://" + REGISTRY, " \r\n'"); if (u) name = registryName(u); }
+  if (!name) return "npm registry fault " + code + " (package not named), not a context-mode package";
+  if (own.includes(name)) return null;
+  return "npm registry fault " + code + " for " + name + ", not a context-mode package";
+}
+
+/** Sync wait (host installs run in sync scripts too). */
+export function sleepSync(ms) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); }
+
+/**
+ * Run `attempt()` up to waits.length + 1 times; attempt returns { ok, text }. Between tries it waits waits[i].
+ * Logs one line per red try, plus the registryFault line when npm named one. Returns { ok, tries, fault, text }.
+ */
+export function retryHostInstall({ label, attempt, waits = HOST_WAITS_MS, sleep = sleepSync, log = console.error }) {
+  const tries = waits.length + 1;
+  let last = { ok: false, text: "" };
+  let fault = null;
+  for (let k = 1; k <= tries; k++) {
+    last = attempt(k);
+    if (last.ok) return { ok: true, tries: k, fault, text: last.text };
+    const f = registryFault(last.text);
+    if (f) fault = f;
+    log("ci-install: " + label + " try " + k + "/" + tries + " failed" + (f ? ": " + f : "") + (k < tries ? ", next try in " + waits[k - 1] / 1000 + " s" : ""));
+    if (k < tries) sleep(waits[k - 1]);
+  }
+  return { ok: false, tries, fault, text: last.text };
+}
+
+// ---------- D-OMP-CI-4: OMP binary from its GitHub release when OMP's install script gets no build ----------
+// 2026-11-25: build.stencil.so (the host OMP's own install script asks) answered {"error":"no_build"} for every
+// target and version, so `omp.sh/install --binary --ref v18.20.0` installed nothing and CI stopped at `omp --version`
+// (run 45606232499, 4 attempts). The same tag's binaries and SHA256SUMS.txt sit on OMP's own GitHub release. This
+// step runs after OMP's script: when omp already starts it does nothing; else it downloads the same tag from that
+// release and checks the SHA-256 from the release's own SHA256SUMS.txt before it puts the binary in place.
+
+/** OMP's GitHub release base (the repo OMP's install script clones for --source). */
+export const OMP_RELEASE_BASE = "https://github.com/can1357/oh-my-pi/releases/download/";
+
+/** One release download may take this long before it counts as a failed try (D-OMP-CI-5). */
+export const OMP_FETCH_TIMEOUT_MS = 300_000;
+
+/** Release asset name for a Node platform/arch, or null when OMP ships no binary for it. */
+export function ompAssetName(platform, arch) {
+  const os = platform === "win32" ? "windows" : platform === "darwin" ? "darwin" : platform === "linux" ? "linux" : "";
+  const cpu = arch === "x64" ? "x64" : arch === "arm64" ? "arm64" : "";
+  if (os === "" || cpu === "") return null;
+  return "omp-" + os + "-" + cpu + (os === "windows" ? ".exe" : "");
+}
+
+/** The SHA-256 SUMS line for `name` ("<hex>  <name>"), lower case, or null. */
+export function sha256For(sums, name) {
+  for (const line of String(sums).split("\n")) {
+    const parts = line.trim().split(" ").filter((p) => p !== "");
+    if (parts.length === 2 && parts[1] === name && parts[0].length === 64) return parts[0].toLowerCase();
+  }
+  return null;
+}
+
+/** True when `<dir>/omp(.exe) --version` exits 0. */
+export function ompStarts(dir, platform = process.platform) {
+  const bin = path.join(dir, platform === "win32" ? "omp.exe" : "omp");
+  if (!existsSync(bin)) return false;
+  return spawnSync(bin, ["--version"], { encoding: "utf8", timeout: 60_000 }).status === 0;
+}
+
+async function fetchTries(url, label, log = console.error) {
+  const waits = HOST_WAITS_MS;
+  for (let k = 1; k <= waits.length + 1; k++) {
+    try {
+      const r = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(OMP_FETCH_TIMEOUT_MS) });
+      if (r.ok) return Buffer.from(await r.arrayBuffer());
+      log("ci-install: " + label + " try " + k + " HTTP " + r.status);
+    } catch (e) {
+      log("ci-install: " + label + " try " + k + " " + (e?.cause?.code ?? e?.message ?? e));
+    }
+    if (k <= waits.length) await new Promise((res) => setTimeout(res, waits[k - 1]));
+  }
+  return null;
+}
+
+/** Puts OMP `tag` into `dir` from its GitHub release unless an omp there already starts. Returns an exit code. */
+export async function installOmpFromRelease(tag, dir, { platform = process.platform, arch = process.arch, log = console.error } = {}) {
+  const target = path.resolve(dir);
+  if (ompStarts(target, platform)) { log("ci-install: omp " + tag + " present from OMP's install script"); return 0; }
+  const name = ompAssetName(platform, arch);
+  if (name === null) { log("ci-install: OMP ships no binary for " + platform + "-" + arch); return 1; }
+  const sums = await fetchTries(OMP_RELEASE_BASE + tag + "/SHA256SUMS.txt", "omp SHA256SUMS " + tag, log);
+  const want = sums === null ? null : sha256For(sums.toString("utf8"), name);
+  if (want === null) { log("ci-install: no SHA-256 for " + name + " in the " + tag + " release"); return 1; }
+  const body = await fetchTries(OMP_RELEASE_BASE + tag + "/" + name, "omp " + name + " " + tag, log);
+  if (body === null) return 1;
+  const { createHash } = await import("node:crypto");
+  const got = createHash("sha256").update(body).digest("hex");
+  if (got !== want) { log("ci-install: checksum mismatch for " + name + ": expected " + want + ", got " + got); return 1; }
+  const { mkdirSync, writeFileSync, renameSync, chmodSync } = await import("node:fs");
+  mkdirSync(target, { recursive: true });
+  const final = path.join(target, platform === "win32" ? "omp.exe" : "omp");
+  const tmp = final + ".download";
+  writeFileSync(tmp, body);
+  if (platform !== "win32") chmodSync(tmp, 0o755);
+  renameSync(tmp, final);
+  log("ci-install: omp " + tag + " installed from its GitHub release (" + name + ", sha256 " + want.slice(0, 12) + ")");
+  return ompStarts(target, platform) ? 0 : 1;
+}
+
+/**
+ * D-OMP-CI-6: adds `dir` to the file that GITHUB_PATH names, so later steps find omp.
+ * The install script step writes the same line, but only when it ends before its 6 min limit (D-OMP-CI-5).
+ * Returns true when it wrote the line. No GITHUB_PATH (a local run) writes nothing.
+ */
+export function addToGithubPath(dir, env = process.env) {
+  const file = env.GITHUB_PATH;
+  if (!file) return false;
+  appendFileSync(file, path.resolve(dir) + "\n");
+  return true;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv[2] === "--omp") {
+  const code = await installOmpFromRelease(process.argv[3], process.argv[4]);
+  if (code === 0) addToGithubPath(process.argv[4]);
+  process.exit(code);
+} else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url) && process.argv[2] === "--npm") {
+  const args = process.argv.slice(3);
+  const r = retryHostInstall({
+    label: "npm " + args.join(" "),
+    attempt: () => {
+      // Windows: npm is npm.cmd, which Node 24 only starts through a shell. The argv is the fixed text of a ci.yml step.
+      const p = spawnSync("npm", args, { stdio: ["ignore", "inherit", "pipe"], encoding: "utf8", shell: process.platform === "win32" });
+      if (p.stderr) process.stderr.write(p.stderr);
+      return { ok: p.status === 0, text: String(p.stderr ?? "") + (p.error ? " " + p.error.message : "") };
+    },
+  });
+  process.exit(r.ok ? 0 : 1);
+} else if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const args = ["install", ...process.argv.slice(2)];
   const run = () => {

@@ -320,7 +320,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 | [DavidHDev/react-bits](react-bits/README.md) | Thư viện component React có animation và tương tác, kèm nhiều biến thể triển khai và website tài liệu. | [`a30a9da9b40a`](https://github.com/DavidHDev/react-bits/tree/a30a9da9b40a91c5672fc8cd77785719e8e5b1e6) | 9,749 | 480.81 MB | [MIT + Commons Clause](react-bits/LICENSE.md) |
 | [jakubkrehel/skills](jakubkrehel-skills/README.md) | Các skill xây dựng giao diện, animation và trải nghiệm người dùng. | [`672ae44ace6a`](https://github.com/jakubkrehel/skills/tree/672ae44ace6aaed65b86cbb1e2fd6fbea0e79578) | 90 | 0.35 MB | [MIT](jakubkrehel-skills/LICENSE) |
 | [JCodesMore/ai-website-cloner-template](ai-website-cloner-template/README.md) | Template dùng coding agent sao chép giao diện website, kèm cấu hình chạy dự án. | [`14085f8ba2a1`](https://github.com/JCodesMore/ai-website-cloner-template/tree/14085f8ba2a15b5e7f509c78dfc4017dbbfced6d) | 49 | 1.21 MB | [MIT](ai-website-cloner-template/LICENSE) |
-| [mksglu/context-mode](context-mode/README.md) | Plugin giảm lượng đầu ra tool đưa vào context, hỗ trợ tìm kiếm SQLite FTS5 và duy trì phiên. | [`f681b4580fe8`](https://github.com/mksglu/context-mode/tree/f681b4580fe8340364384b04d9936a645cb05c53) | 861 | 27.59 MB | [Elastic-2.0](context-mode/LICENSE) |
+| [mksglu/context-mode](context-mode/README.md) | Plugin giảm lượng đầu ra tool đưa vào context, hỗ trợ tìm kiếm SQLite FTS5 và duy trì phiên. | [`ab4fdc57b93e`](https://github.com/mksglu/context-mode/tree/ab4fdc57b93e93991012e2c3196102feaec3972e) | 880 | 28.63 MB | [Elastic-2.0](context-mode/LICENSE) |
 | [patchy631/ai-engineering-hub](ai-engineering-hub/README.md) | Tutorial và notebook về LLM, RAG, agent AI, xử lý dữ liệu và triển khai ứng dụng AI. | [`042aeb506738`](https://github.com/patchy631/ai-engineering-hub/tree/042aeb5067384981eeba6a07fa882f436bb1660d) | 1,519 | 377.35 MB | [MIT](ai-engineering-hub/LICENSE) |
 | [pbakaus/impeccable](impeccable/README.md) | Bộ skill và công cụ hướng dẫn thiết kế, đánh giá, tinh chỉnh giao diện và nhận diện mẫu thiết kế kém. | [`c1e0e5492fbb`](https://github.com/pbakaus/impeccable/tree/c1e0e5492fbb524f5df84d635ecfae7dc438ec45) | 4,527 | 88.07 MB | [Apache-2.0](impeccable/LICENSE) |
 | [public-apis/public-apis](public-apis/README.md) | Danh mục API công khai được phân loại theo chủ đề, kèm công cụ kiểm tra liên kết. | [`88706670ac0f`](https://github.com/public-apis/public-apis/tree/88706670ac0ffaad7bf3c6307747e2515f638bed) | 23 | 0.49 MB | [MIT](public-apis/LICENSE) |
@@ -343,7 +343,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 
 ### Nguồn gốc và kiểm tra
 
-Phần mới gồm **19,724 file**, **1,080,569,758 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
+Phần mới gồm **19,743 file**, **1,081,612,755 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
 
 ```powershell
 rtk proxy python -X utf8 -B verify-github-sources.py

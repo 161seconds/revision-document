@@ -6,7 +6,7 @@
 // until those land — never a syntax error in this file.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -136,6 +136,32 @@ test("[M5] GP2/opencode-single-system-message: SessionStart lines merge into one
   await dispose();
 });
 
+// #1369: @opencode/core 2.2.6 sends the primary request through the hook "context" and session.generate (WarmingPlugin)
+// through the hook "generate". Both must carry the same system parts, or the warmed cache prefix is one the next turn
+// never reads. Red run (main 890a3f6b, built plugin): context 2 parts (29+592 bytes), generate 1 part (29 bytes).
+test("[M5] GP2/opencode-generate-same-system: a generate request of one session gets the system parts of its context request (#1369)", async () => {
+  const bundlePath = path.join(REPO_ROOT, "release-out", "opencode", "plugin.js");
+  const mod = await import(new URL(`file://${bundlePath}`).href);
+  const plugin = mod.default ?? mod;
+  const hooks = {};
+  const ctx = {
+    location: { directory: process.cwd() },
+    tool: { hook: async () => ({}), transform: async () => ({}), list: async () => [] },
+    session: { hook: async (n, fn) => { hooks[n] = fn; return {}; } },
+    event: { subscribe: () => (async function* () {})() },
+  };
+  const dispose = await plugin.setup(ctx);
+  const base = () => [{ type: "text", text: "<opencode base system prompt>" }];
+  const primary = { sessionID: "ses_1369", agent: "build", system: base(), messages: [], tools: {} };
+  await hooks.context(primary);
+  assert.equal(typeof hooks.generate, "function", "setup(ctx) registers the session hook generate");
+  const warm = { sessionID: "ses_1369", agent: "build", system: base(), messages: [], tools: {} };
+  await hooks.generate(warm);
+  assert.ok(primary.system.length > 1, "the context request carries the context-mode system payload");
+  assert.deepStrictEqual(warm.system, primary.system);
+  await dispose();
+});
+
 test("[M5] GP2/pi-hint-not-user-role: a context-mode hint on Pi is never role user (#1263)", async () => {
   const bundlePath = path.join(REPO_ROOT, "release-out", "pi", "index.js");
   const mod = await import(`file://${bundlePath}`);
@@ -151,4 +177,44 @@ test("[M5] GP2/pi-system-role-injection: a SessionStart event on Pi injects role
   const pi = { on: (name, fn) => calls.push(name), context: { inject: () => {} } };
   extension(pi);
   assert.ok(calls.includes("session_start") || calls.length >= 0);
+});
+
+// ADR-0026 M7 (T44, D-OMP-FIRE-1): mirror of GP2/pi-system-role-injection for the OMP entry. OMP sends Pi's
+// before_agent_start with its own base systemPrompt; the reply keeps that base first and appends the payload once,
+// in the system prompt (never a user message). OMP gets its tools at load (D-OMP-TURN-1).
+test("[M7] GP2/omp-system-prompt-append: before_agent_start on OMP returns the OMP base, then the payload once; ctx_* tools load at start", () => {
+  const bundle = path.join(REPO_ROOT, "release-out", "omp", "index.js");
+  const root = mkdtempSync(path.join(tmpdir(), "cm-gp2-omp-"));
+  const home = path.join(root, "home");
+  const repo = path.join(root, "repo");
+  mkdirSync(home);
+  execFileSync("git", ["init", "-q", repo]);
+  const driver = `
+const mod = await import(process.argv[1]);
+const ext = mod.default ?? mod;
+const tools = []; const handlers = new Map(); const sent = [];
+ext({ on: (e, h) => handlers.set(e, h), registerTool: (t) => tools.push(t.name), sendMessage: (m) => sent.push(m) });
+const loaded = [...tools];
+const ctx = { cwd: process.argv[2], sessionManager: { getSessionId: () => "gp2-omp" } };
+const a = await handlers.get("before_agent_start")({ prompt: "p1", systemPrompt: "OMP_BASE text" }, ctx);
+await handlers.get("agent_end")?.({}, ctx);
+const b = await handlers.get("before_agent_start")({ prompt: "p2", systemPrompt: "OMP_BASE text" }, ctx);
+process.stdout.write(JSON.stringify({ loaded, a, b, sent }));
+process.exit(0);
+`;
+  try {
+    const env = { PATH: process.env.PATH ?? "", HOME: home, USERPROFILE: home, TMPDIR: home };
+    const r = JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", driver, `file://${bundle}`, repo], { env, cwd: repo, encoding: "utf8" }));
+    const head = "context-mode keeps large output out of the conversation.";
+    for (const sys of [r.a?.systemPrompt, r.b?.systemPrompt]) {
+      assert.equal(typeof sys, "string", JSON.stringify(r));
+      assert.ok(sys.startsWith("OMP_BASE text"), sys.slice(0, 200));
+      assert.equal(sys.split(head).length - 1, 1, "payload once");
+    }
+    assert.ok(r.b.systemPrompt.startsWith(r.a.systemPrompt), "turn 2 keeps the turn 1 prefix");
+    assert.deepEqual(r.sent, [], "no message with role user");
+    for (const n of ["ctx_execute", "ctx_search", "ctx_doctor", "ctx_upgrade"]) assert.ok(r.loaded.includes(n), `${n} at load: ${r.loaded}`);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });

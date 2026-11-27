@@ -64316,13 +64316,13 @@
       "repository": "mksglu/context-mode",
       "status": "import",
       "path": "context-mode",
-      "commit": "f681b4580fe8340364384b04d9936a645cb05c53",
+      "commit": "ab4fdc57b93e93991012e2c3196102feaec3972e",
       "branch": "main",
-      "files": 861,
-      "bytes": 27587560,
+      "files": 880,
+      "bytes": 28630557,
       "license": "NOASSERTION",
       "description": "Free, local plugin that keeps tool output out of your coding agent's context window. Sandbox and SQLite FTS5 search, 99% fewer bytes in context. Works with Claude Code, Codex, Pi, OpenCode, Gemini CLI, Copilot CLI and 4 more agents. Zero telemetry.",
-      "archive_sha256": "45858de04006d79bb95542eadfd40042bff2f117f7c25dcadbf5b56467137920",
+      "archive_sha256": "fccf9d0b1b1dd9dc513ac1ef589d54919e4cdff140a44eaa8556a2e6178fedef",
       "entries": [
         {
           "path": ".agents/plugins/marketplace.json",
@@ -64332,15 +64332,15 @@
         },
         {
           "path": ".claude-plugin/marketplace.json",
-          "sha": "cf07c8f09f571f19497666737324777feaeb1827",
+          "sha": "6fc996fc24280487028e3feceb7495c77f3659fd",
           "mode": "100644",
-          "size": 966
+          "size": 981
         },
         {
           "path": ".claude-plugin/plugin.json",
-          "sha": "fa700a9a7c914555574e9d64ffbe280430364a15",
+          "sha": "53e78072a49d1d095cef7a0a408a50f39ba2a2bd",
           "mode": "100644",
-          "size": 841
+          "size": 852
         },
         {
           "path": ".claude/settings.json",
@@ -64368,9 +64368,9 @@
         },
         {
           "path": ".codex-plugin/plugin.json",
-          "sha": "78d9cb2a904f0a9edc6894522de2b428b58257d2",
+          "sha": "e0ca56d345d489e331724078071085afc6f43cd9",
           "mode": "100644",
-          "size": 1001
+          "size": 1012
         },
         {
           "path": ".gitattributes",
@@ -64380,9 +64380,9 @@
         },
         {
           "path": ".github/AGENT_ISSUE.md",
-          "sha": "5cffb1d8e823fc49c9c11e55c53c17029bee69d9",
+          "sha": "e7b6eb0998a211c5b5fcf7a9732bfdeb40008f4c",
           "mode": "100644",
-          "size": 13705
+          "size": 13766
         },
         {
           "path": ".github/FUNDING.yml",
@@ -64410,9 +64410,15 @@
         },
         {
           "path": ".github/ISSUE_TEMPLATE/feature.yml",
-          "sha": "38b837b476b2dd57cf965d476651362ac4a55733",
+          "sha": "2e96bc3bd39385cb94a1646eb599828069ec25c1",
           "mode": "100644",
-          "size": 700
+          "size": 714
+        },
+        {
+          "path": ".github/scripts/fixed-on-main.mjs",
+          "sha": "c79529b2e928f92380cc7e7bd55c9328ad29b821",
+          "mode": "100644",
+          "size": 18316
         },
         {
           "path": ".github/scripts/issue-intake-act.mjs",
@@ -64422,15 +64428,21 @@
         },
         {
           "path": ".github/scripts/issue-intake.mjs",
-          "sha": "9527c50c20d7a3e5a51549a880ae16f7b7eecbb5",
+          "sha": "5e80b061704f30b192d65394db39a99c88984a59",
           "mode": "100644",
-          "size": 13572
+          "size": 13598
         },
         {
           "path": ".github/workflows/ci.yml",
-          "sha": "748fe12efd950c6ae42bd69a5e0a2307d097da82",
+          "sha": "fb68deaac08cb0448d6fda751f5aa03e9b1a7585",
           "mode": "100644",
-          "size": 11319
+          "size": 16537
+        },
+        {
+          "path": ".github/workflows/fixed-on-main.yml",
+          "sha": "9fcea2f498599cf73b6432fb92dc704a1f583329",
+          "mode": "100644",
+          "size": 894
         },
         {
           "path": ".github/workflows/issue-intake.yml",
@@ -64440,15 +64452,15 @@
         },
         {
           "path": ".github/workflows/readme-stats.yml",
-          "sha": "98851e49b62c019027d9078b7b97676ed6d62b77",
+          "sha": "5f16f1d7371f9ee1e62a0ec61d935fdd72bdfc9e",
           "mode": "100644",
-          "size": 3764
+          "size": 4042
         },
         {
           "path": ".github/workflows/release.yml",
-          "sha": "d0e24607f9d04e0c7cc0e58be683f32cdc92857c",
+          "sha": "786e7020a2ba91124a6ecef7d0a5b64617954d85",
           "mode": "100644",
-          "size": 21819
+          "size": 24733
         },
         {
           "path": ".github/workflows/weekly.yml",
@@ -64464,9 +64476,9 @@
         },
         {
           "path": "CONTRIBUTING.md",
-          "sha": "f507b263dbdea82dc5812ace58119d88f5dcb7fd",
+          "sha": "d83215f12147a07f85de9ff70be6080f9936a06e",
           "mode": "100644",
-          "size": 783
+          "size": 1144
         },
         {
           "path": "LICENSE",
@@ -64476,9 +64488,9 @@
         },
         {
           "path": "README.md",
-          "sha": "d6f5f503dd30bd5987565394da4d421826c33fea",
+          "sha": "6131e8b8cbf2d871079999100630ac7ac734b9bb",
           "mode": "100644",
-          "size": 49231
+          "size": 49521
         },
         {
           "path": "bench/README.md",
@@ -64581,6 +64593,18 @@
           "sha": "2db5cebc085d8459181612ad82f5b1cd1ad0b709",
           "mode": "100644",
           "size": 12333
+        },
+        {
+          "path": "bench/evidence/code-mode/2026-11-03-ctx-batch.json",
+          "sha": "2757d3d867300294f5d1411465852787f37930d5",
+          "mode": "100644",
+          "size": 9491
+        },
+        {
+          "path": "bench/evidence/code-mode/batch-live.mjs",
+          "sha": "622bdbbfa951a44b1b8325b5fbaa6337f58f5a06",
+          "mode": "100644",
+          "size": 2621
         },
         {
           "path": "bench/evidence/comparison/README.md",
@@ -64773,18 +64797,6 @@
           "sha": "20985063723de14b219a0cf1b905f1ecd273e611",
           "mode": "100644",
           "size": 7272
-        },
-        {
-          "path": "bench/evidence/thinking-in-code/2026-11-03-ctx-batch.json",
-          "sha": "5129327104ebf63cc9045df2fa966a83d3d87712",
-          "mode": "100644",
-          "size": 9498
-        },
-        {
-          "path": "bench/evidence/thinking-in-code/batch-live.mjs",
-          "sha": "d7bc5a17f5018da6ef868f2c8b31cca441dc9f9f",
-          "mode": "100644",
-          "size": 2628
         },
         {
           "path": "bench/evidence/try-it-2026-11-02/01-repo-history.json",
@@ -65190,15 +65202,15 @@
         },
         {
           "path": "bench/fixtures/results.json",
-          "sha": "863030a95f1568b0693e949b4c181bbceea0c909",
+          "sha": "0a9eadaa843f965ee3b2beca324dd65f6587a6eb",
           "mode": "100644",
-          "size": 12625
+          "size": 12687
         },
         {
           "path": "bench/fixtures/run.mjs",
-          "sha": "aa80b81d78ab55942a4fc4b0c7d0d2766b52d887",
+          "sha": "51e31dd6af0681c33e71c0cda408e5872a7d2688",
           "mode": "100644",
-          "size": 12522
+          "size": 13030
         },
         {
           "path": "bench/fixtures/scenarios.json",
@@ -65544,15 +65556,15 @@
         },
         {
           "path": "build/build.mjs",
-          "sha": "0458026e593210917928bdfe04b608bc71f9b5e5",
+          "sha": "ce5cd919b1d4d14256e142662c497225d0b77f24",
           "mode": "100644",
-          "size": 16418
+          "size": 17259
         },
         {
           "path": "build/check-install-docs.mjs",
-          "sha": "ef6ff4a4cc884df9ac69fe7df335caffe4285f64",
+          "sha": "da3eb8c6e155c0a62410deb9295db6eecfbcd096",
           "mode": "100644",
-          "size": 18600
+          "size": 18642
         },
         {
           "path": "build/check-prompt-static.mjs",
@@ -65568,9 +65580,9 @@
         },
         {
           "path": "build/check-removed.mjs",
-          "sha": "e494c3f640f1db62f316ec7b176f0fcffeeee33a",
+          "sha": "a96ca7a19614056bf004b040c227475784b24fd9",
           "mode": "100644",
-          "size": 10755
+          "size": 10876
         },
         {
           "path": "build/check-secrets.mjs",
@@ -65592,9 +65604,9 @@
         },
         {
           "path": "build/manifests.ts",
-          "sha": "5e67db870f7f16d5961a4fb3e7bb7c8fb375e37b",
+          "sha": "e9361d075c45ab0a01a8ce50facaf6c54a3dfdba",
           "mode": "100644",
-          "size": 21048
+          "size": 22459
         },
         {
           "path": "build/npm-downloads.mjs",
@@ -65622,9 +65634,9 @@
         },
         {
           "path": "build/readme-stats.mjs",
-          "sha": "6afcf746c766a08ce8316bd5678e95fbddde7a31",
+          "sha": "8d9e838c37f158419979f6db9d2d34c600ca884e",
           "mode": "100644",
-          "size": 15734
+          "size": 16733
         },
         {
           "path": "build/readme.mjs",
@@ -65646,15 +65658,15 @@
         },
         {
           "path": "docs/architecture/DEVIATIONS.md",
-          "sha": "649ad00bf4694200781aac1b352db9db3df4e9a2",
+          "sha": "44dc432196ba93d40115fd47ee30c090c1ba17cd",
           "mode": "100644",
-          "size": 262204
+          "size": 382197
         },
         {
           "path": "docs/architecture/NO-LOSSY-CUT.md",
-          "sha": "7b61953701f06642925998064b2da710278f2d45",
+          "sha": "d19e0838258af682ecf03569ff5507166b8672bd",
           "mode": "100644",
-          "size": 4570
+          "size": 4572
         },
         {
           "path": "docs/architecture/PRD-setup.md",
@@ -65664,33 +65676,33 @@
         },
         {
           "path": "docs/architecture/PRD.md",
-          "sha": "964bd5839e1a1c6881a8c2de2390435b676189cb",
+          "sha": "c10869c62b47334976d57b69ac7d703ed7b16eba",
           "mode": "100644",
-          "size": 37229
+          "size": 37728
         },
         {
           "path": "docs/architecture/README.md",
-          "sha": "8ae2e44886df9796a9e03443323cc30a6f96318a",
+          "sha": "147dd09c4a52ff17f1fc79835477e0f42f2826be",
           "mode": "100644",
-          "size": 11284
+          "size": 11514
         },
         {
           "path": "docs/architecture/TECH-SPEC.md",
-          "sha": "d28263702b55bc8a620d3ce52774b3498caadde2",
+          "sha": "a2bfeff39851f6a87348588e578089367b919068",
           "mode": "100644",
-          "size": 77966
+          "size": 78188
         },
         {
           "path": "docs/architecture/TEST-LAYOUT.md",
-          "sha": "62620453f8be5c1cf69dad9ed927b518c00670ce",
+          "sha": "6be7da6188e7e7299a608f07e3254e67a2a95fde",
           "mode": "100644",
-          "size": 9165
+          "size": 9429
         },
         {
           "path": "docs/architecture/adr/0001-claude-code-reference-contract.md",
-          "sha": "7b97176c2e46ebba67abb0ebb52f1bede0821033",
+          "sha": "16198162504cd4aec8296073ef2ffb1a1d2cfb68",
           "mode": "100644",
-          "size": 2873
+          "size": 2893
         },
         {
           "path": "docs/architecture/adr/0002-single-db-git-distribution.md",
@@ -65730,27 +65742,27 @@
         },
         {
           "path": "docs/architecture/adr/0008-enforcement-rewrite-and-cap.md",
-          "sha": "c0be0b3ebfd941a0546249f8c6025b5111e78508",
+          "sha": "f5744cb559797d785cb1c849f5540151cc173f29",
           "mode": "100644",
-          "size": 17695
+          "size": 18017
         },
         {
           "path": "docs/architecture/adr/0009-compaction-and-memory.md",
-          "sha": "e44bf4f7a72c8a77ca740a880bcffc28608b4ebc",
+          "sha": "0d707255c6f1887de8831b3fd31b8eccba3a3d84",
           "mode": "100644",
-          "size": 26534
+          "size": 27831
         },
         {
           "path": "docs/architecture/adr/0010-doctor-and-upgrade.md",
-          "sha": "d7bf3a76c1f42af20240a8c599f81274a6057e30",
+          "sha": "5ccd54e52c81266ea72d0b066b2ca0c90add810b",
           "mode": "100644",
-          "size": 9701
+          "size": 10030
         },
         {
           "path": "docs/architecture/adr/0011-release-and-v1-transition.md",
-          "sha": "90cbcbccd592864a7353e60d7f8b17032f5f6925",
+          "sha": "19a3b97ed8d58ba8a2e64b02d240d6ad92ddc9fe",
           "mode": "100644",
-          "size": 10433
+          "size": 11009
         },
         {
           "path": "docs/architecture/adr/0012-keyless-live-harness.md",
@@ -65778,15 +65790,15 @@
         },
         {
           "path": "docs/architecture/adr/0016-subagent-context-protection.md",
-          "sha": "f177d0a150db4bd79aa1877731bbf3367e2bd328",
+          "sha": "20aa810dac4c6109086b710927f82d15de079b29",
           "mode": "100644",
-          "size": 10948
+          "size": 12085
         },
         {
           "path": "docs/architecture/adr/0017-e2e-every-step-and-v1-retention.md",
-          "sha": "ef618dfe9df113d630b97bfe11695d9cc1d059f4",
+          "sha": "d8871bdd17e51e4bcc341eaabd0f0ce8f8e616b2",
           "mode": "100644",
-          "size": 4105
+          "size": 4219
         },
         {
           "path": "docs/architecture/adr/0018-implementation-architecture.md",
@@ -65796,21 +65808,21 @@
         },
         {
           "path": "docs/architecture/adr/0019-interactive-setup-and-npm-channel.md",
-          "sha": "2ac3338c47bcf980bd699f804ea1ec78ce098f9e",
+          "sha": "3e013b745cda2d643ffdae96c8240da1128da86b",
           "mode": "100644",
-          "size": 20300
+          "size": 20344
         },
         {
           "path": "docs/architecture/adr/0020-hooks-and-skills-on-every-agent.md",
-          "sha": "99ef231dd569c40f4832e12812f9ff8b704b723f",
+          "sha": "aa66af114dd33d13b2eaf63ff10fefb57ce6ad4f",
           "mode": "100644",
-          "size": 6112
+          "size": 6156
         },
         {
           "path": "docs/architecture/adr/0021-prompt-cache-safety.md",
-          "sha": "034dd57ec5a719c02c3bd3e3075c1b802aeeb578",
+          "sha": "ca1b40a333bcd9e4949391e48d6c03d12b73ae0b",
           "mode": "100644",
-          "size": 2037
+          "size": 2399
         },
         {
           "path": "docs/architecture/adr/0024-test-layout-by-adr.md",
@@ -65820,81 +65832,93 @@
         },
         {
           "path": "docs/architecture/adr/0025-stored-source-and-open-issues.md",
-          "sha": "de8a03ab6b11ef2ab7763d9e2abd397d863a2ccc",
+          "sha": "bcbd9e510b4d319a6893c7706471799df1eeabaf",
           "mode": "100644",
-          "size": 12179
+          "size": 12172
+        },
+        {
+          "path": "docs/architecture/adr/0026-omp-host.md",
+          "sha": "c21b901bda4395a3db91cd89677a94ff207fc16b",
+          "mode": "100644",
+          "size": 43020
+        },
+        {
+          "path": "docs/architecture/adr/0027-replace-policy.md",
+          "sha": "285a8ae989e79c879a73c922921d200dc6be59ac",
+          "mode": "100644",
+          "size": 32657
         },
         {
           "path": "docs/architecture/adr/ADR-0023-native-install.md",
-          "sha": "021921a3803a605f54a26818148713629fd5569b",
+          "sha": "bd04b3c4a4e14264bcb7ff2bbcfdc0f7a82fe83c",
           "mode": "100644",
-          "size": 11284
+          "size": 11580
         },
         {
           "path": "docs/architecture/modules/00-architecture.md",
-          "sha": "eb86b0549c52725435e7fdea302ab83740acc24b",
+          "sha": "a9ea0cbf426d74c4f84e7adf83539d3a10139b3f",
           "mode": "100644",
-          "size": 34561
+          "size": 34836
         },
         {
           "path": "docs/architecture/modules/01-contracts.md",
-          "sha": "f7a701f867415e257ca07d67287f44bf9cef93cc",
+          "sha": "515d7e819d3ff4877377ef2194442148f903d5b4",
           "mode": "100644",
-          "size": 19492
+          "size": 19660
         },
         {
           "path": "docs/architecture/modules/02-store.md",
-          "sha": "781a56e5a1ef1795ee87134d5dcbce803211ac39",
+          "sha": "20b8a18fabd989756dd3366341b4bdc57ab59a34",
           "mode": "100644",
-          "size": 31417
+          "size": 31678
         },
         {
           "path": "docs/architecture/modules/03-sandbox.md",
-          "sha": "d083a4f789b893a1b284422794d0323f8beb4b0d",
+          "sha": "7465d820a3cb74d411fd273e813c852b90dacf74",
           "mode": "100644",
-          "size": 23466
+          "size": 24274
         },
         {
           "path": "docs/architecture/modules/04-tools-exec.md",
-          "sha": "843aa12e37bec0f7d9dfaacc01443ffae5336c17",
+          "sha": "637d92c77ef27a4af59a04a3740988a0a4d1baa2",
           "mode": "100644",
-          "size": 23091
+          "size": 23271
         },
         {
           "path": "docs/architecture/modules/05-tools-index.md",
-          "sha": "049ff6a83cc04245a8ee1b36643f6c25b68de4a8",
+          "sha": "2d3550c001713cc521e2896992a0eaf987c61065",
           "mode": "100644",
-          "size": 23113
+          "size": 23599
         },
         {
           "path": "docs/architecture/modules/06-tools-session.md",
-          "sha": "14347f9ba95e69c9354b101c804d7d04f41d0634",
+          "sha": "412b18a339443ed0ee4ccc6c502f841b7b6c9391",
           "mode": "100644",
-          "size": 31022
+          "size": 31108
         },
         {
           "path": "docs/architecture/modules/07-tools-ops.md",
-          "sha": "a63500949552202ac1f613776e8b8d7ead0dbc68",
+          "sha": "edecef5fa3a06fa5f5478c41bb5086b70ff9205d",
           "mode": "100644",
           "size": 31759
         },
         {
           "path": "docs/architecture/modules/08-enforcement.md",
-          "sha": "876bb00adcf4e27d2aef50970f1096b6f55ae941",
+          "sha": "61eee950892a4071c87f40bc984667568b097851",
           "mode": "100644",
-          "size": 41724
+          "size": 41956
         },
         {
           "path": "docs/architecture/modules/09-hooks.md",
-          "sha": "40e54cfca2ba051a9d98a15544881b0a2168220e",
+          "sha": "0216639768d209f59da4be372e3cdce02968988f",
           "mode": "100644",
-          "size": 29834
+          "size": 30053
         },
         {
           "path": "docs/architecture/modules/10-adapters.md",
-          "sha": "a4f74bbc90c02134ffc5c3857df1ae75229f0945",
+          "sha": "6d0672008c661ecf3381e469e9cb82b8ed9492ef",
           "mode": "100644",
-          "size": 42502
+          "size": 42965
         },
         {
           "path": "docs/architecture/modules/11-server.md",
@@ -65904,15 +65928,15 @@
         },
         {
           "path": "docs/architecture/modules/12-plugins.md",
-          "sha": "b309be65ef7f01163045d8907ad152332fd895b6",
+          "sha": "adf04b920a657cb7087d0c855ff3ce789c1c71ff",
           "mode": "100644",
-          "size": 31005
+          "size": 31256
         },
         {
           "path": "docs/architecture/modules/13-build-release.md",
-          "sha": "f3d0371e7751bf5db195880f941ea7ecb4295ad7",
+          "sha": "abb5a1fd1e0b3ac046ee9783ec09707a12755e2f",
           "mode": "100644",
-          "size": 37902
+          "size": 38015
         },
         {
           "path": "docs/architecture/modules/14-tests.md",
@@ -65928,49 +65952,49 @@
         },
         {
           "path": "docs/architecture/modules/15-v1-transition.md",
-          "sha": "e36584608dd9cb9e16211dac0a3f4e2a79c6aba4",
+          "sha": "bdcd9d2a27ebbb0732a7cc8b6acd666b79e48f88",
           "mode": "100644",
-          "size": 23062
+          "size": 23509
         },
         {
           "path": "docs/architecture/modules/DEVIATIONS.md",
-          "sha": "83f031f337b641b92dd1350d6c3c2a6f64a09e6a",
+          "sha": "da46056653b2a350c36fbec052f1e2c0f39cd2ca",
           "mode": "100644",
-          "size": 492993
+          "size": 516650
         },
         {
           "path": "docs/architecture/modules/README.md",
-          "sha": "ab49310cb775f45b354e73d4cfcf85eb19fa4f2b",
+          "sha": "64cb4e619992604cf7e14d80e49484a2996408c2",
           "mode": "100644",
-          "size": 3729
+          "size": 3734
         },
         {
           "path": "docs/architecture/prompt-drafts.md",
-          "sha": "bc8ec933e8b5f24ab66be95eca1da141d76406d1",
+          "sha": "aa7533fda2d1233a500db7f0ed20fefc4198a8e0",
           "mode": "100644",
-          "size": 11552
+          "size": 11723
         },
         {
           "path": "docs/architecture/release/HOOKS-FIRE.md",
-          "sha": "833f9341eb1ee2089a9d9ee654b5431d965deede",
+          "sha": "84da8e7b3a8605c5945f516060fdec4c60acb3a5",
           "mode": "100644",
-          "size": 4044
+          "size": 4146
         },
         {
           "path": "docs/architecture/release/MAIN-ONLY.md",
-          "sha": "d740e59705e951684f115c8c03b05aca8279c006",
+          "sha": "d7b299bd56c9d69d985e53b4deee81858df202ad",
           "mode": "100644",
-          "size": 12909
+          "size": 13168
         },
         {
           "path": "docs/architecture/release/NATIVE-INSTALL.md",
-          "sha": "7c56dd05a04ae651a8aeab706a7b7d49ea64d81a",
+          "sha": "aeb897ca8fdb7727a15bd3225896f10d3aae82c1",
           "mode": "100644",
-          "size": 3715
+          "size": 3940
         },
         {
           "path": "docs/architecture/release/WINDOWS.md",
-          "sha": "b02f12d47835bb8a8b1f2defda95591b8d32f4c5",
+          "sha": "eb2ede6605c3e9a35fc13df65676ed4477b2d041",
           "mode": "100644",
           "size": 4844
         },
@@ -65988,9 +66012,9 @@
         },
         {
           "path": "docs/assets/readme/data/adoption-history.json",
-          "sha": "a55822515bede912e4187f415a80c48cc5140526",
+          "sha": "fdd0206d750494364f274780211572dfd85f9a64",
           "mode": "100644",
-          "size": 23467
+          "size": 31793
         },
         {
           "path": "docs/assets/readme/data/stargazer-companies.json",
@@ -66126,27 +66150,27 @@
         },
         {
           "path": "docs/assets/readme/hero-dark.png",
-          "sha": "4766d17bb99ab98d390f7fddf700d2f6ce03898d",
+          "sha": "793151e41b37886eba0f43eb6df0d81e070a6b7f",
           "mode": "100644",
-          "size": 75893
+          "size": 76780
         },
         {
           "path": "docs/assets/readme/hero-light.png",
-          "sha": "cc3d4b25efac76310443689c46863a195a77b4d0",
+          "sha": "fdf542fa692d4d6d454380f023f7c633a51605a5",
           "mode": "100644",
-          "size": 78377
+          "size": 80148
         },
         {
           "path": "docs/assets/readme/npm-downloads-dark.png",
-          "sha": "038ef31a660aadd6cbeb6a72924f1af14974d1f5",
+          "sha": "04f9c3e542d4779334200c0b246418c402882526",
           "mode": "100644",
-          "size": 74695
+          "size": 52423
         },
         {
           "path": "docs/assets/readme/npm-downloads-light.png",
-          "sha": "ca39e95db282c445581f29a22cef6a360caac664",
+          "sha": "ff3a7fbbe56589ed99c4387e5079282d796f790e",
           "mode": "100644",
-          "size": 75612
+          "size": 54038
         },
         {
           "path": "docs/assets/readme/src/brand/wordmark-on-dark.svg",
@@ -66216,15 +66240,15 @@
         },
         {
           "path": "docs/assets/readme/src/hero.html",
-          "sha": "399f4c7529a176514485a5865a0ebf30364bb954",
+          "sha": "dcc3300a6e317b6e4e91cdde9adfc5cd975172c9",
           "mode": "100644",
-          "size": 2711
+          "size": 2716
         },
         {
           "path": "docs/assets/readme/src/npm-data.js",
-          "sha": "36c60cf74ba916ca8d9cb45c0c896045483fdfc1",
+          "sha": "ac982b87f769e6423dd6a305efdb61308e028a36",
           "mode": "100644",
-          "size": 3037
+          "size": 3194
         },
         {
           "path": "docs/assets/readme/src/npm-downloads.html",
@@ -66246,9 +66270,9 @@
         },
         {
           "path": "docs/assets/readme/src/star-data.js",
-          "sha": "1b7b41ca9d56937d39ff076b94564bbf84d3c1ca",
+          "sha": "a46e5a8f722e538af8874bd2a9d4a1f2eed42370",
           "mode": "100644",
-          "size": 5314
+          "size": 5860
         },
         {
           "path": "docs/assets/readme/src/star-history.html",
@@ -66264,15 +66288,15 @@
         },
         {
           "path": "docs/assets/readme/star-history-dark.png",
-          "sha": "b807e37da40cae0dd15d2becc22f78fc9362b000",
+          "sha": "f4ff5e1615e22b949ce02e1e068aa894f59096f1",
           "mode": "100644",
-          "size": 53083
+          "size": 50801
         },
         {
           "path": "docs/assets/readme/star-history-light.png",
-          "sha": "f4ea86572ff7ec1c50a1daab664fdb1462a30079",
+          "sha": "6cbed81bd82a72d57df2804582020e3ef22918b6",
           "mode": "100644",
-          "size": 54828
+          "size": 53985
         },
         {
           "path": "docs/assets/readme/stargazers-dark.png",
@@ -66288,21 +66312,21 @@
         },
         {
           "path": "docs/how-it-works.md",
-          "sha": "56e171dd1b7d093c1c83e1bd40d03e1c8bf4f6bf",
+          "sha": "261ad5ec00c6ea5788ba741fe2fa1eee2bd48d81",
           "mode": "100644",
           "size": 11577
         },
         {
           "path": "docs/install/README.md",
-          "sha": "26685090f7dddc73632e865deefcf5e60d985faa",
+          "sha": "eea20191279cad684645503f0b1191412957d4d7",
           "mode": "100644",
-          "size": 12479
+          "size": 12962
         },
         {
           "path": "docs/install/claude-code.md",
-          "sha": "3ca17098a08711e1ea0f3a1f0294d0247bc73949",
+          "sha": "d3979f2601eff079576ce5223edbc13795c84353",
           "mode": "100644",
-          "size": 4743
+          "size": 4705
         },
         {
           "path": "docs/install/codex.md",
@@ -66329,16 +66353,22 @@
           "size": 3732
         },
         {
-          "path": "docs/install/opencode.md",
-          "sha": "baaaacde9b64f3cffff16ae00c0f2149cb3d160f",
+          "path": "docs/install/omp.md",
+          "sha": "4231f701e3fe8ca779acbcc1cd2f76ebbbb197c8",
           "mode": "100644",
-          "size": 6391
+          "size": 4482
+        },
+        {
+          "path": "docs/install/opencode.md",
+          "sha": "f39303d6f3d3d1e5c4aca1807d2c2589bdd4fe68",
+          "mode": "100644",
+          "size": 7660
         },
         {
           "path": "docs/install/pi.md",
-          "sha": "1057f5d99f9f921e78449854fbbe50f3df90fd3b",
+          "sha": "3133d1c10c36ab6b9040cdbfe9e6aa790c740855",
           "mode": "100644",
-          "size": 4263
+          "size": 5033
         },
         {
           "path": "docs/install/qwen.md",
@@ -66366,9 +66396,9 @@
         },
         {
           "path": "docs/tools.md",
-          "sha": "6ac5e931aac0e148b741b39f025ae19decdc20d3",
+          "sha": "a2ae347a3d492e02cce396b49c79781eb901df2e",
           "mode": "100644",
-          "size": 5453
+          "size": 5425
         },
         {
           "path": "e2e/cases/GP-SEARCH-heldout.e2e.mjs",
@@ -66378,15 +66408,15 @@
         },
         {
           "path": "e2e/cases/GP-SETUP-npm-install.e2e.mjs",
-          "sha": "d9b5e57ea531025ffd4a7fdb2fd516c86b946212",
+          "sha": "ebaf07f329367d20266305c23bd98b8c513f0806",
           "mode": "100644",
-          "size": 12526
+          "size": 20172
         },
         {
           "path": "e2e/cases/GP1-install.e2e.mjs",
-          "sha": "68f232c0e40eb924fa687b0e80db14807ff6d6ac",
+          "sha": "36e48f5031db7752ee483839c9a1275640932bba",
           "mode": "100644",
-          "size": 39838
+          "size": 42278
         },
         {
           "path": "e2e/cases/GP10-stats.e2e.mjs",
@@ -66396,39 +66426,39 @@
         },
         {
           "path": "e2e/cases/GP11-doctor-upgrade.e2e.mjs",
-          "sha": "e9d5ae5f17a81b01e0258ee514e962030a99989f",
+          "sha": "789e0a7f23e7af8114760be58c86aa95ba2a2a73",
           "mode": "100644",
-          "size": 23754
+          "size": 33840
         },
         {
           "path": "e2e/cases/GP2-prompt-surface.e2e.mjs",
-          "sha": "bd31278a219b9e198563669d68eea914e66c7360",
+          "sha": "f379e7ccbe5cd221f6153e52f4727d8acd08e947",
           "mode": "100644",
-          "size": 7775
+          "size": 11904
         },
         {
           "path": "e2e/cases/GP3-hooks.e2e.mjs",
-          "sha": "7dd370a576ba612ac5c37d5d16f83fe760354316",
+          "sha": "50ff0f61bd110e0dd50c95ced191ffdbf3efdc5f",
           "mode": "100644",
-          "size": 23625
+          "size": 46375
         },
         {
           "path": "e2e/cases/GP4-execute.e2e.mjs",
-          "sha": "aac652a3f460c1b798a00211c4cc03a827c39a1a",
+          "sha": "b7b6afb22cead00eeab9a340d67e1108e1fb0f7e",
           "mode": "100644",
-          "size": 20948
+          "size": 21882
         },
         {
           "path": "e2e/cases/GP5-index-search.e2e.mjs",
-          "sha": "a8d4fab6a2d30508d3f7c70ca2d12607280df35f",
+          "sha": "e98d6b37257d1d51932b8b07d74250f60cf5aa07",
           "mode": "100644",
-          "size": 39513
+          "size": 41173
         },
         {
           "path": "e2e/cases/GP6-journal-resume.e2e.mjs",
-          "sha": "717627ef30aaad59327533c63dd8b79b83d6af8e",
+          "sha": "7c0acd17918c7ace5058fc742c566be01c8143f4",
           "mode": "100644",
-          "size": 26493
+          "size": 27435
         },
         {
           "path": "e2e/cases/GP7-scope.e2e.mjs",
@@ -66468,9 +66498,9 @@
         },
         {
           "path": "e2e/checks/ci-config.mjs",
-          "sha": "8cb317ae7a67022ff0166029079133f53fd8a0c8",
+          "sha": "25f1e68238cc0f9b4237b9a8cab99c5293c61a15",
           "mode": "100644",
-          "size": 4062
+          "size": 4081
         },
         {
           "path": "e2e/checks/gate-layers.mjs",
@@ -66492,9 +66522,9 @@
         },
         {
           "path": "e2e/checks/opencode2-native-install.mjs",
-          "sha": "73a1a50a0254db9ebf1a3f88495456adff0cf004",
+          "sha": "7e3d57b24375b3b23b0a6e79648442a9e59042af",
           "mode": "100644",
-          "size": 3363
+          "size": 5708
         },
         {
           "path": "e2e/checks/release-plan-bump.mjs",
@@ -66510,15 +66540,15 @@
         },
         {
           "path": "e2e/checks/repo-github-files.mjs",
-          "sha": "e66ca9d6c8a29bc772c05eb57a60436480025376",
+          "sha": "184bdecd5c7865b8ca2a4fee912b8bb1294828a4",
           "mode": "100644",
-          "size": 6343
+          "size": 6350
         },
         {
           "path": "e2e/checks/setup-hook-overhead.mjs",
-          "sha": "14e84e616490dbb5ea567a3c22b645516dadf482",
+          "sha": "b7efc16fdecfbc7403307cb1eb9c75466bc8f3ae",
           "mode": "100644",
-          "size": 5541
+          "size": 7190
         },
         {
           "path": "e2e/checks/v1-migration.mjs",
@@ -66534,9 +66564,9 @@
         },
         {
           "path": "e2e/checks/windows-hosts.mjs",
-          "sha": "624d33c6dd113fe11bcdd81c4b76906959ff6b4a",
+          "sha": "359d90d690610f0356fe0e8b4c53154ce627c0e1",
           "mode": "100644",
-          "size": 29467
+          "size": 30524
         },
         {
           "path": "e2e/checks/windows-kill-timing.mjs",
@@ -66570,9 +66600,9 @@
         },
         {
           "path": "e2e/fixtures/claude-code/2.1.303/PostToolUse-Bash-large.json",
-          "sha": "fb85d1448e45680d28e57d90873dab8d121765c1",
+          "sha": "4f779ddd111abcb9137fd5fe429aed4db9c55bca",
           "mode": "100644",
-          "size": 11440
+          "size": 11431
         },
         {
           "path": "e2e/fixtures/codex/0.156.1/PostToolUse.json",
@@ -66600,9 +66630,9 @@
         },
         {
           "path": "e2e/fixtures/hook-roundtrip.json",
-          "sha": "73f2e9191943efc0f480506a64643f89018e1e17",
+          "sha": "e367d8f0d22c17021cea32fa310c0d1b0bac334f",
           "mode": "100644",
-          "size": 4350
+          "size": 4663
         },
         {
           "path": "e2e/fixtures/kiro/cli-v3-docs-2026-10-23/SessionStart.json",
@@ -66666,9 +66696,9 @@
         },
         {
           "path": "e2e/golden/GP1/package-json-npm-d1-in-out.json",
-          "sha": "5384e1162aae67023af6b3d6f03b59c028832f2c",
+          "sha": "bcca16007ec389688e73481c641a9458907c1796",
           "mode": "100644",
-          "size": 1841
+          "size": 1953
         },
         {
           "path": "e2e/golden/GP1/standalone-mcp-tool-prefix.json",
@@ -66690,7 +66720,7 @@
         },
         {
           "path": "e2e/golden/GP2/tool-description-token-budget.json",
-          "sha": "5639e327eb323a8c4dab525594eaedae8554d4e9",
+          "sha": "97531240554c74c14f8fc4b8898fbd7ccd7e4493",
           "mode": "100644",
           "size": 542
         },
@@ -66702,9 +66732,9 @@
         },
         {
           "path": "e2e/golden/GP3/antigravity-stop-hook-flat-schema.json",
-          "sha": "3098e9d6a7c7c77481ebda09c1b659a2402c516e",
+          "sha": "f47b59b247a433ce6cc05f50f2c1c5971cae69ac",
           "mode": "100644",
-          "size": 812
+          "size": 838
         },
         {
           "path": "e2e/golden/GP3/codex-exec-pretooluse-matcher.json",
@@ -66714,9 +66744,9 @@
         },
         {
           "path": "e2e/golden/GP3/fixture-replay-claude-code-PostToolUse-Bash-large.json",
-          "sha": "8590f8fb1bc469b63ede178470678de77e99ea32",
+          "sha": "85d90c9d47e260c4b2a1b3e10170fa97ff377fb7",
           "mode": "100644",
-          "size": 231
+          "size": 222
         },
         {
           "path": "e2e/golden/GP3/fixture-replay-claude-code-PostToolUse.json",
@@ -66984,9 +67014,9 @@
         },
         {
           "path": "e2e/golden/GP5/http-proxy-honored.json",
-          "sha": "f7abac185b72dfe6ebc542130bc716d8c0ef6cb0",
+          "sha": "432792a57842e3bb53fd0e14dcb85307a548b30e",
           "mode": "100644",
-          "size": 16
+          "size": 360
         },
         {
           "path": "e2e/golden/GP5/negative-limit-rejected.json",
@@ -67050,9 +67080,9 @@
         },
         {
           "path": "e2e/golden/GP5/search-param-schema-match.json",
-          "sha": "8513b1b9337b843f94c1fd1e136623894245b394",
+          "sha": "5c31237725571187dd78033b093aba3c01893914",
           "mode": "100644",
-          "size": 145
+          "size": 200
         },
         {
           "path": "e2e/golden/GP5/session-worktree-project-rank.json",
@@ -67271,6 +67301,12 @@
           "size": 1677
         },
         {
+          "path": "e2e/golden/cli/print-omp.txt",
+          "sha": "b36b037333ec7f81712f7487003d58525b34edd4",
+          "mode": "100644",
+          "size": 131
+        },
+        {
           "path": "e2e/golden/cli/print-opencode.txt",
           "sha": "2dcbd845d559c5e8ac3660785097c5142a6de1ed",
           "mode": "100644",
@@ -67314,9 +67350,9 @@
         },
         {
           "path": "e2e/harness/hook-runner.mjs",
-          "sha": "d94735a2cfe82d55920bd178cfefa15be8a6769d",
+          "sha": "c4de4baa60f84c6ed0e7aac7e3fab2b7cb170400",
           "mode": "100644",
-          "size": 1798
+          "size": 2844
         },
         {
           "path": "e2e/harness/live/claude-code.mjs",
@@ -67554,9 +67590,9 @@
         },
         {
           "path": "e2e/live/cases/v1-migration-setup.mjs",
-          "sha": "690fce5cf52e8aaf271061f20e2a6e120e8f8148",
+          "sha": "01a5d431b41a19604c9cd51844e255a67c5142cc",
           "mode": "100644",
-          "size": 8653
+          "size": 8879
         },
         {
           "path": "e2e/live/cases/v1-migration-vscode.json",
@@ -67872,7 +67908,7 @@
         },
         {
           "path": "gemini-extension.json",
-          "sha": "582c0370c3c1b2fe5d6743c7e50619d2c3ce890e",
+          "sha": "64404963bc2b56b1ece99f3d98b2ae045114b523",
           "mode": "100644",
           "size": 387
         },
@@ -67890,13 +67926,13 @@
         },
         {
           "path": "package.json",
-          "sha": "9b732b3091afdb7e130f9fe5563db1f06af86adb",
+          "sha": "3dee52a115646a600f7c221035a6f1c4d5fc90bf",
           "mode": "100644",
-          "size": 1364
+          "size": 1369
         },
         {
           "path": "plugins/claude-code/.claude-plugin/plugin.json",
-          "sha": "fa9d7474b2c1b80848197776e290aefef4ba25c3",
+          "sha": "a9bce77c88050b556c2b7e3c26664e9b9871073c",
           "mode": "100644",
           "size": 520
         },
@@ -67914,7 +67950,7 @@
         },
         {
           "path": "plugins/claude-code/.codex-plugin/plugin.json",
-          "sha": "63b4da1352e9d729fa19a016d51342223d30bf2a",
+          "sha": "788dbb16394e7a119aaa58d7428d16c3f7d0de2c",
           "mode": "100644",
           "size": 393
         },
@@ -67926,7 +67962,7 @@
         },
         {
           "path": "plugins/claude-code/.zcode-plugin/plugin.json",
-          "sha": "fdcae9218f11fb1f2abdacd707587469209cb612",
+          "sha": "462f87ace04ce69fb079ba8e289ba199bde0eb17",
           "mode": "100644",
           "size": 516
         },
@@ -67938,21 +67974,21 @@
         },
         {
           "path": "plugins/claude-code/README.md",
-          "sha": "f83092c3fb589ce6eb6f46be259d8120992710e8",
+          "sha": "42a59c66b1aa867fde2be0c058c4687f2d98241a",
           "mode": "100644",
-          "size": 53827
+          "size": 54117
         },
         {
           "path": "plugins/claude-code/SHA256SUMS",
-          "sha": "2f2e4e4e4ca6f9ca21ea8c30859dfd81a52738b0",
+          "sha": "bfb0f53669501b110745d7bb82f22815f3beae0c",
           "mode": "100644",
-          "size": 3128
+          "size": 3207
         },
         {
           "path": "plugins/claude-code/cli.mjs",
-          "sha": "27b7082aaad1c35f87f368e20bfe50dd4a607e17",
+          "sha": "7156395fbdba802d330b43f446581d582bad71ae",
           "mode": "100644",
-          "size": 425364
+          "size": 449764
         },
         {
           "path": "plugins/claude-code/codex/skills/ctx-doctor/SKILL.md",
@@ -67974,33 +68010,33 @@
         },
         {
           "path": "plugins/claude-code/copilot/plugin.json",
-          "sha": "a367fbb587391898843aa8e46bb72fa03d6fa746",
+          "sha": "6c529fafcdbb40d131d6c837e0954cd310a7919c",
           "mode": "100644",
           "size": 352
         },
         {
           "path": "plugins/claude-code/fixtures/hook-roundtrip.json",
-          "sha": "73f2e9191943efc0f480506a64643f89018e1e17",
+          "sha": "e367d8f0d22c17021cea32fa310c0d1b0bac334f",
           "mode": "100644",
-          "size": 4350
+          "size": 4663
         },
         {
           "path": "plugins/claude-code/gemini-extension.json",
-          "sha": "4f232df44b3d222f66b48614bd9a588baf0444a5",
+          "sha": "5bc114ce35b2834b371b548dfbbddd398f369ffb",
           "mode": "100644",
           "size": 367
         },
         {
           "path": "plugins/claude-code/hook.mjs",
-          "sha": "b51a307f20ae33637acc88782b8d3d659a930054",
+          "sha": "b4a2eaac95f743b8fc95367cec3a78da0852f08b",
           "mode": "100644",
-          "size": 155194
+          "size": 167464
         },
         {
           "path": "plugins/claude-code/hooks/claude-code.json",
-          "sha": "fd2f8020b821b10bdb4f2d83f99899d1ec3ed90c",
+          "sha": "f5dac704204cbbef5c8588481679c3e9f6881206",
           "mode": "100644",
-          "size": 1251
+          "size": 1628
         },
         {
           "path": "plugins/claude-code/hooks/codex.json",
@@ -68039,22 +68075,28 @@
           "size": 1208
         },
         {
-          "path": "plugins/claude-code/opencode/plugin.js",
-          "sha": "130494dc4c6e9aacc4c65930f8ba26cc157d770f",
+          "path": "plugins/claude-code/omp/index.js",
+          "sha": "85007a5a9f864dcf6b1845ce967d23578f9a09ad",
           "mode": "100644",
-          "size": 1185083
+          "size": 225
+        },
+        {
+          "path": "plugins/claude-code/opencode/plugin.js",
+          "sha": "350b7ccb0e3b2f61ea8bdd32df413b3e6433de97",
+          "mode": "100644",
+          "size": 1237891
         },
         {
           "path": "plugins/claude-code/package.json",
-          "sha": "37021f7f9d052cc02eb30c53df1c7af49ac1fafe",
+          "sha": "44c8c9e7089589c1f4de87e2239d8a025af3af43",
           "mode": "100644",
-          "size": 1415
+          "size": 1502
         },
         {
           "path": "plugins/claude-code/pi/index.js",
-          "sha": "ec9bf92d250541a8a184e0a307a832706a233f99",
+          "sha": "94325de49d46518ec568fa6408cad456470409f1",
           "mode": "100644",
-          "size": 2219284
+          "size": 2274531
         },
         {
           "path": "plugins/claude-code/pi/skills/ctx-doctor/SKILL.md",
@@ -68076,49 +68118,49 @@
         },
         {
           "path": "plugins/claude-code/qwen-extension.json",
-          "sha": "f11d0d7c5ac6a99d6e60afdea8379d5f362873d0",
+          "sha": "5b82a24461f8a84f4e9a354775e3d88fd6ebc85c",
           "mode": "100644",
           "size": 395
         },
         {
           "path": "plugins/claude-code/run.mjs",
-          "sha": "186ee0f8d636bb105ecadc645d436e87e868335b",
+          "sha": "69c07d7bf931a4a1a4ec6f03f65bbc61e8c980fb",
           "mode": "100644",
-          "size": 204367
+          "size": 212659
         },
         {
           "path": "plugins/claude-code/search.mjs",
-          "sha": "186ee0f8d636bb105ecadc645d436e87e868335b",
+          "sha": "69c07d7bf931a4a1a4ec6f03f65bbc61e8c980fb",
           "mode": "100644",
-          "size": 204367
+          "size": 212659
         },
         {
           "path": "plugins/claude-code/server.mjs",
-          "sha": "d80de26262fc63062f4224545cdcb17bf37acf94",
+          "sha": "89a03fbf2d6b971e7fb317b22c2bf5d1e2eaccf6",
           "mode": "100644",
-          "size": 2103191
+          "size": 2139625
         },
         {
           "path": "plugins/claude-code/skills/ctx-doctor/SKILL.md",
-          "sha": "a5d1f9ffb3881ce336fc50d1a639848c9945c9ac",
+          "sha": "f3a95a36f01a06bafc0ee0ef97b84e212849b3e8",
           "mode": "100644",
-          "size": 353
+          "size": 367
         },
         {
           "path": "plugins/claude-code/skills/ctx-stats/SKILL.md",
-          "sha": "01b00dba5507894253bff28475ec8962a5b145d4",
+          "sha": "99c579dc588bdb525f090fb3ac23929704e8cc10",
           "mode": "100644",
-          "size": 423
+          "size": 436
         },
         {
           "path": "plugins/claude-code/skills/ctx-upgrade/SKILL.md",
-          "sha": "1fcb7565e694b95a2e89de1cad13de964f31d324",
+          "sha": "30917ccbf499edf34d5001b9f4d3f7d5d88ab627",
           "mode": "100644",
-          "size": 468
+          "size": 497
         },
         {
           "path": "qwen-extension.json",
-          "sha": "6b62c281c6e4f7829a8ed12f8e2d2e3619b3ba64",
+          "sha": "be09901c3683ce8af9fcd1f2467aa82752546563",
           "mode": "100644",
           "size": 415
         },
@@ -68130,9 +68172,9 @@
         },
         {
           "path": "scripts/ci-install.mjs",
-          "sha": "3222f944233f9df26d88fcfd1f200dd38db07f2f",
+          "sha": "b93dcdedbd6451ffe49c2a86a208fd123a73521a",
           "mode": "100644",
-          "size": 3188
+          "size": 13520
         },
         {
           "path": "scripts/gate.mjs",
@@ -68169,6 +68211,12 @@
           "sha": "80ba1aea78e1356130ecf208ff5e02ea3aaa7cb9",
           "mode": "100644",
           "size": 3141
+        },
+        {
+          "path": "scripts/release/ci-verified.mjs",
+          "sha": "dd67f70a0cc5a8c0a5ed7a8a309c5d023f08a7be",
+          "mode": "100644",
+          "size": 4347
         },
         {
           "path": "scripts/release/commit-main.mjs",
@@ -68231,6 +68279,12 @@
           "size": 14169
         },
         {
+          "path": "scripts/v1-upgrade-stop.mjs",
+          "sha": "247e0d47dc658e80164772a886af49295f69cd19",
+          "mode": "100644",
+          "size": 1007
+        },
+        {
           "path": "skills/ctx-doctor/SKILL.md",
           "sha": "9861cdbc2606a733d6d5413123581d475938e1c3",
           "mode": "100644",
@@ -68250,9 +68304,9 @@
         },
         {
           "path": "src/adapters/claude-code.ts",
-          "sha": "f332f5edca67362e09046ce6373879b3fabf9701",
+          "sha": "a0892fdda11ccdf447b42d5570e39ccd1cd77761",
           "mode": "100644",
-          "size": 15198
+          "size": 16323
         },
         {
           "path": "src/adapters/codex.ts",
@@ -68280,15 +68334,15 @@
         },
         {
           "path": "src/adapters/opencode.ts",
-          "sha": "bf2482b2fb4e549e932f8f01cec360c92e345b9a",
+          "sha": "dcf87522ea2b62634b5a28a3306f9225f8344b4e",
           "mode": "100644",
-          "size": 4943
+          "size": 5665
         },
         {
           "path": "src/adapters/pi.ts",
-          "sha": "34cd3777259f694ac75b2a8f725e7de11ecc332d",
+          "sha": "9bad7b60c9156292bafd988d7a04e99471c94bfe",
           "mode": "100644",
-          "size": 5070
+          "size": 5404
         },
         {
           "path": "src/adapters/qwen.ts",
@@ -68298,9 +68352,9 @@
         },
         {
           "path": "src/adapters/table.ts",
-          "sha": "ae83d74cb99ce073a9ebe17e6eb44d059ad999c2",
+          "sha": "95bbc8a1117d8cc04ce3d2ee455b33708ab3620f",
           "mode": "100644",
-          "size": 11215
+          "size": 12451
         },
         {
           "path": "src/adapters/vscode.ts",
@@ -68322,15 +68376,15 @@
         },
         {
           "path": "src/cli/commands.ts",
-          "sha": "4aa303ee7c6cbe15a181e6bc4bf2693a245f5d7b",
+          "sha": "e55fdd98a4e13d2b5120daab29bd352ce84af2a0",
           "mode": "100644",
-          "size": 20584
+          "size": 20646
         },
         {
           "path": "src/core/compaction/candidates.ts",
-          "sha": "e6dfcba11fa828b54dc8f529ea3fb9e4a1afd501",
+          "sha": "777b89721ee6f8753fcfe093e2a1fa19321e37b4",
           "mode": "100644",
-          "size": 6734
+          "size": 7126
         },
         {
           "path": "src/core/compaction/recall.ts",
@@ -68352,9 +68406,9 @@
         },
         {
           "path": "src/core/contracts/agents.ts",
-          "sha": "91619f5a9aef32c08b60921c936bd73b2fefd3bb",
+          "sha": "58b7a2aab7916bcc0f20c898d9f019e30945b2b2",
           "mode": "100644",
-          "size": 298
+          "size": 365
         },
         {
           "path": "src/core/contracts/client-map.ts",
@@ -68364,21 +68418,21 @@
         },
         {
           "path": "src/core/contracts/constants.ts",
-          "sha": "56daec08b27066402dbaa74054ccfee8ba1a2e50",
+          "sha": "2ad94ef94eea6947b20ea450f9df6c84b20e3c89",
           "mode": "100644",
-          "size": 94200
+          "size": 102664
         },
         {
           "path": "src/core/contracts/errors.ts",
-          "sha": "533492d387f984c16354a0772894e2d4555f3536",
+          "sha": "eb6b8c876b0da4d39e70bc1cc1722897555f366b",
           "mode": "100644",
-          "size": 3906
+          "size": 4047
         },
         {
           "path": "src/core/contracts/types.ts",
-          "sha": "6bccb1972e8f5f530f0c70c5a4e66b72590e964d",
+          "sha": "13ec28af9e6c2f1bf7b31107f4d0543b008355c3",
           "mode": "100644",
-          "size": 13693
+          "size": 14213
         },
         {
           "path": "src/core/hooks/decision.ts",
@@ -68388,21 +68442,21 @@
         },
         {
           "path": "src/core/hooks/detached.ts",
-          "sha": "dabce650b100eb092116ab02f75ee397136d7d5c",
+          "sha": "41fb2e1e9eda64dded179bdcac82647756b5fa2a",
           "mode": "100644",
-          "size": 1163
+          "size": 880
         },
         {
           "path": "src/core/hooks/dispatch.ts",
-          "sha": "bf3c31e2a66a6779963a5ee74bf06e4ea0769e0f",
+          "sha": "69ffa2f1c42f2b0501fd7e180f92a19c0e47cbc0",
           "mode": "100644",
-          "size": 34279
+          "size": 46582
         },
         {
           "path": "src/core/hooks/fallback.ts",
-          "sha": "bc5683709a809a4e928e1fd7a8e4f3b9af00e08b",
+          "sha": "b28c50442736cc0e301b0e4a507580ba3fd5443f",
           "mode": "100644",
-          "size": 8812
+          "size": 9195
         },
         {
           "path": "src/core/hooks/handle-query.ts",
@@ -68415,6 +68469,12 @@
           "sha": "e4e9cf7b3cdf17a0cdb55f6527fde2227a1d950e",
           "mode": "100644",
           "size": 2169
+        },
+        {
+          "path": "src/core/hooks/spool.ts",
+          "sha": "3109aa6ca9da94b52c346c60eaf7ccacf568dcc6",
+          "mode": "100644",
+          "size": 10909
         },
         {
           "path": "src/core/hooks/throttle.ts",
@@ -68472,9 +68532,9 @@
         },
         {
           "path": "src/core/journal/append.ts",
-          "sha": "e62272144c06ae6d0aaa789c798077cbeb5ed386",
+          "sha": "4f4945a61b7d83c8ba486d14770b6fe5258e5ab5",
           "mode": "100644",
-          "size": 4107
+          "size": 4228
         },
         {
           "path": "src/core/journal/own-call.ts",
@@ -68484,9 +68544,9 @@
         },
         {
           "path": "src/core/journal/read.ts",
-          "sha": "c87f8a69bc484b03ddeb2a70bf9747370eef6cb1",
+          "sha": "6ca23bc5c58dbd967bb7e3f747f08a3a3ca37d8b",
           "mode": "100644",
-          "size": 3298
+          "size": 4187
         },
         {
           "path": "src/core/lifecycle/exit.ts",
@@ -68514,15 +68574,15 @@
         },
         {
           "path": "src/core/ops/detect-v1.ts",
-          "sha": "46f5423c084310af0be6b644621f33031e214176",
+          "sha": "fb15e8175e4ced6025cc17247190863f30d2dddc",
           "mode": "100644",
-          "size": 19112
+          "size": 19297
         },
         {
           "path": "src/core/ops/doctor-config.ts",
-          "sha": "b1a96a8b83f3c6e09031c15a79414b140f711ba9",
+          "sha": "5c857e202f6994fe472e0053d8ed3be1eb89faa1",
           "mode": "100644",
-          "size": 22382
+          "size": 32243
         },
         {
           "path": "src/core/ops/doctor-db.ts",
@@ -68532,27 +68592,27 @@
         },
         {
           "path": "src/core/ops/doctor-env.ts",
-          "sha": "03ec685a79852b465e86879cf065a90675e99ddc",
+          "sha": "9ae60e59f947f5b4b76df7ff71faf57a307bf45f",
           "mode": "100644",
-          "size": 16109
+          "size": 17962
         },
         {
           "path": "src/core/ops/doctor-hook.ts",
-          "sha": "1e14e71dcf66e7dcd3c06ef2962f6112ecb1efbb",
+          "sha": "c81018b89339813670e2d0c24ac0a828c1e35791",
           "mode": "100644",
-          "size": 20223
+          "size": 20916
         },
         {
           "path": "src/core/ops/doctor-issue.ts",
-          "sha": "d8a645af81ef4cf21c1f8956e6a561766317a839",
+          "sha": "085c69ef8f443364f330de7a4285d9cd971b188d",
           "mode": "100644",
-          "size": 12957
+          "size": 15340
         },
         {
           "path": "src/core/ops/hook-shape.ts",
-          "sha": "662932d1bac7bfd2ea1601ae94200906ff923b85",
+          "sha": "1e83dc4964904b740a8a98a2333a89b3fc794b00",
           "mode": "100644",
-          "size": 5799
+          "size": 5856
         },
         {
           "path": "src/core/ops/host-config.ts",
@@ -68568,15 +68628,21 @@
         },
         {
           "path": "src/core/ops/host-write.ts",
-          "sha": "e659748dc010c7c379444c1e2546463722f852fd",
+          "sha": "5bfa385a11e3481998a8ec9be2051d4dc0a06b98",
           "mode": "100644",
-          "size": 5031
+          "size": 5223
+        },
+        {
+          "path": "src/core/ops/omp-import.ts",
+          "sha": "9a06d37800d0ea07567ccc2547b78d1e166f92b9",
+          "mode": "100644",
+          "size": 4369
         },
         {
           "path": "src/core/ops/plugin-root.ts",
-          "sha": "68f924effea7d21863f9b5ebefa41d0bc7914373",
+          "sha": "f7052f44f7628143be0805f2151a0a8ec8cb496a",
           "mode": "100644",
-          "size": 11205
+          "size": 11693
         },
         {
           "path": "src/core/ops/plugin-swap.ts",
@@ -68592,9 +68658,9 @@
         },
         {
           "path": "src/core/ops/uninstall.ts",
-          "sha": "2a2248bc8461f51f3366f14ff2dcd07a545a116a",
+          "sha": "e381a6770014ef13853463d60d7396ed3873c724",
           "mode": "100644",
-          "size": 10248
+          "size": 10760
         },
         {
           "path": "src/core/ops/unsupported-host.ts",
@@ -68616,9 +68682,9 @@
         },
         {
           "path": "src/core/policy/decide.ts",
-          "sha": "10c86991177811d82b4706f8e4128349f8861e16",
+          "sha": "5ec817d67ee8ed30a8d339b6ddef425dfd06d158",
           "mode": "100644",
-          "size": 19155
+          "size": 19222
         },
         {
           "path": "src/core/policy/lexer.ts",
@@ -68628,9 +68694,9 @@
         },
         {
           "path": "src/core/policy/own-file.ts",
-          "sha": "259f55bc0f205c399343646ce827447efaf26ee4",
+          "sha": "ef2026835e38df7130a73bfb43a56b86e3a41a01",
           "mode": "100644",
-          "size": 2113
+          "size": 2619
         },
         {
           "path": "src/core/policy/parse.ts",
@@ -68658,15 +68724,15 @@
         },
         {
           "path": "src/core/policy/subagent.ts",
-          "sha": "62df9e56a49947e1ed6eda8a2aa4261eeb080f1e",
+          "sha": "1dea35c052ff662ca81003c37fd8494008e92689",
           "mode": "100644",
-          "size": 9849
+          "size": 13612
         },
         {
           "path": "src/core/policy/unwrap.ts",
-          "sha": "3ff35d7b767e590df7c01e992d7b7606ab3da371",
+          "sha": "2f8c93a13726aafb0ea71e258fd9ee84e4e094f9",
           "mode": "100644",
-          "size": 6238
+          "size": 6875
         },
         {
           "path": "src/core/policy/user-deny.ts",
@@ -68676,21 +68742,21 @@
         },
         {
           "path": "src/core/project/config-dir.ts",
-          "sha": "98c2d27340ff8efac7b55e0bf15ab1bfd161098e",
+          "sha": "15e1226918bc5ecb36cef0fd487b3d988ff6f56d",
           "mode": "100644",
-          "size": 14158
+          "size": 16185
         },
         {
           "path": "src/core/project/contain.ts",
-          "sha": "6045ce24dee8cd0e4ae55a571e5b3bfcefaed90b",
+          "sha": "6742309918eda11b6e3b94dd755d49d5a2a1b404",
           "mode": "100644",
-          "size": 3785
+          "size": 6147
         },
         {
           "path": "src/core/project/resolve.ts",
-          "sha": "edc42356e349a9306d3897c8d47d8a744a8c48d1",
+          "sha": "9c38e4536d97cc3455603db524018fe1c73f5cf5",
           "mode": "100644",
-          "size": 8657
+          "size": 9635
         },
         {
           "path": "src/core/project/sha256.ts",
@@ -68706,15 +68772,15 @@
         },
         {
           "path": "src/core/sandbox/env.ts",
-          "sha": "b1a2dea8d6b788e9f2a31b9edc44d461e6856511",
+          "sha": "2ee209e9f74ce385266138d784b1d7c257b4056d",
           "mode": "100644",
-          "size": 1423
+          "size": 2138
         },
         {
           "path": "src/core/sandbox/fetch.ts",
-          "sha": "4ba5b330143252ad56508fa03210860217552748",
+          "sha": "6284aad814c04d009c37cfe686e8d17ce9e4ce52",
           "mode": "100644",
-          "size": 10813
+          "size": 15303
         },
         {
           "path": "src/core/sandbox/host-node.ts",
@@ -68730,21 +68796,21 @@
         },
         {
           "path": "src/core/sandbox/path-entries.ts",
-          "sha": "9bd56b1bd16a43d7f39d5d4a5a6a2606b4864010",
+          "sha": "9dbe01ba87af714e406fd39d295bcb171fc86022",
           "mode": "100644",
-          "size": 921
+          "size": 1727
         },
         {
           "path": "src/core/sandbox/runtimes.ts",
-          "sha": "24851e539aa5be5fbed6265f6517219232a10e9a",
+          "sha": "9f7a5b13ea781546b806c2b49e850d800fbdb1f4",
           "mode": "100644",
-          "size": 5216
+          "size": 6439
         },
         {
           "path": "src/core/sandbox/spawn.ts",
-          "sha": "2d1b70cbb9ba8bd796c03d2a749b2f7bec752280",
+          "sha": "6641661b7e5bb1ab2b8048b7148f60c46250e765",
           "mode": "100644",
-          "size": 5840
+          "size": 6480
         },
         {
           "path": "src/core/sandbox/win-build.ts",
@@ -68760,15 +68826,21 @@
         },
         {
           "path": "src/core/store/db.ts",
-          "sha": "3292c7e5c410fbb1565f55358bd69130db2ff861",
+          "sha": "ef4f2f78c0414150224c6720c561b19ffe020385",
           "mode": "100644",
-          "size": 8617
+          "size": 10427
         },
         {
           "path": "src/core/store/fts.ts",
-          "sha": "726be4b10662c92c7ab3dcc104542d4b1189290d",
+          "sha": "2e00e8da8d776d7db7fa0d66ab5d513676e13ed1",
           "mode": "100644",
-          "size": 42619
+          "size": 45980
+        },
+        {
+          "path": "src/core/store/lost-bet.ts",
+          "sha": "f77a242d3bd8333e4061820d7c705add053c2c75",
+          "mode": "100644",
+          "size": 3088
         },
         {
           "path": "src/core/store/open-read.ts",
@@ -68784,9 +68856,9 @@
         },
         {
           "path": "src/core/store/schema.ts",
-          "sha": "57769719f8d069a03eb4e746ef529f18ea0a0e52",
+          "sha": "f8aeb07d1e1e82a8b982f2162e00f193233acd10",
           "mode": "100644",
-          "size": 7024
+          "size": 7744
         },
         {
           "path": "src/core/store/snippet.ts",
@@ -68808,21 +68880,21 @@
         },
         {
           "path": "src/core/tools/doctor.ts",
-          "sha": "3d4e47f6065ba346aec569b4d64805191deaaf8b",
+          "sha": "c5c69a97499b5194cf344a35b6a287209e719bf4",
           "mode": "100644",
-          "size": 13030
+          "size": 16979
         },
         {
           "path": "src/core/tools/execute.ts",
-          "sha": "95e96392e66aee7207671336b89d392340b61da3",
+          "sha": "a58d1a2c4a78c1bef2ea4428629d6a8c35b23291",
           "mode": "100644",
-          "size": 12586
+          "size": 12944
         },
         {
           "path": "src/core/tools/index.ts",
-          "sha": "87415662706da94210a793b791bb89a8cd0be2d5",
+          "sha": "807fc4a823eaacc942fa9b63ee3f19da43e6010a",
           "mode": "100644",
-          "size": 9773
+          "size": 10167
         },
         {
           "path": "src/core/tools/purge.ts",
@@ -68838,21 +68910,21 @@
         },
         {
           "path": "src/core/tools/resume.ts",
-          "sha": "8ff07ac6fbe87d75e98dd8eebe184aaa15c08897",
+          "sha": "05a2ac48643e14f5458cc6ca9f97d057b2133188",
           "mode": "100644",
-          "size": 3890
+          "size": 4101
         },
         {
           "path": "src/core/tools/run-wrapper.ts",
-          "sha": "ac471e893554ddafa752efd5ee3ad2a0582f68c3",
+          "sha": "7602e6a662c31d1dcc7159a2015b0f4e75e754fd",
           "mode": "100644",
-          "size": 7561
+          "size": 8022
         },
         {
           "path": "src/core/tools/search.ts",
-          "sha": "4a91c2a7758b6b12949a32af3c85d322527bec5a",
+          "sha": "7971039b63482836deda2aeda3d49c8243a371c8",
           "mode": "100644",
-          "size": 23309
+          "size": 31865
         },
         {
           "path": "src/core/tools/stats.ts",
@@ -68886,15 +68958,15 @@
         },
         {
           "path": "src/entries/opencode.ts",
-          "sha": "194f5a1304dae6af85cdd9dd85f5d8f6ab465efb",
+          "sha": "2ac33ded5d0b3580bc54fadd37987f241362e4ad",
           "mode": "100644",
-          "size": 18821
+          "size": 23340
         },
         {
           "path": "src/entries/pi.ts",
-          "sha": "91a9782613f39e4c72a962deab13e52577a1c047",
+          "sha": "6af35d6adf0c7bf1e3a2e44cd856f483d059a8c7",
           "mode": "100644",
-          "size": 8740
+          "size": 14583
         },
         {
           "path": "src/entries/run.ts",
@@ -68904,9 +68976,9 @@
         },
         {
           "path": "src/entries/server.ts",
-          "sha": "b073a565f44e137a5979b6c49be36c52e83db939",
+          "sha": "dfccd1776bfb8418feb199afa3713bfff8ecdcec",
           "mode": "100644",
-          "size": 17465
+          "size": 21076
         },
         {
           "path": "src/prompt/_generated.d.ts",
@@ -68970,9 +69042,9 @@
         },
         {
           "path": "src/prompt/tools/ctx_search.md",
-          "sha": "415aaa0f0cc1d2b3e6b4eb0be2923ea06046837a",
+          "sha": "e3ab8fe797da3a45a559fe88d5424b200b6f1028",
           "mode": "100644",
-          "size": 838
+          "size": 963
         },
         {
           "path": "src/prompt/tools/ctx_stats.md",
@@ -69000,9 +69072,9 @@
         },
         {
           "path": "src/setup/engine.ts",
-          "sha": "af1da9cc42546d93d573970f286b6a4c8252f368",
+          "sha": "d03f299afd194204e2ef4059537ab7aacd102498",
           "mode": "100644",
-          "size": 76278
+          "size": 97894
         },
         {
           "path": "src/setup/gemini-gate.ts",
@@ -69012,15 +69084,15 @@
         },
         {
           "path": "src/setup/hook-sample.ts",
-          "sha": "1e5bda5f790552082b8e5af2b75ad69de5a85c1d",
+          "sha": "a45f69e1650e80ded26107a67d60ef913155cf4a",
           "mode": "100644",
-          "size": 4595
+          "size": 4809
         },
         {
           "path": "src/setup/hook-shapes.ts",
-          "sha": "5e7fd4d5c9063092b0a2d18bc13fa39c8e1eac27",
+          "sha": "490d05a374d74a1169d449323a4d63db9f3dc37b",
           "mode": "100644",
-          "size": 4269
+          "size": 4314
         },
         {
           "path": "src/setup/index.ts",
@@ -69048,15 +69120,15 @@
         },
         {
           "path": "src/setup/registry.ts",
-          "sha": "b992ba807370d91710612fe8690d06a0853b7482",
+          "sha": "6e37c3aef35f8e3bf0b04da11a67dbbd44185ece",
           "mode": "100644",
-          "size": 21729
+          "size": 23434
         },
         {
           "path": "src/setup/spawn-bin.ts",
-          "sha": "018416026381449c130b3b3bc7a726f492c89d39",
+          "sha": "f9b0c98843cc0b11e31c2210340833819f1b25f8",
           "mode": "100644",
-          "size": 6180
+          "size": 6283
         },
         {
           "path": "src/setup/vscode-gate.ts",
@@ -69072,51 +69144,51 @@
         },
         {
           "path": "stats.json",
-          "sha": "ac8c229a24279638e8451402faf9e0ccef0a1891",
+          "sha": "eb005b0d0627f461fb243e924345cc8c1b066327",
           "mode": "100644",
           "size": 75
         },
         {
           "path": "tests/0002-store.test.mjs",
-          "sha": "cb6d489ba64b8f2df573527fadc9f41d9f7923b5",
+          "sha": "056f6213ff322a3347c6b8d2bbdcfc3a7e964c43",
           "mode": "100644",
-          "size": 58035
+          "size": 64663
         },
         {
           "path": "tests/0007-identity.test.mjs",
-          "sha": "8caee868d8856c197ef3d39d84e6a84f16955cb7",
+          "sha": "55aaae095120fc401dc39462761d2f7d3b338665",
           "mode": "100644",
-          "size": 80477
+          "size": 84407
         },
         {
           "path": "tests/0007-mcp-server.test.mjs",
-          "sha": "2828095ebe5b8d01fbd56d6ee7bccd0d52e756c0",
+          "sha": "6dc436241a135f153c3c8a546198d4b473dda1be",
           "mode": "100644",
-          "size": 25044
+          "size": 35928
         },
         {
           "path": "tests/0008-enforcement.test.mjs",
-          "sha": "f447e151a436359fc6c2c26c5385653c4b9adb1d",
+          "sha": "f689e28740bffc78f517300db45741d6b9ab5bb8",
           "mode": "100644",
-          "size": 90637
+          "size": 95844
         },
         {
           "path": "tests/0009-compaction-memory.test.mjs",
-          "sha": "ca28e74c9d3eeaa6bce5e2dea8a82643afe5bf14",
+          "sha": "f99ef6a77d03429944bab27e7ced4cb162382fbc",
           "mode": "100644",
-          "size": 66685
+          "size": 74368
         },
         {
           "path": "tests/0010-doctor-upgrade.test.mjs",
-          "sha": "5c7317509fde96e41701ce93e22859e92158f231",
+          "sha": "db80edbec3aedbb56be94b3e7d99f9210f88edbc",
           "mode": "100644",
-          "size": 170244
+          "size": 208780
         },
         {
           "path": "tests/0011-v1-transition.test.mjs",
-          "sha": "65dce72432b7ddc427089527c542f61cd97445ef",
+          "sha": "c645b8d593c658d48423b311207f1428ecfbee13",
           "mode": "100644",
-          "size": 28621
+          "size": 36188
         },
         {
           "path": "tests/0012-live-harness.test.mjs",
@@ -69132,27 +69204,27 @@
         },
         {
           "path": "tests/0013-release-main.test.mjs",
-          "sha": "093be0001874c56622bccb7315ccec2b2b313f17",
+          "sha": "c465c5cb4d4ce316a64008e50ddce955f093e7b3",
           "mode": "100644",
-          "size": 64913
+          "size": 68952
         },
         {
           "path": "tests/0013-release-plan.test.mjs",
-          "sha": "c333e8cbafd76cf1f502d4c58249f907f976cb1e",
+          "sha": "136cc9ef5abb50264ee60a94eb20cc29bb17ec0a",
           "mode": "100644",
-          "size": 73665
+          "size": 73677
         },
         {
           "path": "tests/0014-repo-hygiene.test.mjs",
-          "sha": "604cb1a60c7702e0c49bcc4eb6ca82888390db22",
+          "sha": "3c47b14918a0d83fa5115ab27832f47b5ececf98",
           "mode": "100644",
-          "size": 175835
+          "size": 207902
         },
         {
           "path": "tests/0016-subagent.test.mjs",
-          "sha": "5cb81ebb1d0f0c10273c72e4f1c45de666ed6f53",
+          "sha": "5ea24ed782c212e0e7a7bc70992d89491b0e641d",
           "mode": "100644",
-          "size": 28941
+          "size": 44661
         },
         {
           "path": "tests/0017-v1-retention.test.mjs",
@@ -69162,21 +69234,21 @@
         },
         {
           "path": "tests/0018-build.test.mjs",
-          "sha": "85da7b8700e4802ee84d4311697abf32802989ca",
+          "sha": "cdbb31d7eed4c6c5c2dd39debefd86cd8f21b5b1",
           "mode": "100644",
-          "size": 95409
+          "size": 99285
         },
         {
           "path": "tests/0018-contracts.test.mjs",
-          "sha": "8842f95db2a85da90b0f353b93a78a2574f4271d",
+          "sha": "26d3204c199aae52bbab9b716f743a1d3e6c260a",
           "mode": "100644",
-          "size": 35080
+          "size": 35746
         },
         {
           "path": "tests/0019-cli.test.mjs",
-          "sha": "d524c410e31c0a8ed53da8f51a4b62662eebf6be",
+          "sha": "2ea53c4012863c5e505a737a3ca0171e3274cfff",
           "mode": "100644",
-          "size": 42830
+          "size": 43012
         },
         {
           "path": "tests/0019-host-config.test.mjs",
@@ -69186,15 +69258,15 @@
         },
         {
           "path": "tests/0019-setup-engine.test.mjs",
-          "sha": "2f4c549c32a40a7c2bad4d38ac72a965c573721b",
+          "sha": "4327227cadd37f7ad4dbc3edb401c7265cfac9c8",
           "mode": "100644",
-          "size": 95218
+          "size": 132831
         },
         {
           "path": "tests/0020-adapters.test.mjs",
-          "sha": "6e3150bb821d620582532081a0858e97c4c64dbb",
+          "sha": "a6ee6a8be18567311e128dac0c4db64c0995cd1e",
           "mode": "100644",
-          "size": 130272
+          "size": 134712
         },
         {
           "path": "tests/0020-fire-hook-config.test.mjs",
@@ -69203,16 +69275,22 @@
           "size": 35235
         },
         {
-          "path": "tests/0020-fire-plugin-ext.test.mjs",
-          "sha": "c45bd2447144eff9a484cdf053ec494c2488a7f3",
+          "path": "tests/0020-fire-omp.test.mjs",
+          "sha": "365c8e78725f910e797a90f6a97eb7abeab60cf5",
           "mode": "100644",
-          "size": 29449
+          "size": 13901
+        },
+        {
+          "path": "tests/0020-fire-plugin-ext.test.mjs",
+          "sha": "f709f8f9a5ebefa12972fc5f391fcff9f36e3a92",
+          "mode": "100644",
+          "size": 31402
         },
         {
           "path": "tests/0020-gates-pi-copilot-claude.test.mjs",
-          "sha": "32c26354c9924e2385750c85d87967abf3c644e0",
+          "sha": "7e0f2a763b82b015ef6fab8b67f7f252e82a9d26",
           "mode": "100644",
-          "size": 50925
+          "size": 62614
         },
         {
           "path": "tests/0020-gates-vscode-gemini-kiro.test.mjs",
@@ -69228,27 +69306,27 @@
         },
         {
           "path": "tests/0020-hooks-all.test.mjs",
-          "sha": "12dd49009316bcdc40630f0f2aa71a59ba10e087",
+          "sha": "251f6760d64d0f07ba26bfc66228a5aa2753a097",
           "mode": "100644",
-          "size": 46329
+          "size": 49377
         },
         {
           "path": "tests/0020-plugins.test.mjs",
-          "sha": "0dfb1b1f88facba96a7c754582b426c9e6e02f29",
+          "sha": "721cebb861d36c0b002a8865f95f1202baa8297e",
           "mode": "100644",
-          "size": 38863
+          "size": 67898
         },
         {
           "path": "tests/0021-cache-safety.test.mjs",
-          "sha": "196042852340d352a6d62cbe3b3fe73f795b0725",
+          "sha": "cd545388063e9ded5d5af04ba680a5df89c8440c",
           "mode": "100644",
-          "size": 27868
+          "size": 31816
         },
         {
           "path": "tests/0023-install-docs.test.mjs",
-          "sha": "292fce46b5ee59d2b02e07960472c5485c3e26ba",
+          "sha": "a47712fa1a0a024123091d057434708672063e88",
           "mode": "100644",
-          "size": 31362
+          "size": 34131
         },
         {
           "path": "tests/_lib/codex-fake.mjs",
@@ -69285,6 +69363,24 @@
           "sha": "238874cf141a5230a25ca885d271db1d571adc47",
           "mode": "100644",
           "size": 1340
+        },
+        {
+          "path": "tests/fixtures/fixed-on-main/main.log",
+          "sha": "24b6c7a29e9e3364690d31f755d03978d7b54d76",
+          "mode": "100644",
+          "size": 42678
+        },
+        {
+          "path": "tests/fixtures/fixed-on-main/subjects.txt",
+          "sha": "22ff9a0464b36eb8fa9ce54304b500e12cdee1c9",
+          "mode": "100644",
+          "size": 1059
+        },
+        {
+          "path": "tests/fixtures/fixed-on-main/tag-v2.1.10.txt",
+          "sha": "a79a6138b0d8d151a5e24d11a2c99992a1a06c68",
+          "mode": "100644",
+          "size": 3977
         },
         {
           "path": "tests/fixtures/host-schemas/claude-code.json",
@@ -69437,6 +69533,24 @@
           "size": 2045
         },
         {
+          "path": "tests/fixtures/issue-intake/1350.md",
+          "sha": "006c545316c857abd9affab57f290906bf661bb4",
+          "mode": "100644",
+          "size": 6872
+        },
+        {
+          "path": "tests/fixtures/issue-intake/1371.md",
+          "sha": "dd822429d73c86988da46c3efe5a7fca30ef4802",
+          "mode": "100644",
+          "size": 10606
+        },
+        {
+          "path": "tests/fixtures/issue-intake/1373.md",
+          "sha": "e5be3decd81603794fe7ddaa923b20aa60f7dd0c",
+          "mode": "100644",
+          "size": 3831
+        },
+        {
           "path": "tests/fixtures/parity/react-useeffect.html",
           "sha": "45f9856a9fdd73a0363bf2f9556eb8683533204c",
           "mode": "100644",
@@ -69456,15 +69570,15 @@
         },
         {
           "path": "tests/prd10-hook-fuzz.test.mjs",
-          "sha": "28baa1da372a23a7609512ca21abc46d7d9ec533",
+          "sha": "c0536d369b4a0112c873c0800f9198fd14315412",
           "mode": "100644",
-          "size": 29180
+          "size": 29219
         },
         {
           "path": "tests/prd10-hooks-runtime.test.mjs",
-          "sha": "d99b52a046d2c69518bac84ef649309b556e4d31",
+          "sha": "b5c4951002688fdc1fb2dfcec5a4d1a60121bd90",
           "mode": "100644",
-          "size": 166408
+          "size": 206221
         },
         {
           "path": "tests/prd12-stats-purge.test.mjs",
@@ -69474,15 +69588,15 @@
         },
         {
           "path": "tests/prd8-index-search.test.mjs",
-          "sha": "dbaee64dfe410b92db043b0158d1e521aeaf2244",
+          "sha": "b6218f4e15ea540d742f41a957db772cdf0b81a4",
           "mode": "100644",
-          "size": 189030
+          "size": 219889
         },
         {
           "path": "tests/prd9-sandbox.test.mjs",
-          "sha": "0718946d8a5420e999dc98fdb2c0ab7e13451aa9",
+          "sha": "f947b65dc0affd056a400fb55238cd7896751667",
           "mode": "100644",
-          "size": 69766
+          "size": 84128
         },
         {
           "path": "tsconfig.json",

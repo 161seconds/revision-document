@@ -46,11 +46,23 @@ export function readFirstPrompt(db: DbHandle, sessionId: string): string {
  * DECISIONS-r11 (B): recall candidates, newest first. This session's rows plus the same worktree's rows of
  * prior sessions (ADR-0009 §8 rule 2: always filter by the current worktree). Cost rows carry no text.
  */
-export function readRecallRows(db: DbHandle, sessionId: string, worktree: string, limit: number): JournalRow[] {
+export function readRecallRows(
+  db: DbHandle, sessionId: string, worktree: string, limit: number, maxSeq: number = Number.MAX_SAFE_INTEGER,
+): JournalRow[] {
   if (sessionId === "") return [];
+  // #1394: this session's rows after the latest compaction (seq > maxSeq) are still in the model's live context.
   return db.raw
-    .prepare("SELECT * FROM events WHERE kind <> 'cost' AND (session_id = ? OR worktree = ?) ORDER BY seq DESC LIMIT ?")
-    .all(sessionId, worktree, limit) as unknown as JournalRow[];
+    .prepare(
+      "SELECT * FROM events WHERE kind <> 'cost' AND ((session_id = ? AND seq <= ?) OR (worktree = ? AND session_id <> ?)) " +
+      "ORDER BY seq DESC LIMIT ?",
+    )
+    .all(sessionId, maxSeq, worktree, sessionId, limit) as unknown as JournalRow[];
+}
+
+/** #1394: the newest journal seq (0 for an empty journal); the recall boundary a compaction records. */
+export function readMaxSeq(db: DbHandle): number {
+  const row = db.raw.prepare("SELECT COALESCE(MAX(seq), 0) AS n FROM events").get() as { n: number };
+  return Number(row.n);
 }
 
 /** D-FU-GCH-2: true when this worktree holds at least one journal row written by this agent. */
@@ -61,4 +73,10 @@ export function hasAgentRows(db: DbHandle, worktree: string, agent: string): boo
 /** D-FU-GCH-2: true when this session already holds a journal row (so this is not its first turn). */
 export function hasSessionRows(db: DbHandle, sessionId: string): boolean {
   return db.raw.prepare("SELECT 1 FROM events WHERE session_id = ? LIMIT 1").get(sessionId) !== undefined;
+}
+
+/** #1396: newest journal seq of one session, or 0 when it has none. Keys the SessionStart(compact) marker per compaction. */
+export function lastSessionSeq(db: DbHandle, sessionId: string): number {
+  const row = db.raw.prepare("SELECT MAX(seq) AS m FROM events WHERE session_id = ?").get(sessionId) as { m: number | null } | undefined;
+  return row?.m ?? 0;
 }

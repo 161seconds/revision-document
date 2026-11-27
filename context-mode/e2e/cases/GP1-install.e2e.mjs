@@ -265,7 +265,7 @@ import { vscodeMcpFile } from "../harness/vscode-user-dir.mjs";
     assert.deepStrictEqual(normalize({ errorModuleNotFound }), loadGolden("adapter-bundle-static-imports"));
   });
 
-  // GP9/windows-ci-no-hang (#995) is proven by .github/workflows/ci.yml timeout-minutes: 20 (D-M7-CI-2)
+  // GP9/windows-ci-no-hang (#995) is proven by .github/workflows/ci.yml timeout-minutes: 30 (D-M7-CI-2, D-CI-TIMEOUT-30-1)
   // (checked by e2e/checks/ci-config.mjs), not by a case here.
   void RUN_BUNDLE;
 
@@ -389,9 +389,9 @@ import { vscodeMcpFile } from "../harness/vscode-user-dir.mjs";
   // Given the docs set, When each supported host is checked, Then each host has one install section.
   // Also pins the M6-R1 doc rules: README links each guide's #install anchor, the issue link goes to
   // the v2 bug form (ADR-0014), and no doc names a retired tool. Docs-only: needs no release-out/.
-  // e2e/ never imports src/: the host list is the 10 v2 agents (ADR-0015 row 4).
+  // e2e/ never imports src/: the host list is the 11 v2 agents (ADR-0015 row 4; omp per ADR-0026).
   const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const HOSTS = ["claude-code", "codex", "copilot-cli", "gemini", "kiro", "opencode", "pi", "qwen", "vscode", "zcode"];
+  const HOSTS = ["claude-code", "codex", "copilot-cli", "gemini", "kiro", "omp", "opencode", "pi", "qwen", "vscode", "zcode"];
   const RETIRED_TOOLS = ["ctx_fetch_and_index", "ctx_batch_execute"];
   const BUG_FORM = "https://github.com/mksglu/context-mode/issues/new?template=bug.yml";
   const DISCORD = "https://discord.gg/DCN9jUgN5v";
@@ -712,4 +712,40 @@ import { vscodeMcpFile } from "../harness/vscode-user-dir.mjs";
       }
     });
   }
+}
+
+// GP1: OpenCode 1.x setup with a user MCP server that never answers (#1362, D-OC1-LIST-2)
+{
+  // `opencode mcp list` connects every user server, so one server that never answers held setup's list check past
+  // its 10 s budget and setup FAILed "does not list context-mode (rolled back)". Setup reads `debug config --pure`
+  // now. Real opencode-ai 1.x from PATH (CI installs 1.19.5); skipped with no 1.x opencode there.
+  const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+  const CLI = path.join(REPO_ROOT, "release-out", "cli.mjs");
+  const version = (() => {
+    try { return execFileSync("opencode", ["--version"], { encoding: "utf8", timeout: 30000 }).trim(); } catch { return ""; }
+  })();
+  const skip = !version.startsWith("1.") ? `no opencode 1.x on PATH (${version || "none"})` : !existsSync(CLI) ? "no release-out/cli.mjs" : false;
+
+  test("[M6] GP1/opencode1-slow-mcp-server: setup PASSes in under 10 s next to a user MCP server that never answers (#1362)", { skip }, (t) => {
+    const root = mkdtempSync(path.join(tmpdir(), "cm-gp1-oc1-slow-"));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const home = path.join(root, "home");
+    const slow = path.join(root, "slow.mjs");
+    writeFileSync(slow, "setInterval(() => {}, 1000);\n"); // reads nothing, answers nothing
+    const cfg = path.join(home, ".config", "opencode");
+    mkdirSync(cfg, { recursive: true });
+    writeFileSync(path.join(cfg, "opencode.json"), JSON.stringify({ mcp: { slowsrv: { type: "local", command: [process.execPath, slow], enabled: true } } }, null, 2) + "\n");
+    const env = { ...process.env, HOME: home, USERPROFILE: home };
+    for (const k of ["XDG_CONFIG_HOME", "OPENCODE_CONFIG_DIR", "OPENCODE_CONFIG"]) delete env[k];
+    const t0 = Date.now();
+    let out = "";
+    let code = 0;
+    try { out = execFileSync(process.execPath, [CLI, "setup", "--yes", "--agents", "opencode"], { cwd: root, env, encoding: "utf8", timeout: 60000, stdio: ["ignore", "pipe", "pipe"] }); }
+    catch (e) { code = e.status ?? 1; out = `${e.stdout}${e.stderr}`; }
+    const ms = Date.now() - t0;
+    assert.equal(code, 0, out);
+    assert.ok(ms < 10000, `setup took ${ms} ms`);
+    const doc = JSON.parse(readFileSync(path.join(cfg, "opencode.json"), "utf8"));
+    assert.ok(doc.mcp["context-mode"] && doc.mcp.slowsrv, JSON.stringify(doc));
+  });
 }

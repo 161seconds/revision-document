@@ -9,8 +9,12 @@ import { mkdtempSync, mkdirSync, rmSync, realpathSync, readFileSync } from "node
 import { tmpdir, homedir } from "node:os";
 import { join } from "node:path";
 import piExtension from "../src/entries/pi.ts";
+import * as piEntry from "../src/entries/pi.ts";
 import { resolveProject } from "../src/core/project/resolve.ts";
+import { openDb } from "../src/core/store/db.ts";
+import { readSessionEvents } from "../src/core/journal/read.ts";
 import { INSTRUCTIONS } from "../src/entries/server.ts";
+import { RESUME_HINT } from "../src/core/contracts/constants.ts";
 import { setTimeout as sleep } from "node:timers/promises";
 
 // Serial: opencode-ported, pi-ops-ported and pi-search-whole-line set process.env.HOME in before()/after(); a concurrent describe would see the wrong HOME.
@@ -98,7 +102,8 @@ describe("ADR-0020 plugins", () => {
       const dispose = await opencodePlugin.default.setup(f.ctx);
       assert.equal(typeof dispose, "function");
       for (const n of ["execute.before", "execute.after"]) assert.equal(typeof f.hooks.tool[n], "function", n);
-      for (const n of ["prompt", "context", "compaction"]) assert.equal(typeof f.hooks.session[n], "function", n);
+      // "generate" (#1369): @opencode/core 2.2.6 sends session.generate (cache warming) through its own hook kind.
+      for (const n of ["prompt", "context", "generate", "compaction"]) assert.equal(typeof f.hooks.session[n], "function", n);
       assert.deepEqual(f.subs.map((s) => s.types), [["session.step.ended"]]);
       await dispose();
     });
@@ -182,12 +187,13 @@ describe("ADR-0020 plugins", () => {
       assert.deepEqual(asked.map((a) => [a.permission, a.patterns]), [["ctx_execute", ["shell"]], ["bash", ["rm -rf build"]]]);
     });
 
-    test("execute.before: the shell tool is routed like every host (curl denied by throwing the ctx_ redirect), webfetch is denied, ls passes", async () => {
+    test("execute.before: the shell tool is routed like every replace host (curl runs, execute.after replaces a large result), webfetch is denied, ls passes", async () => {
       const f = fakeCtx(tmpdir());
       const dispose = await opencodePlugin.default.setup(f.ctx);
       const before = f.hooks.tool["execute.before"];
       const call = (tool, input) => ({ tool, sessionID: "ses_b", agent: "build", messageID: "msg_1", id: "call_1", input });
-      await assert.rejects(before(call(SHELL, { command: "curl https://example.com" })), (e) => e instanceof Error && e.message.includes("ctx_"));
+      // D-M7-RR-1 + D-R54-OC-REPLACE-1 (#1347): a replace row runs the main agent's curl; no size-guess deny.
+      await before(call(SHELL, { command: "curl https://example.com" }));
       await assert.rejects(before(call("webfetch", { url: "https://example.com" })), (e) => e instanceof Error && e.message !== "");
       await before(call(SHELL, { command: "ls" }));
       await dispose();
@@ -218,6 +224,96 @@ describe("ADR-0020 plugins", () => {
       await f.hooks.session.prompt({ sessionID: "ses_c", prompt: { text: "hello" } });
       await f.hooks.session.compaction({ sessionID: "ses_c", system: [], messages: [], tools: {}, options: {} });
       await dispose();
+    });
+
+    // #1348, ADR-0016 l.23 (OpenCode 2 tool set from the agent at spawn time) and l.91 (D-SUB-NOCTX-1): the 2.x event carries
+    // `agent`, and ctx.agent.get returns Agent.Info {mode, permissions:[{action, resource, effect}]} (@opencode/plugin 2.2.6
+    // promise/agent.d.ts, client AgentGetOutput {location, data}). Red on main f681b458: the bridge drops i.agent, so a
+    // subagent whose permissions deny every ctx_* tool gets "Tool: ctx_index, then ctx_search" and cannot do its task.
+    // #1347, ADR-0016 l.49 + 12-plugins §4.5 step 3: the 2.x host reads afterEvent.result back after the hook (core
+    // persistent-pty-fre27jqt.js:124-139); red on main: a 278889-byte result reaches the model unchanged.
+    describe("agent tool set and in-process replace (#1348, #1347)", () => {
+      const NO_CTX = [{ action: "ctx_*", resource: "*", effect: "deny" }, { action: "webfetch", resource: "*", effect: "allow" }];
+      const agents = {
+        "arch-review": { id: "arch-review", mode: "subagent", permissions: NO_CTX },
+        "ctx-helper": { id: "ctx-helper", mode: "subagent", permissions: [{ action: "*", resource: "*", effect: "allow" }] },
+        build: { id: "build", mode: "primary", permissions: NO_CTX },
+      };
+      let home, oldEnv;
+      before(() => {
+        home = mkdtempSync(join(tmpdir(), "cm-oc2-agent-"));
+        oldEnv = { HOME: process.env.HOME, XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME, XDG_DATA_HOME: process.env.XDG_DATA_HOME };
+        process.env.HOME = home; process.env.XDG_CONFIG_HOME = join(home, ".config"); process.env.XDG_DATA_HOME = join(home, ".local", "share");
+      });
+      after(() => {
+        for (const [k, v] of Object.entries(oldEnv)) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
+        rmSync(home, { recursive: true, force: true });
+      });
+      function agentCtx(directory) {
+        const f = fakeCtx(directory);
+        f.ctx.agent = { get: async ({ agentID }) => ({ location: { directory }, data: agents[agentID] }) };
+        return f;
+      }
+      const ev = (tool, agent, input) => ({ tool, sessionID: "ses_ag", agent, messageID: "msg_1", id: "call_1", input });
+
+      test("#1348: a subagent whose permissions deny every ctx_* tool runs webfetch; the deny names no tool it lacks", async () => {
+        const f = agentCtx(mkdtempSync(join(home, "p-")));
+        const dispose = await opencodePlugin.default.setup(f.ctx);
+        await f.hooks.tool["execute.before"](ev("webfetch", "arch-review", { url: "https://example.com/" }));
+        await dispose();
+      });
+
+      test("#1348: a subagent that has the ctx_* tools keeps the webfetch redirect (case A)", async () => {
+        const f = agentCtx(mkdtempSync(join(home, "p-")));
+        const dispose = await opencodePlugin.default.setup(f.ctx);
+        await assert.rejects(f.hooks.tool["execute.before"](ev("webfetch", "ctx-helper", { url: "https://example.com/" })), (e) => e.message.includes("ctx_"));
+        await dispose();
+      });
+
+      test("#1348: a primary agent and a call with no agent keep the webfetch redirect", async () => {
+        const f = agentCtx(mkdtempSync(join(home, "p-")));
+        const dispose = await opencodePlugin.default.setup(f.ctx);
+        await assert.rejects(f.hooks.tool["execute.before"](ev("webfetch", "build", { url: "https://example.com/" })), (e) => e.message.includes("ctx_"));
+        await assert.rejects(f.hooks.tool["execute.before"](ev("webfetch", undefined, { url: "https://example.com/" })), (e) => e.message.includes("ctx_"));
+        await dispose();
+      });
+
+      test("#1347: a large completed shell result is replaced in result.content; output and metadata stay", async () => {
+        const f = agentCtx(mkdtempSync(join(home, "p-")));
+        const dispose = await opencodePlugin.default.setup(f.ctx);
+        const big = Array.from({ length: 4000 }, (_, i) => `commit ${i.toString(16).padStart(40, "0")} fix thing number ${i}`).join("\n");
+        const a = { ...ev(SHELL, "build", { command: "git log" }), status: "completed", result: { content: [{ type: "text", text: big }], output: { exit: 0 }, metadata: { m: 1 } } };
+        await f.hooks.tool["execute.after"](a);
+        const text = a.result.content.map((c) => c.text).join("");
+        assert.ok(text.length < 8000, "the model gets " + text.length + " bytes, not " + big.length);
+        assert.ok(text.includes("ctx_search"), text.slice(0, 300));
+        assert.deepEqual(a.result.output, { exit: 0 });
+        assert.deepEqual(a.result.metadata, { m: 1 });
+        await dispose();
+      });
+
+      test("#1347: a small result and an error result stay as the host made them", async () => {
+        const f = agentCtx(mkdtempSync(join(home, "p-")));
+        const dispose = await opencodePlugin.default.setup(f.ctx);
+        const small = { ...ev(SHELL, "build", { command: "git status" }), status: "completed", result: { content: [{ type: "text", text: "clean" }] } };
+        await f.hooks.tool["execute.after"](small);
+        assert.deepEqual(small.result.content, [{ type: "text", text: "clean" }]);
+        const err = { ...ev(SHELL, "build", { command: "x" }), id: "call_2", status: "error", error: { _tag: "Tool.Error", message: "boom ".repeat(3000) } };
+        await f.hooks.tool["execute.after"](err);
+        assert.equal(err.result, undefined);
+        assert.equal(err.error.message, "boom ".repeat(3000));
+        await dispose();
+      });
+
+      test("#1347: OpenCode 1.19 tool.execute.after replaces output.output (the host returns that object to the model)", async () => {
+        const dir = mkdtempSync(join(home, "p-"));
+        const hooks = await opencodePlugin.default.server({ directory: dir });
+        const big = "line lorem ipsum dolor sit amet\n".repeat(6500);
+        const out = { title: "git log", metadata: {}, output: big };
+        await hooks["tool.execute.after"]({ tool: "bash", sessionID: "ses_l", callID: "c1", args: { command: "git log" } }, out);
+        assert.ok(out.output.length < 8000, "the model gets " + out.output.length + " bytes");
+        assert.ok(out.output.includes("ctx_search"), out.output.slice(0, 300));
+      });
     });
   });
 
@@ -279,11 +375,9 @@ describe("ADR-0020 plugins", () => {
         hooks["tool.execute.before"]({ tool: "webfetch", sessionID: "s-block", callID: "c1" }, { args: { url: "https://example.com" } }),
         (err) => err instanceof Error && err.message !== "",
       );
-      // D-HF-OPENCODE-SHELL-1: the row lists shell ["bash"], so an inline HTTP call is denied like on every other host.
-      await assert.rejects(
-        hooks["tool.execute.before"]({ tool: "bash", sessionID: "s-block", callID: "c2" }, { args: { command: "curl https://example.com" } }),
-        (err) => err instanceof Error && err.message.includes("ctx_"),
-      );
+      // D-HF-OPENCODE-SHELL-1: the row lists shell ["bash"], so the user's own Bash rules apply. A curl runs on this
+      // replace row and execute.after replaces a large result (D-M7-RR-1, D-R54-OC-REPLACE-1, #1347).
+      await hooks["tool.execute.before"]({ tool: "bash", sessionID: "s-block", callID: "c2" }, { args: { command: "curl https://example.com" } });
       await hooks["tool.execute.before"]({ tool: "bash", sessionID: "s-block", callID: "c3" }, { args: { command: "ls" } });
     });
 
@@ -528,6 +622,24 @@ describe("ADR-0020 plugins", () => {
       assert.ok(out.systemPrompt.startsWith("base"), "the host prompt stays first");
     });
 
+    // T14 / D-OMP-TOOLS-1 (ADR-0026 M3): OMP lists a tool as a top-level tool only with loadMode "essential"
+    // (OMP docs/extensions.md:826); Pi ignores the field. Every other field keeps the fea7780d shape.
+    test("before_agent_start: all 9 ctx_* tools register with loadMode essential, other fields unchanged (OMP M3, T14)", async () => {
+      const { pi, handlers, tools } = fakePi();
+      piExtension(pi);
+      await handlers.get("before_agent_start")({ systemPrompt: "base" }, ctxFor("s-t14"));
+      assert.equal(tools.size, 9);
+      for (const [name, t] of tools) {
+        assert.equal(t.loadMode, "essential", name);
+        const { loadMode, execute, ...rest } = t;
+        assert.equal(typeof execute, "function", name);
+        assert.deepEqual(Object.keys(rest), ["name", "label", "description", "parameters"], name);
+        assert.equal(rest.label, name);
+        assert.equal(typeof rest.description, "string");
+        assert.equal(rest.parameters.type, "object", name);
+      }
+    });
+
     // D-CACHE-PI-1 replaces A24's "a second turn returns nothing": Pi 0.73.1 resets the system prompt to base on
     // a turn without systemPrompt (agent-session.js:791-797), so "nothing" dropped INSTRUCTIONS on turn 2 and
     // broke the cache. Pi replaces, never appends, so the prompt the model sees must hold INSTRUCTIONS exactly once
@@ -541,6 +653,29 @@ describe("ADR-0020 plugins", () => {
       assert.equal(first.systemPrompt.split(INSTRUCTIONS).length - 1, 1, "INSTRUCTIONS exactly once on turn 1");
       assert.equal(second.systemPrompt, first.systemPrompt, "turn 2 system prompt is byte-identical to turn 1");
       assert.equal(second.systemPrompt.split(INSTRUCTIONS).length - 1, 1, "INSTRUCTIONS exactly once on turn 2");
+    });
+
+    // #1384: Pi >= 1.5 (runner.js:1154-1155) turns a returned systemPrompt into forceSystemPrompt, and a forced
+    // prompt renders no sections (system-prompt.js:125-129), so builtin:mcp's <mcp_servers> section is dropped.
+    // On the sections channel our payload is one named section and the return carries no systemPrompt.
+    test("before_agent_start: on Pi >= 1.5 the payload goes into a named section and no systemPrompt is returned, so other sections stay (#1384)", async () => {
+      const { pi, handlers } = fakePi();
+      piExtension(pi);
+      const sections = { mcp_servers: "<server name=\"codemode\"/>" };
+      const event = { type: "before_agent_start", prompt: "p", systemPrompt: "base", systemPromptOptions: { sections } };
+      const out = await handlers.get("before_agent_start")(event, ctxFor("s-1384"));
+      assert.equal(out?.systemPrompt, undefined, "no systemPrompt, so Pi does not force the prompt");
+      assert.equal(sections.mcp_servers, "<server name=\"codemode\"/>", "another extension's section stays as it was");
+      assert.equal(typeof sections.context_mode, "string", "the payload is a named section");
+      assert.equal(sections.context_mode.split(INSTRUCTIONS).length - 1, 1, "INSTRUCTIONS exactly once in the section");
+    });
+
+    test("before_agent_start: a host with no sections channel (Pi 0.73.1, OMP) still gets base + payload as systemPrompt (#1384)", async () => {
+      const { pi, handlers } = fakePi();
+      piExtension(pi);
+      const out = await handlers.get("before_agent_start")({ type: "before_agent_start", prompt: "p", systemPrompt: "base" }, ctxFor("s-1384b"));
+      assert.equal(typeof out.systemPrompt, "string");
+      assert.ok(out.systemPrompt.startsWith("base\n\n") && out.systemPrompt.includes(INSTRUCTIONS));
     });
 
     test("before_agent_start: a registerTool failure is retried on the next turn (#1098)", async () => {
@@ -633,6 +768,106 @@ describe("ADR-0020 plugins", () => {
     });
   });
 
+  describe("ADR-0020 pi plugin tool_result metadata and excludeTools (#1352)", () => {
+    // #1352 (xz-dev, hoho51): a large extension result (fetch_content, session_search) came back with `details`
+    // overwritten by {text} and with `structuredContent` dropped, so the tool lost its continuation id (responseId).
+    // ADR-0016:48 Pi row: "set `content` AND `structuredContent` together post-call (`tool_result`)". Pi >= 1.4
+    // drops structuredContent on a content-only patch (types.d.ts "Return it along with `content` to keep it") and
+    // keeps `details` when the patch omits it. contextMode.excludeTools in Pi settings leaves a named tool whole.
+    let root;
+    let repo;
+    let oldHome;
+
+    before(() => {
+      root = realpathSync(mkdtempSync(join(tmpdir(), "cm-pi-1352-")));
+      repo = join(root, "repo");
+      mkdirSync(repo);
+      execFileSync("git", ["init", "-q", repo]);
+      oldHome = process.env.HOME;
+      process.env.HOME = root; process.env.USERPROFILE = root;
+    });
+
+    after(() => {
+      process.env.HOME = oldHome;
+      try { rmSync(root, { recursive: true, force: true, maxRetries: 3 }); } catch (err) { if (process.platform !== "win32") throw err; }
+    });
+
+    const PAGE = "# Requested page\n" + Array.from({ length: 300 }, (_, i) => "Section " + i + ": a distinct paragraph about the requested page and its source " + i + ".\n").join("");
+    const META = { responseId: "stored-response-for-continuation", successful: 1 };
+
+    function resultEvent(toolName, id, extra = {}) {
+      return {
+        toolName, toolCallId: id, input: { url: "https://example.invalid/" + id },
+        content: [{ type: "text", text: PAGE }], details: { ...META }, structuredContent: { ...META }, isError: false, ...extra,
+      };
+    }
+
+    async function start(sid, getSettings) {
+      const handlers = new Map();
+      const pi = { on: (n, f) => handlers.set(n, f), registerTool() {} };
+      if (getSettings !== undefined) pi.getSettings = getSettings;
+      piExtension(pi);
+      const ctx = { cwd: repo, sessionManager: { getSessionId: () => sid } };
+      await handlers.get("before_agent_start")({ systemPrompt: "" }, ctx);
+      return (ev) => handlers.get("tool_result")(ev, ctx);
+    }
+
+    // The journal write is detached: wait until the row lands.
+    async function rowsOf(sid, kind) {
+      const db = await openDb(resolveProject("pi", { env: process.env, argv: [], cwd: repo, piCwd: repo }));
+      let rows = [];
+      for (let i = 0; i < 100; i++) {
+        rows = readSessionEvents(db, sid, kind);
+        if (rows.length > 0) break;
+        await sleep(20);
+      }
+      return rows;
+    }
+
+    test("[#1352] a large replace keeps the tool's details (no details key) and returns its structuredContent", async () => {
+      const toolResult = await start("pi-1352-a");
+      const out = await toolResult(resultEvent("fetch_content", "a1"));
+      assert.ok(out && Buffer.byteLength(out.content[0].text) < Buffer.byteLength(PAGE) / 2, "the content is replaced");
+      assert.equal(Object.hasOwn(out, "details"), false, "details stays as the tool made it: " + JSON.stringify(out.details));
+      assert.deepEqual(out.structuredContent, META, "structuredContent goes back with the new content, so Pi keeps it");
+      const plain = await toolResult(resultEvent("fetch_content", "a2", { structuredContent: undefined }));
+      assert.equal(Object.hasOwn(plain, "structuredContent"), false, "no structuredContent in, none out");
+    });
+
+    test("[#1352] excludeTools: a listed tool's 23 KB result stays whole, a cmd row is still journaled, another tool is still replaced", async () => {
+      const toolResult = await start("pi-1352-b", () => ({ contextMode: { excludeTools: ["fetch_content", "bash"] } }));
+      assert.equal(await toolResult(resultEvent("fetch_content", "b1")), undefined, "fetch_content is left as the host made it");
+      const bash = { toolName: "bash", toolCallId: "b2", input: { command: "cat page.md" }, content: [{ type: "text", text: PAGE }], isError: false };
+      assert.equal(await toolResult(bash), undefined, "bash is listed, so it is left whole too");
+      assert.equal((await rowsOf("pi-1352-b", "cmd")).length, 1, "the kept bash call still has its journal row");
+      const other = await toolResult(resultEvent("web_search", "b3"));
+      assert.ok(other && Buffer.byteLength(other.content[0].text) < Buffer.byteLength(PAGE) / 2, "a tool not on the list is still replaced");
+    });
+
+    test("[#1352] missing, empty or malformed excludeTools settings, and a Pi with no getSettings, give the default replace", async () => {
+      const variants = [
+        undefined,
+        () => ({}),
+        () => ({ contextMode: null }),
+        () => ({ contextMode: { excludeTools: [] } }),
+        () => ({ contextMode: { excludeTools: "fetch_content" } }),
+        () => ({ contextMode: { excludeTools: [1, null, { name: "fetch_content" }] } }),
+        () => { throw new Error("Extension runtime not initialized"); },
+      ];
+      for (const [i, getSettings] of variants.entries()) {
+        const toolResult = await start("pi-1352-c" + i, getSettings);
+        const out = await toolResult(resultEvent("fetch_content", "c" + i));
+        assert.ok(out && Buffer.byteLength(out.content[0].text) < Buffer.byteLength(PAGE) / 2, "variant " + i + " replaces");
+      }
+    });
+
+    test("[#1352] an excluded tool's large error result stays unchanged and is journaled as toolerr", async () => {
+      const toolResult = await start("pi-1352-d", () => ({ contextMode: { excludeTools: ["fetch_content"] } }));
+      assert.equal(await toolResult(resultEvent("fetch_content", "d1", { isError: true })), undefined);
+      assert.equal((await rowsOf("pi-1352-d", "toolerr")).length, 1, "the error row is written");
+    });
+  });
+
   describe("ADR-0020 pi plugin search whole line", () => {
     // Live pi failure (hooks-fast pi round 1): a 254920 B log replaced through tool_result, then ctx_search
     // ["FATAL"] returned "... FATAL disk controller panic" without " code=E-7731-ZETA". The replace path stored
@@ -689,6 +924,260 @@ describe("ADR-0020 plugins", () => {
       }
       assert.ok(text.includes(FATAL), "the whole FATAL line comes back:\n" + text);
       assert.equal(text.split(FATAL).length - 1, 1, "one hit for one matching line:\n" + text);
+    });
+  });
+
+  describe("ADR-0026 OMP entry (#1332)", () => {
+    // OMP >= 14.7.0 sends before_agent_start systemPrompt as string[] (runner.ts:2682-2686); a string return replaced
+    // every block (#1332). D-OMP-PROMPT-1: an array gets our payload as its last block, once; a string keeps the
+    // fea7780d bytes (Pi, Pi-Bolt, OMP < 14.7.0). The shape picks the return form, so one helper serves both entries.
+    let root;
+    let repo;
+    let oldHome;
+    let n = 0;
+
+    before(() => {
+      root = realpathSync(mkdtempSync(join(tmpdir(), "cm-omp-prompt-")));
+      repo = join(root, "repo");
+      mkdirSync(repo);
+      execFileSync("git", ["init", "-q", repo]);
+      oldHome = process.env.HOME;
+      process.env.HOME = root; process.env.USERPROFILE = root;
+    });
+
+    after(() => {
+      process.env.HOME = oldHome;
+      try { rmSync(root, { recursive: true, force: true, maxRetries: 3 }); } catch (err) { if (process.platform !== "win32") throw err; }
+    });
+
+    // A fresh instance and session per test: the first delivery is INSTRUCTIONS plus the one resume hint.
+    function start(cwd = repo) {
+      const handlers = new Map();
+      piExtension({ on: (name, fn) => handlers.set(name, fn), registerTool() {} });
+      const ctx = { cwd, sessionManager: { getSessionId: () => "omp-prompt-" + ++n } };
+      return { ctx, run: (ev) => handlers.get(ev.type)(ev, ctx) };
+    }
+    const turn = (systemPrompt) => ({ type: "before_agent_start", systemPrompt });
+    const FIRST = INSTRUCTIONS + "\n\n" + RESUME_HINT.split("{prefix}").join("");
+    const once = (blocks, part) => blocks.join("\n").split(part).length - 1;
+
+    // Hook failure seam: a project that no longer resolves (an empty cwd -> NO_PROJECT; a missing dir resolves to
+    // its nearest existing parent since D-1409-MISSING-CWD-1) makes handleHook write its stderr line; a throwing
+    // stderr makes that line throw out of handleHook, which is the entry's "hook throws" path.
+    async function withThrowingHook(fn) {
+      const write = process.stderr.write;
+      process.stderr.write = () => { throw new Error("hook failed"); };
+      try { return await fn(); } finally { process.stderr.write = write; }
+    }
+
+    test("[T1] array: every OMP block stays, in order, and the payload is the last block, once", async () => {
+      const base = ["BASE", "<project-context>AGENTS</project-context>", "OTHER"];
+      const out = await start().run(turn(base));
+      assert.ok(Array.isArray(out.systemPrompt), "an array comes back as an array");
+      assert.equal(out.systemPrompt.length, 4);
+      assert.deepEqual(out.systemPrompt.slice(0, 3), base);
+      assert.equal(out.systemPrompt[3], FIRST);
+      assert.equal(once(out.systemPrompt, INSTRUCTIONS), 1, "INSTRUCTIONS once");
+    });
+
+    test("[T2] string: the bytes equal the fea7780d output (Pi and Pi-Bolt golden)", async () => {
+      assert.equal((await start().run(turn("base"))).systemPrompt, "base\n\n" + FIRST);
+      assert.equal((await start().run(turn(""))).systemPrompt, FIRST);
+      assert.equal((await start().run({ type: "before_agent_start" })).systemPrompt, FIRST, "absent: the payload alone");
+    });
+
+    test("[T3] array, two turns, same base: the same output bytes (D-CACHE-PI-1)", async () => {
+      const s = start();
+      const first = await s.run(turn(["BASE", "OTHER"]));
+      const second = await s.run(turn(["BASE", "OTHER"]));
+      assert.deepEqual(second.systemPrompt, first.systemPrompt);
+      assert.equal(JSON.stringify(second.systemPrompt), JSON.stringify(first.systemPrompt));
+    });
+
+    test("[T4] array, the hook throws after the first delivery: base blocks plus the same payload", async () => {
+      const own = join(root, "repo-t4");
+      mkdirSync(own);
+      execFileSync("git", ["init", "-q", own]);
+      const s = start(own);
+      const first = await s.run(turn(["BASE"]));
+      s.ctx.cwd = "";
+      const out = await withThrowingHook(() => s.run(turn(["BASE", "MORE"])));
+      assert.deepEqual(out.systemPrompt, ["BASE", "MORE", first.systemPrompt[1]]);
+    });
+
+    test("[T5] array, the hook throws before the first delivery: {} so OMP keeps its own array", async () => {
+      const out = await withThrowingHook(() => start("").run(turn(["BASE"])));
+      assert.deepEqual(out, {});
+    });
+
+    test("[T6] array, compact turn: base kept, payload is INSTRUCTIONS only, no resume hint (O2a)", async () => {
+      const s = start();
+      await s.run(turn(["BASE"]));
+      assert.equal(await s.run({ type: "session_compact" }), undefined);
+      const out = await s.run(turn(["BASE", "<summary>after compact</summary>"]));
+      assert.deepEqual(out.systemPrompt, ["BASE", "<summary>after compact</summary>", INSTRUCTIONS]);
+    });
+
+    test("[T7] empty array: [payload]", async () => {
+      assert.deepEqual((await start().run(turn([]))).systemPrompt, [FIRST]);
+    });
+
+    // D-OMP-ENTRY-1: one factory, the agent id comes from the entry. omp/index.js calls hostExtension(pi, "omp");
+    // the Pi entry is hostExtension(pi, "pi"). PI_CODING_AGENT_DIR and PI_CONFIG_DIR never pick the id.
+    function hosted(agent, sid) {
+      const handlers = new Map();
+      piEntry.hostExtension({ on: (name, fn) => handlers.set(name, fn), registerTool() {} }, agent);
+      const ctx = { cwd: repo, sessionManager: { getSessionId: () => sid } };
+      return (ev) => handlers.get(ev.type)?.(ev, ctx);
+    }
+    async function promptRows(sid) {
+      const db = await openDb(resolveProject("pi", { env: process.env, argv: [], cwd: repo, piCwd: repo }));
+      let rows = [];
+      for (let i = 0; i < 100 && rows.length === 0; i++) {
+        rows = readSessionEvents(db, sid, "prompt");
+        if (rows.length === 0) await sleep(20);
+      }
+      return rows;
+    }
+    async function stderrOf(fn) {
+      const write = process.stderr.write;
+      let text = "";
+      process.stderr.write = (chunk) => { text += String(chunk); return true; };
+      try { await fn(); } finally { process.stderr.write = write; }
+      return text;
+    }
+    async function withPiEnv(fn) {
+      const keep = { a: process.env.PI_CODING_AGENT_DIR, b: process.env.PI_CONFIG_DIR };
+      process.env.PI_CODING_AGENT_DIR = join(root, ".omp", "agent");
+      process.env.PI_CONFIG_DIR = ".omp";
+      try { return await fn(); } finally {
+        if (keep.a === undefined) delete process.env.PI_CODING_AGENT_DIR; else process.env.PI_CODING_AGENT_DIR = keep.a;
+        if (keep.b === undefined) delete process.env.PI_CONFIG_DIR; else process.env.PI_CONFIG_DIR = keep.b;
+      }
+    }
+
+    test("[T9] the OMP entry hands handleHook omp; the Pi entry (default export) hands it pi", async () => {
+      assert.equal(typeof piEntry.hostExtension, "function");
+      const pi = hosted("pi", "omp-t9-pi");
+      await pi(turn("base"));
+      await pi({ type: "input", text: "hello pi" });
+      assert.deepEqual((await promptRows("omp-t9-pi")).map((r) => r.agent), ["pi"]);
+      // D-OMP-ROW-1 (M4): the omp AgentId writes its own rows.
+      const omp = hosted("omp", "omp-t9-omp");
+      await omp(turn(["BASE"]));
+      await omp({ type: "input", text: "hello omp" });
+      assert.deepEqual((await promptRows("omp-t9-omp")).map((r) => r.agent), ["omp"]);
+    });
+
+    test("[T10] PI_CODING_AGENT_DIR and PI_CONFIG_DIR set: the Pi entry stays pi, the OMP entry stays omp", async () => {
+      await withPiEnv(async () => {
+        const pi = hosted("pi", "omp-t10-pi");
+        await pi(turn("base"));
+        await pi({ type: "input", text: "hello pi" });
+        const omp = hosted("omp", "omp-t10-omp");
+        await omp({ type: "input", text: "x" });
+      });
+      assert.deepEqual((await promptRows("omp-t10-pi")).map((r) => r.agent), ["pi"]);
+      assert.deepEqual((await promptRows("omp-t10-omp")).map((r) => r.agent), ["omp"]);
+      // Default export with the env set: still pi.
+      await withPiEnv(async () => {
+        const handlers = new Map();
+        piExtension({ on: (name, fn) => handlers.set(name, fn), registerTool() {} });
+        const ctx = { cwd: repo, sessionManager: { getSessionId: () => "omp-t10-default" } };
+        await handlers.get("before_agent_start")({ systemPrompt: "base" }, ctx);
+        await handlers.get("input")({ text: "hi" }, ctx);
+      });
+      assert.deepEqual((await promptRows("omp-t10-default")).map((r) => r.agent), ["pi"]);
+    });
+
+    // D-OMP-TURN-1 (O2c): OMP re-runs before_agent_start in one prompt when its base changed during the call
+    // (agent-session.ts:9413-9432). A re-run is the same event.prompt with no input or agent_end in between.
+    // Both entries write prompt rows (D-OMP-ROW-1, M4); the turn numbers show one turn per prompt.
+    test("[T8] a re-run in one prompt with a grown base: new base + payload once, one turn counted", async () => {
+      for (const agent of ["pi", "omp"]) {
+        const sid = "omp-t8-" + agent;
+        const run = hosted(agent, sid);
+        let first;
+        let second;
+        await stderrOf(async () => {
+          await run({ type: "input", text: "p1" });
+          first = await run({ type: "before_agent_start", prompt: "p1", systemPrompt: ["BASE"] });
+          second = await run({ type: "before_agent_start", prompt: "p1", systemPrompt: ["BASE", "TOOLS"] });
+          await run({ type: "agent_end" });
+          await run({ type: "input", text: "p2" });
+        });
+        const payload = first.systemPrompt[1];
+        assert.deepEqual(second.systemPrompt, ["BASE", "TOOLS", payload], agent + ": the new base, then the payload");
+        assert.equal(once(second.systemPrompt, INSTRUCTIONS), 1, agent + ": INSTRUCTIONS once");
+        assert.deepEqual((await promptRows(sid)).map((r) => [r.agent, r.turn]), [[agent, 1], [agent, 2]], agent + ": prompt 2 is turn 2");
+      }
+    });
+
+    test("[T11] the OMP entry registers the 9 tools at load; the Pi entry in the first before_agent_start", async () => {
+      for (const [agent, atLoad] of [["omp", 9], ["pi", 0]]) {
+        const names = [];
+        const handlers = new Map();
+        piEntry.hostExtension({ on: (name, fn) => handlers.set(name, fn), registerTool: (t) => names.push(t.name) }, agent);
+        assert.equal(names.length, atLoad, agent + " at load");
+        const ctx = { cwd: repo, sessionManager: { getSessionId: () => "omp-t11-" + agent } };
+        await stderrOf(() => handlers.get("before_agent_start")({ prompt: "p", systemPrompt: ["BASE"] }, ctx));
+        await stderrOf(() => handlers.get("before_agent_start")({ prompt: "p", systemPrompt: ["BASE", "TOOLS"] }, ctx));
+        assert.equal(names.length, 9, agent + ": 9 tools, each once");
+        assert.equal(new Set(names).size, 9);
+      }
+      const names = [];
+      piExtension({ on() {}, registerTool: (t) => names.push(t.name) });
+      assert.equal(names.length, 0, "the Pi default export registers nothing at load");
+    });
+
+    test("[T12] two prompts: turns 1 and 2 on both entries, also with the same prompt text", async () => {
+      for (const agent of ["pi", "omp"]) {
+        const sid = "omp-t12-" + agent;
+        const run = hosted(agent, sid);
+        await stderrOf(async () => {
+          for (const end of [true, false]) {
+            await run({ type: "input", text: "continue" });
+            await run({ type: "before_agent_start", prompt: "continue", systemPrompt: ["BASE"] });
+            if (end) await run({ type: "agent_end" });
+          }
+        });
+        assert.deepEqual((await promptRows(sid)).map((r) => [r.agent, r.turn]), [[agent, 1], [agent, 2]], agent);
+      }
+    });
+
+    // D-OMP-FILTER-1 (O10): OMP has no getSettings. contextMode.excludeTools comes from api.pi.settings, project
+    // over global, read on each tool_result, never at load. No settings or a bad value gives []. Pi reads getSettings.
+    test("[T13] OMP entry: contextMode.excludeTools from api.pi.settings per call; no settings -> []", async () => {
+      const S = (list) => ({ contextMode: { excludeTools: list } });
+      const omp = (global, project) => ({ pi: { settings: { getGlobalSettings: () => global, getProjectSettings: () => project } } });
+      const of = piEntry.excludedTools;
+      assert.deepEqual(of(omp(S(["read"])), "omp"), ["read"], "global settings");
+      assert.deepEqual(of(omp(S(["read"]), {}), "omp"), ["read"], "a project with no list keeps the global list");
+      assert.deepEqual(of(omp(S(["read"]), S(["bash"])), "omp"), ["bash"], "the project list wins");
+      const empty = [
+        {}, { pi: {} }, { pi: { settings: {} } }, omp(undefined, undefined), omp({ contextMode: null }),
+        omp(S("read")), omp(S([1, null, { name: "read" }])),
+        { pi: { settings: { getGlobalSettings: () => { throw new Error("not bound"); } } } },
+        { getSettings: () => S(["read"]) },
+      ];
+      for (const [i, api] of empty.entries()) assert.deepEqual(of(api, "omp"), [], "omp variant " + i);
+      assert.deepEqual(of({ getSettings: () => S(["read"]), ...omp(S(["bash"])) }, "pi"), ["read"], "Pi reads getSettings only");
+
+      let reads = 0;
+      const handlers = new Map();
+      const api = {
+        on: (name, fn) => handlers.set(name, fn), registerTool() {},
+        pi: { settings: { getGlobalSettings: () => { reads += 1; return S(["read"]); }, getProjectSettings: () => ({}) } },
+      };
+      piEntry.hostExtension(api, "omp");
+      assert.equal(reads, 0, "never read at load");
+      const ctx = { cwd: repo, sessionManager: { getSessionId: () => "omp-t13" } };
+      await stderrOf(async () => {
+        for (const id of ["r1", "r2"]) {
+          await handlers.get("tool_result")({ toolName: "read", toolCallId: id, input: {}, content: [{ type: "text", text: "x" }], isError: false }, ctx);
+        }
+      });
+      assert.equal(reads, 2, "read once per tool_result, so a settings change counts at once");
     });
   });
 });

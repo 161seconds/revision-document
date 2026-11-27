@@ -185,7 +185,7 @@ export function encode(ev: CanonicalHookEvent, d: Decision, extra?: string): Hoo
 
 1. Switch on `d.kind`:
    - `"allow"`: native stdout = `""` (or, for agents whose plain-text hook requires silence on `PromptSubmit`/`UserPromptSubmit`, exactly `""` — Kiro, GP3 fixture) exit `0`.
-   - `"hint"`: write `d.text` into this agent's hint field (table below) if one exists; else (Gemini, Pi, OpenCode 2 lack a PreToolUse hint field, PRD §10.1/ADR-0001 Consequences) drop it — the hint reaches the model only through tool descriptions, never a second mechanism.
+   - `"hint"`: write `d.text` into this agent's hint field (table below) if one exists; else (Gemini, Pi, OMP, OpenCode 2 lack a PreToolUse hint field, PRD §10.1/ADR-0001 Consequences) drop it — the hint reaches the model only through tool descriptions, never a second mechanism.
    - `"deny"`: write `d.reason` (prefixed with the rewritten command when `d.rewritten` is set) into this agent's deny field (table below); exit `2`. Never `allow` + an input-rewrite field (ADR-0001 Decision 1, PRD §10.2 — `updatedInput` is never used).
    - `"replace"`: only valid on `PostToolUse`; write `d.output` into this agent's output-replace field if one exists (Claude Code: `updatedToolOutput`); else no-op (case C has no substitute on an agent with no such field — ADR-0016 table, Q23 Kiro row: "no rewrite/replace channel either way").
 2. Return `{ stdout, exitCode }`.
@@ -385,14 +385,14 @@ In-process glue only, same reasoning as Pi.
 | event name | v2 Effect plugin call sites: session hook `"context"` (every request), session hook `"compaction"`, session hook `"prompt"`, tool hook `"execute.before"`/`"execute.after"` |
 | sessionId | `sessionID` from the hook's own argument |
 | cwd | no native `cwd` field; decode reads `directory` passed at plugin init instead (spike §2) — this is the one named mechanism for OpenCode 2 (projectSource `"spawn-cwd"`, §1.3), not a fallback: it is read once, at load, exactly like Pi's `ctx.cwd` |
-| subagent | not documented; stays `undefined` |
+| subagent | `execute.before`/`execute.after` carry `agent`; the plugin reads `ctx.agent.get` once per agent and, for mode `"subagent"`, sends `agentID` (-> `agentId`, `agentType`) and the tools its permissions leave on (-> `agentTools`, the ADR-0016 manifest source). D-R54-OC-AGENT-1 (#1348) |
 | SessionStart.source | the `"context"` hook fires on every request, not only at session start — decode's caller (`handleHook`) must de-duplicate per session before treating it as `SessionStart`; `"compaction"` hook sets `source:"compact"` |
 | UserPromptSubmit.prompt | the `"prompt"` session hook's own message argument; this hook cannot fail (spike: "cannot fail") — a `"deny"` decision on it is never produced, only `"allow"` |
 | tool (Pre/Post) | `"execute.before"`/`"execute.after"` hook arguments; MCP firing through the codemode wrapper is `[U]` (spike: "MCP UNKNOWN") |
 | result (Post) | `"execute.after"` argument |
 | hint field | **none** ("NO hint" in the spike matrix) — dropped |
 | deny field | `"execute.before"` throws `Tool.Error(reason)`; only this hook can fail |
-| replace field | none documented |
+| replace field | `"execute.after"` `result` is mutable (2.x `tool.d.ts`; core reads `afterEvent.result` back): encode returns the replace as stdout, the plugin writes it into `result.content` (1.19: `output.output`). D-R54-OC-REPLACE-1 (#1347) |
 
 - Errors: shared "unknown event name" throw. One extra rule: `decode` on the `"context"` session hook must be idempotent across repeated per-request firings — it is not an error path, but it means `encode`'s `"hint"`/`"deny"` results for this hook are only ever produced once per session by the caller, never by this file (the de-dup lives in `hooks/dispatch.ts`, not here).
 - Constants used: none.

@@ -8,17 +8,17 @@ import { z } from "zod/v4";
 import { getAdapter } from "../../adapters/table.ts";
 import {
   D5_LAST_HOOK_ERROR, D5_PAST_HOOK_ERROR, DOCTOR_CHECK_ORDER, DOCTOR_DOCS_LABEL, DOCTOR_DOCS_LINK, DOCTOR_LABEL, OWNER_PID_EXT, OWNERS_DIR_NAME,
-  NATIVE_INSTALL, PI_LIST_COMMAND, PROJECTS_DIR_NAME, REPORT_ENV_ENUMS, BUNDLE_SHA, D1_REGISTRY_URL, DOCTOR_GIT_TIMEOUT_MS, REPORT_CAP, REPORT_SOURCE_LABEL,
+  NATIVE_INSTALL, OMP_LIST_COMMAND, PI_LIST_COMMAND, PROJECTS_DIR_NAME, REPORT_ENV_ENUMS, BUNDLE_SHA, D1_REGISTRY_URL, DOCTOR_GIT_TIMEOUT_MS, REPORT_CAP, REPORT_SOURCE_LABEL,
 } from "../contracts/constants.ts";
 import { CtxError } from "../contracts/errors.ts";
 import type {
-  AdapterRow, CtxDoctorInput, DbHandle, DoctorCheckId, DoctorRow, ToolContext, ToolReply,
+  AdapterRow, CtxDoctorInput, DbHandle, DoctorCheckId, DoctorRow, ProjectContext, ToolContext, ToolReply,
 } from "../contracts/types.ts";
 import { ownBundleDir } from "../ops/bundle-dir.ts";
-import { checkDoubleFire, checkHostConfig, checkV1Leftovers } from "../ops/doctor-config.ts";
+import { checkDoubleFire, checkHostConfig, checkV1Leftovers, ompInfoLines, replaceTriggerInfoLines } from "../ops/doctor-config.ts";
 import { checkDb, checkIndex } from "../ops/doctor-db.ts";
 import type { DbCheck } from "../ops/doctor-db.ts";
-import { bundleVersion, checkMcp, checkMode, checkNode, checkProject, checkShell, checkVersion } from "../ops/doctor-env.ts";
+import { bundleVersion, checkMcp, checkMode, checkNode, checkProject, checkRuntimes, checkShell, checkVersion, needsProjectRow, noProjectRow, projectOrMissing } from "../ops/doctor-env.ts";
 import { checkHookRoundTrip } from "../ops/doctor-hook.ts";
 import { lastHookError } from "../hooks/fallback.ts";
 import { healD8, healOrphan } from "../ops/db-heal.ts";
@@ -27,7 +27,7 @@ import { unsupportedHostOf } from "../ops/unsupported-host.ts";
 import type { UnsupportedHost } from "../contracts/constants.ts";
 import type { AgentId } from "../contracts/agents.ts";
 import { UNSUPPORTED_HOST_LINE } from "../ops/unsupported-host.ts";
-import { environmentLine, writeIssueReport } from "../ops/doctor-issue.ts";
+import { environmentLine, runtimeInfo, writeIssueReport } from "../ops/doctor-issue.ts";
 import { claudeDirOf, hostUpdateCommand, codexDirOf, codexRunDirOf, homeDirOf, copilotDirOf, geminiDirOf, kiroDirOf, opencodeDirOf, piAgentDirOf, requireHomeDir, resolveConfigDir } from "../project/config-dir.ts";
 import { indexText } from "../index/text.ts";
 import { buildChildEnv } from "../sandbox/env.ts";
@@ -60,10 +60,10 @@ async function guard(id: DoctorCheckId, run: () => DoctorRow | Promise<DoctorRow
 }
 
 // D5 Codex trust sub-case reads the journal; doctor never creates context.db, so no file means no handle.
-async function codexDb(ctx: ToolContext, adapter: AdapterRow): Promise<DbHandle | null> {
-  if (adapter.id !== "codex" || !existsSync(ctx.project.dbPath)) return null;
+async function codexDb(project: ProjectContext, adapter: AdapterRow): Promise<DbHandle | null> {
+  if (adapter.id !== "codex" || !existsSync(project.dbPath)) return null;
   try {
-    return await openDb(ctx.project, { readOnly: true });
+    return await openDb(project, { readOnly: true });
   } catch {
     return null; // a stale or corrupt DB is D8's row; D5 then sees no journal
   }
@@ -78,12 +78,12 @@ function unsupportedRow(id: "D3" | "D5", h: UnsupportedHost): DoctorRow {
   return { id, label: DOCTOR_LABEL[id], status: "WARN", detail: UNSUPPORTED_HOST_LINE(h.name) }; // no fix command: setup never writes config for it
 }
 
-async function hookRow(ctx: ToolContext, adapter: AdapterRow, host: DoctorHost): Promise<DoctorRow> {
-  const db = await codexDb(ctx, adapter);
+async function hookRow(ctx: ToolContext, project: ProjectContext, adapter: AdapterRow, host: DoctorHost): Promise<DoctorRow> {
+  const db = await codexDb(project, adapter);
   const runStart = Date.now();
   try {
     const row = await checkHookRoundTrip({
-      worktree: ctx.project.worktree,
+      worktree: project.worktree,
       agent: adapter.id,
       bundleDir: host.bundleDir,
       env: buildChildEnv(host.env),
@@ -119,7 +119,10 @@ export async function runDoctorChecks(ctx: ToolContext, adapter: AdapterRow, hos
   // app-server call then read the Codex home the running plugin sits in, so CODEX_HOME names it from here on.
   const host = adapter.id === "codex" ? { ...host0, env: { ...host0.env, CODEX_HOME: codexRunDirOf(host0.env, homeDirOf(host0.env) ?? "", host0.bundleDir) } } : host0;
   const env = host.env;
-  const project = ctx.project;
+  // D-1410-DOCTOR-NO-PROJECT-1 (ADR-0014 §1): an unresolved project is the D7 FAIL row; project-scoped rows wait for it.
+  const p = projectOrMissing(ctx);
+  if ("missing" in p) return noProjectRows(ctx, adapter, host, p.missing);
+  const project = p.project;
   const other = adapter.installMode === "in-process" ? undefined : unsupportedHostOf({ clientName: ctx.clientInfo?.name, bundleDir: host.bundleDir, env }); // D-UNSUPPORTED-HOSTS-1: the host is known and not supported; Pi and OpenCode run in process, so a terminal env var (CURSOR_TRACE_ID) never names another host
   let integrityFailed = false;
   let orphan: DbCheck["orphan"] = [];
@@ -128,7 +131,7 @@ export async function runDoctorChecks(ctx: ToolContext, adapter: AdapterRow, hos
     D2: () => checkNode({ nodeVersion: process.version, bunVersion: process.versions.bun }),
     D3: () => other !== undefined ? unsupportedRow("D3", other) : checkHostConfig(adapter, env, project.worktree), // D-UNSUPPORTED-HOSTS-1
     D4: () => checkV1Leftovers(adapter.id, requireHomeDir(env), { project: project.worktree, piAgentDir: piAgentDirOf(env, requireHomeDir(env)), claudeDir: claudeDirOf(env, requireHomeDir(env)), codexDir: codexDirOf(env, requireHomeDir(env)), geminiDir: geminiDirOf(env, requireHomeDir(env)), copilotDir: copilotDirOf(env, requireHomeDir(env)), kiroDir: kiroDirOf(env, requireHomeDir(env)), opencodeDir: opencodeDirOf(env, requireHomeDir(env)) }),
-    D5: () => other !== undefined ? unsupportedRow("D5", other) : hookRow(ctx, adapter, host),
+    D5: () => other !== undefined ? unsupportedRow("D5", other) : hookRow(ctx, project, adapter, host),
     D5b: () => checkDoubleFire(adapter.id, project.worktree),
     D6: () => checkMcp(ctx, adapter),
     D7: () => checkProject({ project, adapter, piCwd: host.piCwd }),
@@ -140,7 +143,7 @@ export async function runDoctorChecks(ctx: ToolContext, adapter: AdapterRow, hos
     },
     D9: () => checkIndex(project),
     D10: () => checkMode(adapter, ctx.hostPermission), // D-1331-OC-PERM-1
-    D11: () => checkShell(env),
+    D11: () => checkRuntimes(env, checkShell(env)),
   };
   const rows: DoctorRow[] = [];
   for (const id of DOCTOR_CHECK_ORDER) rows.push(await guard(id, checks[id]));
@@ -160,6 +163,31 @@ export async function runDoctorChecks(ctx: ToolContext, adapter: AdapterRow, hos
   return rows;
 }
 
+/** D-1410-DOCTOR-NO-PROJECT-1: the rows when the project did not resolve. Host-wide checks run as usual (D1 git runs in
+ *  the spawn cwd, D4 scans home only); D7 FAILs with the missing source; D3, D5, D5b, D8, D9 wait for the project. */
+async function noProjectRows(ctx: ToolContext, adapter: AdapterRow, host: DoctorHost, missing: string): Promise<DoctorRow[]> {
+  const env = host.env;
+  const other = adapter.installMode === "in-process" ? undefined : unsupportedHostOf({ clientName: ctx.clientInfo?.name, bundleDir: host.bundleDir, env });
+  const wait = (id: DoctorCheckId) => () => needsProjectRow(id);
+  const checks: Record<DoctorCheckId, () => DoctorRow | Promise<DoctorRow>> = {
+    D1: () => checkVersion({ bundleSha: BUNDLE_SHA, version: bundleVersion(host.bundleDir), registryUrl: D1_REGISTRY_URL, timeoutMs: DOCTOR_GIT_TIMEOUT_MS, env: buildChildEnv(env), cwd: process.cwd(), signal: ctx.signal, updateCommand: d1UpdateCommand(adapter.id, env, other) }),
+    D2: () => checkNode({ nodeVersion: process.version, bunVersion: process.versions.bun }),
+    D3: other !== undefined ? () => unsupportedRow("D3", other) : wait("D3"),
+    D4: () => checkV1Leftovers(adapter.id, requireHomeDir(env), { piAgentDir: piAgentDirOf(env, requireHomeDir(env)), claudeDir: claudeDirOf(env, requireHomeDir(env)), codexDir: codexDirOf(env, requireHomeDir(env)), geminiDir: geminiDirOf(env, requireHomeDir(env)), copilotDir: copilotDirOf(env, requireHomeDir(env)), kiroDir: kiroDirOf(env, requireHomeDir(env)), opencodeDir: opencodeDirOf(env, requireHomeDir(env)) }),
+    D5: other !== undefined ? () => unsupportedRow("D5", other) : wait("D5"),
+    D5b: wait("D5b"),
+    D6: () => checkMcp(ctx, adapter),
+    D7: () => noProjectRow(missing),
+    D8: wait("D8"),
+    D9: wait("D9"),
+    D10: () => checkMode(adapter, ctx.hostPermission),
+    D11: () => checkRuntimes(env, checkShell(env)),
+  };
+  const rows: DoctorRow[] = [];
+  for (const id of DOCTOR_CHECK_ORDER) rows.push(await guard(id, checks[id]));
+  return rows;
+}
+
 // D-M5-D6-3: only env keys with a closed enum (REPORT_ENV_ENUMS) reach the report; others carry no fact.
 function reportEnv(env: NodeJS.ProcessEnv): Record<string, string> {
   const out: Record<string, string> = {};
@@ -175,15 +203,17 @@ function reportEnv(env: NodeJS.ProcessEnv): Record<string, string> {
  * report goes to ~/.context-mode/reports/ and three lines under the table name it, the gh command and the form URL.
  */
 export async function doctorReply(ctx: ToolContext, host: DoctorHost): Promise<ToolReply> {
-  const adapter = getAdapter(ctx.project.agent); // step 1
+  const adapter = getAdapter(ctx.agent ?? ctx.project.agent); // step 1; D-1410-DOCTOR-NO-PROJECT-1: the --agent id first, so a missing project is a row
+  const runtime = runtimeInfo(host.env, ctx.signal); // #1350: under Bun one PATH node start, beside the checks
   const rows = await runDoctorChecks(ctx, adapter, host); // step 2
   const failed = rows.some((r) => r.status === "FAIL");
   // ADR-0019 D7: name the CLI command; setup when a row failed (it repairs and verifies), else doctor.
   // D-R38-PI-CMD-1 (#1312): Pi installs through `pi install` and has no global context-mode CLI; name Pi's own commands.
   const command = adapter.id === "pi" ? (failed ? NATIVE_INSTALL.pi[0] : PI_LIST_COMMAND)
+    : adapter.id === "omp" ? ompCommand(rows, failed) // D-OMP-DOCTOR-1: OMP's own verbs, no context-mode CLI
     : `context-mode ${failed ? "setup" : "doctor"} --agents ${adapter.id}`;
   const input = { agent: adapter.id, rows, env: reportEnv(host.env), command };
-  const envLine = environmentLine(ctx, adapter, host.env, bundleVersion(host.bundleDir));
+  const envLine = environmentLine(ctx, adapter, host.env, bundleVersion(host.bundleDir), await runtime);
   const table = buildReport(input); // step 3
   let notes: string[] = [];
   if (failed) {
@@ -196,18 +226,34 @@ export async function doctorReply(ctx: ToolContext, host: DoctorHost): Promise<T
   // D-DOCTOR-FIX-1: one docs link (UTM) under the table, for the first row that needs a look.
   const look = rows.find((r) => r.status === "FAIL") ?? rows.find((r) => r.status !== "PASS");
   const docs = look === undefined ? [] : [DOCTOR_DOCS_LABEL + DOCTOR_DOCS_LINK(look.id)];
-  const whole = [envLine, table, ...docs, ...notes].join("\n");
+  // D-OMP-DOCTOR-1: OMP host-limit lines (ADR-0026 support matrix); the version is OMP's own when the host names it.
+  const info = adapter.id === "omp" ? ompInfoLines(host.env, ctx.clientInfo?.version) : [];
+  // D-REPLACE-TRIGGER-CONST-1: the retired CTX_REPLACE_TRIGGER_BYTES, when still set, gets one info line (never a row).
+  const known = projectOrMissing(ctx);
+  info.push(...replaceTriggerInfoLines(adapter.id, host.env, "missing" in known ? host.env.CLAUDE_PROJECT_DIR : known.project.worktree));
+  const whole = [envLine, table, ...docs, ...info, ...notes].join("\n");
   const bytes = Buffer.byteLength(whole, "utf8");
   if (bytes <= REPORT_CAP) return { text: whole, isError: false, sandboxBytes: bytes }; // step 4
   // D-NO-LOSSY-CUT-1: over the cap, the whole report is stored first; the reply holds the FAIL rows and the pointer.
-  const db = await openDb(ctx.project);
+  // D-1410-DOCTOR-NO-PROJECT-1: with no project there is no store, so the whole report is the reply.
+  const p = known;
+  if ("missing" in p) return { text: whole, isError: false, sandboxBytes: bytes };
+  const db = await openDb(p.project);
   try {
-    indexText(db, ctx.project, ctx.sessionId, REPORT_SOURCE_LABEL, whole, "text");
+    indexText(db, p.project, ctx.sessionId, REPORT_SOURCE_LABEL, whole, "text");
   } finally {
     closeDb(db);
   }
-  const text = [envLine, buildReportHead(input), ...docs, ...notes].join("\n");
+  const text = [envLine, buildReportHead(input), ...docs, ...info, ...notes].join("\n");
   return { text, isError: false, sandboxBytes: bytes };
+}
+
+/** D-OMP-DOCTOR-1: the closing command on OMP. A failed D3 names its OMP verb (install or enable); any other FAIL gets the
+ *  install command, which OMP runs as a repair; all clear gets `omp plugin list`. */
+function ompCommand(rows: DoctorRow[], failed: boolean): string {
+  if (!failed) return OMP_LIST_COMMAND;
+  const d3 = rows.find((r) => r.id === "D3" && r.status === "FAIL");
+  return d3?.fixCommand ?? NATIVE_INSTALL.omp[0];
 }
 
 async function handler(_input: CtxDoctorInput, ctx: ToolContext): Promise<ToolReply> {

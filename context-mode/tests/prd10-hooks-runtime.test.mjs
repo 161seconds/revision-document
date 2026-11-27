@@ -3,17 +3,17 @@
 import { test, before, after, describe } from "node:test";
 import { CONC } from "./_lib/concurrency.mjs";
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readdirSync, existsSync, readFileSync, realpathSync, statSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
-import path, { join, sep } from "node:path";
+import path, { dirname, join, sep } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { handleHook } from "../src/core/hooks/dispatch.ts";
 import { ctxSearch } from "../src/core/tools/search.ts";
 import { ctxStats } from "../src/core/tools/stats.ts";
 import { chunkText } from "../src/core/index/chunk.ts";
 import { getAdapter, ADAPTERS, hasRecall, hasReplace } from "../src/adapters/table.ts";
-import { COMPACT_POINTER_LINE, OUTPUT_CAP, REPLACE_TRIGGER_BYTES, REPLACE_RETURN_BYTES, REPLACE_CHUNK_BYTES, SYNC_INDEX_MAX_BYTES, PENDING_COMPACT_META_PREFIX, DECISION_OPTION_KEY, DECISION_SOURCE, RECALL_BUDGET_BYTES, RECALL_CLOSE_TAG, RECALL_OPEN_TAG, STATE_BUDGET, HOOK_TIMEOUT_MS,D5_LAST_HOOK_ERROR, MCP_HINT_EVERY, PARSE_ERROR_DENY_LINE, POLICY_UNREADABLE_LINE, REPLACE_HANDLE_LINE, REQUIRE_SECURITY_ENV, TOOL_ORDER, prefixToolNames } from "../src/core/contracts/constants.ts";
+import { SEARCH_TWIN_LINE, PERSISTED_FILE_LINE, SEARCH_WRAPPER_FILE, COMPACT_POINTER_LINE, OUTPUT_CAP, REPLACE_TRIGGER_BYTES, REPLACE_RETURN_BYTES, REPLACE_CHUNK_BYTES, SYNC_INDEX_MAX_BYTES, PENDING_COMPACT_META_PREFIX, DECISION_OPTION_KEY, DECISION_SOURCE, RECALL_BUDGET_BYTES, RECALL_CLOSE_TAG, RECALL_OPEN_TAG, STATE_BUDGET, HOOK_TIMEOUT_MS,D5_LAST_HOOK_ERROR, MCP_HINT_EVERY, PARSE_ERROR_DENY_LINE, POLICY_UNREADABLE_LINE, REPLACE_HANDLE_LINE, REQUIRE_SECURITY_ENV, TOOL_ORDER, prefixToolNames } from "../src/core/contracts/constants.ts";
 import { answerDecisions, askOptionLabels, listOptionLabels, optionEchoDecision } from "../src/core/hooks/decision.ts";
 import { decode } from "../src/adapters/claude-code.ts";
 import { openDb, closeDb, withWrite, metaGet } from "../src/core/store/db.ts";
@@ -239,6 +239,19 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     assert.deepEqual(rows.map((r) => ({ ...r })), [{ kind: "toolerr", ok: 0, key: 'Grep:{"path":"src","pattern":"x"}', path: "src" }]);
   });
 
+  test("PostToolUseFailure (#1408, ADR-0009 §1): a failed Claude Code host tool writes a toolerr row, hook output stays empty", async () => {
+    const p = cc({ hook_event_name: "PostToolUseFailure", tool_name: "Grep", tool_input: { pattern: "y", path: "lib" }, tool_use_id: "toolu_f1", error: "Exit code 2\nboom", is_interrupt: false, duration_ms: 7 });
+    const out = await handleHook("claude-code", p, env);
+    assert.equal(out.stdout, "");
+    const rows = await waitRows("SELECT kind, ok, key, path FROM events WHERE session_id = ?", [p.session_id], 1);
+    assert.deepEqual(rows.map((r) => ({ ...r })), [{ kind: "toolerr", ok: 0, key: 'Grep:{"path":"lib","pattern":"y"}', path: "lib" }]);
+    // The host takes only additionalContext on this event: a large error gets no replace, the hook output stays empty.
+    const big = cc({ hook_event_name: "PostToolUseFailure", tool_name: "Bash", tool_input: { command: "make" }, tool_use_id: "toolu_f2", error: "Exit code 1\n" + "e".repeat(20000) });
+    assert.equal((await handleHook("claude-code", big, env)).stdout, "");
+    const bigRows = await waitRows("SELECT kind, ok, bytes, returned_bytes FROM events WHERE session_id = ?", [big.session_id], 1);
+    assert.deepEqual(bigRows.map((r) => ({ ...r })), [{ kind: "toolerr", ok: 0, bytes: 20012, returned_bytes: 20012 }]);
+  });
+
   test("PostToolUse Edit: edit row with the file path", async () => {
     const p = cc({ hook_event_name: "PostToolUse", tool_name: "Edit", tool_input: { file_path: "/a/b.ts" }, tool_response: "ok" });
     await handleHook("claude-code", p, env);
@@ -285,10 +298,13 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     const src = query("SELECT label, bytes_total FROM sources WHERE session_id = ?", p.session_id);
     // bytes_total is the sum of chunk bytes (store rule): the trailing newline is not a chunk byte.
     assert.equal(src.length, 1);
-    assert.equal(src[0].label, "subagent:Read:0");
+    // D-CC-POINTER-4 (#1342): the label carries the call id (here the adapter's hash id), so two calls stay two sources.
+    assert.ok(src[0].label.startsWith("subagent:Read:") && src[0].label !== "subagent:Read:0", src[0].label);
     assert.ok(src[0].bytes_total >= Buffer.byteLength(text) - 1, "the whole text is indexed, nothing cut");
     // Whole chunks only: the selected chunks, joined by one "\n", make up the body byte for byte.
-    const body = replaced.slice(0, replaced.lastIndexOf("\n" + CCP + "ctx_search(") < 0 ? replaced.length : replaced.lastIndexOf("\n" + CCP + "ctx_search("));
+    // D-CC-POINTER-1: a case C subagent gets a handle line with no ctx tool; the body is all before the last line.
+    assert.equal(replaced.includes("ctx_"), false, replaced);
+    const body = replaced.slice(0, replaced.lastIndexOf("\n"));
     const whole = chunkText(text, "text", REPLACE_CHUNK_BYTES).filter((c) => body.includes(c.text));
     assert.ok(whole.length > 0);
     const joined = whole.reduce((n, c) => n + Buffer.byteLength(c.text), 0) + whole.length - 1;
@@ -473,6 +489,46 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     assert.equal(typeof parsed(await handleHook("claude-code", q, env)).updatedToolOutput, "object", "a project file still replaces");
   });
 
+  // D-R54-OWN-FILE-LINK-1 (#1345, EarthChen): "~/.claude/skills/<skill> is a symlink to a dir outside ~/.claude; a Read of
+  // a >4096 B reference .md is replaced by a ctx_search pointer, the same file in a real dir passes whole".
+  test("D-R54-OWN-FILE-LINK-1: a full Read of a skill reference under a symlinked ~/.claude/skills dir is never replaced (#1345)", async () => {
+    const content = bigText(REPLACE_TRIGGER_BYTES * 3);
+    const n = content.split("\n").length;
+    const target = join(root, "dotfiles", "skills", "linked");
+    mkdirSync(join(target, "references"), { recursive: true });
+    writeFileSync(join(target, "references", "api.md"), content);
+    writeFileSync(join(target, "references", "log.jsonl"), content);
+    mkdirSync(join(root, ".claude", "skills"), { recursive: true });
+    symlinkSync(target, join(root, ".claude", "skills", "linked"));
+    const read = (filePath, id) => cc({ hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: filePath }, tool_use_id: id, tool_response: { type: "text", file: { filePath, content, numLines: n, startLine: 1, totalLines: n } } });
+    const ref = join(root, ".claude", "skills", "linked", "references", "api.md");
+    assert.equal(parsed(await handleHook("claude-code", read(ref, "toolu_link"), env)), null, "the linked skill reference reaches the model whole");
+    const data = join(root, ".claude", "skills", "linked", "references", "log.jsonl");
+    assert.equal(typeof parsed(await handleHook("claude-code", read(data, "toolu_link_data"), env)).updatedToolOutput, "object", "data through the same link still replaces");
+    const direct = join(target, "references", "api.md");
+    assert.equal(typeof parsed(await handleHook("claude-code", read(direct, "toolu_link_direct"), env)).updatedToolOutput, "object", "the link target read by its own path is not an own file");
+    // A ".." step through the link: path.resolve folds it to ~/.claude/skills/outside.md, the OS reads
+    // dotfiles/skills/outside.md. That file is not an own file, so the Read still replaces (review r54 round 2).
+    writeFileSync(join(root, "dotfiles", "skills", "outside.md"), content);
+    const dotdot = [root, ".claude", "skills", "linked", "..", "outside.md"].join(sep);
+    assert.equal(typeof parsed(await handleHook("claude-code", read(dotdot, "toolu_link_dotdot"), env)).updatedToolOutput, "object", "a .. step through the link still replaces");
+  });
+
+  // #1404: "OpenCode: the skill tool result over 4096 B is replaced by a ctx_search pointer, so skills never load in
+  // full". A skill load is instructions the model must read whole (README: "a loaded skill joins the prompt in full"),
+  // as on Claude Code, whose PostToolUse matcher leaves Skill out. A shell output of the same size still replaces.
+  test("#1404: an OpenCode skill tool result over the trigger reaches the model whole; bash still replaces", async () => {
+    const body = "<skill_content name=\"deploy\">\n# Skill: deploy\n" + bigText(REPLACE_TRIGGER_BYTES * 3) + "</skill_content>\n";
+    assert.ok(Buffer.byteLength(body) > REPLACE_TRIGGER_BYTES);
+    const after = (tool, args, callID) => ({ type: "execute.after", sessionID: "s-1404", directory: repo, tool, args, callID, output: body });
+    const skill = await handleHook("opencode", after("skill", { name: "deploy" }, "call_skill"), env);
+    assert.deepEqual(skill, { stdout: "", exitCode: 0 }, "the skill body is left as the host made it");
+    const shell = await handleHook("opencode", after("bash", { command: "cat big.md" }, "call_bash"), env);
+    assert.equal(shell.exitCode, 0);
+    assert.ok(shell.stdout.includes("ctx_search"), "a bash output of the same size still gets the pointer");
+    assert.ok(Buffer.byteLength(shell.stdout) < Buffer.byteLength(body), "savings stay: bash output shrinks");
+  });
+
   test("D-M7-RR-1: main-agent replace above SYNC_INDEX_MAX_BYTES: in-memory selection, detached index", async () => {
     const text = bigText(SYNC_INDEX_MAX_BYTES * 2);
     const p = mainBashPost(text);
@@ -592,6 +648,184 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     const u = out.updatedToolOutput;
     assert.deepEqual({ ...u, content: 0 }, { ...resp, content: 0 });
     assert.ok(Buffer.byteLength(u.content) < Buffer.byteLength(resp.content) && u.content.includes("needle target"));
+  });
+
+  // D-1372-ORDERED-READ-1 (#1372, @limekiln): an external MCP tool returns one JSON document the agent needs whole.
+  // The replace keeps its stub (no new bytes on any replace); the way back is the pointer call, then each More: line.
+  // On main 47b03fcc that walk took 113 calls for 24,575 B (5 chunks of 48 B a page) and left 77% of a one-line JSON
+  // document unreachable. The pointer call now reads the document in order: at most ceil(S / OUTPUT_CAP) calls.
+  const DOC_RECORDS = Array.from({ length: 80 }, (_, i) => ({ id: "rec-" + String(i).padStart(4, "0"), title: "Item number " + i + " of the catalog",
+    status: i % 3 ? "open" : "closed", owner: "team-" + (i % 7), score: (i * 37) % 101, tags: ["alpha", "beta" + (i % 5)],
+    note: "end-" + String(i).padStart(4, "0") + " lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod" }));
+  const DOC_PRETTY = JSON.stringify({ kind: "document", count: 80, records: DOC_RECORDS }, null, 2);
+  const DOC_COMPACT = JSON.stringify({ kind: "document", count: 80, records: DOC_RECORDS });
+  const DOC_TOOL = "mcp__example__get_document";
+  // A call line (handle line or More: line) as arguments: keys unquoted, values JSON.
+  const callArgs = (line) => {
+    let t = line.slice(line.indexOf("ctx_search({") + "ctx_search(".length);
+    t = t.slice(0, t.indexOf("})") + 1);
+    for (const k of ["queries", "scope", "source", "offset"]) t = t.split("{" + k + ":").join('{"' + k + '":').split(", " + k + ":").join(', "' + k + '":');
+    return JSON.parse(t);
+  };
+
+  function replaceDoc(text, n) {
+    return cc({ hook_event_name: "PostToolUse", tool_name: DOC_TOOL, tool_input: {}, tool_use_id: "toolu_01Doc1372" + n, tool_response: [{ type: "text", text }] });
+  }
+
+  test("D-1372-ORDERED-READ-1 (#1372): the replace stub of an MCP JSON document is unchanged, byte for byte", async () => {
+    for (const [text, body] of [[DOC_PRETTY, '      "status": "open",\n\n        "beta4"\n      ],\n\n    }\n  ]\n}\n'], [DOC_COMPACT, ""]]) {
+      const p = replaceDoc(text, text.length);
+      const out = parsed(await handleHook("claude-code", p, env));
+      const replaced = out.updatedToolOutput[0].text;
+      const src = query("SELECT id FROM sources WHERE session_id = ?", p.session_id);
+      assert.equal(src.length, 1);
+      const id = "s" + Number(src[0].id).toString(36);
+      const handle = CCP + "ctx_search({queries:[" + JSON.stringify(DOC_TOOL) + "], source:" + JSON.stringify(id) + "}) searches the whole output (" + Buffer.byteLength(text) + " B).";
+      const twin = SEARCH_TWIN_LINE(join(dirname(process.argv[1]), SEARCH_WRAPPER_FILE), id, DOC_TOOL, realpathSync.native(repo));
+      assert.equal(replaced, body + handle + twin);
+    }
+  });
+
+  test("D-1372-ORDERED-READ-1 (#1372): the pointer and its More: lines give back the whole MCP JSON document in ceil(S / OUTPUT_CAP) calls", async () => {
+    for (const text of [DOC_PRETTY, DOC_COMPACT]) {
+      const S = Buffer.byteLength(text);
+      const p = replaceDoc(text, "w" + text.length);
+      const out = parsed(await handleHook("claude-code", p, env));
+      const replaced = out.updatedToolOutput[0].text;
+      const ctx = { project: resolveProject("claude-code", { env, argv: [], cwd: repo }), sessionId: p.session_id, turn: 1, signal: new AbortController().signal };
+      let args = callArgs(replaced.slice(replaced.lastIndexOf("\n") + 1));
+      let got = "";
+      let calls = 0;
+      let bytes = 0;
+      while (args !== null && calls < 200) {
+        const r = await ctxSearch.handler(args, ctx);
+        calls++;
+        bytes += Buffer.byteLength(r.text);
+        assert.equal(r.isError, false, r.text.slice(0, 300));
+        assert.ok(Buffer.byteLength(r.text) <= OUTPUT_CAP, "a reply fits OUTPUT_CAP: " + Buffer.byteLength(r.text));
+        // An ordered page: one head line, the next stored bytes, then a More: line when bytes are left.
+        const body = r.text.slice(r.text.indexOf("\n") + 1);
+        const more = body.lastIndexOf("\nMore: ");
+        got += more < 0 ? body : body.slice(0, more);
+        args = more < 0 ? null : callArgs(body.slice(more + 1));
+      }
+      const label = S + " B " + (text === DOC_PRETTY ? "pretty" : "compact");
+      assert.ok(got === text, label + ": the agent holds the whole document, byte for byte, after " + calls + " calls (" + Buffer.byteLength(got) + " B put together)");
+      assert.ok(calls <= Math.ceil(S / OUTPUT_CAP) + 1 && calls <= 2, label + ": " + calls + " calls");
+      assert.ok(bytes <= S + calls * 512, label + ": " + bytes + " reply bytes for the document");
+    }
+  });
+
+  // D-0027-LOSTBET-1 (ADR-0027 D3, RC4, FR5, AC4): the hook remembers a lost bet for the rest of the session. A lost bet
+  // is (b) a ranged Read of a file after its full Read was replaced in the same session, or (a) ctx_search page-ins on a
+  // replaced source that reach 50% or more of its bytes. Then a later output with the same tool key (Read: the path,
+  // Bash: the command, MCP: server + tool) passes whole up to OUTPUT_CAP. Another key, a new session, an output over
+  // OUTPUT_CAP (ADR-0008) and the first output after a compaction are replaced as before.
+  // Repro on main e84bc8fc and npm 2.2.2 (tickets r92-9002): the second full Read of F in S1 was replaced again.
+  const lostBetSession = () => "s-lostbet-" + Math.random().toString(36).slice(2);
+  function readPost(sessionId, filePath, content, range = {}) {
+    const n = content.split("\n").length;
+    return { session_id: sessionId, cwd: repo, hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: filePath, ...range },
+      tool_use_id: "toolu_lb" + Math.random().toString(36).slice(2), tool_response: { type: "text", file: { filePath, content, numLines: n, startLine: 1, totalLines: n } } };
+  }
+  async function readOut(sessionId, filePath, content, range) {
+    return parsed(await handleHook("claude-code", readPost(sessionId, filePath, content, range), env));
+  }
+
+  test("D-0027-LOSTBET-1 (AC4 case b): after a ranged Read follows a replaced full Read of F, the next full Read of F in the session passes whole", async () => {
+    const content = bigText(REPLACE_TRIGGER_BYTES * 2);
+    assert.ok(Buffer.byteLength(content) > REPLACE_TRIGGER_BYTES && Buffer.byteLength(content) <= OUTPUT_CAP);
+    const F = join(repo, "lostbet-f.ts");
+    const G = join(repo, "lostbet-g.ts");
+    const S1 = lostBetSession();
+    assert.equal(typeof (await readOut(S1, F, content)).updatedToolOutput, "object", "the first full Read of F is a bet: replaced");
+    assert.equal(await readOut(S1, F, content, { offset: 120, limit: 40 }), null, "the ranged Read of F reaches the model whole (D-R41-READ-OFFSET-1)");
+    assert.equal(await readOut(S1, F, content), null, "the bet on F was lost in S1: the next full Read of F passes whole");
+    assert.equal(typeof (await readOut(S1, G, content)).updatedToolOutput, "object", "a full Read of another file G in S1 is still replaced");
+    assert.equal(typeof (await readOut(lostBetSession(), F, content)).updatedToolOutput, "object", "in a new session F is replaced again");
+  });
+
+  test("D-0027-LOSTBET-1 (AC4): after a lost bet, a full Read over OUTPUT_CAP is still replaced (ADR-0008)", async () => {
+    const content = bigText(OUTPUT_CAP * 2);
+    const F = join(repo, "lostbet-big.ts");
+    const S1 = lostBetSession();
+    assert.equal(typeof (await readOut(S1, F, content)).updatedToolOutput, "object");
+    assert.equal(await readOut(S1, F, content, { offset: 1, limit: 2000 }), null);
+    assert.equal(typeof (await readOut(S1, F, content)).updatedToolOutput, "object", "over OUTPUT_CAP the full Read stays replaced");
+  });
+
+  test("D-0027-LOSTBET-1 (AC4): a compaction clears the lost-bet marks of the session", async () => {
+    const content = bigText(REPLACE_TRIGGER_BYTES * 2);
+    const F = join(repo, "lostbet-compact.ts");
+    const S1 = lostBetSession();
+    assert.equal(typeof (await readOut(S1, F, content)).updatedToolOutput, "object");
+    assert.equal(await readOut(S1, F, content, { offset: 10, limit: 20 }), null);
+    assert.equal(await readOut(S1, F, content), null, "the lost bet on F holds before the compaction");
+    await handleHook("claude-code", { session_id: S1, cwd: repo, hook_event_name: "PreCompact", trigger: "auto" }, env);
+    await handleHook("claude-code", { session_id: S1, cwd: repo, hook_event_name: "SessionStart", source: "compact" }, env);
+    assert.equal(typeof (await readOut(S1, F, content)).updatedToolOutput, "object", "after the compaction the full Read of F is a bet again");
+  });
+
+  test("D-0027-LOSTBET-1 (AC4 case a): a ctx_search page-in of 50% or more of a replaced MCP or Bash output marks its tool key", async () => {
+    const doc = JSON.stringify({ kind: "document", records: DOC_RECORDS.slice(0, 30) });
+    const log = bigText(REPLACE_TRIGGER_BYTES * 2);
+    for (const s of [doc, log]) assert.ok(Buffer.byteLength(s) > REPLACE_TRIGGER_BYTES && Buffer.byteLength(s) <= OUTPUT_CAP);
+    const mcp = (sessionId, tool) => ({ session_id: sessionId, cwd: repo, hook_event_name: "PostToolUse", tool_name: tool, tool_input: {},
+      tool_use_id: "toolu_lbm" + Math.random().toString(36).slice(2), tool_response: [{ type: "text", text: doc }] });
+    const bash = (sessionId, command) => ({ session_id: sessionId, cwd: repo, hook_event_name: "PostToolUse", tool_name: "Bash", tool_input: { command },
+      tool_use_id: "toolu_lbb" + Math.random().toString(36).slice(2), tool_response: { stdout: log, stderr: "", interrupted: false, isImage: false } });
+    const pointerText = (out) => (Array.isArray(out.updatedToolOutput) ? out.updatedToolOutput[0].text : replacedText(out.updatedToolOutput));
+    const cases = [
+      { name: "MCP", same: (sid) => mcp(sid, "mcp__lostbet__get_document"), other: (sid) => mcp(sid, "mcp__lostbet__list_documents") },
+      { name: "Bash", same: (sid) => bash(sid, "make lostbet-build"), other: (sid) => bash(sid, "make lostbet-check") },
+    ];
+    for (const c of cases) {
+      const S1 = lostBetSession();
+      const first = parsed(await handleHook("claude-code", c.same(S1), env));
+      assert.notEqual(first, null, c.name + ": the first output is a bet: replaced");
+      const pointer = pointerText(first).split("\n").find((l) => l.includes(CCP + "ctx_search({"));
+      assert.ok(pointer !== undefined, c.name + ": the stub names the ctx_search call");
+      const ctx = { project: resolveProject("claude-code", { env, argv: [], cwd: repo }), sessionId: S1, turn: 2, signal: new AbortController().signal };
+      let args = callArgs(pointer);
+      let paged = 0;
+      for (let calls = 0; args !== null && calls < 4; calls++) {
+        const r = await ctxSearch.handler(args, ctx);
+        assert.equal(r.isError, false, r.text.slice(0, 300));
+        const more = r.text.lastIndexOf("\nMore: ");
+        paged += Buffer.byteLength(r.text.slice(r.text.indexOf("\n") + 1, more < 0 ? undefined : more));
+        args = more < 0 ? null : callArgs(r.text.slice(more + 1));
+      }
+      const size = Buffer.byteLength(c.name === "MCP" ? doc : log);
+      assert.ok(paged * 2 >= size, c.name + ": the page-in reached " + paged + " of " + size + " B, a lost bet");
+      assert.equal(parsed(await handleHook("claude-code", c.same(S1), env)), null, c.name + ": the bet on this key was lost in S1: the next output passes whole");
+      assert.notEqual(parsed(await handleHook("claude-code", c.other(S1), env)), null, c.name + ": another key in S1 is still replaced");
+      assert.notEqual(parsed(await handleHook("claude-code", c.same(lostBetSession()), env)), null, c.name + ": in a new session the key is replaced again");
+    }
+  });
+
+  // D-1402-PLUGIN-CALL-1 (#1402): a plugin mod's $.mcp.call gets a toolu_plugin_ id from the host, and its result goes
+  // back to the mod only, never to the model. The mod gets the output whole (it may JSON.parse it); the text is indexed.
+  test("D-1402-PLUGIN-CALL-1: a large MCP result of a plugin call (toolu_plugin_) reaches the mod whole and is indexed", async () => {
+    const rows = Array.from({ length: 120 }, (_, i) => ({ id: i, title: "needle target werk " + i, body: "x".repeat(40) }));
+    const text = JSON.stringify({ items: rows });
+    assert.ok(Buffer.byteLength(text) > REPLACE_TRIGGER_BYTES);
+    const p = cc({ hook_event_name: "PostToolUse", tool_name: "mcp__lazi__meine_werke_liste", tool_input: {},
+      tool_use_id: "toolu_plugin_b25e726b9ce6495b9be4eb7224a5e1b1", tool_response: [{ type: "text", text }] });
+    const out = await handleHook("claude-code", p, env);
+    assert.deepEqual(out, { stdout: "", exitCode: 0 }, "the plugin call got a replace: " + out.stdout.slice(0, 200));
+    const src = await waitRows("SELECT label FROM sources WHERE session_id = ?", [p.session_id], 1);
+    assert.equal(src.length, 1, "the plugin call output is indexed");
+    assert.ok(src[0].label.includes("toolu_plugin_b25e726b9ce6495b9be4eb7224a5e1b1"), src[0].label);
+  });
+
+  test("D-1402-PLUGIN-CALL-1: the same MCP result of a model call (toolu_01) is still replaced", async () => {
+    const rows = Array.from({ length: 120 }, (_, i) => ({ id: i, title: "needle target werk " + i, body: "x".repeat(40) }));
+    const text = JSON.stringify({ items: rows });
+    const p = cc({ hook_event_name: "PostToolUse", tool_name: "mcp__lazi__meine_werke_liste", tool_input: {},
+      tool_use_id: "toolu_01AbCdEf", tool_response: [{ type: "text", text }] });
+    const out = parsed(await handleHook("claude-code", p, env));
+    assert.ok(Array.isArray(out.updatedToolOutput) && out.updatedToolOutput[0].type === "text");
+    assert.ok(Buffer.byteLength(out.updatedToolOutput[0].text) < Buffer.byteLength(text), "the model call is replaced");
   });
 
   test("D-M7-RR-1: rows with no replace (codex, qwen) keep their one path: large PostToolUse is the empty allow", async () => {
@@ -729,6 +963,9 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
       assert.ok(replaced.includes("SECRET-2 value=late9x7q"), "the line past the head comes back: " + replaced);
       const src = await waitRows("SELECT bytes_total FROM sources WHERE session_id = ?", [p.session_id], 1);
       assert.ok(src[0].bytes_total >= Buffer.byteLength(full) - 1, "the whole file is indexed");
+      // D-CC-POINTER-6 (#1406): the pointer names the file the host persisted, so the agent can Read it in ranges.
+      assert.ok(replaced.includes(PERSISTED_FILE_LINE(file)), "D-CC-POINTER-6: the pointer names the persisted file: " + replaced);
+      assert.ok(Buffer.byteLength(replaced) < Buffer.byteLength(full) / 10, "D-CC-POINTER-6: the replace stays small, the file is not inlined");
       const q = mainBashPost(head, "");
       q.tool_input = { command: "cat data/part2.txt" };
       q.tool_response = { stdout: head, stderr: "", interrupted: false, persistedOutputPath: join(dir, "none.txt"), persistedOutputSize: Buffer.byteLength(full) };
@@ -763,6 +1000,7 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
         p.tool_response = { stdout: head, stderr: "", interrupted: false, persistedOutputPath: file, persistedOutputSize: Buffer.byteLength(secret) };
         const out = replacedText(parsed(await handleHook("claude-code", p, env)).updatedToolOutput);
         assert.equal(out.includes("k8w2p0zq"), false, "not read: " + file);
+        assert.equal(out.includes(file), false, "D-CC-POINTER-6: a refused path is not named: " + file);
       }
       assert.equal(lastHookError(env)?.stage, "persisted-output", "doctor sees the refused path in hook-errors.log");
     } finally {
@@ -787,10 +1025,13 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     assert.ok(nl > 0, "a body, then the handle line");
     const intent = p.tool_input.description ?? p.tool_input.command;
     const golden = CCP + "ctx_search({queries:[" + JSON.stringify(intent) + "], source:" + JSON.stringify(id) + "}) searches the whole output (" + Buffer.byteLength(text) + " B).";
-    assert.equal(replaced.slice(nl + 1), golden);
+    // D-CC-POINTER-2 (#1358): the claude-code line then names the MCP-free search.mjs call; it sits outside the
+    // selection budget, so the body is the same as before and the bound grows by the twin only.
+    const twin = SEARCH_TWIN_LINE(join(dirname(process.argv[1]), SEARCH_WRAPPER_FILE), id, intent, realpathSync.native(repo));
+    assert.equal(replaced.slice(nl + 1), golden + twin);
     assert.equal(replaced.split("\n" + CCP + "ctx_search(").length, 2, "one call line, no second more line: " + replaced);
     for (const r of lintPromptText(golden)) assert.ok(r.ok, r.rule + " " + JSON.stringify(r.matches));
-    const bound = REPLACE_RETURN_BYTES + Buffer.byteLength("\n" + moreLine(intent, src[0].label));
+    const bound = REPLACE_RETURN_BYTES + Buffer.byteLength("\n" + moreLine(intent, src[0].label)) + Buffer.byteLength(twin);
     assert.ok(Buffer.byteLength(replaced) <= bound, Buffer.byteLength(replaced) + " > " + bound);
   });
 
@@ -804,7 +1045,22 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     assert.equal(src.length, 1);
     const last = replaced.slice(replaced.lastIndexOf("\n") + 1);
     assert.ok(last.includes(", source:" + JSON.stringify("s" + Number(src[0].id).toString(36)) + "})"), last);
-    assert.ok(last.endsWith("(" + Buffer.byteLength(text) + " B)."), last);
+    assert.ok(last.includes("searches the whole output (" + Buffer.byteLength(text) + " B)."), last);
+  });
+
+  // D-CC-POINTER-7 (#1342, #1358): the twin names the project dir in its native form (resolve.ts realpathSync.native:
+  // the long Windows name, the on-disk letter case). A CLAUDE_PROJECT_DIR alias (8.3 short name on windows-latest,
+  // other letter case here) gives the same line. Expected values use .native too: realpathSync keeps the alias (CI 43100308997).
+  test("D-CC-POINTER-7: a project dir alias: the search.mjs twin names the native project dir", async (t) => {
+    const flip = join(dirname(repo), "REPO");
+    if (!existsSync(flip) || realpathSync.native(flip) === flip) return t.skip("no case alias on this filesystem");
+    const p = { ...mainBashPost(bigText(40000)), cwd: flip };
+    const out = parsed(await handleHook("claude-code", p, { ...env, CLAUDE_PROJECT_DIR: flip }));
+    const replaced = replacedText(out.updatedToolOutput);
+    const src = query("SELECT id FROM sources WHERE session_id = ?", p.session_id);
+    const id = "s" + Number(src[0].id).toString(36);
+    const twin = SEARCH_TWIN_LINE(join(dirname(process.argv[1]), SEARCH_WRAPPER_FILE), id, p.tool_input.description, realpathSync.native(flip));
+    assert.ok(replaced.endsWith(twin), replaced.slice(replaced.lastIndexOf("\n") + 1));
   });
 
   // D-CR3-HANDLE-2: above SYNC_INDEX_MAX_BYTES the source row id is reserved before the detached write, so the
@@ -821,9 +1077,10 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
     const nl = replaced.lastIndexOf("\n");
     assert.ok(nl > 0, "a body, then the handle line");
     const intent = p.tool_input.description;
-    assert.equal(replaced.slice(nl + 1), CCP + "ctx_search({queries:[" + JSON.stringify(intent) + "], source:" + JSON.stringify(id) + "}) searches the whole output (" + Buffer.byteLength(text) + " B).");
+    const twin = SEARCH_TWIN_LINE(join(dirname(process.argv[1]), SEARCH_WRAPPER_FILE), id, intent, realpathSync.native(repo));
+    assert.equal(replaced.slice(nl + 1), CCP + "ctx_search({queries:[" + JSON.stringify(intent) + "], source:" + JSON.stringify(id) + "}) searches the whole output (" + Buffer.byteLength(text) + " B)." + twin);
     assert.ok(Buffer.byteLength(replaced.slice(0, nl)) > 0 && replaced.slice(0, nl).includes("needle target"), "the selection budget is not 0");
-    const bound = REPLACE_RETURN_BYTES + Buffer.byteLength("\n" + moreLine(intent, src[0].label));
+    const bound = REPLACE_RETURN_BYTES + Buffer.byteLength("\n" + moreLine(intent, src[0].label)) + Buffer.byteLength(twin);
     assert.ok(Buffer.byteLength(replaced) <= bound, Buffer.byteLength(replaced) + " > " + bound);
     const chunks = await waitRows("SELECT ord FROM chunks WHERE source_id = ?", [src[0].id], 1);
     assert.ok(chunks.length > 0, "the detached write stores the chunks under the reserved id");
@@ -875,6 +1132,15 @@ describe("PRD-v2 section 10: dispatch, replace and handle line (GP3, GP6)", () =
 });
 
 // serial: sets process.env.HOME in before(); process.env is shared by every test in the file
+// A compaction happens in a long session: fill the journal so BM25 IDF is that of a real session (recall tests).
+const FILLER = [
+  "rename the config loader", "update the changelog for the release", "bump the version in package.json",
+  "add a retry to the http client", "write docs for the cli flags", "move the date helpers to utils",
+  "check the coverage report", "split the large router file", "tidy the readme headings",
+  "add a test for the date parser", "remove the unused logger import", "sort the imports in main",
+];
+const ASK_ERROR = "why did the zebraquux migration fail with ETIMEDOUT";
+
 describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)", () => {
   // Unit tests for the M4 branches of src/core/hooks/dispatch.ts: compactSummary "none" delivery through
   // renderState (impl/09 §4.3 step 1.2-1.3, §4.4 step 2.4; DECISIONS-r6 D6) and the ADR-0009 §8.2 decision
@@ -955,7 +1221,7 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
 
   // ---------- compactSummary "none" (DECISIONS-r6 D6) ----------
 
-  test("[M4] SessionStart(compact) on codex (none): the renderState block, once per session (A23)", async () => {
+  test("[M4] SessionStart(compact) on codex (none): the renderState block, once per compaction (A23, #1396)", async () => {
     const s = sid();
     await handleHook("codex", payload(s, { hook_event_name: "UserPromptSubmit", prompt: "fix the flaky login test" }), env);
     await waitRows("SELECT seq FROM events WHERE session_id = ?", [s], 1);
@@ -966,6 +1232,24 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
     assert.ok(text.includes('session="' + s + '"'), text);
     const again = await handleHook("codex", payload(s, { hook_event_name: "SessionStart", source: "compact" }), env);
     assert.equal(again.stdout, "");
+  });
+
+  test("#1396 SessionStart(compact) on claude-code: one state block per compaction in one session, a repeat of the same compaction stays silent", async () => {
+    const s = sid();
+    const compact = () => handleHook("claude-code", payload(s, { hook_event_name: "SessionStart", source: "compact" }), env);
+    await handleHook("claude-code", payload(s, { hook_event_name: "UserPromptSubmit", prompt: "fix the flaky login test" }), env);
+    await waitRows("SELECT seq FROM events WHERE session_id = ?", [s], 1);
+    const first = context(await compact());
+    assert.ok(first !== null && isStateBlock(first), String(first));
+    assert.ok(first.includes("fix the flaky login test"), first);
+    assert.equal((await compact()).stdout, "", "a repeat of the same compaction stays silent");
+    await handleHook("claude-code", payload(s, { hook_event_name: "UserPromptSubmit", prompt: "now ship the billing export" }), env);
+    await waitRows("SELECT seq FROM events WHERE session_id = ?", [s], 2);
+    const second = context(await compact());
+    assert.ok(second !== null && isStateBlock(second), "the second compaction gets its own state block: " + String(second));
+    assert.ok(second.includes("now ship the billing export"), second);
+    assert.ok(second.includes('session="' + s + '"'), second);
+    assert.notEqual(second, first);
   });
 
   test("[M4] SessionStart(compact) on codex with an empty journal: the empty state block, never a throw", async () => {
@@ -1001,14 +1285,6 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
 
   // ---------- turn-boundary recall (DECISIONS-r11 B) ----------
 
-  // A compaction happens in a long session: fill the journal so BM25 IDF is that of a real session.
-  const FILLER = [
-    "rename the config loader", "update the changelog for the release", "bump the version in package.json",
-    "add a retry to the http client", "write docs for the cli flags", "move the date helpers to utils",
-    "check the coverage report", "split the large router file", "tidy the readme headings",
-    "add a test for the date parser", "remove the unused logger import", "sort the imports in main",
-  ];
-
   async function longSession(agent, s, promptEvent) {
     for (const p of [...FILLER, ...FILLER]) await handleHook(agent, payload(s, { hook_event_name: promptEvent, prompt: p }), env);
     await handleHook(agent, payload(s, {
@@ -1017,8 +1293,6 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
     }), env);
     await waitRows("SELECT seq FROM events WHERE session_id = ?", [s], 2 * FILLER.length + 1);
   }
-
-  const ASK_ERROR = "why did the zebraquux migration fail with ETIMEDOUT";
 
   test("[M7] recall/no-compaction-zero-bytes: a prompt naming an earlier error adds nothing before a compaction", async () => {
     const s = sid();
@@ -1045,6 +1319,51 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
     // below threshold: an unrelated prompt adds nothing
     const off = await handleHook("claude-code", payload(s, { hook_event_name: "UserPromptSubmit", prompt: "what is the weather" }), env);
     assert.deepEqual(off, { stdout: "", exitCode: 0 });
+  });
+
+  // #1394: recall pushes state the compaction took away (DECISIONS-r11 B). A row written after the latest
+  // SessionStart(compact) is still in the model's live context, so recall never sends it again; a row from
+  // before the boundary still comes back.
+  test("[M7] recall/compaction-boundary (#1394): rows after the latest compaction stay out, rows before it come back", async () => {
+    const s = sid();
+    await longSession("claude-code", s, "UserPromptSubmit");
+    await handleHook("claude-code", payload(s, { hook_event_name: "SessionStart", source: "compact" }), env);
+    await handleHook("claude-code", payload(s, {
+      hook_event_name: "PostToolUse", tool_name: "Bash", tool_input: { command: "npm run bundle:quokkafrob" },
+      tool_response: { stdout: "", stderr: "quokkafrob bundle failed: EACCES writing dist/quokkafrob.js", is_error: true },
+    }), env);
+    await waitRows("SELECT seq FROM events WHERE session_id = ? AND kind = 'toolerr'", [s], 2);
+    const post = query("SELECT seq FROM events WHERE session_id = ? AND kind = 'toolerr' ORDER BY seq DESC", s)[0];
+    // a host-made prompt (task-notification) that names the post-compaction row
+    const late = context(await handleHook("claude-code", payload(s, {
+      hook_event_name: "UserPromptSubmit", prompt: "<task-notification>why did the quokkafrob bundle fail with EACCES</task-notification>",
+    }), env));
+    assert.ok(late === null || !late.includes("#" + post.seq + " "), "post-compaction row recalled: " + String(late));
+    assert.ok(late === null || !late.includes("quokkafrob bundle failed"), String(late));
+    // the pre-compaction row is still recalled
+    const pre = query("SELECT seq FROM events WHERE session_id = ? AND kind = 'toolerr' ORDER BY seq ASC", s)[0];
+    const text = context(await handleHook("claude-code", payload(s, { hook_event_name: "UserPromptSubmit", prompt: ASK_ERROR }), env));
+    assert.ok(text !== null && text.includes("#" + pre.seq + " toolerr Bash: "), String(text));
+  });
+
+  test("[M7] recall/compaction-boundary units (#1394): line units of an output after the latest compaction stay out", async () => {
+    const s = sid();
+    await longSession("claude-code", s, "UserPromptSubmit");
+    await handleHook("claude-code", payload(s, { hook_event_name: "SessionStart", source: "compact" }), env);
+    const PLANTED = "walrusbeam deploy rolled back after 41 health check failures on canary-3";
+    const lines = [];
+    for (let i = 0, n = 0; n < SYNC_INDEX_MAX_BYTES - 2000; i++) {
+      const l = i === 50 ? PLANTED : "step " + i + " of the release pipeline finished in " + (i % 17) + " s on runner " + (i % 5);
+      lines.push(l);
+      n += Buffer.byteLength(l, "utf8") + 1;
+    }
+    await handleHook("claude-code", payload(s, {
+      hook_event_name: "PostToolUse", tool_name: "Bash", tool_input: { command: "cat deploy.log", description: "deploy log" },
+      tool_use_id: "toolu_1394", tool_response: { stdout: lines.join("\n"), stderr: "", interrupted: false, isImage: false },
+    }), env);
+    await waitRows("SELECT 1 FROM line_units WHERE session_id = ?", [s], lines.length);
+    const text = context(await handleHook("claude-code", payload(s, { hook_event_name: "UserPromptSubmit", prompt: "why did the walrusbeam deploy roll back on canary-3" }), env));
+    assert.ok(text === null || !text.includes(PLANTED), "post-compaction line unit recalled: " + String(text));
   });
 
   // #1330 (Lcstyle, aron-intframe): the first prompt is 30 KB of the README; a later output holds README lines and
@@ -1093,7 +1412,7 @@ describe("PRD-v2 section 10: compaction delivery, recall and decision rows (GP6)
       const out = r.encode(ev, { kind: "hint", text: "RECALL-PROBE", onceKey: "recall" });
       assert.equal(hasRecall(r), JSON.stringify(out).includes("RECALL-PROBE"), r.id);
     }
-    assert.deepEqual(ADAPTERS.filter((r) => !hasRecall(r)).map((r) => r.id), ["pi", "opencode"]); // D-R33-KIRO-RECALL-1
+    assert.deepEqual(ADAPTERS.filter((r) => !hasRecall(r)).map((r) => r.id), ["pi", "opencode", "omp"]); // D-R33-KIRO-RECALL-1; omp keeps the Pi compact path
   });
 
   // ---------- decision rows (ADR-0009 §8.2) ----------
@@ -1766,6 +2085,146 @@ describe("PRD-v2 section 10: hook entry argv and stdin handling (GP7)", () => {
     }
   });
 
+  // #1401 (impl/09 §3.2, A21, PRD P4): another process (a second session, a long PostToolUse index) holds the project
+  // context.db write lock. The hook must still answer and exit well inside the host timeout (claude-code kills it at
+  // HOOK_TIMEOUT_MS), and no write is lost: the journal row and the indexed output land once the lock is free.
+  function projectDb() {
+    const projects = join(root, ".context-mode", "projects");
+    return join(projects, readdirSync(projects)[0], "context.db");
+  }
+
+  // A second process takes BEGIN IMMEDIATE and keeps it until its stdin ends.
+  async function holdWriteLock(db) {
+    const code = "const{DatabaseSync}=require('node:sqlite');const h=new DatabaseSync(process.argv[1]);h.exec('BEGIN IMMEDIATE');" +
+      "process.stdout.write('locked\\n');process.stdin.resume();process.stdin.on('end',()=>{h.exec('COMMIT');h.close();});";
+    const child = spawn(process.execPath, ["-e", code, db], { stdio: ["pipe", "pipe", "inherit"] });
+    await new Promise((resolve, reject) => {
+      child.stdout.once("data", resolve);
+      child.once("exit", (c) => reject(new Error("lock holder exited " + c)));
+    });
+    return async () => {
+      const done = new Promise((r) => child.once("exit", r));
+      child.stdin.end();
+      await done;
+    };
+  }
+
+  function timedRun(input) {
+    const env = { PATH: process.env.PATH, HOME: root, USERPROFILE: root, CLAUDE_PROJECT_DIR: repo };
+    const t0 = Date.now();
+    const r = spawnSync(process.execPath, [ENTRY, "--agent", "claude-code"], { input, cwd: repo, env, encoding: "utf8", timeout: HOOK_TIMEOUT_MS * 3 });
+    return { ...r, ms: Date.now() - t0 };
+  }
+
+  function readRows(sql, ...args) {
+    const h = new DatabaseSync(projectDb(), { readOnly: true });
+    try {
+      return h.prepare(sql).all(...args).map((x) => ({ ...x }));
+    } finally {
+      h.close();
+    }
+  }
+
+  test("#1401: UserPromptSubmit while another process holds the write lock exits fast and keeps the prompt row", async () => {
+    const warm = { session_id: "lk1", cwd: repo, hook_event_name: "UserPromptSubmit", prompt: "warm" };
+    assert.equal(timedRun(JSON.stringify(warm)).status, 0);
+    const release = await holdWriteLock(projectDb());
+    let r;
+    try {
+      r = timedRun(JSON.stringify({ ...warm, prompt: "written under the lock" }));
+    } finally {
+      await release();
+    }
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout, "");
+    assert.ok(r.ms < HOOK_TIMEOUT_MS / 2, `hook took ${r.ms} ms under a held write lock (host kills it at ${HOOK_TIMEOUT_MS} ms); stderr: ${r.stderr}`);
+    // The lock is free: the next hook in the project runs, and the row written under the lock is in the journal.
+    assert.equal(timedRun(JSON.stringify({ ...warm, prompt: "after the lock" })).status, 0);
+    const bodies = readRows("SELECT body FROM events WHERE session_id = ? AND kind = 'prompt' ORDER BY seq", "lk1").map((x) => x.body);
+    assert.deepEqual(bodies, ["warm", "written under the lock", "after the lock"]);
+  });
+
+  test("#1401: a 200 KB Bash PostToolUse under a held write lock still replaces fast, and the output is indexed after", async () => {
+    const warm = { session_id: "lk2", cwd: repo, hook_event_name: "UserPromptSubmit", prompt: "show the lockneedle line" };
+    assert.equal(timedRun(JSON.stringify(warm)).status, 0);
+    const lines = [];
+    for (let i = 0; lines.join("\n").length < 200 * 1024; i++) lines.push(i === 1500 ? "row 1500 lockneedle found here" : `row ${i} plain filler text for the log`);
+    const full = lines.join("\n");
+    const post = { session_id: "lk2", cwd: repo, hook_event_name: "PostToolUse", tool_name: "Bash", tool_use_id: "toolu_lk2",
+      tool_input: { command: "cat big.log", description: "big log" }, tool_response: { stdout: full, stderr: "", interrupted: false } };
+    // D-1401-LOCK-BASELINE-1: the same 200 KB PostToolUse with no lock (another session), run before, after and once more
+    // in this test, is the baseline: runner load slows both the same way. The lock may add under HOOK_TIMEOUT_MS / 2 to
+    // the median baseline; a hook that waits for the lock (DB_TIMEOUT_MS) adds 5000 ms and fails.
+    const free = (n) => timedRun(JSON.stringify({ ...post, session_id: "lk2b", tool_use_id: "toolu_lk2b" + n }));
+    const base = [free(1)];
+    const release = await holdWriteLock(projectDb());
+    let r;
+    try {
+      r = timedRun(JSON.stringify(post));
+    } finally {
+      await release();
+    }
+    base.push(free(2), free(3));
+    for (const b of base) assert.equal(b.status, 0, b.stderr);
+    const baseMs = base.map((b) => b.ms).sort((a, b) => a - b)[1];
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(r.ms < HOOK_TIMEOUT_MS, `hook took ${r.ms} ms under a held write lock; the host kills it at ${HOOK_TIMEOUT_MS} ms; stderr: ${r.stderr}`);
+    assert.ok(r.ms - baseMs < HOOK_TIMEOUT_MS / 2, `the held lock added ${r.ms - baseMs} ms (${r.ms} ms against a median of ${baseMs} ms with no lock: ${base.map((b) => b.ms).join(", ")}); stderr: ${r.stderr}`);
+    // Savings hold under the lock: the model gets a short replace that names the indexed output, not the full 200 KB.
+    assert.notEqual(r.stdout, "", "a replace decision, not an empty answer: " + r.stderr);
+    const out = JSON.parse(r.stdout).hookSpecificOutput.updatedToolOutput;
+    assert.ok(Buffer.byteLength(out.stdout) * 10 < Buffer.byteLength(full), `replaced ${Buffer.byteLength(out.stdout)} bytes`);
+    assert.ok(out.stdout.includes("ctx_search("));
+    // The lock is free: after the next hook in the project, the whole output is stored and searchable.
+    assert.equal(timedRun(JSON.stringify({ ...warm, prompt: "next" })).status, 0);
+    const src = readRows("SELECT id, bytes_total FROM sources WHERE session_id = ?", "lk2");
+    assert.deepEqual(src.map((x) => x.bytes_total), [Buffer.byteLength(full)], "one source row for the output");
+    assert.ok(readRows("SELECT ord FROM chunks WHERE source_id = ?", src[0].id).length > 0, "chunks stored");
+    assert.ok(readRows("SELECT ord FROM line_units WHERE source_id = ?", src[0].id).length > 0, "line units stored");
+  });
+
+  // #1401 follow-up (@ryanleecode, systemfsoftware/context-mode#4): after a compaction, a prompt runs recall
+  // (DECISIONS-r11 B). Another process holds the write lock (a second session indexes an output): the prompt still
+  // gets its recall block, fast, and the row still goes out once per session (the seen marker lands after the lock).
+  test("#1401: a compacted-session UserPromptSubmit under a held write lock still returns the recall block, once", async () => {
+    const s = "lk3";
+    const ups = (prompt) => JSON.stringify({ session_id: s, cwd: repo, hook_event_name: "UserPromptSubmit", prompt });
+    for (const p of [...FILLER, ...FILLER]) assert.equal(timedRun(ups(p)).status, 0);
+    assert.equal(timedRun(JSON.stringify({ session_id: s, cwd: repo, hook_event_name: "PostToolUse", tool_name: "Bash",
+      tool_use_id: "toolu_lk3", tool_input: { command: "npm run migrate:zebraquux" },
+      tool_response: { stdout: "", stderr: "zebraquux migration failed: ETIMEDOUT connecting to db-replica-7", is_error: true } })).status, 0);
+    let err = [];
+    for (const end = Date.now() + 5000; err.length === 0 && Date.now() < end; await new Promise((r) => setTimeout(r, 20))) {
+      err = readRows("SELECT seq FROM events WHERE session_id = ? AND kind = 'toolerr'", s);
+    }
+    assert.equal(err.length, 1, "the toolerr row is in the journal");
+    const compact = timedRun(JSON.stringify({ session_id: s, cwd: repo, hook_event_name: "SessionStart", source: "compact" }));
+    assert.equal(compact.status, 0, compact.stderr);
+    assert.notEqual(compact.stdout, "", "the state block after the compaction");
+    const release = await holdWriteLock(projectDb());
+    let r;
+    try {
+      r = timedRun(ups(ASK_ERROR));
+    } finally {
+      await release();
+    }
+    assert.equal(r.status, 0, r.stderr);
+    assert.ok(r.ms < HOOK_TIMEOUT_MS / 2, `hook took ${r.ms} ms under a held write lock; stderr: ${r.stderr}`);
+    assert.equal(r.stderr, "", "no hook error under the lock");
+    assert.notEqual(r.stdout, "", "the recall block, not an empty answer");
+    const text = JSON.parse(r.stdout).hookSpecificOutput.additionalContext;
+    assert.ok(text.startsWith(RECALL_OPEN_TAG + "\n") && text.endsWith("\n" + RECALL_CLOSE_TAG), text);
+    assert.ok(text.includes("#" + err[0].seq + " toolerr Bash: "), text);
+    assert.ok(text.includes("zebraquux migration failed: ETIMEDOUT connecting to db-replica-7"), text);
+    // The lock is free: the same question does not send the row again, and the prompt row written under the lock is kept.
+    const again = timedRun(ups(ASK_ERROR));
+    assert.equal(again.status, 0, again.stderr);
+    const next = again.stdout === "" ? null : JSON.parse(again.stdout).hookSpecificOutput.additionalContext;
+    assert.ok(next === null || !next.includes("#" + err[0].seq + " "), "row sent twice: " + String(next));
+    const asked = readRows("SELECT body FROM events WHERE session_id = ? AND kind = 'prompt' AND body = ?", s, ASK_ERROR);
+    assert.equal(asked.length, 2, "both prompt rows are in the journal");
+  });
+
   test("GP7/codex-session-project-dir: codex sessions in X and Y write to their own project", () => {
     const x = join(root, "x");
     const y = join(root, "y");
@@ -1849,7 +2308,7 @@ describe("PRD-v2 section 10: PreToolUse module load set", { concurrency: CONC },
 describe("PRD-v2 section 10: hook never errors (D-HNE-GUARD-1)", () => {
   // D-HNE-GUARD-1 (owner decision 2026-10-29): a hook never errors. On any internal failure it exits 0 with a valid decision
   // for its host: own ctx_* tools allowed, flooding tools denied with the redirect plus "run ctx_doctor", and the error with
-  // its stack in <HOME>/.context-mode/hook-errors.log. Runs the built bundle for all 10 hosts (CM_HNE_BUNDLE overrides it).
+  // its stack in <HOME>/.context-mode/hook-errors.log. Runs the built bundle for all 11 hosts (CM_HNE_BUNDLE overrides it).
   const REPO = join(import.meta.dirname, "..");
   let root;
   let bundle;
@@ -1887,8 +2346,10 @@ describe("PRD-v2 section 10: hook never errors (D-HNE-GUARD-1)", () => {
     zcode: { pay: (t, i) => SNAKE("PreToolUse", t, i), shell: "Bash", own: "mcp__context-mode__ctx_execute", safe: "TodoWrite" },
     pi: { pay: (t, i) => ({ type: "tool_call", sessionId: "s1", cwd: repo, toolName: t, input: i }), shell: "bash", own: "ctx_execute", safe: "todo" },
     opencode: { pay: (t, i) => ({ type: "execute.before", sessionID: "s1", directory: repo, tool: t, args: i }), shell: "bash", own: "context-mode_ctx_execute", safe: "todowrite" },
+    omp: { pay: (t, i) => ({ type: "tool_call", sessionId: "s1", cwd: repo, toolName: t, input: i }), shell: "bash", own: "ctx_execute", safe: "todo" }, // ADR-0026: the Pi wire
   };
-  const EXIT2 = new Set(["kiro", "pi", "opencode"]); // these hosts deny by exit code 2 and text
+  const EXIT2 = new Set(["kiro", "pi", "opencode", "omp"]); // these hosts deny by exit code 2 and text
+  const INPROC = new Set(["pi", "opencode", "omp"]); // installMode "in-process": ctx_* tools live in the host process, no MCP server
 
   function run(host, payload, { fault, env = {}, preload } = {}) {
     const home = mkdtempSync(join(root, "home-"));
@@ -1944,18 +2405,35 @@ describe("PRD-v2 section 10: hook never errors (D-HNE-GUARD-1)", () => {
       });
     }
 
-    test(`[D-HNE-GUARD-1] ${host}: Node below 24.15 gives the same failure decision and does not crash at load`, () => {
-      const pre = join(root, "oldnode.cjs");
-      writeFileSync(pre, "Object.defineProperty(process, 'version', { value: 'v22.1.0' });");
-      const r = run(host, h.pay(h.shell, CMD), { preload: pre });
-      const reason = denyText(host, r);
-      assert.notEqual(reason, null, `${host} old node not a deny: status=${r.status} stderr=${r.stderr.slice(0, 200)}`);
-      assert.ok(reason.includes("NODE_TOO_OLD"), reason);
-      assert.ok(reason.includes("ctx_doctor"), reason);
-      assert.equal(logLines(r.home)[0].stage, "node");
-      const own = run(host, h.pay(h.own, { code: "1" }), { preload: pre });
-      assert.equal(own.status, 0);
-      assert.equal(denyText(host, own), null);
+    // D-1370-OLDNODE-ALLOW-1 (#1370): on Node below 24.15 the MCP server runs on the same node and is degraded (PRD §13: it
+    // lists ctx_doctor only), so a deny that redirects to ctx_execute blocks the host. The 8 server hosts allow and still log
+    // the error (D5); Pi and OpenCode register ctx_* in-process with no version gate, so their redirect target exists.
+    test(`[D-1370] ${host}: Node below 24.15 ${INPROC.has(host) ? "keeps the redirect deny (ctx_* is in-process)" : "allows shell, large Read, Grep and fetch"}`, () => {
+      const big = join(root, "big-1370.txt");
+      writeFileSync(big, "x".repeat(40000));
+      for (const v of ["v22.1.0", "v18.20.5"]) {
+        const pre = join(root, `oldnode-${v}.cjs`);
+        writeFileSync(pre, `Object.defineProperty(process, 'version', { value: '${v}' });`);
+        const calls = [[h.shell, CMD], ["Read", { file_path: big }], ["Grep", { pattern: "x" }], ["WebFetch", { url: "https://example.com" }]];
+        for (const [tool, input] of calls) {
+          const r = run(host, h.pay(tool, input), { preload: pre });
+          const reason = denyText(host, r);
+          if (INPROC.has(host)) {
+            if (tool !== h.shell) continue;
+            assert.notEqual(reason, null, `${host}/${v} in-process shell keeps the deny: stdout=${r.stdout.slice(0, 200)}`);
+            assert.ok(reason.includes("NODE_TOO_OLD") && reason.includes("ctx_doctor"), reason);
+          } else {
+            assert.equal(r.status, 0, `${host}/${v}/${tool} exit ${r.status}: ${r.stderr.slice(0, 200)}`);
+            assert.equal(reason, null, `${host}/${v}/${tool} must not be denied (the degraded server has no ctx_execute): ${r.stdout.slice(0, 300)}`);
+            if (r.stdout !== "") JSON.parse(r.stdout); // a valid document for the host (Copilot CLI)
+          }
+          assert.ok(r.stderr.includes("NODE_TOO_OLD") || r.stderr.includes("needs Node 24.15.0"), `${host}/${v} stderr names the error: ${r.stderr.slice(0, 200)}`);
+          assert.equal(logLines(r.home)[0]?.stage, "node", `${host}/${v}/${tool} hook-errors.log line`);
+        }
+        const own = run(host, h.pay(h.own, { code: "1" }), { preload: pre });
+        assert.equal(own.status, 0);
+        assert.equal(denyText(host, own), null);
+      }
     });
 
     test(`[D-HNE-GUARD-1] ${host}: unreadable stdin is logged and answered with exit 0`, () => {
@@ -2180,7 +2658,7 @@ describe("PRD-v2 section 10: saving decision per host (ADR-0020)", () => {
   // the ctx tool on PreToolUse everywhere else. One effect per host, no fallback.
   const SAVING = {
     "claude-code": "R", codex: "D", gemini: "R", qwen: "D", "copilot-cli": "R",
-    vscode: "D", kiro: "D", zcode: "D", pi: "R", opencode: "D",
+    vscode: "D", kiro: "D", zcode: "D", pi: "R", opencode: "R", omp: "R", // omp R: Pi tool_result rewrite (ADR-0026); opencode R: D-R54-OC-REPLACE-1 (#1347)
   };
   // D-M3-F-9: a hook or detached write keeps its DB handle open by design (A21), and Windows cannot delete
   // an open file, so temp cleanup there is best-effort. The assertions are unchanged.
@@ -2369,6 +2847,43 @@ describe("PRD-v2 section 10: saving on live payload shapes", () => {
     const r = await handlers.tool_result({ type: "tool_result", toolCallId: "c3", toolName: "read", input,
       content: [{ type: "text", text: big }], isError: false, details: undefined }, ctx);
     assert.equal(r, undefined);
+  });
+
+  // #1392: OMP 18.21.0 read has `path` only, with the line range inline (src/tools/read.ts:899-901, read-selector.ts
+  // parseSel: :N, :N-M, :N+K, :N-, :-N, comma lists, :raw before or after). A ranged path is the user's own window
+  // (D-R41-READ-OFFSET-1); a path with no range (bare, :raw alone, a drive letter) is a full read and stays replaced.
+  async function ompHandlers(repo) {
+    const { hostExtension } = await import("../src/entries/pi.ts");
+    const handlers = {};
+    hostExtension({ on: (e, h) => { handlers[e] = h; }, registerTool: () => {} }, "omp");
+    const ctx = { cwd: repo, sessionManager: { getSessionId: () => "o1" } };
+    await handlers.before_agent_start({ systemPrompt: ["base"] }, ctx);
+    return { handlers, ctx };
+  }
+
+  test("omp tool_result of a `read` with a line range in the path is not replaced (#1392)", async (t) => {
+    const { repo, big } = sandbox(t);
+    const { handlers, ctx } = await ompHandlers(repo);
+    const ranged = ["logs/app.log:50-120", "logs/app.log:50+40", "logs/app.log:50", "logs/app.log:50-", "logs/app.log:-60",
+      "logs/app.log:5-16,960-973", "logs/app.log:2-4:raw", "logs/app.log:raw:2-4", "D:/x/app.log:50-120"];
+    const whole = [];
+    for (const p of ranged) {
+      const r = await handlers.tool_result({ type: "tool_result", toolCallId: "r-" + p, toolName: "read", input: { path: p },
+        content: [{ type: "text", text: big }], isError: false, details: undefined }, ctx);
+      if (r === undefined) whole.push(p);
+    }
+    assert.deepEqual(whole, ranged, "every ranged read reaches the model whole");
+  });
+
+  test("omp tool_result of a full `read` (no range in the path) is still replaced (#1392)", async (t) => {
+    const { repo, big } = sandbox(t);
+    const { handlers, ctx } = await ompHandlers(repo);
+    for (const p of ["logs/app.log", "logs/app.log:raw", "D:/x/app.log", "D:\\x\\app.log", "logs/app.log:img", "logs/v1:2/app.log"]) {
+      const r = await handlers.tool_result({ type: "tool_result", toolCallId: "f-" + p, toolName: "read", input: { path: p },
+        content: [{ type: "text", text: big }], isError: false, details: undefined }, ctx);
+      assert.ok(r !== undefined, p + " is replaced");
+      assert.ok(Buffer.byteLength(r.content[0].text) < Buffer.byteLength(big) / 2, p + ": replaced text is under half the raw output");
+    }
   });
 
   test("gemini AfterTool of a bounded read_file (offset/limit) is not replaced (#1314)", async (t) => {
@@ -2655,7 +3170,7 @@ describe("PRD-v2 section 10: hint throttle", { concurrency: CONC }, () => {
 // serial: tests set process.env.HOME and REQUIRE_SECURITY_ENV
 describe("PRD-v2 section 10: host tool names in hook output", () => {
   // Hook texts name tools the way the host calls them: row.toolNamePrefix + ctx_*. A bare ctx_search on Gemini
-  // (mcp_context-mode_ctx_search) names a tool the model cannot call. Covers the 10 hosts and every hook text
+  // (mcp_context-mode_ctx_search) names a tool the model cannot call. Covers the 11 hosts and every hook text
   // that names a tool: Read deny, parse-error deny, policy-unreadable deny, the replace handle line, the
   // compact state block and the pointer line. DEVIATIONS D-HL-NAMES-1.
   function rmTemp(dir) {
@@ -2681,12 +3196,12 @@ describe("PRD-v2 section 10: host tool names in hook output", () => {
     event: "PreToolUse", agent: row.id, sessionId: "s1", cwd, tool: { name, canonicalName, input },
   });
 
-  test("all 10 hosts: the Read deny names <prefix>ctx_execute", () => {
+  test("all 11 hosts: the Read deny names <prefix>ctx_execute", () => {
     const dir = mkdtempSync(path.join(tmpdir(), "cm-names-"));
     try {
       const big = path.join(dir, "big.log");
       writeFileSync(big, "x".repeat(300 * 1024));
-      assert.equal(ADAPTERS.length, 10);
+      assert.equal(ADAPTERS.length, 11); // ADR-0026 T18: omp is the 11th row
       for (const row of ADAPTERS) {
         const d = decide(ev(row, dir, "Read", "Read", { file_path: big }), row, []);
         assert.equal(d.kind, "deny", row.id);
@@ -2699,7 +3214,7 @@ describe("PRD-v2 section 10: host tool names in hook output", () => {
     }
   });
 
-  test("all 10 hosts: parse-error and policy-unreadable denies name <prefix>ctx_*", () => {
+  test("all 11 hosts: parse-error and policy-unreadable denies name <prefix>ctx_*", () => {
     const old = process.env[REQUIRE_SECURITY_ENV];
     try {
       for (const row of ADAPTERS) {

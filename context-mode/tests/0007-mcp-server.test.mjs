@@ -144,6 +144,17 @@ describe("ADR-0004 server entry and exit guard", () => {
     assert.equal(sessionIdOf(undefined, "gemini", env, "srv"), "mcp:srv");
     assert.equal(sessionIdOf(undefined, undefined, env, "srv"), "mcp:srv");
   });
+
+  // #1411 (D-1411-ZCODE-SID-1): ZCode (zai-org/ZCode fec97590 adapters/src/mcp/index.ts mcpRequestMeta) sends its
+  // session id on every tools/call as _meta.session_id and again under "com.zcode/request-context". It refuses a
+  // session env in the MCP config, so _meta is its one channel. The hooks journal under that same id.
+  test("sessionIdOf: zcode reads its own _meta session_id, the id its hooks journal under", async () => {
+    const { sessionIdOf } = await import("../src/entries/server.ts");
+    const meta = { trace_id: "t-1", session_id: "sess_zc_1", turn_id: "u-1", "com.zcode/request-context": { trace_id: "t-1", session_id: "sess_zc_1" } };
+    assert.equal(sessionIdOf(meta, "zcode", {}, "srv"), "sess_zc_1");
+    assert.equal(sessionIdOf({ ...meta, session_id: "" }, "zcode", {}, "srv"), "mcp:srv");
+    assert.equal(sessionIdOf(undefined, "zcode", {}, "srv"), "mcp:srv");
+  });
 });
 
   // serial: before/after set process.env.HOME
@@ -218,9 +229,9 @@ describe("ADR-0007 call shape on every host", () => {
     assert.ok(TOOLS.reduce((n, t) => n + t.description.length, 0) <= SURFACE_CAP);
   });
 
-  // Owner 2026-11-03 (D-TIC-PROMPT-1): "her yerde Thinking in Code felsefesini ... gormek istiyorum". The model reads the
+  // Owner 2026-11-03 (D-TIC-PROMPT-1): "her yerde Code Mode felsefesini ... gormek istiyorum". The model reads the
   // ctx_execute description on every turn, so it says the principle in one plain line.
-  test("ctx_execute description tells the agent to write code that prints only the answer (Thinking in Code)", () => {
+  test("ctx_execute description tells the agent to write code that prints only the answer (Code Mode)", () => {
     const exec = TOOLS.find((t) => t.name === "ctx_execute");
     assert.ok(exec.description.includes("Write code that prints only the answer, not the raw data."), exec.description);
     assert.ok(exec.description.length <= DESCRIPTION_CAP);
@@ -275,6 +286,22 @@ describe("ADR-0007 call shape on every host", () => {
       assert.ok(out.includes(exampleOf(tool.description)), out);
     });
   }
+
+  // #1354, #1353: Pi with a JSON-schema model fills every optional field with its zero value.
+  // The inputs are the reporter's payload from #1354 (source:"", offset:0, after:0).
+  test("Pi whole-schema zero payloads: ctx_search offset:0/after:0/source:\"\" and ctx_resume session:\"\" answer", async () => {
+    const pi = await fakePi();
+    await pi.get("ctx_index").execute("c0", { content: "README overview: how the project starts", source: "readme-notes" });
+    for (const input of [
+      { queries: ["README overview"], source: "", scope: "session", sort: "timeline", offset: 0, after: 0 },
+      { queries: ["README overview"], source: "", scope: "session", offset: 0, after: 0 },
+    ]) {
+      const out = await pi.get("ctx_search").execute("c1", input);
+      assert.ok(out.content[0].text.includes("README overview"), JSON.stringify(input) + " -> " + out.content[0].text);
+    }
+    const out = await pi.get("ctx_resume").execute("c2", { session: "" });
+    assert.ok(out.content[0].text.startsWith("<context_mode_state"), out.content[0].text);
+  });
 
   test("Pi and OpenCode register the description and the schema the MCP hosts get", async () => {
     const pi = await fakePi();
@@ -368,6 +395,146 @@ describe("ADR-0007 call shape on every host", () => {
     assert.ok(text.startsWith("Project source "), text);
     assert.ok(text.includes(". Fix: "), text);
     assert.ok(!text.includes(bundleDir), "must not name the plugin dir as the project: " + text);
+    await client.close();
+  });
+
+  // #1398: a folder the user added to the session (Claude Code /add-dir, --add-dir, permissions.additionalDirectories;
+  // Codex --add-dir, sandbox writable_roots) is inside the boundary the host enforces (#852 "restore the boundary the
+  // host believes it is enforcing"), so ctx_index and ctx_execute(file=) accept it by default, with no setting. Every
+  // folder the host did not grant stays OUTSIDE_ROOT, and that error names the rule and how to add a folder.
+  // Wire probed on the hosts: Claude Code 2.1.331 negotiates 2026-07-28 and answers roots/list only as an MRTR input
+  // request (it then retries the same tools/call with inputResponses); Codex 0.169.0-alpha.11.1 sends the granted
+  // folders in _meta codex/sandbox-state-meta permissionProfile.file_system.entries ({type:path} with access write).
+  const CC_ENVELOPE = {
+    "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+    "io.modelcontextprotocol/clientInfo": { name: "claude-code", title: "Claude Code", version: "2.1.331" },
+    "io.modelcontextprotocol/clientCapabilities": { roots: { listChanged: true }, elicitation: { form: {}, url: {} } },
+  };
+  const ccClient = async (t) => {
+    const client = spawnBundle(join(bundleDir, "server.mjs"), { HOME: root, USERPROFILE: root, CLAUDE_PROJECT_DIR: repo, PATH: process.env.PATH ?? "" }, ["--agent", "claude-code"], { cwd: repo });
+    t.after(() => client.kill());
+    await client.request("server/discover", { _meta: CC_ENVELOPE });
+    return client;
+  };
+  // Claude Code's MRTR loop: answer each roots/list input request with the session's roots, retry the same call.
+  async function ccCall(client, name, args, roots) {
+    let params = { name, arguments: args, _meta: CC_ENVELOPE };
+    for (let round = 1; ; round++) {
+      const r = await client.request("tools/call", params);
+      if (r.resultType !== "input_required") return { r, round };
+      assert.ok(round < 3, "more than two input rounds: " + JSON.stringify(r));
+      const inputResponses = {};
+      for (const [key, ask] of Object.entries(r.inputRequests ?? {})) {
+        assert.equal(ask.method, "roots/list", JSON.stringify(ask));
+        inputResponses[key] = { roots: roots.map((p) => ({ uri: pathToFileURL(p).href })) };
+      }
+      params = { name, arguments: args, _meta: CC_ENVELOPE, inputResponses, ...(r.requestState === undefined ? {} : { requestState: r.requestState }) };
+    }
+  }
+  // A folder outside the containment root (root = parent of the repo dir), as /add-dir ../../manuals would be.
+  const outsideDir = (t, file, text) => {
+    const d = realpathSync.native(mkdtempSync(join(tmpdir(), "cm-1398-")));
+    t.after(() => rmSync(d, { recursive: true, force: true }));
+    writeFileSync(join(d, file), text);
+    return d;
+  };
+  const codexGrant = (...writeDirs) => ({
+    [SANDBOX_META]: {
+      sandboxCwd: pathToFileURL(repo).href,
+      permissionProfile: { type: "managed", file_system: { type: "restricted", entries: [
+        { path: { type: "special", value: { kind: "root" } }, access: "read" },
+        { path: { type: "path", path: repo }, access: "write" },
+        ...writeDirs.map((p) => ({ path: { type: "path", path: p }, access: "write" })),
+        { path: { type: "special", value: { kind: "slash_tmp" } }, access: "write" },
+        { path: { type: "special", value: { kind: "tmpdir" } }, access: "write" },
+      ] } },
+    },
+  });
+
+  test("#1398 claude-code: ctx_index indexes a folder the session added (/add-dir), once Claude Code lists it as a root", async (t) => {
+    const added = outsideDir(t, "guide.md", "# Guide\n\nr1398 added folder\n");
+    const client = await ccClient(t);
+    const { r } = await ccCall(client, "ctx_index", { path: join(added, "guide.md") }, [repo, added]);
+    assert.notEqual(r.isError, true, r.content[0].text);
+    assert.ok(r.content[0].text.startsWith("Indexed "), r.content[0].text);
+    await client.close();
+  });
+
+  test("#1398 claude-code: ctx_execute(file=) reads a file in a folder the session added", async (t) => {
+    const added = outsideDir(t, "notes.txt", "r1398-marker\n");
+    const client = await ccClient(t);
+    const code = "console.log(require('fs').readFileSync(process.env.CTX_FILE, 'utf8').trim())";
+    const { r } = await ccCall(client, "ctx_execute", { language: "javascript", code, file: join(added, "notes.txt") }, [repo, added]);
+    assert.notEqual(r.isError, true, r.content[0].text);
+    assert.ok(r.content[0].text.includes("r1398-marker"), r.content[0].text);
+    await client.close();
+  });
+
+  test("#1398 claude-code: a folder the host did not list stays outside, and the error names the rule and how to add a folder", async (t) => {
+    const added = outsideDir(t, "guide.md", "# Guide\n");
+    const other = outsideDir(t, "secret.md", "# not granted\n");
+    const client = await ccClient(t);
+    const { r } = await ccCall(client, "ctx_index", { path: join(other, "secret.md") }, [repo, added]);
+    assert.equal(r.isError, true, r.content[0].text);
+    const text = r.content[0].text;
+    assert.ok(oneLine(text), text);
+    assert.ok(text.includes(other), text);
+    assert.ok(text.includes("add-dir"), "the error must say how to add a folder to the session: " + text);
+    await client.close();
+  });
+
+  test("#1398 claude-code: a call inside the project completes in one round (no roots round trip)", async (t) => {
+    writeFileSync(join(repo, "r1398-in.md"), "# In project\n");
+    const client = await ccClient(t);
+    const { r, round } = await ccCall(client, "ctx_index", { path: "r1398-in.md" }, [repo]);
+    assert.notEqual(r.isError, true, r.content[0].text);
+    assert.equal(round, 1, "an in-project call must not ask the host for roots");
+    await client.close();
+  });
+
+  test("#1398 codex: ctx_index indexes a folder from --add-dir / writable_roots (sandbox-state-meta write entry)", async (t) => {
+    const added = outsideDir(t, "guide.md", "# Guide\n\nr1398 codex added folder\n");
+    const client = codexClient(repo);
+    t.after(() => client.kill());
+    await hello(client);
+    const r = await client.request("tools/call", { name: "ctx_index", arguments: { path: join(added, "guide.md") }, _meta: codexGrant(added) });
+    assert.notEqual(r.isError, true, r.content[0].text);
+    assert.ok(r.content[0].text.startsWith("Indexed "), r.content[0].text);
+    await client.close();
+  });
+
+  test("#1398 codex: the read-only disk root and the tmp entries grant nothing; the error says how to add a folder", async (t) => {
+    const added = outsideDir(t, "guide.md", "# Guide\n");
+    const other = outsideDir(t, "secret.md", "# not granted\n"); // under tmpdir: the tmpdir/slash_tmp entries must not count
+    const client = codexClient(repo);
+    t.after(() => client.kill());
+    await hello(client);
+    const r = await client.request("tools/call", { name: "ctx_index", arguments: { path: join(other, "secret.md") }, _meta: codexGrant(added) });
+    assert.equal(r.isError, true, r.content[0].text);
+    const text = r.content[0].text;
+    assert.ok(oneLine(text), text);
+    assert.ok(text.includes("add-dir"), "the error must say how to add a folder to the session: " + text);
+    await client.close();
+  });
+
+  // #1411: a zcode hook row and a zcode MCP call from the same ZCode session land in one session, so ctx_stats
+  // reports "This session" with the hook-journaled shell call.
+  test("zcode: a hook row and an MCP call with ZCode's _meta session_id share one session (ctx_stats This session)", async (t) => {
+    const sid = "sess_zc_e2e_1411";
+    const big = Array.from({ length: 300 }, (_, i) => `commit ${i.toString(16).padStart(40, "0")} line ${i}`).join("\n");
+    const hook = spawnSync(process.execPath, [join(bundleDir, "hook.mjs"), "--agent", "zcode"], {
+      cwd: repo, env: { ...process.env, HOME: root, USERPROFILE: root, CLAUDE_CODE_SESSION_ID: "" }, encoding: "utf8",
+      input: JSON.stringify({ hook_event_name: "PostToolUse", session_id: sid, cwd: repo, tool_name: "Bash", tool_input: { command: "git log" }, tool_use_id: "z1", tool_response: { stdout: big, stderr: "", interrupted: false, isImage: false } }),
+    });
+    assert.equal(hook.status, 0, hook.stderr);
+    const client = spawnBundle(join(bundleDir, "server.mjs"), { HOME: root, USERPROFILE: root }, ["--agent", "zcode"], { cwd: repo });
+    t.after(() => client.kill());
+    await client.request("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "zcode", version: "0" } });
+    client.notify("notifications/initialized");
+    const meta = { trace_id: "t-1", session_id: sid, turn_id: "u-1", "com.zcode/request-context": { trace_id: "t-1", session_id: sid } };
+    const r = await client.request("tools/call", { name: "ctx_stats", arguments: {}, _meta: meta });
+    assert.notEqual(r.isError, true, r.content[0].text);
+    assert.ok(r.content[0].text.includes("This session · 1 call"), r.content[0].text);
     await client.close();
   });
 

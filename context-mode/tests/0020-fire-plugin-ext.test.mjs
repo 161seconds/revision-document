@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { spawn, execFileSync, spawnSync } from "node:child_process";
 import { openSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { devNull, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { runDoctor, runSetup } from "../src/setup/index.ts";
 
@@ -74,8 +74,25 @@ describe("ADR-0020 fire, plugin and extension hosts", { concurrency: CONC }, () 
     /** Runs opencode once; returns the content of the tool message the model got on its second request. */
     async function run(cmd, pluginEntry) { return (await runHost(cmd, pluginEntry, HOST_1)).out; }
 
+    // D-OC-NO-OUTPUT-RERUN-1: on a loaded CI runner the host's own shell tool lost the child stdout and sent the model
+    // HOST_NO_OUTPUT (9 red jobs on 8 shas), also in the control run with no plugin loaded. Then the host runs again, up to
+    // HOST_RUNS times in all; every assertion stays the same. A plugin that blanks the output gives HOST_NO_OUTPUT in every
+    // run and still fails.
+    const HOST_NO_OUTPUT = "(no output)";
+    const HOST_RUNS = 3;
+
     /** The same run for a host row: the tool text, the tool names of the first model request, and the host log. */
     async function runHost(cmd, pluginEntry, host) {
+      let r;
+      for (let k = 1; k <= HOST_RUNS; k++) {
+        r = await runHostOnce(cmd, pluginEntry, host);
+        if (r.out.trim() !== HOST_NO_OUTPUT) return { ...r, runs: k };
+        process.stderr.write(`opencode fire: run ${k}/${HOST_RUNS} of ${host.bin} gave the model ${JSON.stringify(HOST_NO_OUTPUT)} for ${JSON.stringify(cmd)}\n`);
+      }
+      return { ...r, runs: HOST_RUNS };
+    }
+
+    async function runHostOnce(cmd, pluginEntry, host) {
       const d = mkdtempSync(join(tmpdir(), "cm-ocfire-"));
       const work = join(d, "work");
       const home = join(d, "home");
@@ -140,6 +157,21 @@ describe("ADR-0020 fire, plugin and extension hosts", { concurrency: CONC }, () 
       for (const n of ["ctx_execute", "ctx_search", "ctx_stats"]) assert.ok(r.toolNames.includes(n), n + " listed: " + r.toolNames.join(","));
       assert.ok(r.out.includes("ctx_execute"), r.out.slice(0, 400));
       assert.ok(r.out.length < 4000, "the model got " + r.out.length + " bytes, not the file");
+    });
+    // D-R54-OC-REPLACE-1 (#1347): a large output that runs (not a whole-file cat) comes back replaced. Red before the fix:
+    // the model got the whole grep output (208000 bytes) on both hosts.
+    const GREP = "grep lorem big.log";
+    test("D-R54-OC-REPLACE-1: OpenCode 1.19 runs a large grep and the model gets the replace, not the output", opts, async () => {
+      const b = buildPlugin();
+      const r = await runHost(GREP, b.plugin, HOST_1);
+      assert.ok(r.out.includes("ctx_search"), r.out.slice(0, 400));
+      assert.ok(r.out.length < 20000, "the model got " + r.out.length + " bytes, not the replace");
+    });
+    test("D-R54-OC-REPLACE-1: OpenCode 2 runs a large grep and the model gets the replace in result.content", opts2, async () => {
+      const b = buildPlugin();
+      const r = await runHost(GREP, b.out, HOST_2);
+      assert.ok(r.out.includes("ctx_search"), r.out.slice(0, 400));
+      assert.ok(r.out.length < 20000, "the model got " + r.out.length + " bytes, not the replace");
     });
     test.after?.(() => { if (built) rmSync(built.out, { recursive: true, force: true }); });
   });

@@ -2,6 +2,7 @@
 // valid decision for its host, built from the tool-name table alone: no project, no store, no policy module.
 //   - own ctx_* tools and tools that cannot flood the context: allowed (ctx_doctor and the sandbox stay reachable);
 //   - shell, large Read, grep and fetch tools: denied with the usual redirect plus one line naming the error.
+//   D-1370-OLDNODE-ALLOW-1: on Node below NODE_MIN the server hosts get allowOutput instead (the server is degraded too).
 // The error and its stack go to <data root>/hook-errors.log (append only, never cut), never only to stderr.
 // Imports: contracts and the adapter table only. Nothing here throws.
 const fs = process.getBuiltinModule("node:fs") as typeof import("node:fs");
@@ -157,7 +158,16 @@ function bigRead(agent: AgentId, input: Rec, cwd: string): boolean {
   // D-R47-READ-MEDIA-1: an image or PDF the host shows as a block is not denied (same as decide).
   // D-R48-OWN-FILE-1 (#1326): the agent's own skill and rule files are not denied (same as decide).
   return [firstString(input, READ_PATH_KEYS), ...many].some((p) => p !== "" && bigFile(resolve(cwd, p))
-    && !isMediaRead(agent, resolve(cwd, p)) && !isOwnFile(agent, resolve(cwd, p)));
+    && !isMediaRead(agent, resolve(cwd, p)) && !isOwnFile(agent, cwd, p));
+}
+
+/** This host's allow reply, in its own shape (a valid document for every host). Never throws. */
+export function allowOutput(agent: AgentId): HookOutput {
+  try {
+    return getAdapter(agent).encode({ event: "PreToolUse", agent, sessionId: "", cwd: "", turn: 0 }, { kind: "allow" });
+  } catch {
+    return { stdout: "", exitCode: 0 };
+  }
 }
 
 /**
@@ -166,16 +176,15 @@ function bigRead(agent: AgentId, input: Rec, cwd: string): boolean {
  */
 export function failureOutput(agent: AgentId, raw: unknown, err: unknown, cwdFallback = ""): HookOutput {
   const row = getAdapter(agent);
-  const allow = (): HookOutput => row.encode({ event: "PreToolUse", agent, sessionId: "", cwd: "", turn: 0 }, { kind: "allow" });
   try {
-    if (!isRec(raw)) return allow();
-    if (!isPreTool(row, firstString(raw, HOOK_FAIL_EVENT_KEYS))) return allow();
+    if (!isRec(raw)) return allowOutput(agent);
+    if (!isPreTool(row, firstString(raw, HOOK_FAIL_EVENT_KEYS))) return allowOutput(agent);
     const name = firstString(raw, HOOK_FAIL_TOOL_KEYS);
-    if (name === "" || name.includes(OWN_TOOL_PREFIX)) return allow();
+    if (name === "" || name.includes(OWN_TOOL_PREFIX)) return allowOutput(agent);
     const kind = kindOf(row, name);
-    if (kind === null) return allow();
+    if (kind === null) return allowOutput(agent);
     const cwd = firstString(raw, HOOK_FAIL_CWD_KEYS) || cwdFallback;
-    if (kind === "read" && !bigRead(agent, inputOf(raw), cwd)) return allow();
+    if (kind === "read" && !bigRead(agent, inputOf(raw), cwd)) return allowOutput(agent);
     const redirect = kind === "read" ? HOOK_FAIL_REDIRECT.read : HOOK_FAIL_REDIRECT[kind];
     const reason = prefixToolNames(redirect, row.toolNamePrefix) + "\n" + HOOK_FAIL_LINE(errorLabel(err), row.toolNamePrefix);
     return row.encode({ event: "PreToolUse", agent, sessionId: "", cwd, turn: 0 }, { kind: "deny", reason });

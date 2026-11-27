@@ -14,7 +14,7 @@ All from 00 §3.3, verbatim, no new text:
 | `TIMEOUT` | `Timed out after <ms> ms. Fix: pass background: true.` |
 | `NO_RUNTIME` | `No <lang> runtime on PATH. Fix: install it or pick another language.` |
 | `FETCH_FAILED` | `Fetch failed: <code>. Fix: check the URL or proxy.` |
-| `OUTSIDE_ROOT` | `Path <p> is outside the project. Fix: use a path inside <root>.` |
+| `OUTSIDE_ROOT` | `Path <p> is outside the project and the folders added to this session. Fix: use a path inside <root>, or add its folder to the session (Claude Code /add-dir, Codex --add-dir).` (D-1398-HOST-ROOTS-1) |
 
 ## 2. `src/core/tools/execute.ts` — `ctx_execute`
 
@@ -138,7 +138,7 @@ export function runWrapperMain(argv: string[], env: NodeJS.ProcessEnv): Promise<
 6. Run the decoded command exactly as `ctxExecute` would for `language: "shell"` (§2.3 steps 5–12), same cwd, same exit code, timeout `EXEC_TIMEOUT_MS`.
 7. `indexText(db, project, sessionId, "run.mjs:" + decoded.slice(0, 80), combinedOutput, "text")` → `sourceId`.
 8. `selectChunks(db, sourceId, originalIntentField ?? "", OUTPUT_CAP - summaryReserve)` — `originalIntentField` is the tool call's `description` field, passed through as `argv[4]` (ADR-0016: "the call's `description` field").
-9. Print to stdout: `summaryLine(exitCode, fullBytes) + "\n" + selected.text`, then one line: `` `more: node <bundle>/search.mjs <source-id> "<terms>"` `` where `<bundle>` is `resolvePluginRoot`'s directory and `<terms>` is the `description` field re-quoted (ADR-0016 exact template).
+9. Print to stdout: `summaryLine(exitCode, fullBytes) + "\n" + selected.text`, then one line: `` `more: node '<bundle>/search.mjs' <source-id> '<terms>'` `` (POSIX single-quoted words, D-CC-POINTER-5) where `<bundle>` is `resolvePluginRoot`'s directory and `<terms>` is the `description` field re-quoted (ADR-0016 exact template).
 10. `process.exit(exitCode ?? 0)` — the subagent's Bash tool sees the real exit code of the original command (ADR-0016: "same cwd, same exit code").
 11. If the decoded command itself times out: print `errorText("TIMEOUT", { ms: EXEC_TIMEOUT_MS })` to stdout as the sole content, `process.exit(124)` (the POSIX timeout convention, picked because no source names a wrapper-specific timeout exit code — Assumption A18).
 

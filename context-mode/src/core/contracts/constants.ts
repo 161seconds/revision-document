@@ -26,22 +26,20 @@ export const SYNC_INDEX_MAX_BYTES = 65536; // DECISIONS-r9 F1
 // D-M7-SV-1: the PostToolUse replace path has its own sizes, separate from OUTPUT_CAP (which stays the cap for
 // replies and the Read deny threshold). A result over REPLACE_TRIGGER_BYTES is indexed whole and the model gets
 // whole BM25-selected chunks of at most REPLACE_CHUNK_BYTES each, within REPLACE_RETURN_BYTES, plus the more line.
-// D-R48-TRIGGER-1 (#1326 coreycoburn): a documented setting, env CTX_REPLACE_TRIGGER_BYTES (a positive safe integer),
-// read once at process start; default 4096. Bench (bench/replay.mjs, 602 files, 28,390 calls, 37.9 MB): trigger 4096
-// saves 41.99% (1,878 replaces), 6144 saves 30.89% (998), 8192 saves 23.34% (582): raising it costs a quarter to
-// half of the saving, so the default stays; a user who wants 2-6 KB outputs whole sets the env var.
-export const REPLACE_TRIGGER_BYTES_DEFAULT = 4096;
+// D-REPLACE-TRIGGER-CONST-1 (amends D-R48-TRIGGER-1): a constant; no env, flag or setting changes it. Bench
+// (bench/replay.mjs, 602 files, 28,390 calls, 37.9 MB): 4096 saves 41.99%, 6144 saves 30.89%, 8192 saves 23.34%.
+// A stored output reads back whole through ctx_search. REPLACE_TRIGGER_ENV is the retired env name: doctor reads it
+// only to tell the user it is no longer read (D-REPLACE-TRIGGER-CONST-1); nothing else reads it.
+export const REPLACE_TRIGGER_BYTES = 4096;
 export const REPLACE_TRIGGER_ENV = "CTX_REPLACE_TRIGGER_BYTES";
-export function readReplaceTrigger(raw: string | undefined): number {
-  if (raw === undefined || raw.trim() === "") return REPLACE_TRIGGER_BYTES_DEFAULT;
-  const n = Number(raw);
-  return Number.isSafeInteger(n) && n > 0 ? n : REPLACE_TRIGGER_BYTES_DEFAULT;
-}
-export const REPLACE_TRIGGER_BYTES = readReplaceTrigger(process.env[REPLACE_TRIGGER_ENV]);
 // D-R41-READ-OFFSET-1 (#1314): a read-like tool (canonical name) called with a range key is the user's own window:
 // PostToolUse lets it through whole. Claude Code, Pi, Gemini: offset/limit; VS Code read_file and Copilot view map to them.
 export const RANGE_READ_TOOLS = Object.freeze(["Read", "view"]);
 export const READ_RANGE_KEYS = Object.freeze(["offset", "limit", "view_range"]);
+// D-1404-SKILL-LOAD-1 (#1404): a skill-load tool (canonical name) returns a skill's instructions, which the model must
+// read whole: PostToolUse lets it through. Claude Code calls it Skill (its PostToolUse matcher leaves it out); OpenCode's
+// native `skill` maps to it. Every other tool output over the trigger keeps the replace.
+export const SKILL_LOAD_TOOLS = Object.freeze(["Skill"]);
 export const REPLACE_RETURN_BYTES = 96; // D-M7-SV-3: was 512 (D-M7-SV-2), 1024 before; sweeps in DEVIATIONS
 // D-M2-JSON-1: a parser-found shape digest (schema, counts, whole rows) has its own budget, independent of the handle line.
 export const SHAPE_RETURN_BYTES = 256;
@@ -54,6 +52,30 @@ export const REPLACE_CHUNK_BYTES = 48; // D-M7-SV-3: was 256; two whole chunks f
 export function REPLACE_HANDLE_LINE(intent: string, handle: string, bytes: number, prefix = "", asked = ""): string {
   const queries = asked === "" ? [intent] : [intent, asked];
   return prefix + "ctx_search({queries:[" + queries.map((q) => JSON.stringify(q)).join(",") + "], source:" + JSON.stringify(handle) + "}) searches the whole output (" + bytes + " B).";
+}
+// D-CC-POINTER-1 (#1342, ADR-0016 line 16): the handle line of a subagent replace in case B or C. It names no ctx
+// tool (the subagent cannot call one). It states the size and the short id; it names Read with offset and limit
+// only when the subagent has Read and the call was a read.
+export function SUBAGENT_HANDLE_LINE(handle: string, bytes: number, read: boolean): string {
+  return "The full output (" + bytes + " B) is stored as " + handle + "; above is the best-matching part."
+    + (read ? " Read the file with offset and limit for other lines." : "");
+}
+// D-CC-POINTER-2 (#1358, #1342): the MCP-free twin of the search call, for a caller with a shell on the claude-code
+// row. search.mjs takes the short id and the project dir, so it works from any cwd and with no MCP server.
+// D-CC-POINTER-5: every word is a POSIX single-quoted word, so the shell runs no $( ), backtick or $VAR in it.
+export function SEARCH_TWIN_LINE(searchPath: string, handle: string, terms: string, projectDir: string): string {
+  return " Or run: node " + shellWord(searchPath) + " " + handle + " " + shellWord(terms) + " " + shellWord(projectDir);
+}
+// D-CC-POINTER-6 (#1406): Claude Code kept the whole output in this file (D-M2-SHAPE-2) and the replace drops the host's
+// persistedOutputPath field, so the pointer names the file. A Read with offset and limit passes whole
+// (D-R41-READ-OFFSET-1), so the caller pages through the output in order.
+export function PERSISTED_FILE_LINE(file: string): string {
+  return " The whole output is also in " + JSON.stringify(file) + "; Read it with offset and limit.";
+}
+// D-CC-POINTER-5: one POSIX shell word. Inside single quotes sh, bash and Git Bash expand nothing; a ' closes the
+// quote, adds an escaped ', and opens it again.
+export function shellWord(s: string): string {
+  return "'" + s.split("'").join("'\\''") + "'";
 }
 export const HANDLE_PROMPT_WORDS = 3; // D-HA-GEMINI-HINT-1: prompt words the handle-line query may add
 export const MAX_CHUNK_BYTES = 4096; // DECISIONS-r9 §C
@@ -107,9 +129,23 @@ export const PIPE_EOF_GRACE_MS = 250;
 // D-1337-EXIT-SETTLE-1: the most time the pipe drain may take after exit, so a survivor that keeps writing cannot hold the call.
 export const PIPE_DRAIN_MAX_MS = 2000;
 export const DB_TIMEOUT_MS = 5000; // ADR-0002, PRD §4
+// D-1401-SPOOL-1 (#1401): a hook process waits at most this long for the write lock, then puts the write in the
+// project spool. The host kills a hook at HOOK_TIMEOUT_MS, so a hook never waits DB_TIMEOUT_MS.
+export const HOOK_BUSY_MS = 250;
+export const HOOK_SPOOL_DIR = "pending"; // D-1401-SPOOL-1: <projectDir>/pending, one JSON file per waiting write
+// D-1401-SPOOL-1: a claimed spool file older than this has no live drainer (the host killed it); another hook takes it.
+export const SPOOL_CLAIM_STALE_MS = 30000;
+// D-1401-SPOOL-1: the most time one hook spends writing spool files into the store; the rest waits for the next hook.
+export const SPOOL_DRAIN_MS = 1000;
 export const DB_WAL_SUFFIX = "-wal"; // impl/02 §6.1 step 4, DEVIATIONS D-M1-T5-1: WAL sibling of context.db
 export const DB_SHM_SUFFIX = "-shm"; // impl/02 §6.1 step 4, DEVIATIONS D-M1-T5-1: shared-memory sibling of context.db
 export const DB_TMP_SUFFIX = ".tmp"; // DEVIATIONS D-M2-CI-3: private build name of a new context.db before linkSync publishes it
+// DEVIATIONS D-1385-NOLINK-1: link() codes that mean "this file system has no hard links" (Android f2fs, some FUSE/SMB mounts).
+export const DB_LINK_DENIED_CODES: readonly string[] = ["EACCES", "EPERM", "ENOSYS", "ENOTSUP", "EOPNOTSUPP"];
+export const DB_PUBLISH_CLAIM_SUFFIX = ".publish"; // D-1385-NOLINK-1: mkdir claim; its holder alone renames the temp DB into place
+// D-1385-NOLINK-2: Windows answers mkdir with EPERM while another process removes the same claim dir.
+export const DB_CLAIM_BUSY_CODES: readonly string[] = ["EEXIST", "EPERM"];
+export const DB_PUBLISH_POLL_MS = 5; // D-1385-NOLINK-1: a creator that lost the claim checks for the published file this often
 export const SQLITE_PRIMARY_CODE_MASK = 255; // DEVIATIONS D-M1-T5-1: extended result code -> primary code (low byte)
 export const SQLITE_CORRUPT_CODE = 11; // impl/02 §6.1 error cases: SQLITE_CORRUPT -> DB_CORRUPT
 export const SQLITE_NOTADB_CODE = 26; // DEVIATIONS D-M1-T5-1: SQLITE_NOTADB (garbage file) -> DB_CORRUPT
@@ -127,7 +163,7 @@ export const MS_PER_DAY = 86400000; // DEVIATIONS D-M1-3: day-to-ms factor for t
 
 // Store (impl/02 §0; DEVIATIONS D-M1-3: impl/00 names NODE_MIN and INDEX_WRITE_CHUNK cover the rest)
 export const PROJECT_KEY_HEX_LEN = 16; // impl/00 A5: first 16 hex chars of sha256(git common dir realpath)
-export const SCHEMA_VERSION = 6; // ADR-0002 decision 2: PRAGMA user_version; 2 = cost dedup index (D-M5-arch-2); 3 = chunks title + porter (D-SEARCH-3); 4 = trigram table + vocab (D-SEARCH-4); 5 = line_units (r3-ledger); 6 = path labels with forward slashes (D-PATH-LABEL-1)
+export const SCHEMA_VERSION = 7; // ADR-0002 decision 2: PRAGMA user_version; 2 = cost dedup index (D-M5-arch-2); 3 = chunks title + porter (D-SEARCH-3); 4 = trigram table + vocab (D-SEARCH-4); 5 = line_units (r3-ledger); 6 = path labels with forward slashes (D-PATH-LABEL-1); 7 = per-source line unit rowid span (D-1401-UNITS-SPAN-1)
 export const RETENTION_IDLE_DAYS = 30; // impl/02 A-S1: row-level, age since last access
 export const RETENTION_SIZE_CAP_BYTES = 524288000; // impl/02 A-S2 (Q7b): 500 MB per project
 export const PROJECT_DEAD_IDLE_DAYS = 14; // DECISIONS-r9 V22 (#1024): project-level sweep, dead owner
@@ -157,17 +193,20 @@ export const PLAIN_OUTPUT_ENV: Readonly<Record<string, string>> = Object.freeze(
 
 // impl/04 §4, ADR-0016 case B: the run.mjs wrapper and its search.mjs follow-up (DEVIATIONS D-M3-X1-1..5).
 export const RUN_USAGE_LINE = "Usage: run.mjs <base64>"; // §4 step 1
-export const SEARCH_USAGE_LINE = "Usage: search.mjs <source-id> <terms>"; // D-M3-X1-2
+export const SEARCH_USAGE_LINE = "Usage: search.mjs <source-id> <terms> [project-dir]"; // D-M3-X1-2
 export const RUN_FAIL_EXIT = 1; // §4 steps 1, 4: usage error or deny, the command never runs
 export const RUN_TIMEOUT_EXIT = 124; // §4 step 11, A18: POSIX timeout convention
 export const RUN_LABEL_PREFIX = "run.mjs:"; // §4 step 7 source label, + first line of the command
-export const RUN_MORE_PREFIX = "more: node "; // §4 step 9, ADR-0016 template: + "<bundle>/search.mjs" <source-id> "<terms>"
+export const RUN_MORE_PREFIX = "more: node "; // §4 step 9, ADR-0016 template: + '<bundle>/search.mjs' <source-id> '<terms>' (D-CC-POINTER-5)
 export const SEARCH_WRAPPER_FILE = "search.mjs"; // ADR-0016 more: line target, next to run.mjs (D-M3-X1-2)
 export const RUN_WRAPPER_AGENT = "claude-code"; // D-M3-X1-3: case B deny + rewrite is the Claude Code mechanism (ADR-0016 Q3)
 export const RUN_SESSION_PREFIX = "mcp:"; // §4 step 5, 00 A8: no MCP _meta, + a process-local id
 // D-CR2-SID-1: the env var a host sets in the MCP server process to the session id its hooks receive.
 // Claude Code 2.1.303 sets CLAUDE_CODE_SESSION_ID (probe: equals the hook payload session_id). A host not listed keeps mcp:<serverId>.
 export const HOST_SESSION_ENV: Readonly<Partial<Record<string, string>>> = Object.freeze({ "claude-code": "CLAUDE_CODE_SESSION_ID" });
+// D-1411-ZCODE-SID-1: the _meta key a host uses for the session id its hooks receive, when it is not sessionId.
+// ZCode (zai-org/ZCode fec97590 mcpRequestMeta) sends _meta.session_id on every tools/call and sets no session env.
+export const HOST_SESSION_META: Readonly<Partial<Record<string, string>>> = Object.freeze({ zcode: "session_id" });
 
 // Runtime
 export const NODE_MIN = "24.15.0"; // S-NODE
@@ -180,6 +219,7 @@ export const REQUIRE_SECURITY_ENV = "CONTEXT_MODE_REQUIRE_SECURITY"; // v1 issue
 export const HOST_CONFIG_DIR_NAME = ".claude"; // project and user agents: <root>/.claude/agents/<type>.md
 export const AGENTS_DIR_NAME = "agents"; // also the plugin's own agents/ dir under its installPath
 export const AGENT_FILE_EXT = ".md";
+export const SYNCED_PLUGINS_DIR_NAME = "synced"; // D-CC-POINTER-3 (#1342): <claude dir>/plugins/synced/<id>/<plugin>/agents
 export const HOST_PLUGINS_DIR_NAME = "plugins"; // ~/.claude/plugins/installed_plugins.json
 export const INSTALLED_PLUGINS_FILE = "installed_plugins.json";
 export const PLUGIN_AGENT_SEPARATOR = ":"; // plugin agent type "<plugin>:<agent>"
@@ -198,6 +238,9 @@ export const FRONTMATTER_FENCE = "---";
 export const FRONTMATTER_TOOLS_KEY = "tools";
 export const FRONTMATTER_DISALLOWED_KEY = "disallowedTools";
 export const MCP_SERVER_TOOL_PREFIX = "mcp__"; // Claude-shape MCP name; a bare "mcp__<server>" rule covers all its tools
+// D-1402-PLUGIN-CALL-1 (#1402): Claude Code gives a plugin mod's $.mcp.call this tool_use_id prefix (2.1.322 d6n/s_r);
+// the result goes back to the mod in a virtual message, never to the model.
+export const PLUGIN_CALL_ID_PREFIX = "toolu_plugin_";
 export const MCP_NAME_JOIN = "__"; // Claude-shape join between server and tool name
 export const GEMINI_MCP_PREFIX = "mcp_"; // generateValidName(): "mcp_" + server + "_" + tool (ADR-0016 Gemini row)
 export const GEMINI_NAME_EXTRA_CHARS = "_-.:"; // kept besides A-Z a-z 0-9; any other char becomes "_"
@@ -351,7 +394,7 @@ const READ_IMAGES_AND_PDF: readonly ReadMediaType[] = Object.freeze([...READ_IMA
  *  A host with no checked media path keeps the size deny for every file. */
 export const READ_MEDIA_BY_AGENT: Readonly<Record<AgentId, readonly ReadMediaType[]>> = Object.freeze({
   "claude-code": READ_IMAGES_AND_PDF, gemini: READ_IMAGES_AND_PDF, qwen: READ_IMAGES_AND_PDF, opencode: READ_IMAGES_AND_PDF,
-  pi: READ_IMAGES, vscode: READ_IMAGES, zcode: READ_IMAGES, "copilot-cli": [], codex: [], kiro: [],
+  pi: READ_IMAGES, omp: READ_IMAGES, vscode: READ_IMAGES, zcode: READ_IMAGES, "copilot-cli": [], codex: [], kiro: [],
 });
 
 // impl/09 §4 hooks dispatch (DEVIATIONS D-M3-H2-1..6). Keys and texts the dispatch reads; no numbers.
@@ -372,6 +415,11 @@ export const RECALL_BUDGET_BYTES = 2048; // whole recall block, wrapper included
 export const RECALL_MIN_SCORE = 5;
 export const RECALL_MAX_ROWS = 340; // newest rows read per prompt (= MAX_CANDIDATES_TOTAL)
 export const COMPACTED_META_PREFIX = "compacted:"; // meta key + session id: a compaction happened in this session
+// D-0027-LOSTBET-1 (ADR-0027 D3, FR5, 10.7): meta keys + session id + ":" + tool key. BET_META_PREFIX notes a replaced
+// full Read of a file (the bet); LOSTBET_META_PREFIX marks a lost bet, so later outputs with that key pass whole up to
+// OUTPUT_CAP for the rest of the session. A compaction clears the session's lostbet marks.
+export const BET_META_PREFIX = "bet:";
+export const LOSTBET_META_PREFIX = "lostbet:";
 export const RECALL_UNITS_SEEN_META_PREFIX = "recall_units_seen:"; // r3-ledger: JSON "source:ord" list of line units already injected
 export const UNITS_ANCESTOR_FACTOR = 8; // D-UNITS-BOUND-1: ancestor copies per output <= this x its bytes (0 of 680k units in 3520 real files drop a parent at 8)
 // D-1330-RECALL-PROMPT-1 (#1330): the recall query is the current prompt only, its first distinct words up to this
@@ -572,6 +620,8 @@ export const D6_UNKNOWN_DETAIL = "no clientInfo or protocolVersion on the reques
 export const D6_IN_PROCESS_DETAIL = "in-process plugin: this call ran inside the agent, no MCP session to read"; // PASS (D-R49-DOCTOR-1339-3)
 export function D7_DETAIL(got: string): string { return `resolved project source ${got} does not match the host's actual cwd`; }
 export const D7_FIX = "restart the agent in the correct directory";
+export function D7_NO_PROJECT_DETAIL(kind: string): string { return `Project source ${kind} is missing`; } // D-1410-DOCTOR-NO-PROJECT-1
+export const DOCTOR_NEEDS_PROJECT_DETAIL = "runs once the project resolves; D7 names the project source"; // D-1410-DOCTOR-NO-PROJECT-1
 export function D8_STALE_SCHEMA_DETAIL(got: number, want: number): string { return `stale schema (v${got}, expected v${want})`; }
 export const D8_INTEGRITY_DETAIL = "integrity_check failed";
 export const D8_INTEGRITY_FIX = "doctor will heal context.db on the next run";
@@ -609,6 +659,7 @@ export const EXTENSIONS_DIR_NAME = "extensions"; // Gemini/Qwen: <agent home>/ex
 export const AGENT_HOME_DIR: Readonly<Record<AgentId, readonly string[]>> = Object.freeze({
   "claude-code": [".claude"], codex: [".codex"], gemini: [".gemini"], qwen: [".qwen"], "copilot-cli": [".copilot"],
   vscode: [".vscode"], kiro: [".kiro"], zcode: [".zcode"], pi: [".pi"], opencode: [".config", "opencode"],
+  omp: [".omp"], // ADR-0026: OMP data and plugins live under ~/.omp
 });
 export const UPGRADE_RESTART_LINE = "restart needed"; // impl/07 §6 step 8
 export const UPGRADE_HOST_AREA = "host update"; // impl/07 §6 step 4
@@ -696,8 +747,6 @@ export const UNSUPPORTED_HOSTS: readonly UnsupportedHost[] = Object.freeze([
     configDirs: [".gemini/antigravity", ".gemini/antigravity-cli", ".gemini/config"], binaries: ["agy"], source: "v1.0.169:src/adapters/client-map.ts:15-17; detect.ts:156,481-483; #1340" }),
   unsupported({ id: "cursor", name: "Cursor", clientNames: ["cursor-vscode"], envVars: ["CURSOR_TRACE_ID", "CURSOR_CLI", "CURSOR_CWD"],
     pluginPaths: [], configDirs: [".cursor"], binaries: [], source: "v1.0.169:src/adapters/client-map.ts:18; detect.ts:163-165,584" }),
-  unsupported({ id: "omp", name: "OMP (oh-my-pi)", clientNames: ["omp-coding-agent"], envVars: [],
-    pluginPaths: [], configDirs: [".omp"], binaries: ["omp"], source: "v1.0.169:src/adapters/client-map.ts:37; detect.ts:543 (PI_CODING_AGENT_DIR is not a signal: supported Pi reads it too)" }),
   unsupported({ id: "openclaw", name: "OpenClaw", clientNames: [], envVars: [],
     pluginPaths: [], configDirs: [".openclaw"], binaries: [], source: "v1.0.169:src/adapters/detect.ts:252,575 (the runtime sets no env var)" }),
   unsupported({ id: "kimi", name: "Kimi Code", clientNames: ["kimi-code", "kimi"], envVars: [],
@@ -731,6 +780,7 @@ export const HOOK_HOST_FILE: Readonly<Record<AgentId, {
   zcode: { root: "home", file: [".zcode", "cli", "config.json"], key: ["hooks", "events"], shape: "zcode", timeoutKey: "timeoutMs", matcher: true },
   pi: null,
   opencode: null,
+  omp: null, // ADR-0026: in-process, no hook file
 });
 export const TOOL_HOOK_EVENTS: readonly string[] = Object.freeze(["PreToolUse", "PostToolUse"]); // canonical events that carry the matcher
 export const HOOK_MATCHER_FIELD = "matcher";
@@ -762,7 +812,15 @@ export const D5_READ_RANGE_DETAIL = "PostToolUse Read with offset/limit over the
 export const D5_READ_OWN_DETAIL = "PreToolUse Read of a skill file over the one-read limit under the agent's own config dir came back denied: skill and rule files must reach the model whole (#1326)";
 export const D5_READ_MEDIA_DETAIL = "PreToolUse Read of a PNG over the one-read limit came back denied: an image Read must reach the model as an image block (#1321)";
 export const D5_READ_SHAPE_DETAIL = "PostToolUse Read replace is not Read's output shape {type:\"text\", file:{filePath, content, numLines, startLine, totalLines}}: Claude Code drops it and shows a hook warning";
-export function D5_SLOW_DETAIL(ms: number): string { return `hook round trip took ${ms} ms over bare node, over ${HOOK_P95_MS} ms`; }
+// #1350: the hook-cost bound is max(HOOK_P95_MS, D5_BARE_SHARE x the fastest bare node start). HOOK_P95_MS was set where node
+// starts in ~40 ms (GS6); on a machine where node starts in 600 ms the same hook costs more ms, not a larger share.
+export const D5_BARE_SHARE = 0.5;
+export function D5_SLOW_DETAIL(ms: number, bound: number = HOOK_P95_MS): string { return `hook round trip took ${ms} ms over bare node, over ${bound} ms`; }
+export function D5_SLOW_START_DETAIL(ms: number, bare: number, bound: number): string {
+  return `hook adds ${ms} ms to a ${bare} ms node start, inside ${bound} ms (half a start): node starts slowly on this machine`;
+}
+// #1350: OpenCode, Pi and OMP run hooks inside the host process; D5 checks the shape, a tool call pays no node start.
+export const D5_IN_PROCESS_DETAIL = "native shape ok; hooks run inside the host process, so a tool call pays no node start";
 // D-1323-CODEX-STOP-1 (#1323): the Codex Stop probe (rust-v0.166.0 stop.command.input) failed or wrote a hook-errors.log line.
 export const D5_STOP_DETAIL = "Codex Stop event: the hook did not give an empty or Codex Stop reply, or it logged a hook error";
 export const D5_FIX = "run ctx_upgrade"; // a broken hook entry is a broken install
@@ -783,6 +841,9 @@ export const OC_ANY_RESOURCE = "*";
 export const D11_WIN_DETAIL = "Git Bash not found"; export const D11_WIN_FIX = "install Git for Windows";
 export const D11_POSIX_DETAIL = "no sh on PATH"; export const D11_POSIX_FIX = "install sh or add it to PATH";
 export function D11_PASS_DETAIL(shell: string, win: boolean): string { return `${win ? "Git Bash" : "sh"}: ${shell}`; }
+// D-1373-STAT-1: a sandbox language whose PATH candidates exist but cannot be read (Windows Store app alias: EACCES).
+export function D11_RUNTIME_DETAIL(lang: string, unreadable: readonly string[]): string { return `${lang} not found, unreadable on PATH: ${unreadable.join(", ")}`; }
+export function D11_RUNTIME_FIX(lang: string): string { return `install ${lang}, or turn off its app alias and PATH entry that cannot be read`; }
 // doctor-heal.ts: D8 heal (impl/07 §5 step 7). Order: main file, then WAL, then SHM.
 export const DB_SIBLING_SUFFIXES = Object.freeze(["", DB_WAL_SUFFIX, DB_SHM_SUFFIX] as const);
 export const HEAL_TMP_SUFFIX = ".heal"; // VACUUM INTO <context.db>.heal, then rename over context.db
@@ -806,6 +867,7 @@ export const UPGRADE_HOST_COMMAND: Readonly<Record<AgentId, string>> = Object.fr
   gemini: "gemini extensions update context-mode",
   qwen: "qwen extensions update context-mode",
   pi: "pi update --extensions",
+  omp: "omp plugin upgrade context-mode", // ADR-0026 decision 4: OMP native update
   opencode: "opencode plugin update",
   "copilot-cli": "npm i -g context-mode && context-mode setup --agents copilot-cli",
   vscode: "npm i -g context-mode && context-mode setup --agents vscode",
@@ -824,7 +886,12 @@ export const V1_SCRIPT_NAMES = Object.freeze([
 ] as const);
 export const V1_HOOK_COMMAND = "context-mode hook";
 export const V1_CODEX_HOOK_COMMAND = "context-mode hook codex";
-export const V1_CODEX_HOOKS_DIR = Object.freeze(["hooks", "codex"] as const); // path segments of hooks/codex/*.mjs
+export const V1_CODEX_HOOKS_DIR = Object.freeze(["hooks", "codex"] as const); // path segments of hooks/codex/<event>.mjs
+// #1364 D-1364-CODEX-V1-SCRIPT-1: the only scripts v1.0.169 shipped under hooks/codex/ and wrote into hooks.json
+// (v1 src/adapters/codex/index.ts LEGACY_HOOK_PATH_SUFFIXES). Any other .mjs there is the user's own hook.
+export const V1_CODEX_SCRIPT_NAMES = Object.freeze([
+  "pretooluse.mjs", "posttooluse.mjs", "sessionstart.mjs", "precompact.mjs", "userpromptsubmit.mjs", "stop.mjs",
+] as const);
 export const V1_CACHE_HEAL_NAME = "context-mode-cache-heal"; // hooks/context-mode-cache-heal.{mjs,sh}
 export const V1_CACHE_HEAL_EXTS = Object.freeze([".mjs", ".sh"] as const);
 export const V1_STATUSLINE_COMMAND = "context-mode statusline"; // report only, never removed
@@ -834,6 +901,20 @@ export const PI_NPM_DIR = "npm";
 export const PI_NODE_MODULES_DIR = "node_modules";
 export const PI_PACKAGE_JSON_FILE = "package.json";
 export const PI_LIST_COMMAND = "pi list"; // D-R38-PI-CMD-1: Pi's own command that lists installed packages
+// ADR-0026 decision 7 (D-OMP-DOCTOR-1): OMP's own plugin verbs and the host-limit info lines of the support matrix.
+export const OMP_LIST_COMMAND = "omp plugin list";
+export const OMP_ENABLE_COMMAND = "omp plugin enable context-mode";
+export const OMP_MIN_VERSION = "14.7.0"; // first OMP with systemPrompt: string[] (ADR-0026 decision 15)
+export const OMP_FLOOR_INFO = (v: string): string => `OMP ${v} is older than the tested floor ${OMP_MIN_VERSION}. Update it with: omp update`;
+export const OMP_CONTENT_INFO = "OMP keeps tool output in content; context-mode writes its notes there.";
+export const OMP_PRINT_MODE_INFO = "Print mode sends no prompt event. Use omp or omp --mode rpc to keep prompts.";
+export const OMP_SCRIPTS_INFO = "Add < /dev/null in scripts.";
+export const OMP_IMPORT_INFO = (claude: string, mcp: string): string =>
+  `OMP also imports context-mode from ${claude}. To run it once, add "context-mode" to disabledServers in ${mcp}.`;
+// D-REPLACE-TRIGGER-CONST-1: the doctor info line when the retired CTX_REPLACE_TRIGGER_BYTES is still set (`where` is a
+// settings file path or "the process env"). Positive wording; never a WARN or FAIL row.
+export const REPLACE_TRIGGER_RETIRED_INFO = (where: string): string =>
+  `${REPLACE_TRIGGER_ENV} in ${where} is no longer read: context-mode stores every tool output over ${REPLACE_TRIGGER_BYTES} B whole and ctx_search reads it back. You can remove that line from ${where}.`;
 export const PI_CURRENT_MAJOR = 2; // an installed context-mode at this major or later is the current Pi package
 export const V1_OPENCODE_PLUGIN_SPEC = "context-mode"; // bare npm spec in .plugin[]
 export const V1_TMP_PREFIX = "context-mode-"; // <os tmp>/context-mode-*
@@ -853,6 +934,10 @@ export const OPENCODE_CONFIG_DIR_ENV = "OPENCODE_CONFIG_DIR"; // D-WIN-OPENCODE-
 export const APPDATA_ENV = "APPDATA"; // D-WIN-VSCODE-MCP-1: Windows roaming app data; VS Code keeps its user dir under it
 export const VSCODE_USER_DIR_SEGMENTS = Object.freeze(["Code", "User"] as const); // D-WIN-VSCODE-MCP-1: <app data>/Code/User/{mcp.json,settings.json}
 export const XDG_CONFIG_HOME_ENV = "XDG_CONFIG_HOME"; // D-WIN-OPENCODE-DIR-1: OpenCode takes its global dir from xdg-basedir: $XDG_CONFIG_HOME/opencode, else ~/.config/opencode
+export const XDG_DATA_HOME_ENV = "XDG_DATA_HOME"; // #1415 D-OMP-STORE-PATH-1: OMP keeps its plugin store in $XDG_DATA_HOME/omp/plugins once $XDG_DATA_HOME/omp exists (linux, darwin)
+export const PI_CONFIG_DIR_ENV = "PI_CONFIG_DIR"; // #1415 D-OMP-STORE-PATH-1: OMP config root <home>/<it>, default <home>/.omp; a path only, never the agent id
+export const OMP_APP_DIR = "omp"; // #1415 D-OMP-STORE-PATH-1: OMP APP_NAME, the dir under $XDG_DATA_HOME
+export const OMP_PLUGINS_DIR = "plugins"; // ADR-0026 decision 7: <OMP data root>/plugins holds omp-plugins.lock.json and package.json
 export const CONFIG_TOML_FILE = "config.toml"; // codex
 export const CONFIG_JSON_FILE = "config.json"; // zcode cli/
 export const ZCODE_CLI_DIR = "cli";
@@ -889,7 +974,6 @@ export const V1_DATA_DIR_NAME = "context-mode"; // <agent home>/context-mode/
 // "content" dir, "platform.json"); v2 shares the dir (DATA_ROOT), so only these names are v1 content.
 export const V1_DATA_ROOT_ENTRIES = Object.freeze(["content", "platform.json"] as const);
 export const V1_SESSIONS_DIR_NAME = "sessions"; // VS Code: <.github|.vscode>/context-mode/sessions/
-export const V1_SCRIPT_EXT = ".mjs"; // hooks/codex/*.mjs
 export const V1_BIN_COMMAND = SERVER_KEY; // v1 global npm bin; v2 never runs it ("no npm for users")
 export const VSCODE_MCP_SERVERS_KEY = "servers"; // .vscode/mcp.json {servers:{<name>:{command,args}}}
 export const ZCODE_EVENTS_KEY = "events"; // ~/.zcode/cli/config.json hooks.events.<Event>[]
@@ -907,7 +991,7 @@ export const V1_REASON = Object.freeze({
   cacheHealFile: "old context-mode cache-heal script file",
   statusLine: "old context-mode statusLine (context-mode statusline): report only, never removed",
   mcpEntry: "old context-mode MCP entry mcpServers.context-mode",
-  codexHook: "old context-mode Codex hook entry: context-mode hook codex or hooks/codex/*.mjs",
+  codexHook: "old context-mode Codex hook entry: context-mode hook codex or hooks/codex/<event>.mjs",
   codexToml: "old context-mode config.toml [mcp_servers.context-mode*] section",
   hookFile: "old context-mode hook file context-mode.json (runs context-mode hook)",
   vscodeMcp: "old context-mode MCP entry servers.context-mode in .vscode/mcp.json: report only, never removed",
@@ -958,6 +1042,7 @@ export const MCP_COMMAND_FIELD = "command";
 export const MCP_ARGS_FIELD = "args";
 export const MCP_ENV_FIELD = "env"; // #1327 D-1327-CODEX-ENV-1: Codex passes this table to the MCP server process (mcp_types.rs env)
 export const MCP_ENV_VARS_FIELD = "env_vars"; // #1327: Codex forwards these named vars from its own env
+export const MCP_TOOLS_FIELD = "tools"; // #1359 D-1359-CODEX-TOOLS-1: [mcp_servers.<id>.tools.<tool>] approval_mode, user config
 // The one host config file (segments under $HOME; VS Code: the name inside its user dir, ownMcpFileOf) and key path of context-mode's own MCP entry, for the
 // agents whose MCP entry lives in a host config file (installMode config-mcp, mcp-entry, hooks+mcp).
 // fields = host-required members of the entry next to command/args; also = sibling key paths the host needs set
@@ -1059,6 +1144,7 @@ export const NATIVE_INSTALL: Readonly<Record<string, readonly string[]>> = Objec
   qwen: ["qwen extensions install https://github.com/mksglu/context-mode:context-mode"],
   opencode: ["opencode plugin add context-mode"],
   pi: ["pi install npm:context-mode"],
+  omp: ["omp plugin install context-mode"], // ADR-0026 decision 4: OMP native install
   "copilot-cli": ["npm i -g context-mode", "context-mode setup --agents copilot-cli"],
   vscode: ["npm i -g context-mode", "context-mode setup --agents vscode"],
   kiro: ["npm i -g context-mode", "context-mode setup --agents kiro"],

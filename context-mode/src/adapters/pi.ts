@@ -38,7 +38,13 @@ function readResult(p: Record<string, unknown>): ToolResultInfo {
   const text = p.content === undefined ? "" : typeof p.content === "string" ? p.content : JSON.stringify(p.content);
   const info: ToolResultInfo = { isError: p.isError === true, bytes: Buffer.byteLength(text), text };
   if (typeof p.exitCode === "number") info.exitCode = p.exitCode;
+  if (p.keep === true) info.keep = true; // D-R54-PI-META-1 (#1352): an excludeTools name stays as the host made it
   return info;
+}
+
+/** ADR-0026 (D-OMP-FIRE-1): OMP sends the Pi payload; the event names the agent omp, so its rows say omp. */
+export function decodeOmp(raw: unknown): CanonicalHookEvent {
+  return { ...decode(raw), agent: "omp" };
 }
 
 export function decode(raw: unknown): CanonicalHookEvent {

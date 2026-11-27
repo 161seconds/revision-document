@@ -38,7 +38,7 @@ Status: accepted 2026-10-30, move done. Decision record: [ADR-0024](adr/0024-tes
 | 0018-build | ADR-0018, ADR-0019, ADR-0023 | `tests/0018-build.test.mjs` | build, generated files, host manifests, npm package | 79 | 10.1 |
 | 0002-store | ADR-0002, PRD-v2 section 4, GP8, GP9 | `tests/0002-store.test.mjs` | single DB, schema, cleanup, checkpoint, owners, lifecycle exit | 63 | 8.5 |
 | 0007-identity | ADR-0007, PRD-v2 section 5, GP7 | `tests/0007-identity.test.mjs` | project and session identity, scope, containment, per-host home dirs | 86 | 6.4 |
-| 0007-mcp-server | ADR-0004, ADR-0005, ADR-0007, PRD-v2 sections 6-7 | `tests/0007-mcp-server.test.mjs` | MCP server, tool registry, call shapes, prompt delivery | 65 | 4.4 |
+| 0007-mcp-server | ADR-0004, ADR-0005, ADR-0007, PRD-v2 sections 6-7 | `tests/0007-mcp-server.test.mjs` | MCP server, tool registry, call shapes, prompt delivery | 66 | 4.4 |
 | prd8-index-search | PRD-v2 section 8, GP5 | `tests/prd8-index-search.test.mjs` | chunking, index, FTS search, fetch, snippets | 201 | 8.3 |
 | prd9-sandbox | PRD-v2 section 9, GP4 | `tests/prd9-sandbox.test.mjs` | execute, batch, runtimes, env, cap, kill, spawn | 91 | 11.3 |
 | prd12-stats-purge | PRD-v2 sections 8 and 12, GP10 | `tests/prd12-stats-purge.test.mjs` | stats and purge tools | 21 | 5.8 |
@@ -46,15 +46,16 @@ Status: accepted 2026-10-30, move done. Decision record: [ADR-0024](adr/0024-tes
 | 0016-subagent | ADR-0016 | `tests/0016-subagent.test.mjs` | subagent context protection, run wrapper, VS Code tools | 56 | 1.9 |
 | prd10-hooks-runtime | PRD-v2 section 10, GP3, GP6, GP7 | `tests/prd10-hooks-runtime.test.mjs` | hook process: stdin, entry, dispatch, saving, errors, throttle | 280 | 23.0 |
 | prd10-hook-fuzz | PRD-v2 section 10 | `tests/prd10-hook-fuzz.test.mjs` | seeded hook fuzz on every host (the long pole; one file on purpose) | 22 | 51.1 |
-| 0009-compaction-memory | ADR-0009, PRD-v2 section 11, GP6 | `tests/0009-compaction-memory.test.mjs` | compaction, journal, resume, recall, search decision | 79 | 3.7 |
+| 0009-compaction-memory | ADR-0009, PRD-v2 section 11, GP6 | `tests/0009-compaction-memory.test.mjs` | compaction, journal, resume, recall, search decision | 81 | 3.7 |
 | 0020-adapters | ADR-0020, PRD-v2 section 3 | `tests/0020-adapters.test.mjs` | agent adapters and the host table | 182 | 2.8 |
-| 0020-plugins | ADR-0020, PRD-v2 section 3 | `tests/0020-plugins.test.mjs` | OpenCode and Pi in-process plugins | 33 | 2.0 |
+| 0020-plugins | ADR-0020, PRD-v2 section 3 | `tests/0020-plugins.test.mjs` | OpenCode, Pi and OMP in-process plugins | 33 | 2.0 |
 | 0020-hooks-all | ADR-0020 | `tests/0020-hooks-all.test.mjs` | hooks and skills on every agent: one fire matrix | 26 | 27.8 |
 | 0020-gates-zcode | ADR-0020 | `tests/0020-gates-zcode.test.mjs` | hook gate and shape for Z Code | 23 | 24.2 |
 | 0020-gates-vscode-gemini-kiro | ADR-0020 | `tests/0020-gates-vscode-gemini-kiro.test.mjs` | hook gates for VS Code, Gemini CLI, Kiro | 23 | 24.1 |
 | 0020-gates-pi-copilot-claude | ADR-0020 | `tests/0020-gates-pi-copilot-claude.test.mjs` | hook gates for Pi, Copilot CLI, Claude Code, Codex, OpenCode | 40 | 26.0 |
 | 0020-fire-hook-config | ADR-0020 | `tests/0020-fire-hook-config.test.mjs` | real-agent fire tests: Claude Code, Codex, Copilot CLI, Gemini CLI, Kiro (skipped when the agent is absent) | 13 | 3.2 |
 | 0020-fire-plugin-ext | ADR-0020 | `tests/0020-fire-plugin-ext.test.mjs` | real-agent fire tests: OpenCode, Pi, Qwen, VS Code, Z Code (split from 0020-fire: spawnSync probes block the event loop, so one file ran slower than its longest source) | 12 | 4.0 |
+| 0020-fire-omp | ADR-0020, ADR-0026 | `tests/0020-fire-omp.test.mjs` | real-agent fire tests: OMP (skipped when omp is absent); own file because its spawnSync calls blocked the 10 s MCP timer of the VS Code setup check in the shared process on CI | 6 | 60 |
 | 0019-setup-engine | ADR-0019, ADR-0023, PRD-setup | `tests/0019-setup-engine.test.mjs` | interactive setup engine and its no-regex rule | 73 | 34.5 |
 | 0019-host-config | ADR-0019, ADR-0023, PRD-setup | `tests/0019-host-config.test.mjs` | host config read/write, TOML, plugin root and swap, uninstall | 121 | 1.8 |
 | 0019-cli | ADR-0019, PRD-setup | `tests/0019-cli.test.mjs` | the context-mode CLI | 59 | 35.6 |

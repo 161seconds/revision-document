@@ -380,31 +380,50 @@ test("[M2] GP5/nested-gitignore-negation", async () => {
 });
 
 test("[M2] GP5/http-proxy-honored", async () => {
-  let hits = 0;
+  // #1403: a proxy that env names (Docker sandbox: gateway.docker.internal) is not an SSRF target,
+  // so a private proxy is used. The TARGET is still checked: a private target never reaches it.
+  const seen = [];
   const proxy = createServer((req, res) => {
-    hits += 1;
-    res.end("x");
+    seen.push(`${req.method} ${req.url}`);
+    res.end("proxied page body");
   });
-  proxy.on("connection", () => { hits += 1; });
+  proxy.on("connect", (req, sock) => {
+    seen.push(`CONNECT ${req.url}`);
+    sock.end("HTTP/1.1 403 Forbidden\r\n\r\n");
+  });
   await new Promise((r) => proxy.listen(0, "127.0.0.1", r));
-  try {
-    for (const [key, url] of [["HTTP_PROXY", "http://example.com/"], ["https_proxy", "https://example.com/"]]) {
-      const env = { ...ENV, [key]: `http://127.0.0.1:${proxy.address().port}` };
-      const client = spawnBundle(SERVER_BUNDLE, env);
-      await client.request("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "e2e", version: "0.0.0" } });
-      try {
-        const out = await client.request("tools/call", { name: "ctx_index", arguments: { url } });
-        assert.equal(out.isError, true, key);
-        assert.equal(out.content?.[0]?.text, "Blocked private address 127.0.0.1. Fix: use a public URL.", key);
-      } finally {
-        await client.close();
-      }
+  const call = async (key, url) => {
+    const env = { ...ENV, [key]: `http://127.0.0.1:${proxy.address().port}` };
+    const client = spawnBundle(SERVER_BUNDLE, env);
+    await client.request("initialize", { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "e2e", version: "0.0.0" } });
+    try {
+      const out = await client.request("tools/call", { name: "ctx_index", arguments: { url } });
+      return { isError: out.isError === true, text: out.content?.[0]?.text ?? "" };
+    } finally {
+      await client.close();
     }
-    assert.equal(hits, 0, "no socket may reach a private proxy");
+  };
+  let result;
+  try {
+    const blocked = [];
+    for (const target of ["http://169.254.169.254/latest/meta-data/", "http://10.0.0.5/", "http://127.0.0.1:1/"]) {
+      const out = await call("HTTP_PROXY", target);
+      assert.equal(out.isError, true, target);
+      assert.ok(out.text.startsWith("Blocked private address "), out.text);
+      blocked.push(out.text);
+    }
+    assert.deepEqual(seen, [], "a private target never reaches the proxy");
+    const plain = await call("HTTP_PROXY", "http://example.com/");
+    assert.equal(plain.isError, false, plain.text);
+    assert.ok(seen.includes("GET http://example.com/"), JSON.stringify(seen));
+    const tls = await call("https_proxy", "https://example.com/");
+    assert.equal(tls.text, "Fetch failed: 403. Fix: check the URL or proxy.");
+    assert.ok(seen.includes("CONNECT example.com:443"), JSON.stringify(seen));
+    result = { blocked, seen, tls: tls.text };
   } finally {
     await new Promise((r) => proxy.close(r));
   }
-  golden("http-proxy-honored", { hits });
+  golden("http-proxy-honored", result);
 });
 
 test("[M2] GP5/negative-limit-rejected", async () => {
@@ -512,7 +531,13 @@ test("[M2] GP5/search-param-schema-match", async () => {
     offset: { queries: ["x"], offset: 20 },
     sort: { queries: ["x"], sort: "timeline" },
     after: { queries: ["x"], sort: "timeline", after: 1 },
+    // #1354: a whole-schema client fills both cursors with 0; 0 is the first page, not paging.
+    zeroTimeline: { queries: ["x"], sort: "timeline", offset: 0, after: 0 },
+    zeroRelevance: { queries: ["x"], offset: 0, after: 0 },
   };
+  // #1390: an explicit source that names no stored source is a fixable input (isError:true), so
+  // store "note" first; this test checks that the schema and the handler agree on valid input.
+  await withClient((c) => c.request("tools/call", { name: "ctx_index", arguments: { content: "x marks the note", source: "note" } }));
   const results = {};
   for (const [key, input] of Object.entries(valid)) {
     const reply = await withClient((c) => c.request("tools/call", { name: "ctx_search", arguments: input }));
@@ -674,8 +699,9 @@ test("[M4] GP5/timeline-repeat-and-session-scope", async () => {
 
 test("[M4] GP5/timeline-offset-relevance-after-invalid-args", async () => {
   const out = await twoSessions(async ({ a }) => ({
-    offset: await a("ctx_search", { queries: [], sort: "timeline", offset: 0 }),
-    after: await a("ctx_search", { queries: ["x"], after: 0 }),
+    // Real cursors: 0 is the first page and is accepted (#1354, D-R54-SEARCH-ZERO-1).
+    offset: await a("ctx_search", { queries: [], sort: "timeline", offset: 20 }),
+    after: await a("ctx_search", { queries: ["x"], after: 1700000000 }),
   }));
   assert.equal(out.offset.isError, true);
   assert.equal(out.after.isError, true);

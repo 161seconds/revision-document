@@ -16,13 +16,13 @@ Write them in this order: `types.ts` needs `AgentId` from `agents.ts`; `errors.t
 Exports:
 
 ```ts
-export const AGENT_IDS = ["claude-code","codex","gemini","qwen","copilot-cli","vscode","kiro","zcode","pi","opencode"] as const;
+export const AGENT_IDS = ["claude-code","codex","gemini","qwen","copilot-cli","vscode","kiro","zcode","pi","opencode","omp"] as const; // omp: ADR-0026
 export type AgentId = typeof AGENT_IDS[number];
 ```
 
-Source: PRD-v2 §3 (10-agent table), TECH-SPEC §2, 00-architecture §3.1. Order matches the PRD §3 table top to bottom. No other export. No function: this file is data only.
+Source: PRD-v2 §3 (agent table; ADR-0026 adds omp as the 11th), TECH-SPEC §2, 00-architecture §3.1. Order matches the PRD §3 table top to bottom. No other export. No function: this file is data only.
 
-E2E case: GP1 (install across all 10 adapters reads this exact list). ADR-0017 `covers`: `src/core/contracts/agents.ts`.
+E2E case: GP1 (install across all 11 adapters reads this exact list). ADR-0017 `covers`: `src/core/contracts/agents.ts`.
 
 ## 2. `src/core/contracts/types.ts`
 
@@ -54,7 +54,7 @@ Rules per field, each citing its source:
 
 No type in this file has an optional field that is also used to pick between two runtime paths (P1): optionality here only ever means "this event/host does not carry this field," never "pick path A or B."
 
-E2E case: GP3 (hook payload decode into `CanonicalHookEvent` for all 10 adapters), GP4 (`ToolContext`/`ToolReply` shape), GP6 (`JournalRow`/`NewJournalRow`). ADR-0017 `covers`: `src/core/contracts/types.ts`.
+E2E case: GP3 (hook payload decode into `CanonicalHookEvent` for all 11 adapters), GP4 (`ToolContext`/`ToolReply` shape), GP6 (`JournalRow`/`NewJournalRow`). ADR-0017 `covers`: `src/core/contracts/types.ts`.
 
 ## 3. `src/core/contracts/constants.ts`
 
@@ -85,7 +85,7 @@ Exports every row of the table below, by the exact name in column 1. No other mo
 | `HOOK_CPU_OVER_NODE_MS` | `number` | `20` | GS6 |
 | `HOOK_COMBINED_P95_MS` | `number` | `60` | GS6, A31 |
 | `READ_HINT_BYTES` | retired | was `51200` | ADR-0008 "Read: hint to deny" retires this in favor of `OUTPUT_CAP` for both the Read deny threshold and the ranged-Read hint threshold, so there is one cap, not two |
-| `REPLACE_TRIGGER_BYTES` | `number` | `4096`, overridden by env `CTX_REPLACE_TRIGGER_BYTES` if that env parses as a positive safe integer, else `4096` (D-R48-TRIGGER-1, #1326) | D-M7-SV-1 |
+| `REPLACE_TRIGGER_BYTES` | `number` | `4096`, a constant; no env, flag or setting changes it (D-REPLACE-TRIGGER-CONST-1, amends D-R48-TRIGGER-1, #1326) | D-M7-SV-1 |
 | `MCP_HINT_EVERY` | `number` | `10`, overridden by env `CTX_MCP_HINT_EVERY` if that env parses as a positive integer, else `10` | Q1 |
 | `EXIT_SIGTERM_MS` | `number` | `2000` | GP9, #862 |
 | `EXIT_SIGKILL_MS` | `number` | `5000` | GP9, #862 |
@@ -142,7 +142,7 @@ export type ErrorCode =
 | `NO_RUNTIME` | `No <lang> runtime on PATH. Fix: install it or pick another language.` | PRD §9 |
 | `FETCH_FAILED` | `Fetch failed: <code>. Fix: check the URL or proxy.` | #1135 |
 | `SSRF` | `Blocked private address <host>. Fix: use a public URL.` | Q19, PRD §9 |
-| `OUTSIDE_ROOT` | `Path <p> is outside the project. Fix: use a path inside <root>.` | #954, #1294 |
+| `OUTSIDE_ROOT` | `Path <p> is outside the project and the folders added to this session. Fix: use a path inside <root>, or add its folder to the session (Claude Code /add-dir, Codex --add-dir).` | #954, #1294, #1398 (D-1398-HOST-ROOTS-1) |
 | `INVALID_ARGS` | `Invalid argument <field>. Fix: <action>.` | DECISIONS-r9 M23 |
 | `ONE_OF_INPUT` | `Pass exactly one of <names>. Fix: drop the extra field.` | DECISIONS-r9 M23 |
 | `SPAWN_FAILED` | `Failed to start the process: <detail>. Fix: check the command and PATH.` | DECISIONS-r9 M23 |

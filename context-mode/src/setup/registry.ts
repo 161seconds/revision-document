@@ -9,6 +9,7 @@ import { AGENT_HOME_DIR, PLUGIN_MARKETPLACE_NAME, HOST_NODE_COMMAND, HOST_PLUGIN
 import type { AgentId, AdapterRow, HostConfigFormat } from "../core/contracts/types.ts";
 import { claudeDirOf, claudeProfileEnv, copilotDirOf, geminiDirOf, kiroDirOf, opencodeDirOf, ownMcpFileOf } from "../core/project/config-dir.ts";
 import { ownMcpValue } from "../core/ops/host-config.ts";
+import { ompImportFiles } from "../core/ops/omp-import.ts";
 import { HOOK_SHAPES, type JsonObject } from "./hook-shapes.ts";
 
 export const SERVER_BUNDLE = "server.mjs";
@@ -25,7 +26,9 @@ export const INSTRUCTION_FILES: readonly string[] = Object.freeze([
   "CLAUDE.md", "AGENTS.md", "AGENTS.override.md", "GEMINI.md", "QWEN.md", "copilot-instructions.md", "KIRO.md",
 ]);
 
-export interface SetupContext { home: string; pkgDir: string; env: Record<string, string | undefined>; platform?: NodeJS.Platform; }
+export interface SetupContext { home: string; pkgDir: string; env: Record<string, string | undefined>; platform?: NodeJS.Platform;
+  /** D-R54-OC-PLUGINS-DIR-1: the project OpenCode runs in (its .opencode/plugins dir loads plugins too); default process.cwd(). */
+  cwd?: string; }
 
 /** A config file setup edits itself: the exact diff is known before apply. */
 export interface ConfigTarget {
@@ -45,7 +48,7 @@ export interface HookFile { file: string; mode: "rewrite" | "drop"; }
  *  ships the hooks (claude-code, gemini, qwen, pi through its CLI install). */
 export type HookInstall =
   | { kind: "file"; file: string; shape: JsonObject; command: string; trust?: string }
-  | { kind: "plugin-list"; file: string; key: readonly string[]; entry: string }
+  | { kind: "plugin-list"; file: string; key: readonly string[]; entry: string; worktree: string }
   | { kind: "package"; via: string };
 
 /** ADR-0020: the one skill channel. dir = setup writes <dir>/<name>/SKILL.md rendered with the agent's tool name
@@ -110,7 +113,8 @@ export interface CheckRow {
   hookCommand?: string[];
   config?: ConfigTarget;
   cli?: CliPlan;
-  listCommand?: { bin: string; args: string[] };
+  /** reader "codex-mcp-get": the answer is `codex mcp get <name> --json` (D-1413-CODEX-LIST-1); else a list that names us. */
+  listCommand?: { bin: string; args: string[]; reader?: "codex-mcp-get" };
   /** D-US-1: the host runs a copy of the package; `file` records the copied version, `refresh` (run with `bin`) renews it. */
   copy?: HostCopy;
   hookFiles: HookFile[];
@@ -181,6 +185,10 @@ export function stableNodePath(execPath: string, fs: NodePathFs = REAL_FS): stri
   return execPath;
 }
 
+/** Agents whose Windows hook shell may be PowerShell: their written hook line starts with bare `node`
+ *  (D-C166-WIN-FIRE-1 codex, D-R44-QWEN-WIN-1 qwen, D-1375-COPILOT-WIN-1 copilot-cli and vscode). */
+const BARE_NODE_ON_WINDOWS: readonly AgentId[] = ["codex", "qwen", "copilot-cli", "vscode"];
+
 /** The node setup writes into host configs (D-STABLE-NODE-1). */
 export const SETUP_NODE = stableNodePath(process.execPath);
 
@@ -239,6 +247,8 @@ function cliFor(ctx: SetupContext, id: AgentId): CliPlan | undefined {
     case "qwen": return { bin: "qwen", install: [["extensions", "link", ctx.pkgDir]], remove: [["extensions", "uninstall", SERVER_KEY]], input: "y\n" };
     case "copilot-cli": return { bin: "copilot", install: [["mcp", "add", SERVER_KEY, "--", ...s]], remove: [["mcp", "remove", SERVER_KEY]] };
     case "pi": return { bin: "pi", install: [["install", ctx.pkgDir]], remove: [["remove", ctx.pkgDir]] };
+    // ADR-0026 decision 4: OMP installs from its own plugin store by name (T23, T24).
+    case "omp": return { bin: "omp", install: [["plugin", "install", SERVER_KEY]], remove: [["plugin", "uninstall", SERVER_KEY]] };
     default: return undefined;
   }
 }
@@ -252,13 +262,16 @@ function copyFor(ctx: SetupContext, id: AgentId): HostCopy | undefined {
     marketplace: ["plugin", "marketplace", "update", PLUGIN_MARKETPLACE_NAME], profile: claudeProfileEnv(ctx.env, ctx.platform ?? process.platform) };
 }
 
-const LIST: Partial<Record<AgentId, { bin: string; args: string[] }>> = {
+const LIST: Partial<Record<AgentId, NonNullable<CheckRow["listCommand"]>>> = {
   "claude-code": { bin: "claude", args: ["plugin", "list"] },
-  codex: { bin: "codex", args: ["mcp", "list"] },
+  // D-1413-CODEX-LIST-1 (#1413): `mcp list` runs OAuth discovery (network, 5 s cap per server) and keyring reads for every
+  // server; `mcp get <name> --json` loads the same servers, plugin servers too, and looks up the exact name (no auth).
+  codex: { bin: "codex", args: ["mcp", "get", SERVER_KEY, "--json"], reader: "codex-mcp-get" },
   gemini: { bin: "gemini", args: ["extensions", "list"] },
   qwen: { bin: "qwen", args: ["extensions", "list"] },
   "copilot-cli": { bin: "copilot", args: ["mcp", "list"] },
   pi: { bin: "pi", args: ["list"] },
+  omp: { bin: "omp", args: ["plugin", "list"] }, // ADR-0026
   // D-HF-OPENCODE-LIST-1: --pure skips external plugins, so a fresh HOME does not wait on the @opencode-ai/plugin install.
   opencode: { bin: "opencode", args: ["mcp", "list", "--pure"] },
 };
@@ -287,6 +300,7 @@ function hookInstallFor(ctx: SetupContext, row: AdapterRow, command: string): Ho
   }
   if (row.id === "opencode") {
     return { kind: "plugin-list", file: path.join(opencodeDirOf(ctx.env, ctx.home), OPENCODE_BASE_CONFIG_FILE), key: ["plugin"],
+      worktree: ctx.cwd ?? process.cwd(), // D-R54-OC-PLUGINS-DIR-1: <project>/.opencode/plugins
       entry: ctx.pkgDir }; // D-OC2-ENTRY-1: the package dir loads on OpenCode 1.19.5 and 2.2.x (2.x rejects a file path: "configured plugin path must be a directory"); the host turns an absolute or drive-letter path into a file URL itself (D-WIN-OCENTRY-1)
   }
   return { kind: "package", via: ch.path };
@@ -318,7 +332,9 @@ export function buildRegistry(ctx: SetupContext): CheckRow[] {
     // D-C166-WIN-FIRE-1: Codex 0.166 runs a hook through the session shell, PowerShell on Windows, and PowerShell reads a
     // leading quoted path as a string. A bare `node` word runs in sh, cmd.exe and PowerShell; the doctor still runs the absolute node.
     // D-R44-QWEN-WIN-1 (host audit qwen-3): Qwen spawns a hook through cmd.exe /d /s /c (ComSpec) or PowerShell, so the same bare word.
-    const bareNode = (id === "codex" || id === "qwen") && (ctx.platform ?? process.platform) === "win32";
+    // #1375 D-1375-COPILOT-WIN-1: the GitHub Copilot app runs the `command` field as `pwsh -NoProfile -Command` and skips the
+    // `powershell` field, so copilot-cli and vscode take the same bare word on Windows.
+    const bareNode = BARE_NODE_ON_WINDOWS.includes(id) && (ctx.platform ?? process.platform) === "win32";
     const hookCommand = bareNode ? [HOST_NODE_COMMAND, ...runCommand.slice(1)] : runCommand;
     const command = `${bareNode ? HOST_NODE_COMMAND : `"${hookCommand[0]}"`} "${hookCommand[1]}" ${AGENT_FLAG} ${id}`;
     const hookInstall = hookInstallFor(ctx, getAdapter(id), command);
@@ -330,6 +346,7 @@ export function buildRegistry(ctx: SetupContext): CheckRow[] {
       ...(hookInstall.kind === "package" ? [] : [hookInstall.file]),
       ...(hookInstall.kind === "file" && hookInstall.trust ? [hookInstall.trust] : []),
       ...(skillInstall.kind === "dir" ? skillInstall.files.map((f) => f.file) : []),
+      ...(id === "omp" ? [ompImportFiles(ctx.env, ctx.home).mcp] : []), // ADR-0026 decision 11: disabledServers, only when OMP imports us
     ];
     const out: CheckRow = {
       id, installMode: row.installMode, serverCommand: serverCmd(ctx, id), config, cli: cliFor(ctx, id),

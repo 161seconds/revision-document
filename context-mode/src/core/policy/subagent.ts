@@ -1,13 +1,13 @@
 // impl/08 §5 (case A/B/C pick, toolSet resolution), Assumption B4; ADR-0016 "How the subagent's tools are
 // known"; DECISIONS-r3 Q23; DEVIATIONS D-M3-E3-1..4. No regex: frontmatter is read line by line.
 // D-CI-PERF-3: node:fs through getBuiltinModule; a static ESM import of node:fs also loads fs/promises, readline and streams.
-const { readFileSync } = process.getBuiltinModule("node:fs") as typeof import("node:fs");
+const { readFileSync, readdirSync } = process.getBuiltinModule("node:fs") as typeof import("node:fs");
 import { join } from "node:path";
 import { hostText } from "../ops/host-text.ts";
 import {
   AGENT_FILE_EXT, AGENTS_DIR_NAME, FRONTMATTER_DISALLOWED_KEY, FRONTMATTER_FENCE, FRONTMATTER_TOOLS_KEY,
   GEMINI_MCP_PREFIX, GEMINI_NAME_EXTRA_CHARS, HOST_CONFIG_DIR_NAME, HOST_PLUGINS_DIR_NAME, INSTALLED_PLUGINS_FILE,
-  MCP_NAME_JOIN, MCP_SERVER_TOOL_PREFIX, PLUGIN_AGENT_SEPARATOR, PLUGIN_KEY_SEPARATOR, TOOL_ORDER,
+  MCP_NAME_JOIN, MCP_SERVER_TOOL_PREFIX, PLUGIN_AGENT_SEPARATOR, PLUGIN_KEY_SEPARATOR, SYNCED_PLUGINS_DIR_NAME, TOOL_ORDER,
 } from "../contracts/constants.ts";
 import type { AdapterRow, CanonicalHookEvent } from "../contracts/types.ts";
 import { getAdapter } from "../../adapters/table.ts";
@@ -25,6 +25,24 @@ export interface ToolSetSources {
 }
 
 type AgentDef = { tools: string[] | null; disallowed: string[] };
+
+// D-CC-POINTER-3 (#1342, ADR-0016 line 22, LV8 from the Claude Code 2.1.322 binary): the built-in agent types of the
+// claude-code row. tools null = all tools (tools:["*"]); Explore and Plan drop their disallowedTools and keep MCP.
+// D-1382-NO-ROUTE-1 (#1382, binary 2.1.273 strings): claude has tools:["*"]; claude-code-guide, statusline-setup and
+// web-fetch have fixed lists with no ctx tool and no shell. Unknown names are not here: they stay null -> case C.
+// Binary: disallowedTools:[ft,...Y9,ny,lt,Xt,Zs] = Agent, the four Artifact tools, ExitPlanMode, Edit, Write, NotebookEdit.
+const CC_READ_ONLY_DENY = Object.freeze(["Agent", "Artifact", "ArtifactComments", "ArtifactData", "ArtifactCheck", "ExitPlanMode", "Edit", "Write", "NotebookEdit"]);
+const CLAUDE_CODE_BUILT_INS: Readonly<Record<string, AgentDef>> = Object.freeze({
+  "general-purpose": { tools: null, disallowed: [] },
+  fork: { tools: null, disallowed: [] },
+  claude: { tools: null, disallowed: [] },
+  Explore: { tools: null, disallowed: [...CC_READ_ONLY_DENY] },
+  Plan: { tools: null, disallowed: [...CC_READ_ONLY_DENY] },
+  "claude-code-guide": { tools: ["Glob", "Grep", "Read", "WebFetch", "WebSearch"], disallowed: [] },
+  "statusline-setup": { tools: ["Read", "Edit"], disallowed: [] },
+  "web-fetch": { tools: ["WebFetch"], disallowed: [] },
+});
+const BUILT_IN_AGENT = "claude-code";
 
 /** Q23: presence of `agentId` alone marks a subagent call; `agentType` never does. */
 export function isSubagentCall(ev: CanonicalHookEvent): boolean {
@@ -47,9 +65,10 @@ export function toolSetForAgentType(ev: CanonicalHookEvent, src: ToolSetSources)
   const row = getAdapter(ev.agent);
   if (src.manifestTools !== undefined) return unique(src.manifestTools.map((n) => norm(row, n)));
   const type = ev.agentType ?? "";
-  const def = findDef(type, src);
+  const def = findDef(type, src) ?? builtIn(ev.agent, type);
   if (def === null) return null; // step 3
-  const tools = (def.tools ?? allKnownToolNames(row)).map((n) => norm(row, n));
+  const known = allKnownToolNames(row);
+  const tools = def.tools === null ? known : def.tools.map((n) => norm(row, n)).flatMap((n) => [n, ...known.filter((k) => grants(n, k))]);
   const deny = def.disallowed.map((n) => norm(row, n));
   return unique(tools.filter((n) => !deny.some((d) => denies(d, n))));
 }
@@ -84,6 +103,13 @@ function findDef(type: string, src: ToolSetSources): AgentDef | null {
   return null;
 }
 
+// After every file source (a project or user file with the same name wins); keyed on the claude-code row only.
+function builtIn(agent: string, type: string): AgentDef | null {
+  if (agent !== BUILT_IN_AGENT || !Object.prototype.hasOwnProperty.call(CLAUDE_CODE_BUILT_INS, type)) return null;
+  const d = CLAUDE_CODE_BUILT_INS[type];
+  return { tools: d.tools, disallowed: [...d.disallowed] };
+}
+
 // A type name is a file stem: no path separator, no dot segment, not empty (never reads outside agents/).
 function safeType(type: string): boolean {
   if (type === "" || type === "." || type === "..") return false;
@@ -103,6 +129,10 @@ function readPluginAgent(claudeDir: string, type: string): AgentDef | null {
   const plugin = type.slice(0, cut);
   const agent = type.slice(cut + PLUGIN_AGENT_SEPARATOR.length);
   if (agent.indexOf(PLUGIN_AGENT_SEPARATOR) >= 0) return null;
+  return installedPluginAgent(claudeDir, plugin, agent) ?? syncedPluginAgent(claudeDir, plugin, agent);
+}
+
+function installedPluginAgent(claudeDir: string, plugin: string, agent: string): AgentDef | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(hostText(readFileSync(join(claudeDir, HOST_PLUGINS_DIR_NAME, INSTALLED_PLUGINS_FILE), "utf8")));
@@ -122,6 +152,24 @@ function readPluginAgent(claudeDir: string, type: string): AgentDef | null {
       const d = readAgentFile(join(dir, AGENTS_DIR_NAME, agent + AGENT_FILE_EXT));
       if (d !== null) return d;
     }
+  }
+  return null;
+}
+
+// D-CC-POINTER-3 (#1342): Claude Code also loads <claude dir>/plugins/synced/<id>/<plugin>/agents/<agent>.md.
+// Dot dirs (.trash, .staging) hold hidden or half-written plugins and are never read. Sorted, first match wins.
+function syncedPluginAgent(claudeDir: string, plugin: string, agent: string): AgentDef | null {
+  const root = join(claudeDir, HOST_PLUGINS_DIR_NAME, SYNCED_PLUGINS_DIR_NAME);
+  let ids: string[];
+  try {
+    ids = readdirSync(root).sort();
+  } catch {
+    return null;
+  }
+  for (const id of ids) {
+    if (id.startsWith(".")) continue;
+    const d = readAgentFile(join(root, id, plugin, AGENTS_DIR_NAME, agent + AGENT_FILE_EXT));
+    if (d !== null) return d;
   }
   return null;
 }
@@ -200,6 +248,18 @@ function geminiValid(s: string): string {
     out += ok ? ch : "_";
   }
   return out;
+}
+
+// D-1374-WILDCARD-GRANT-1 (#1374): a tools: entry that names one whole MCP server, "mcp__<server>__*" or "mcp__<server>",
+// grants every tool of that server, as Claude Code expands it (2.1.322 binary: agent tools entry with a named
+// serverName and toolName undefined or "*"). Narrower than denies(): a grant too wide would make a case-A deny name a
+// tool the subagent cannot call, so "mcp__*", "mcp__*__*" and non-MCP prefixes grant nothing beyond their exact name.
+function grants(entry: string, name: string): boolean {
+  if (!entry.startsWith(MCP_SERVER_TOOL_PREFIX)) return false;
+  const wild = MCP_NAME_JOIN + "*";
+  const server = entry.slice(MCP_SERVER_TOOL_PREFIX.length, entry.endsWith(wild) ? -wild.length : entry.length);
+  if (server === "" || server.indexOf("*") >= 0 || server.indexOf(MCP_NAME_JOIN) >= 0) return false;
+  return name.startsWith(MCP_SERVER_TOOL_PREFIX + server + MCP_NAME_JOIN);
 }
 
 // A disallowedTools entry removes: a trailing-"*" prefix, a whole MCP server ("mcp__<server>"), or one exact name.

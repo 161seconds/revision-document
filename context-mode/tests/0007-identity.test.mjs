@@ -29,7 +29,8 @@ describe("ADR-0007: resolveProject picks the project dir per host", { concurrenc
   // Dir picked per AdapterRow.projectSource: env:CLAUDE_PROJECT_DIR, arg:--agent+cwd,
   // spawn-cwd cwd, arg:workspaceFolder (--workspace-folder <path>), pi:ctx.cwd (piCwd).
   // Missing -> NO_PROJECT with <kind>; not a git repo -> realpath(dir) is the project (D-M7-NG-1);
-  // a project dir that does not exist -> NO_GIT_DIR.
+  // a project dir that does not exist yet -> its nearest existing parent decides (D-1409-MISSING-CWD-1);
+  // NO_GIT_DIR only when nothing exists up to the filesystem root.
   // containmentRoot = parent of gitCommonDir. GP7: identity shared per repo (2 worktrees -> same projectKey).
   // Concurrent: pure resolve calls on explicit env/argv/cwd arguments, own temp repos.
   function initRepo() {
@@ -113,21 +114,40 @@ describe("ADR-0007: resolveProject picks the project dir per host", { concurrenc
     }
   });
 
-  test("resolveProject throws NO_GIT_DIR when the project dir does not exist", () => {
+  // D-1409-MISSING-CWD-1 (#1409): Codex sends the command's own workdir as cwd, and that dir may not exist yet
+  // ("mkdir -p x && cd x"). A missing dir is a normal host state, not a fault: the nearest existing parent decides.
+  test("D-1409-MISSING-CWD-1: a dir that does not exist yet outside any repo is keyed by its nearest existing parent", () => {
     const base = mkdtempSync(join(tmpdir(), "cm-gone-"));
-    const gone = join(base, "gone");
+    const gone = join(base, "gone", "a", "b");
     try {
-      assert.throws(
-        () => resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: gone }),
-        (err) => {
-          assert.ok(err instanceof CtxError);
-          assert.equal(err.code, "NO_GIT_DIR");
-          return true;
-        }
-      );
+      const ctx = resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: gone });
+      const want = resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: base });
+      assert.equal(ctx.worktree, realpathSync.native(base));
+      assert.equal(ctx.containmentRoot, realpathSync.native(base));
+      assert.equal(ctx.projectKey, want.projectKey);
     } finally {
       rmSync(base, { recursive: true, force: true });
     }
+  });
+
+  test("D-1409-MISSING-CWD-1: a dir that does not exist yet inside a repo gets that repo's project", () => {
+    const repo = initRepo();
+    try {
+      const ctx = resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: join(repo, "new", "sub") });
+      const want = resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: repo });
+      assert.equal(ctx.worktree, realpathSync.native(repo));
+      assert.equal(ctx.containmentRoot, want.containmentRoot);
+      assert.equal(ctx.projectKey, want.projectKey);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  });
+
+  test("D-1409-MISSING-CWD-1: a relative name that does not exist stays NO_GIT_DIR (only an absolute dir walks up)", () => {
+    assert.throws(
+      () => resolveProject("codex", { env: {}, argv: ["--agent", "codex"], cwd: "<proj>" }),
+      (e) => e instanceof CtxError && e.code === "NO_GIT_DIR",
+    );
   });
 
   test("GP7: two worktrees of the same repo resolve the same projectKey", () => {
@@ -758,12 +778,13 @@ describe("ADR-0007: OpenCode config dir", { concurrency: CONC }, () => {
     const xdg = path.join(root, "xdg cfg");
     const bin = path.join(root, "bin");
     mkdirSync(home, { recursive: true }); mkdirSync(bin, { recursive: true });
-    // The fake opencode lists context-mode only when the config sits where OpenCode reads it.
+    // The fake opencode 1.x prints its version, and its `debug config --pure` prints the config only when it sits where
+    // OpenCode reads it (D-OC1-LIST-2, #1362: the list check reads debug config, and a version with no digits is a FAIL).
     const conf = path.join(xdg, "opencode", "opencode.json");
     if (process.platform === "win32") {
-      writeFileSync(path.join(bin, "opencode.cmd"), `@if exist "${conf}" (echo context-mode connected) else (exit /b 1)\r\n`);
+      writeFileSync(path.join(bin, "opencode.cmd"), `@if "%1"=="--version" (echo 1.19.5& exit /b 0)\r\n@if exist "${conf}" (type "${conf}") else (exit /b 1)\r\n`);
     } else {
-      writeFileSync(path.join(bin, "opencode"), `#!/bin/sh\nif [ -f "${conf}" ]; then echo "context-mode connected"; else exit 1; fi\n`, { mode: 0o755 });
+      writeFileSync(path.join(bin, "opencode"), `#!/bin/sh\nif [ "$1" = "--version" ]; then echo 1.19.5; exit 0; fi\nif [ -f "${conf}" ]; then cat "${conf}"; else exit 1; fi\n`, { mode: 0o755 });
     }
     const repo = path.resolve(import.meta.dirname, "..");
     const pkgDir = path.join(root, "pkg");
@@ -1084,6 +1105,38 @@ describe("ADR-0007: hook run in a non-git project", () => {
     assert.equal(projects.length, 1);
     assert.equal(existsSync(join(home, ".context-mode", "projects", projects[0], "context.db")), true);
   });
+
+  // D-1409-MISSING-CWD-1 (#1409): the reporter's host. A Codex PreToolUse Bash call whose cwd does not exist yet
+  // used to get the "hook failed (NO_GIT_DIR)" deny for every command. Now the normal policy runs: a quiet
+  // command is allowed, and a flooding one still gets its own redirect (savings stay).
+  function codexPre(command, cwd, home) {
+    const payload = { hook_event_name: "PreToolUse", tool_name: "Bash", tool_input: { command }, cwd, session_id: "t1409" };
+    const env = { PATH: process.env.PATH, HOME: home, USERPROFILE: home };
+    return spawnSync(process.execPath, [ENTRY, "--agent", "codex"], { input: JSON.stringify(payload), cwd: root, env, encoding: "utf8" });
+  }
+
+  test("D-1409-MISSING-CWD-1: Codex PreToolUse Bash in a cwd that does not exist yet is allowed, not denied", () => {
+    const home = join(root, "home-1409-a");
+    mkdirSync(home);
+    const gone = join(root, "plain", "not-yet", "x");
+    assert.equal(existsSync(gone), false);
+    const r = codexPre("mkdir -p x", gone, home);
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.includes('"deny"'), false, r.stdout);
+    assert.equal(r.stdout.includes("the hook failed"), false, r.stdout);
+    assert.equal(r.stderr.includes("NO_GIT_DIR"), false, r.stderr);
+  });
+
+  test("D-1409-MISSING-CWD-1: Codex curl in a cwd that does not exist yet still gets the curl redirect", () => {
+    const home = join(root, "home-1409-b");
+    mkdirSync(home);
+    const r = codexPre("curl http://example.invalid", join(root, "plain", "not-yet-2"), home);
+    assert.equal(r.status, 0, r.stderr);
+    const hso = JSON.parse(r.stdout).hookSpecificOutput;
+    assert.equal(hso.permissionDecision, "deny");
+    assert.ok(hso.permissionDecisionReason.includes("This curl/wget call"), hso.permissionDecisionReason);
+    assert.equal(hso.permissionDecisionReason.includes("the hook failed"), false, hso.permissionDecisionReason);
+  });
 });
 
 describe("ADR-0007: Claude Code cwd source (D-FU-PS-1)", () => {
@@ -1183,22 +1236,12 @@ describe("ADR-0007: Claude Code cwd source (D-FU-PS-1)", () => {
     return { lines, restore: () => { process.stderr.write = orig; } };
   }
 
-  test("D-FU-PS-1: a project dir that does not exist -> allow plus exactly one stderr line with NO_GIT_DIR", async () => {
-    const gone = join(root, "does-not-exist");
-    const payload = JSON.parse(readFileSync(GOLDEN, "utf8"));
-    payload.cwd = gone;
-    const cap = captureStderr();
-    let out;
-    try {
-      out = await handleHook("claude-code", payload, { PATH: process.env.PATH, HOME: join(root, "gone-home"), USERPROFILE: join(root, "gone-home") });
-    } finally {
-      cap.restore();
-    }
-    assert.deepEqual(out, { stdout: "", exitCode: 0 });
-    assert.equal(cap.lines.length, 1, JSON.stringify(cap.lines));
-    assert.ok(cap.lines[0].startsWith("hooks: no project: NO_GIT_DIR "), cap.lines[0]);
-    assert.ok(cap.lines[0].includes(gone), cap.lines[0]);
-    assert.ok(cap.lines[0].endsWith("\n"));
+  // D-1409-MISSING-CWD-1 amends this D-FU-PS-1 case: a payload cwd that does not exist yet is no longer
+  // "no project"; its nearest existing parent is the project and the Bash output is replaced as usual.
+  test("D-FU-PS-1 + D-1409-MISSING-CWD-1: a payload cwd that does not exist yet -> Bash replace keyed by its nearest existing parent", () => {
+    const parent = join(root, "gone-parent");
+    mkdirSync(parent);
+    assertReplaced(runHook("gone", join(parent, "does-not-exist", "a"), root), realpathSync.native(parent));
   });
 
   test("D-FU-PS-1: an unknown agent id in handleHook -> empty output plus one stderr line (no silent drop)", async () => {
@@ -1222,7 +1265,7 @@ describe("ADR-0007: Claude Code cwd source (D-FU-PS-1)", () => {
     const expected = {
       codex: "arg:--agent+cwd", "copilot-cli": "arg:--agent+cwd", kiro: "arg:--agent+cwd",
       vscode: "arg:workspaceFolder", gemini: "spawn-cwd", qwen: "spawn-cwd", zcode: "spawn-cwd", opencode: "spawn-cwd",
-      pi: "pi:ctx.cwd", "claude-code": "env:CLAUDE_PROJECT_DIR",
+      pi: "pi:ctx.cwd", omp: "pi:ctx.cwd", "claude-code": "env:CLAUDE_PROJECT_DIR", // ADR-0026 T19
     };
     assert.deepEqual([...AGENT_IDS].sort(), Object.keys(expected).sort());
     for (const agent of AGENT_IDS) assert.equal(getAdapter(agent).projectSource, expected[agent], agent);
@@ -1287,7 +1330,8 @@ describe("ADR-0007: project dir cases ported from v1", () => {
     switch (agent) {
       case "claude-code": return { env: { ...env, CLAUDE_PROJECT_DIR: dir }, argv: [], cwd: other };
       case "vscode": return { env, argv: ["--workspace-folder", dir], cwd: other };
-      case "pi": return { env, argv: [], cwd: other, piCwd: dir };
+      case "pi":
+      case "omp": return { env, argv: [], cwd: other, piCwd: dir }; // ADR-0026: OMP passes ctx.cwd like Pi
       default: return { env, argv: ["--agent", agent], cwd: dir };
     }
   }
@@ -1364,10 +1408,16 @@ describe("ADR-0007: project dir cases ported from v1", () => {
   });
 
   test("the Windows-style plugin path is a plain directory name to v2: it gets no special-case branch", () => {
-    assert.throws(
-      () => resolveProject("codex", { env: {}, argv: [], cwd: "C:\\Users\\x\\.claude\\plugins\\cache\\context-mode" }),
-      (e) => e instanceof CtxError && e.code === "NO_GIT_DIR",
-    );
+    // D-1409-MISSING-CWD-1: no branch looks at the "C:\\" shape. On POSIX it is a relative name that does not
+    // exist -> NO_GIT_DIR. On Windows it is an absolute dir that does not exist -> its nearest existing parent decides.
+    const win = "C:\\Users\\x\\.claude\\plugins\\cache\\context-mode";
+    if (!path.isAbsolute(win)) {
+      assert.throws(() => resolveProject("codex", { env: {}, argv: [], cwd: win }), (e) => e instanceof CtxError && e.code === "NO_GIT_DIR");
+      return;
+    }
+    let parent = win;
+    while (!existsSync(parent)) parent = path.dirname(parent);
+    assert.equal(resolveProject("codex", { env: {}, argv: [], cwd: win }).projectKey, resolveProject("codex", { env: {}, argv: [], cwd: parent }).projectKey);
   });
 
   test("compiled-ESM guard (v1 'resolver runs under Node without CommonJS require'): resolve.ts loads and runs as ESM under Node", () => {
