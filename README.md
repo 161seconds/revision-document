@@ -314,7 +314,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 | Dự án và README | Nội dung | Commit nguồn | File | Dung lượng | Giấy phép |
 | --- | --- | --- | ---: | ---: | --- |
 | [addyosmani/agent-skills](addyosmani-agent-skills/README.md) | Skill kỹ thuật cho quy trình đặc tả, lập kế hoạch, phát triển, kiểm thử, review và tối ưu hiệu năng web. | [`e997ac5b9a74`](https://github.com/addyosmani/agent-skills/tree/e997ac5b9a74eab332d5e9793bb38a38c8cfdd74) | 280 | 1.43 MB | [MIT](addyosmani-agent-skills/LICENSE) |
-| [anthropics/skills](anthropics-skills/README.md) | Bộ skill mẫu của Anthropic, gồm thiết kế, phát triển, xử lý tài liệu và đặc tả Agent Skills. | [`2c5958ecac7c`](https://github.com/anthropics/skills/tree/2c5958ecac7cee2b583967a2c4981d0f4a75c579) | 446 | 11.97 MB | [Theo từng skill; Apache-2.0](anthropics-skills/THIRD_PARTY_NOTICES.md) |
+| [anthropics/skills](anthropics-skills/README.md) | Bộ skill mẫu của Anthropic, gồm thiết kế, phát triển, xử lý tài liệu và đặc tả Agent Skills. | [`e4bb5d960d87`](https://github.com/anthropics/skills/tree/e4bb5d960d87126ff3b3a8af1a104b7db67560ba) | 448 | 12.10 MB | [Theo từng skill; Apache-2.0](anthropics-skills/THIRD_PARTY_NOTICES.md) |
 | [bentran1vn/ai-clean-handoff](ai-clean-handoff/README.md) | Quy trình Copybara/Roslyn chuẩn bị bàn giao mã C#, lọc cấu hình agent và bảo toàn file phía nhận. | [`06704e83f410`](https://github.com/bentran1vn/ai-clean-handoff/tree/06704e83f41013d83e9d64b4d5e5f3f05ca8ecbc) | 33 | 3.18 MB | [MIT](ai-clean-handoff/LICENSE) |
 | [bentran1vn/vietmap-testing-4pmm](vietmap-testing-4pmm/README.md) | Dự án thử nghiệm tích hợp Vietmap; xem README và package.json trong bản nguồn. | [`99a888ed5f06`](https://github.com/bentran1vn/vietmap-testing-4pmm/tree/99a888ed5f06bfd047dbe4dec324495278b8d993) | 33 | 2.31 MB | Chưa khai báo |
 | [DavidHDev/react-bits](react-bits/README.md) | Thư viện component React có animation và tương tác, kèm nhiều biến thể triển khai và website tài liệu. | [`9d9c687dc4f5`](https://github.com/DavidHDev/react-bits/tree/9d9c687dc4f55b23539aa5417b703078047efa74) | 8,823 | 399.76 MB | [MIT + Commons Clause](react-bits/LICENSE.md) |
@@ -343,7 +343,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 
 ### Nguồn gốc và kiểm tra
 
-Phần mới gồm **18,810 file**, **999,713,011 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
+Phần mới gồm **18,812 file**, **999,843,095 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
 
 ```powershell
 rtk proxy python -X utf8 -B verify-github-sources.py

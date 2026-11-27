@@ -1820,13 +1820,13 @@
       "repository": "anthropics/skills",
       "status": "import",
       "path": "anthropics-skills",
-      "commit": "2c5958ecac7cee2b583967a2c4981d0f4a75c579",
+      "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "branch": "main",
-      "files": 446,
-      "bytes": 11969368,
+      "files": 448,
+      "bytes": 12099452,
       "license": null,
       "description": "Public repository for Agent Skills",
-      "archive_sha256": "3783fe4e778029522bf3da866948353cc0c86204a6139c812907f5aebdaf78ef",
+      "archive_sha256": "287d5d39770a929db26f35fd13833b53f1ac3db58b96c76602b3487f8f573e19",
       "entries": [
         {
           "path": ".claude-plugin/marketplace.json",
@@ -3000,9 +3000,9 @@
         },
         {
           "path": "skills/docx/SKILL.md",
-          "sha": "acc50ea0729fc4b22319b25f1277d0db6f3b429a",
+          "sha": "a95379e1bb058bbca8c51edbd30de4d31ae4785b",
           "mode": "100644",
-          "size": 6897
+          "size": 7488
         },
         {
           "path": "skills/docx/scripts/__init__.py",
@@ -3030,21 +3030,21 @@
         },
         {
           "path": "skills/docx/scripts/office/helpers/__init__.py",
-          "sha": "d3c5817c7e50b23bdd82032c8f89fed497bce9fa",
+          "sha": "4902e2ad85e6789b71d7d944bc8e16d978f8cb6e",
           "mode": "100644",
-          "size": 3358
+          "size": 4042
         },
         {
           "path": "skills/docx/scripts/office/helpers/pptx_chart.py",
-          "sha": "209cb7c58b91b90ee685c082f7e20be21a1a6686",
+          "sha": "0e86aed6ed60c248001c7fa007f1ac4bb498d65f",
           "mode": "100644",
-          "size": 5862
+          "size": 9938
         },
         {
           "path": "skills/docx/scripts/office/helpers/pptx_slide.py",
-          "sha": "22f9aee0ff6c4797fa344f064d7cd6a1ab96b05b",
+          "sha": "55274b837847f0b918dcf5cc692b775f06723f0a",
           "mode": "100644",
-          "size": 1675
+          "size": 3352
         },
         {
           "path": "skills/docx/scripts/office/helpers/pptx_theme.py",
@@ -3288,15 +3288,15 @@
         },
         {
           "path": "skills/docx/scripts/office/soffice.py",
-          "sha": "0b4c99deca54013c550458c9244ee63eea748dca",
+          "sha": "59b18d91ba8dfc523fbc436d8aebceb2ddb2af9d",
           "mode": "100644",
-          "size": 5927
+          "size": 9100
         },
         {
           "path": "skills/docx/scripts/office/validate.py",
-          "sha": "29ca186a12e5c102702029ab9e51e6c3b71b1403",
+          "sha": "cdd6a91e0bc95f00e339a046517c78a586691330",
           "mode": "100755",
-          "size": 6142
+          "size": 7808
         },
         {
           "path": "skills/docx/scripts/office/validators/__init__.py",
@@ -3306,27 +3306,27 @@
         },
         {
           "path": "skills/docx/scripts/office/validators/base.py",
-          "sha": "33fc97bbe351949f9a8bd88998c78f81cd842c6a",
+          "sha": "04d6169c1cb489dc94aa78ece22e60ee5911b854",
           "mode": "100644",
-          "size": 33756
+          "size": 34369
         },
         {
           "path": "skills/docx/scripts/office/validators/docx.py",
-          "sha": "b18149945a7cf7ebd77c14655eb74d89baca3a00",
+          "sha": "2acdaf4ef4e5ec84c7191dadf9eeb73b00a81cc2",
           "mode": "100644",
-          "size": 17482
+          "size": 19745
         },
         {
           "path": "skills/docx/scripts/office/validators/pptx.py",
-          "sha": "318f0e61483972fb08e02be39c94331dba46445e",
+          "sha": "bb06b825e3dad82c3859243f294a963868d7dc8f",
           "mode": "100644",
-          "size": 15966
+          "size": 21058
         },
         {
           "path": "skills/docx/scripts/office/validators/redlining.py",
-          "sha": "4185c51f4f10eeaf3227168e440ed378ce120ec6",
+          "sha": "4406912e654dca3fc1869dc6bdd7099ac6573041",
           "mode": "100644",
-          "size": 11231
+          "size": 18983
         },
         {
           "path": "skills/docx/scripts/templates/comments.xml",
@@ -3473,28 +3473,28 @@
           "size": 29
         },
         {
+          "path": "skills/pdf/FORMS.md",
+          "sha": "13493857340a31c41970faf407327b57b0aac8e1",
+          "mode": "100644",
+          "size": 11857
+        },
+        {
           "path": "skills/pdf/LICENSE.txt",
           "sha": "7a4a3ea2424c09fbe48d455aed1eaa94d9124835",
           "mode": "100644",
           "size": 11357
         },
         {
+          "path": "skills/pdf/REFERENCE.md",
+          "sha": "7748e376a0f174cb36738599268c30227ebe1f3c",
+          "mode": "100644",
+          "size": 16724
+        },
+        {
           "path": "skills/pdf/SKILL.md",
           "sha": "9f606f1cd68dcab9dabb75b548e90c1de028b8a2",
           "mode": "100644",
           "size": 8058
-        },
-        {
-          "path": "skills/pdf/forms.md",
-          "sha": "6e7e1e0d9e6ae17215db3e130aea3c3c546487e6",
-          "mode": "100644",
-          "size": 11854
-        },
-        {
-          "path": "skills/pdf/reference.md",
-          "sha": "41400bf4fc67f15fb062d43695ec92f078226023",
-          "mode": "100644",
-          "size": 16692
         },
         {
           "path": "skills/pdf/scripts/check_bounding_boxes.py",
@@ -3552,9 +3552,9 @@
         },
         {
           "path": "skills/pptx/SKILL.md",
-          "sha": "a90df9c7e8f47c474c58f367faba57b66ff14cbb",
+          "sha": "6857031b6d9942039b9fe1871887910e8f5c5ff5",
           "mode": "100644",
-          "size": 20782
+          "size": 28365
         },
         {
           "path": "skills/pptx/scripts/__init__.py",
@@ -3564,9 +3564,15 @@
         },
         {
           "path": "skills/pptx/scripts/add_slide.py",
-          "sha": "f013ea94d1785c8cf767fb69284ffb5b8dd9d390",
+          "sha": "9b418bceb49ef063d8f32d4b98a364de669588d2",
           "mode": "100755",
-          "size": 14537
+          "size": 18831
+        },
+        {
+          "path": "skills/pptx/scripts/apply_theme.js",
+          "sha": "ea6e45a11ca11a4ce64dd1c1dcd7335ca746831e",
+          "mode": "100644",
+          "size": 7291
         },
         {
           "path": "skills/pptx/scripts/clean.py",
@@ -3576,21 +3582,21 @@
         },
         {
           "path": "skills/pptx/scripts/office/helpers/__init__.py",
-          "sha": "d3c5817c7e50b23bdd82032c8f89fed497bce9fa",
+          "sha": "4902e2ad85e6789b71d7d944bc8e16d978f8cb6e",
           "mode": "100644",
-          "size": 3358
+          "size": 4042
         },
         {
           "path": "skills/pptx/scripts/office/helpers/pptx_chart.py",
-          "sha": "209cb7c58b91b90ee685c082f7e20be21a1a6686",
+          "sha": "0e86aed6ed60c248001c7fa007f1ac4bb498d65f",
           "mode": "100644",
-          "size": 5862
+          "size": 9938
         },
         {
           "path": "skills/pptx/scripts/office/helpers/pptx_slide.py",
-          "sha": "22f9aee0ff6c4797fa344f064d7cd6a1ab96b05b",
+          "sha": "55274b837847f0b918dcf5cc692b775f06723f0a",
           "mode": "100644",
-          "size": 1675
+          "size": 3352
         },
         {
           "path": "skills/pptx/scripts/office/helpers/pptx_theme.py",
@@ -3834,15 +3840,15 @@
         },
         {
           "path": "skills/pptx/scripts/office/soffice.py",
-          "sha": "0b4c99deca54013c550458c9244ee63eea748dca",
+          "sha": "59b18d91ba8dfc523fbc436d8aebceb2ddb2af9d",
           "mode": "100644",
-          "size": 5927
+          "size": 9100
         },
         {
           "path": "skills/pptx/scripts/office/validate.py",
-          "sha": "29ca186a12e5c102702029ab9e51e6c3b71b1403",
+          "sha": "cdd6a91e0bc95f00e339a046517c78a586691330",
           "mode": "100755",
-          "size": 6142
+          "size": 7808
         },
         {
           "path": "skills/pptx/scripts/office/validators/__init__.py",
@@ -3852,27 +3858,33 @@
         },
         {
           "path": "skills/pptx/scripts/office/validators/base.py",
-          "sha": "33fc97bbe351949f9a8bd88998c78f81cd842c6a",
+          "sha": "04d6169c1cb489dc94aa78ece22e60ee5911b854",
           "mode": "100644",
-          "size": 33756
+          "size": 34369
         },
         {
           "path": "skills/pptx/scripts/office/validators/docx.py",
-          "sha": "b18149945a7cf7ebd77c14655eb74d89baca3a00",
+          "sha": "2acdaf4ef4e5ec84c7191dadf9eeb73b00a81cc2",
           "mode": "100644",
-          "size": 17482
+          "size": 19745
         },
         {
           "path": "skills/pptx/scripts/office/validators/pptx.py",
-          "sha": "318f0e61483972fb08e02be39c94331dba46445e",
+          "sha": "bb06b825e3dad82c3859243f294a963868d7dc8f",
           "mode": "100644",
-          "size": 15966
+          "size": 21058
         },
         {
           "path": "skills/pptx/scripts/office/validators/redlining.py",
-          "sha": "4185c51f4f10eeaf3227168e440ed378ce120ec6",
+          "sha": "4406912e654dca3fc1869dc6bdd7099ac6573041",
           "mode": "100644",
-          "size": 11231
+          "size": 18983
+        },
+        {
+          "path": "skills/pptx/scripts/slide_text.py",
+          "sha": "c583efabc4fc3e5d3b4d569fe9e5ca77d8dc5249",
+          "mode": "100755",
+          "size": 4446
         },
         {
           "path": "skills/pptx/scripts/thumbnail.py",
@@ -4182,27 +4194,27 @@
         },
         {
           "path": "skills/xlsx/SKILL.md",
-          "sha": "cc347203f2247b009b8ea34574bccfa62fce3669",
+          "sha": "419ecd344b776826107eef93a9727af3772cb755",
           "mode": "100644",
-          "size": 8584
+          "size": 9770
         },
         {
           "path": "skills/xlsx/scripts/office/helpers/__init__.py",
-          "sha": "d3c5817c7e50b23bdd82032c8f89fed497bce9fa",
+          "sha": "4902e2ad85e6789b71d7d944bc8e16d978f8cb6e",
           "mode": "100644",
-          "size": 3358
+          "size": 4042
         },
         {
           "path": "skills/xlsx/scripts/office/helpers/pptx_chart.py",
-          "sha": "209cb7c58b91b90ee685c082f7e20be21a1a6686",
+          "sha": "0e86aed6ed60c248001c7fa007f1ac4bb498d65f",
           "mode": "100644",
-          "size": 5862
+          "size": 9938
         },
         {
           "path": "skills/xlsx/scripts/office/helpers/pptx_slide.py",
-          "sha": "22f9aee0ff6c4797fa344f064d7cd6a1ab96b05b",
+          "sha": "55274b837847f0b918dcf5cc692b775f06723f0a",
           "mode": "100644",
-          "size": 1675
+          "size": 3352
         },
         {
           "path": "skills/xlsx/scripts/office/helpers/pptx_theme.py",
@@ -4446,15 +4458,15 @@
         },
         {
           "path": "skills/xlsx/scripts/office/soffice.py",
-          "sha": "0b4c99deca54013c550458c9244ee63eea748dca",
+          "sha": "59b18d91ba8dfc523fbc436d8aebceb2ddb2af9d",
           "mode": "100644",
-          "size": 5927
+          "size": 9100
         },
         {
           "path": "skills/xlsx/scripts/office/validate.py",
-          "sha": "29ca186a12e5c102702029ab9e51e6c3b71b1403",
+          "sha": "cdd6a91e0bc95f00e339a046517c78a586691330",
           "mode": "100755",
-          "size": 6142
+          "size": 7808
         },
         {
           "path": "skills/xlsx/scripts/office/validators/__init__.py",
@@ -4464,33 +4476,33 @@
         },
         {
           "path": "skills/xlsx/scripts/office/validators/base.py",
-          "sha": "33fc97bbe351949f9a8bd88998c78f81cd842c6a",
+          "sha": "04d6169c1cb489dc94aa78ece22e60ee5911b854",
           "mode": "100644",
-          "size": 33756
+          "size": 34369
         },
         {
           "path": "skills/xlsx/scripts/office/validators/docx.py",
-          "sha": "b18149945a7cf7ebd77c14655eb74d89baca3a00",
+          "sha": "2acdaf4ef4e5ec84c7191dadf9eeb73b00a81cc2",
           "mode": "100644",
-          "size": 17482
+          "size": 19745
         },
         {
           "path": "skills/xlsx/scripts/office/validators/pptx.py",
-          "sha": "318f0e61483972fb08e02be39c94331dba46445e",
+          "sha": "bb06b825e3dad82c3859243f294a963868d7dc8f",
           "mode": "100644",
-          "size": 15966
+          "size": 21058
         },
         {
           "path": "skills/xlsx/scripts/office/validators/redlining.py",
-          "sha": "4185c51f4f10eeaf3227168e440ed378ce120ec6",
+          "sha": "4406912e654dca3fc1869dc6bdd7099ac6573041",
           "mode": "100644",
-          "size": 11231
+          "size": 18983
         },
         {
           "path": "skills/xlsx/scripts/recalc.py",
-          "sha": "6232be2deea56cc97c1d8996e4d68adf2457059c",
+          "sha": "9f1d1b9abf0b602fac6ab75d5d0f9b923287b9fd",
           "mode": "100755",
-          "size": 10670
+          "size": 34340
         },
         {
           "path": "spec/agent-skills-spec.md",
