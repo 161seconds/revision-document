@@ -1,5 +1,7 @@
 # Matt Pocock Skills: mục lục và tóm tắt
 
+Cập nhật mã nguồn đến [`6f7f783`](https://github.com/mattpocock/skills/tree/6f7f7831a625f040a8e06a0e7954826b87ce775a). Danh mục tiếng Việt bên dưới được viết cho bản [`49dd158`](https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336). Các mục đã bị gỡ liên kết về bản cũ.
+
 Bản sao cục bộ từ [mattpocock/skills](https://github.com/mattpocock/skills), gồm **38 skill**, **132 file Markdown**, **190 file** tổng cộng. README này tóm tắt nội dung và liên kết đến từng file để tra cứu.
 
 ## Cách đọc
@@ -195,22 +197,22 @@ Các file dưới đây mô tả thay đổi trong repo nguồn, không phải t
 | --- | --- |
 | [.changeset/README.md](./.changeset/README.md) | Giới thiệu Changesets và tài liệu về cách ghi nhận thay đổi, quản lý phiên bản. |
 | [.changeset/config.json](./.changeset/config.json) | Cấu hình nhánh cơ sở, tạo changelog GitHub và cách tăng phiên bản gói. |
-| [.changeset/ask-matt-read-skill-first.md](./.changeset/ask-matt-read-skill-first.md) | Yêu cầu ask-matt đọc SKILL.md trước khi giải thích chức năng hoặc đề xuất bỏ qua một bước. |
-| [.changeset/code-review-standards-and-subagents.md](./.changeset/code-review-standards-and-subagents.md) | Bổ sung tìm tiêu chuẩn repo, nhận báo cáo từ agent review và đọc tracker qua tài liệu cấu hình. |
-| [.changeset/diagnosing-bugs-prove-mutation.md](./.changeset/diagnosing-bugs-prove-mutation.md) | Kiểm chứng lần cố ý sửa sai thực sự làm thay đổi code trước khi tin kết quả test thất bại. |
-| [.changeset/github-tracker-external-pr-list.md](./.changeset/github-tracker-external-pr-list.md) | Sửa cách liệt kê PR từ người đóng góp bên ngoài trong mẫu tracker GitHub. |
-| [.changeset/grilling-yes-accepts-recommendation.md](./.changeset/grilling-yes-accepts-recommendation.md) | Đặt câu hỏi sao cho trả lời đồng ý cũng đồng nghĩa chấp nhận phương án được đề xuất. |
-| [.changeset/handoff-temp-dir.md](./.changeset/handoff-temp-dir.md) | Chỉ rõ cách xác định thư mục tạm trên từng hệ điều hành khi tạo tài liệu bàn giao. |
-| [.changeset/implement-skill-tool-wording.md](./.changeset/implement-skill-tool-wording.md) | Yêu cầu gọi công cụ skill tường minh cho tdd và code-review thay vì chỉ nhắc tên trong văn bản. |
-| [.changeset/implement-ticket-reference.md](./.changeset/implement-ticket-reference.md) | Đọc ticket được truyền vào, xác nhận tiêu đề và làm rõ tham chiếu khi còn mơ hồ. |
-| [.changeset/setup-tracker-fixes.md](./.changeset/setup-tracker-fixes.md) | Sửa lệnh tracker, tạo nhãn còn thiếu và cải thiện cách đọc issue, ánh xạ nhãn. |
-| [.changeset/tdd-seam-tradeoffs.md](./.changeset/tdd-seam-tradeoffs.md) | Nêu ngắn gọn mỗi vị trí kiểm thử phát hiện được gì và bỏ sót gì khi đề xuất lựa chọn. |
-| [.changeset/teach-quiz-answer-position.md](./.changeset/teach-quiz-answer-position.md) | Thay đổi vị trí đáp án đúng trong các câu hỏi kiểm tra kiến thức. |
-| [.changeset/teach-workspace-root.md](./.changeset/teach-workspace-root.md) | Ghi dữ liệu học tập vào thư mục gọi skill, tránh ghi nhầm vào thư mục chứa skill. |
-| [.changeset/to-tickets-sub-issues.md](./.changeset/to-tickets-sub-issues.md) | Tạo ticket thành issue con; dùng quan hệ phụ thuộc gốc của tracker khi có hỗ trợ. |
-| [.changeset/wayfinder-labels-refs-research-prs.md](./.changeset/wayfinder-labels-refs-research-prs.md) | Sửa nhãn, tham chiếu issue, loại quyết định và quy tắc không mở PR từ nhánh nghiên cứu. |
-| [.changeset/wizard-template-fixes.md](./.changeset/wizard-template-fixes.md) | Sửa nhập liệu, ghi biến môi trường, xử lý symlink, quyền file và kết thúc đầu vào trong wizard. |
-| [.changeset/wizard-template-fixes-2.md](./.changeset/wizard-template-fixes-2.md) | Sửa đọc giá trị .env, an toàn khi script đổi giữa phiên, xóa màn hình và đồng bộ biến shell. |
+| [.changeset/ask-matt-read-skill-first.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/ask-matt-read-skill-first.md) | Yêu cầu ask-matt đọc SKILL.md trước khi giải thích chức năng hoặc đề xuất bỏ qua một bước. |
+| [.changeset/code-review-standards-and-subagents.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/code-review-standards-and-subagents.md) | Bổ sung tìm tiêu chuẩn repo, nhận báo cáo từ agent review và đọc tracker qua tài liệu cấu hình. |
+| [.changeset/diagnosing-bugs-prove-mutation.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/diagnosing-bugs-prove-mutation.md) | Kiểm chứng lần cố ý sửa sai thực sự làm thay đổi code trước khi tin kết quả test thất bại. |
+| [.changeset/github-tracker-external-pr-list.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/github-tracker-external-pr-list.md) | Sửa cách liệt kê PR từ người đóng góp bên ngoài trong mẫu tracker GitHub. |
+| [.changeset/grilling-yes-accepts-recommendation.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/grilling-yes-accepts-recommendation.md) | Đặt câu hỏi sao cho trả lời đồng ý cũng đồng nghĩa chấp nhận phương án được đề xuất. |
+| [.changeset/handoff-temp-dir.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/handoff-temp-dir.md) | Chỉ rõ cách xác định thư mục tạm trên từng hệ điều hành khi tạo tài liệu bàn giao. |
+| [.changeset/implement-skill-tool-wording.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/implement-skill-tool-wording.md) | Yêu cầu gọi công cụ skill tường minh cho tdd và code-review thay vì chỉ nhắc tên trong văn bản. |
+| [.changeset/implement-ticket-reference.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/implement-ticket-reference.md) | Đọc ticket được truyền vào, xác nhận tiêu đề và làm rõ tham chiếu khi còn mơ hồ. |
+| [.changeset/setup-tracker-fixes.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/setup-tracker-fixes.md) | Sửa lệnh tracker, tạo nhãn còn thiếu và cải thiện cách đọc issue, ánh xạ nhãn. |
+| [.changeset/tdd-seam-tradeoffs.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/tdd-seam-tradeoffs.md) | Nêu ngắn gọn mỗi vị trí kiểm thử phát hiện được gì và bỏ sót gì khi đề xuất lựa chọn. |
+| [.changeset/teach-quiz-answer-position.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/teach-quiz-answer-position.md) | Thay đổi vị trí đáp án đúng trong các câu hỏi kiểm tra kiến thức. |
+| [.changeset/teach-workspace-root.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/teach-workspace-root.md) | Ghi dữ liệu học tập vào thư mục gọi skill, tránh ghi nhầm vào thư mục chứa skill. |
+| [.changeset/to-tickets-sub-issues.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/to-tickets-sub-issues.md) | Tạo ticket thành issue con; dùng quan hệ phụ thuộc gốc của tracker khi có hỗ trợ. |
+| [.changeset/wayfinder-labels-refs-research-prs.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/wayfinder-labels-refs-research-prs.md) | Sửa nhãn, tham chiếu issue, loại quyết định và quy tắc không mở PR từ nhánh nghiên cứu. |
+| [.changeset/wizard-template-fixes.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/wizard-template-fixes.md) | Sửa nhập liệu, ghi biến môi trường, xử lý symlink, quyền file và kết thúc đầu vào trong wizard. |
+| [.changeset/wizard-template-fixes-2.md](https://github.com/mattpocock/skills/blob/49dd158d1076134a641b33efb035946536778336/.changeset/wizard-template-fixes-2.md) | Sửa đọc giá trị .env, an toàn khi script đổi giữa phiên, xóa màn hình và đồng bộ biến shell. |
 
 ## Các quyết định ngoài phạm vi
 

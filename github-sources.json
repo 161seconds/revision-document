@@ -8,7 +8,12 @@
     {
       "repository": "mattpocock/skills",
       "status": "existing",
-      "path": "mattpocock-skills"
+      "path": "mattpocock-skills",
+      "commit": "6f7f7831a625f040a8e06a0e7954826b87ce775a",
+      "branch": "main",
+      "files": 190,
+      "bytes": 798466,
+      "note": "README.md retains the local Vietnamese catalog. Other paths match the upstream snapshot."
     },
     {
       "repository": "obra/superpowers",
