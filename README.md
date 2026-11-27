@@ -322,7 +322,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 | [JCodesMore/ai-website-cloner-template](ai-website-cloner-template/README.md) | Template dùng coding agent sao chép giao diện website, kèm cấu hình chạy dự án. | [`14085f8ba2a1`](https://github.com/JCodesMore/ai-website-cloner-template/tree/14085f8ba2a15b5e7f509c78dfc4017dbbfced6d) | 49 | 1.21 MB | [MIT](ai-website-cloner-template/LICENSE) |
 | [mksglu/context-mode](context-mode/README.md) | Plugin giảm lượng đầu ra tool đưa vào context, hỗ trợ tìm kiếm SQLite FTS5 và duy trì phiên. | [`ab4fdc57b93e`](https://github.com/mksglu/context-mode/tree/ab4fdc57b93e93991012e2c3196102feaec3972e) | 880 | 28.63 MB | [Elastic-2.0](context-mode/LICENSE) |
 | [patchy631/ai-engineering-hub](ai-engineering-hub/README.md) | Tutorial và notebook về LLM, RAG, agent AI, xử lý dữ liệu và triển khai ứng dụng AI. | [`042aeb506738`](https://github.com/patchy631/ai-engineering-hub/tree/042aeb5067384981eeba6a07fa882f436bb1660d) | 1,519 | 377.35 MB | [MIT](ai-engineering-hub/LICENSE) |
-| [pbakaus/impeccable](impeccable/README.md) | Bộ skill và công cụ hướng dẫn thiết kế, đánh giá, tinh chỉnh giao diện và nhận diện mẫu thiết kế kém. | [`c1e0e5492fbb`](https://github.com/pbakaus/impeccable/tree/c1e0e5492fbb524f5df84d635ecfae7dc438ec45) | 4,527 | 88.07 MB | [Apache-2.0](impeccable/LICENSE) |
+| [pbakaus/impeccable](impeccable/README.md) | Bộ skill và công cụ hướng dẫn thiết kế, đánh giá, tinh chỉnh giao diện và nhận diện mẫu thiết kế kém. | [`2fc5e1459efb`](https://github.com/pbakaus/impeccable/tree/2fc5e1459efbbf06d92c7306517c286bf12490cf) | 5,034 | 96.37 MB | [Apache-2.0](impeccable/LICENSE) |
 | [public-apis/public-apis](public-apis/README.md) | Danh mục API công khai được phân loại theo chủ đề, kèm công cụ kiểm tra liên kết. | [`88706670ac0f`](https://github.com/public-apis/public-apis/tree/88706670ac0ffaad7bf3c6307747e2515f638bed) | 23 | 0.49 MB | [MIT](public-apis/LICENSE) |
 | [viettranx/3dviz-pro-max](3dviz-pro-max/README.md) | Skill dựng cảnh 3D bằng Three.js/Blender, có recipe, dữ liệu tham chiếu, kit và ví dụ tương tác. | [`d077e0e68915`](https://github.com/viettranx/3dviz-pro-max/tree/d077e0e68915c25be8e71d74684d3144fd1c2aca) | 2,112 | 85.70 MB | [MIT](3dviz-pro-max/LICENSE) |
 
@@ -343,7 +343,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 
 ### Nguồn gốc và kiểm tra
 
-Phần mới gồm **19,743 file**, **1,081,612,755 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
+Phần mới gồm **20,250 file**, **1,089,917,146 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
 
 ```powershell
 rtk proxy python -X utf8 -B verify-github-sources.py
