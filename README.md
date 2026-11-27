@@ -318,7 +318,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 | [bentran1vn/ai-clean-handoff](ai-clean-handoff/README.md) | Quy trình Copybara/Roslyn chuẩn bị bàn giao mã C#, lọc cấu hình agent và bảo toàn file phía nhận. | [`06704e83f410`](https://github.com/bentran1vn/ai-clean-handoff/tree/06704e83f41013d83e9d64b4d5e5f3f05ca8ecbc) | 33 | 3.18 MB | [MIT](ai-clean-handoff/LICENSE) |
 | [bentran1vn/vietmap-testing-4pmm](vietmap-testing-4pmm/README.md) | Dự án thử nghiệm tích hợp Vietmap; xem README và package.json trong bản nguồn. | [`99a888ed5f06`](https://github.com/bentran1vn/vietmap-testing-4pmm/tree/99a888ed5f06bfd047dbe4dec324495278b8d993) | 33 | 2.31 MB | Chưa khai báo |
 | [DavidHDev/react-bits](react-bits/README.md) | Thư viện component React có animation và tương tác, kèm nhiều biến thể triển khai và website tài liệu. | [`a30a9da9b40a`](https://github.com/DavidHDev/react-bits/tree/a30a9da9b40a91c5672fc8cd77785719e8e5b1e6) | 9,749 | 480.81 MB | [MIT + Commons Clause](react-bits/LICENSE.md) |
-| [jakubkrehel/skills](jakubkrehel-skills/README.md) | Các skill xây dựng giao diện, animation và trải nghiệm người dùng. | [`8b254eb75dad`](https://github.com/jakubkrehel/skills/tree/8b254eb75dadf3615a6abce87aed28e1b6e4d77c) | 104 | 0.55 MB | [MIT](jakubkrehel-skills/LICENSE) |
+| [jakubkrehel/skills](jakubkrehel-skills/README.md) | Các skill xây dựng giao diện, animation và trải nghiệm người dùng. | [`672ae44ace6a`](https://github.com/jakubkrehel/skills/tree/672ae44ace6aaed65b86cbb1e2fd6fbea0e79578) | 90 | 0.35 MB | [MIT](jakubkrehel-skills/LICENSE) |
 | [JCodesMore/ai-website-cloner-template](ai-website-cloner-template/README.md) | Template dùng coding agent sao chép giao diện website, kèm cấu hình chạy dự án. | [`5426e0e2ec35`](https://github.com/JCodesMore/ai-website-cloner-template/tree/5426e0e2ec35dbc173a7a18f47a3dfe2a765313e) | 49 | 1.32 MB | [MIT](ai-website-cloner-template/LICENSE) |
 | [mksglu/context-mode](context-mode/README.md) | Plugin giảm lượng đầu ra tool đưa vào context, hỗ trợ tìm kiếm SQLite FTS5 và duy trì phiên. | [`f681b4580fe8`](https://github.com/mksglu/context-mode/tree/f681b4580fe8340364384b04d9936a645cb05c53) | 861 | 27.59 MB | [Elastic-2.0](context-mode/LICENSE) |
 | [patchy631/ai-engineering-hub](ai-engineering-hub/README.md) | Tutorial và notebook về LLM, RAG, agent AI, xử lý dữ liệu và triển khai ứng dụng AI. | [`042aeb506738`](https://github.com/patchy631/ai-engineering-hub/tree/042aeb5067384981eeba6a07fa882f436bb1660d) | 1,519 | 377.35 MB | [MIT](ai-engineering-hub/LICENSE) |
@@ -343,7 +343,7 @@ Tên dự án mở README gốc. Mỗi nguồn giữ cấu trúc upstream và co
 
 ### Nguồn gốc và kiểm tra
 
-Phần mới gồm **19,738 file**, **1,080,888,627 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
+Phần mới gồm **19,724 file**, **1,080,684,533 byte**. [github-sources.json](github-sources.json) lưu commit đầy đủ, nhánh, SHA-256 archive, số file, dung lượng, Git blob SHA và mode từng file. Hash và byte nguồn được giữ nguyên khi chuyển thư mục; cảnh báo whitespace upstream không được sửa để tránh thay đổi nguồn.
 
 ```powershell
 rtk proxy python -X utf8 -B verify-github-sources.py

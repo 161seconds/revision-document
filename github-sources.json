@@ -63454,25 +63454,25 @@
       "repository": "jakubkrehel/skills",
       "status": "import",
       "path": "jakubkrehel-skills",
-      "commit": "8b254eb75dadf3615a6abce87aed28e1b6e4d77c",
+      "commit": "672ae44ace6aaed65b86cbb1e2fd6fbea0e79578",
       "branch": "main",
-      "files": 104,
-      "bytes": 554474,
+      "files": 90,
+      "bytes": 350380,
       "license": "MIT",
       "description": "A collection of agent skills that help you build great interfaces.",
-      "archive_sha256": "e42aa9602a428939ffdc62a9a4b9935663cdd69f39377c11eceab4b7f415ff1e",
+      "archive_sha256": "1bd04c469afe6a5b37e693f693305174a16906115402e0d950c76637859d23e7",
       "entries": [
         {
           "path": ".claude-plugin/marketplace.json",
-          "sha": "9226731fe9aabcc321690c8946c4c605841e7fa2",
+          "sha": "0b1d5263030c8b016d741d2d55c713d8485d8d36",
           "mode": "100644",
-          "size": 449
+          "size": 457
         },
         {
           "path": ".claude-plugin/plugin.json",
-          "sha": "53b71e4277c5fe25660e9b32285038812e4a6dd0",
+          "sha": "fa935cca26ab0027f3acb02bbdd6f59c51b46cca",
           "mode": "100644",
-          "size": 375
+          "size": 383
         },
         {
           "path": ".gitattributes",
@@ -63482,9 +63482,9 @@
         },
         {
           "path": "AGENTS.md",
-          "sha": "3c49cde6da760d0a2d1c1d879c0e76c8a6339495",
+          "sha": "d4210b190cf4460d8359f4bad1422e89a65b019a",
           "mode": "100644",
-          "size": 18778
+          "size": 19229
         },
         {
           "path": "CLAUDE.md",
@@ -63500,9 +63500,9 @@
         },
         {
           "path": "README.md",
-          "sha": "19f53a2305c94379a0d2079595aba6e15ecdf4ef",
+          "sha": "3943cdc43b24510d15f6d10e68b08c8be2418cfd",
           "mode": "100644",
-          "size": 3846
+          "size": 4077
         },
         {
           "path": "opencode.json",
@@ -63512,9 +63512,9 @@
         },
         {
           "path": "skills/afk/SKILL.md",
-          "sha": "cc1d5e4811edbaba17fc7dcb150556682081234c",
+          "sha": "120f7a284262b82c8247723ca699ee51b15ea9bc",
           "mode": "100644",
-          "size": 12508
+          "size": 11735
         },
         {
           "path": "skills/afk/agents/openai.yaml",
@@ -63524,9 +63524,9 @@
         },
         {
           "path": "skills/better-accessibility/SKILL.md",
-          "sha": "5e9ab11b4c109d56c435731198ed23ba0267e529",
+          "sha": "e882d3cb0aee1ed4beb2f8f85a03b8ed79aedd9b",
           "mode": "100644",
-          "size": 10949
+          "size": 10478
         },
         {
           "path": "skills/better-accessibility/agents/openai.yaml",
@@ -63536,45 +63536,51 @@
         },
         {
           "path": "skills/better-accessibility/focus-and-keyboard.md",
-          "sha": "ba4982b56ea2e2c8d3af560db0a9277ce1a567b2",
+          "sha": "361ad8e51c83249d9dc16a97b4ae01883de08131",
           "mode": "100644",
-          "size": 6492
+          "size": 6356
         },
         {
           "path": "skills/better-accessibility/forms.md",
-          "sha": "6e9839d2ea1c2790efd8132027ebf44dd8f206e5",
+          "sha": "8f960cbb59f6dfd27cb47f6a962198659ff66dcd",
           "mode": "100644",
-          "size": 3491
+          "size": 3628
         },
         {
           "path": "skills/better-accessibility/hit-areas.md",
-          "sha": "f44d07d20ecd529985b82883273c6830c8ecb9f1",
+          "sha": "9f9aa538683a0ba68b6164a8508164dd6109ca42",
           "mode": "100644",
-          "size": 3262
+          "size": 3385
         },
         {
           "path": "skills/better-accessibility/motion-and-zoom.md",
-          "sha": "7ba3f3a2466c4365bb300df9e8c6fa74b51ad279",
+          "sha": "e184315a5060f86107d4fb2951e884bf697cc399",
           "mode": "100644",
-          "size": 2437
+          "size": 2055
+        },
+        {
+          "path": "skills/better-accessibility/reporting.md",
+          "sha": "46d221bad48a6e0992d13377a285ed6f9002f794",
+          "mode": "100644",
+          "size": 1174
         },
         {
           "path": "skills/better-accessibility/screen-readers.md",
-          "sha": "275394c2b880277fff1abea51098243029dd684d",
+          "sha": "7da1b74995ee8bb6374e2aa17e694e7d55dc21bd",
           "mode": "100644",
-          "size": 4633
+          "size": 4450
         },
         {
           "path": "skills/better-accessibility/semantics-and-aria.md",
-          "sha": "410c022391ab661c074141dab948f8b85a282e79",
+          "sha": "24ab05c1d7fbdbd5900b5e7758bae23d06e91866",
           "mode": "100644",
-          "size": 4636
+          "size": 4380
         },
         {
           "path": "skills/better-colors/SKILL.md",
-          "sha": "e0b3049b65a4e369217ca5f67b89ad3adf311fa0",
+          "sha": "75c7d18a22e8c467fc9e181f32b82932d1a52f8c",
           "mode": "100644",
-          "size": 7698
+          "size": 6808
         },
         {
           "path": "skills/better-colors/agents/openai.yaml",
@@ -63584,45 +63590,51 @@
         },
         {
           "path": "skills/better-colors/color-formats.md",
-          "sha": "1a87448505f8030146820fc8470f277fb273921f",
+          "sha": "e3ab1d8985929585726c98a628b430821c385eb9",
           "mode": "100644",
-          "size": 4565
+          "size": 4276
         },
         {
           "path": "skills/better-colors/color-usage.md",
-          "sha": "2a2b8af8a9dc8a5d7698ca33807fce276e6e3de5",
+          "sha": "3e3fa19de1cf3b246d5f696b6c150bbdd77e72cf",
           "mode": "100644",
-          "size": 5292
+          "size": 5192
         },
         {
           "path": "skills/better-colors/contrast.md",
-          "sha": "d84e9d94c95e4b7118cad2be56e3ccdeeb24aa7a",
+          "sha": "b00abf672fe1a9433caa021cd03c542ef068d0f2",
           "mode": "100644",
-          "size": 3949
+          "size": 3879
         },
         {
           "path": "skills/better-colors/palette-generation.md",
-          "sha": "3c45253bdd2f673335b66ef30afbeedaca02af4c",
+          "sha": "cb4898c0017af56fbc47840ffbec741c27b2daa3",
           "mode": "100644",
-          "size": 6096
+          "size": 6113
         },
         {
           "path": "skills/better-colors/palette-structure.md",
-          "sha": "480781afbef455b3268cad43d6b38b5c8acc8337",
+          "sha": "7ad23b1e97868d3371ac0d7563876dab1a1c52a1",
           "mode": "100644",
-          "size": 4923
+          "size": 5037
+        },
+        {
+          "path": "skills/better-colors/reporting.md",
+          "sha": "4a09ce64da7c6a5da92e86f45aa4cb4124938a19",
+          "mode": "100644",
+          "size": 1114
         },
         {
           "path": "skills/better-colors/token-naming.md",
-          "sha": "f69a0022dda0437986cc46c0505c8fcce113ea32",
+          "sha": "3e223635c6c65d9f9d578132a883f3fd56ad9b09",
           "mode": "100644",
-          "size": 5853
+          "size": 5326
         },
         {
           "path": "skills/better-interface/SKILL.md",
-          "sha": "11a75671a0cca1d24aeb6d70007aff6079c85696",
+          "sha": "64095eb409214878d78b809d14ac67e01b3556d3",
           "mode": "100644",
-          "size": 8779
+          "size": 8778
         },
         {
           "path": "skills/better-interface/agents/openai.yaml",
@@ -63632,15 +63644,15 @@
         },
         {
           "path": "skills/better-interface/review-format.md",
-          "sha": "345dc43af4ce9f971ab55afd7ceae786b1c4d36a",
+          "sha": "10da82dfabf13456eb5dbbf3bb290234fb6a190e",
           "mode": "100644",
-          "size": 2126
+          "size": 2221
         },
         {
           "path": "skills/better-layout/SKILL.md",
-          "sha": "d2a6a8226dc12d0cbb8f5c193fbf4c8329325085",
+          "sha": "7e4c3bf3c479d712c62a02a1e1924d30ed4076d3",
           "mode": "100644",
-          "size": 8414
+          "size": 7670
         },
         {
           "path": "skills/better-layout/agents/openai.yaml",
@@ -63655,16 +63667,82 @@
           "size": 3936
         },
         {
-          "path": "skills/better-layout/spacing-and-adaptivity.md",
-          "sha": "10dce94ddbdc4eebf661b7f34130ead08f14f52e",
+          "path": "skills/better-layout/reporting.md",
+          "sha": "57ae18482a88f6c21992f3471b3fa9e867263d92",
           "mode": "100644",
-          "size": 5834
+          "size": 1051
+        },
+        {
+          "path": "skills/better-layout/spacing-and-adaptivity.md",
+          "sha": "97882c0c8f95f5e722f939ff8722667bf077dae2",
+          "mode": "100644",
+          "size": 5767
+        },
+        {
+          "path": "skills/better-motion/SKILL.md",
+          "sha": "dff8e63fd5a90909e356454ecdd08a247bf994e2",
+          "mode": "100644",
+          "size": 14621
+        },
+        {
+          "path": "skills/better-motion/agents/openai.yaml",
+          "sha": "b8406b74ba0f5ea65a0d03ef524831304b8ddfa3",
+          "mode": "100644",
+          "size": 151
+        },
+        {
+          "path": "skills/better-motion/drag.md",
+          "sha": "ad2dde5acb0ec67a49257eff7f18033df31de1d2",
+          "mode": "100644",
+          "size": 3817
+        },
+        {
+          "path": "skills/better-motion/enter-exit.md",
+          "sha": "8f59dbfe76f35b21acb13c3bb914dbfdec546667",
+          "mode": "100644",
+          "size": 4921
+        },
+        {
+          "path": "skills/better-motion/icon-transitions.md",
+          "sha": "fc120cffc046b551811a05f75f22040280101a81",
+          "mode": "100644",
+          "size": 3120
+        },
+        {
+          "path": "skills/better-motion/layout-animation.md",
+          "sha": "6881b8cd2a63830997ffe5aa25fa49ba9577a70f",
+          "mode": "100644",
+          "size": 5295
+        },
+        {
+          "path": "skills/better-motion/performance.md",
+          "sha": "18ecb4be4a2389f73aa4b918fc1208b652cf7bac",
+          "mode": "100644",
+          "size": 3231
+        },
+        {
+          "path": "skills/better-motion/reporting.md",
+          "sha": "61236d29069819663cc2398dec1b39155174259d",
+          "mode": "100644",
+          "size": 1322
+        },
+        {
+          "path": "skills/better-motion/slow-motion.md",
+          "sha": "9b6509f4c159c573006be8ad02fb66aa4d333839",
+          "mode": "100644",
+          "size": 2181
+        },
+        {
+          "path": "skills/better-motion/transitions.md",
+          "sha": "a473c7645c382dd82a49208fe125bcb2266ebad3",
+          "mode": "100644",
+          "size": 5446
         },
         {
           "path": "skills/better-typography/SKILL.md",
-          "sha": "843e22d6c32b930d8aa225d7150201bf6f6c80b6",
+          "sha": "0939acbcb1bac9b3e2b6fedb708a848758b5aeaa",
           "mode": "100644",
-          "size": 12244
+          "size": 11508
         },
         {
           "path": "skills/better-typography/agents/openai.yaml",
@@ -63674,15 +63752,15 @@
         },
         {
           "path": "skills/better-typography/choosing-fonts.md",
-          "sha": "f20acea6fc5ef4e9692234e28bb67a255efb0589",
+          "sha": "6fa00127499d868bb14c55e58e45f60ec9a54705",
           "mode": "100644",
-          "size": 2142
+          "size": 1105
         },
         {
           "path": "skills/better-typography/css-cheat-sheet.md",
-          "sha": "e79e12d59c5addb3ec049b777f279e86118069b1",
+          "sha": "c9ec90c955d645f139e78f7f0df4c22de9928ea4",
           "mode": "100644",
-          "size": 4288
+          "size": 1391
         },
         {
           "path": "skills/better-typography/details-and-accessibility.md",
@@ -63691,28 +63769,34 @@
           "size": 3339
         },
         {
-          "path": "skills/better-typography/spacing-and-sizing.md",
-          "sha": "a6523cb8f72ba0781b6be5768053f8043132f349",
+          "path": "skills/better-typography/reporting.md",
+          "sha": "cc6b4cf0ad7a0a397aab578fb481125b9f55833d",
           "mode": "100644",
-          "size": 2234
+          "size": 1086
+        },
+        {
+          "path": "skills/better-typography/spacing-and-sizing.md",
+          "sha": "c267aeec1bf9bd78dcbcc29f64e463a8b4101f14",
+          "mode": "100644",
+          "size": 2161
         },
         {
           "path": "skills/better-typography/variable-fonts-and-opentype.md",
-          "sha": "5fa1b72c55a21a20d635b900fc20680946cc63cf",
+          "sha": "98e57b65a500cc0d959478dbacbc9806e4c08882",
           "mode": "100644",
-          "size": 3468
+          "size": 2497
         },
         {
           "path": "skills/better-typography/wrapping-and-punctuation.md",
-          "sha": "4a17017136190ab98647654f6877e8f5aa83e967",
+          "sha": "b16bcf6900ed6ce7d3dade58d28977925019b862",
           "mode": "100644",
-          "size": 1618
+          "size": 1676
         },
         {
           "path": "skills/better-ui/SKILL.md",
-          "sha": "b8abea328cfc49549423adce6674af7f50cce044",
+          "sha": "b8bcea2a025607627c987f5db8c975178d3f5ab4",
           "mode": "100644",
-          "size": 11122
+          "size": 5250
         },
         {
           "path": "skills/better-ui/agents/openai.yaml",
@@ -63721,46 +63805,28 @@
           "size": 113
         },
         {
-          "path": "skills/better-ui/animations.md",
-          "sha": "e24309ab099e012c95f171b0187bf6d3746249ae",
-          "mode": "100644",
-          "size": 4923
-        },
-        {
-          "path": "skills/better-ui/enter-exit.md",
-          "sha": "b2b2ec813b1f767a8f79442e134afd65abf80059",
-          "mode": "100644",
-          "size": 3596
-        },
-        {
-          "path": "skills/better-ui/icon-transitions.md",
-          "sha": "a8ae54ef48da7ff86db5422e64bb33d8d12a0996",
-          "mode": "100644",
-          "size": 2647
-        },
-        {
           "path": "skills/better-ui/icons.md",
-          "sha": "b5dabd7181cd4b5c43df0581b458929723a244d8",
+          "sha": "272c89a003f8088975e2d60493603b33aa8c6398",
           "mode": "100644",
-          "size": 3963
+          "size": 3940
         },
         {
-          "path": "skills/better-ui/performance.md",
-          "sha": "0a4a1e12b0a9167e81d27434fde812902490e10b",
+          "path": "skills/better-ui/reporting.md",
+          "sha": "a7755419c48e6cf2a4c293997a93686d00abb98e",
           "mode": "100644",
-          "size": 2265
+          "size": 921
         },
         {
           "path": "skills/better-ui/surfaces.md",
-          "sha": "8dcd37a45a4175e64b3c7422e26e8ce1e579eb92",
+          "sha": "47a607ef0adf44a322c9855d9697ad132406510e",
           "mode": "100644",
-          "size": 3584
+          "size": 3597
         },
         {
           "path": "skills/better-writing/SKILL.md",
-          "sha": "54f93d31197446fc5b4d8645fddaa3ec91baa5c2",
+          "sha": "f52f9afef8d6a001beb9bccf26e921aeb4873587",
           "mode": "100644",
-          "size": 9414
+          "size": 8723
         },
         {
           "path": "skills/better-writing/agents/openai.yaml",
@@ -63770,15 +63836,21 @@
         },
         {
           "path": "skills/better-writing/patterns.md",
-          "sha": "be3001190b33523c7e031bf368bcaf15cc19cd07",
+          "sha": "7b4ca5577bdd58d4da3fb7446654ac57dfb3083c",
           "mode": "100644",
-          "size": 2845
+          "size": 2857
+        },
+        {
+          "path": "skills/better-writing/reporting.md",
+          "sha": "ed141316930e0d8f9d56e3544b8fa977848df2d8",
+          "mode": "100644",
+          "size": 1021
         },
         {
           "path": "skills/break/SKILL.md",
-          "sha": "c8627584766cd688d761fb65e2c16f9c95be2d87",
+          "sha": "ff466ed48f3beb9b9adb54250320fa3cec9c95ba",
           "mode": "100644",
-          "size": 6145
+          "size": 5221
         },
         {
           "path": "skills/break/agents/openai.yaml",
@@ -63794,9 +63866,9 @@
         },
         {
           "path": "skills/build-design/SKILL.md",
-          "sha": "f598b6e37c9e58e2e4913250df317a9dfd0bd517",
+          "sha": "0d0c30190835b83fa6762344e1f5f0168e1e098a",
           "mode": "100644",
-          "size": 6085
+          "size": 6104
         },
         {
           "path": "skills/build-design/agents/openai.yaml",
@@ -63824,33 +63896,33 @@
         },
         {
           "path": "skills/explain-interface/find-the-effect.md",
-          "sha": "03d6248aa3b872320f20db7ca94a6679187cc90b",
+          "sha": "f9508fdf20300882b14fc7a5b4184a93902eed88",
           "mode": "100644",
-          "size": 6340
+          "size": 6336
         },
         {
           "path": "skills/explain-interface/from-an-image.md",
-          "sha": "285a7da41cf755585c3fe8b4366b79367749fdfd",
+          "sha": "21d66dfa2e7377da463960174b1f4332f9366dc8",
           "mode": "100644",
-          "size": 3532
+          "size": 3628
         },
         {
           "path": "skills/explain-interface/no-browser.md",
-          "sha": "d88604f6fd641da9e7cf6a26424cc5331db783fa",
+          "sha": "bbcd3ea07a0a0e17acbb2b4f2cea1386f2a5ba4f",
           "mode": "100644",
-          "size": 3534
+          "size": 3704
         },
         {
           "path": "skills/explain-interface/read-the-system.md",
-          "sha": "ea60301bde11d7a3fb73da68a33a0723bbceb5c0",
+          "sha": "a19cfc9df5e5278afa5be8cc1821a3d8bbac8de5",
           "mode": "100644",
-          "size": 8423
+          "size": 9156
         },
         {
           "path": "skills/interface-review/SKILL.md",
-          "sha": "3b14135fedc6ba71738070312024a0931d50cff1",
+          "sha": "5430aa6f297faca3c61cf85feac9475dded515e0",
           "mode": "100644",
-          "size": 10128
+          "size": 10312
         },
         {
           "path": "skills/interface-review/agents/openai.yaml",
@@ -63860,21 +63932,21 @@
         },
         {
           "path": "skills/interface-review/removed-signals.md",
-          "sha": "5295ca310a5b0bd730932e16d09ab60f9ba1bba3",
+          "sha": "b13f03c01b27d4aba6d00b52ca474101bdfb5f25",
           "mode": "100644",
-          "size": 3228
+          "size": 3291
         },
         {
           "path": "skills/interface-review/scope-resolution.md",
-          "sha": "bb754eee4bf212ce040e149b8827f0bf6506f60a",
+          "sha": "93e51f98538e8cfeae29939ae626c1de03eb1155",
           "mode": "100644",
-          "size": 7611
+          "size": 8011
         },
         {
           "path": "skills/state-machine/SKILL.md",
-          "sha": "26f835284b16b4d08372867ec75b0212019659c9",
+          "sha": "22ebdfd7168be129464b99d4e4dfba88211fdfba",
           "mode": "100644",
-          "size": 6295
+          "size": 5370
         },
         {
           "path": "skills/state-machine/agents/openai.yaml",
@@ -63884,195 +63956,39 @@
         },
         {
           "path": "skills/state-machine/switcher.md",
-          "sha": "f59488c4247e8876f5ac680696b5504bb0950087",
+          "sha": "06b5bf7cefaf4182e6e46757b7e903d1d59cb4f2",
           "mode": "100644",
-          "size": 6978
+          "size": 7026
         },
         {
-          "path": "skills/teardown/SKILL.md",
-          "sha": "98e423cc0f2b53e2b5fca1cc3a2f22a50dcf31e5",
+          "path": "skills/upskill/SKILL.md",
+          "sha": "b412fd2cb29aa570d74fd3507f2d2336003e1aac",
           "mode": "100644",
-          "size": 10593
+          "size": 11554
         },
         {
-          "path": "skills/teardown/agents/openai.yaml",
-          "sha": "08bd9751593eceee7665cd85032d9909c7377f42",
+          "path": "skills/upskill/agents/openai.yaml",
+          "sha": "429b9433a433df325e036efd2f81c10f9cccf1c0",
           "mode": "100644",
-          "size": 113
+          "size": 172
         },
         {
-          "path": "skills/teardown/assets/export.js",
-          "sha": "7134b58bc8cc95a481b9a157a7176040c5a66298",
+          "path": "skills/upskill/reader-brief.md",
+          "sha": "dedf4db605ccab44c9728eae9e8737341f4b8a3f",
           "mode": "100644",
-          "size": 6085
+          "size": 1620
         },
         {
-          "path": "skills/teardown/assets/flipbook.js",
-          "sha": "f859aecba8c9133baa874a36024491191e0347fa",
+          "path": "skills/upskill/sources.md",
+          "sha": "eca9994aba5400e0faf51542b17a56274934e850",
           "mode": "100644",
-          "size": 1858
-        },
-        {
-          "path": "skills/teardown/assets/geometry.js",
-          "sha": "f28cf21b17b489bfd5ef60fa6c28bcfffcf781d7",
-          "mode": "100644",
-          "size": 27027
-        },
-        {
-          "path": "skills/teardown/assets/projection.js",
-          "sha": "37d48db3ca5155d73374cd088540cbd68cc48efb",
-          "mode": "100644",
-          "size": 28466
-        },
-        {
-          "path": "skills/teardown/assets/render-queue.js",
-          "sha": "33d2ff22e6fffb9091620df357637c7954e2fef0",
-          "mode": "100644",
-          "size": 2203
-        },
-        {
-          "path": "skills/teardown/assets/sheet.js",
-          "sha": "53062333e982a7860520c9d2aa4fb4be3ec1c15c",
-          "mode": "100644",
-          "size": 901
-        },
-        {
-          "path": "skills/teardown/assets/theme.js",
-          "sha": "b38c381d962b4933482c0e883f7b65cf4d66ca3c",
-          "mode": "100644",
-          "size": 1467
-        },
-        {
-          "path": "skills/teardown/assets/viewer.html",
-          "sha": "c3d86079faaf30396883d7c4d3aac6e10e161f6a",
-          "mode": "100644",
-          "size": 17988
-        },
-        {
-          "path": "skills/teardown/assets/viewer.js",
-          "sha": "7637b5b653835b1857bb095e8eac3f335b03b9b9",
-          "mode": "100644",
-          "size": 25359
-        },
-        {
-          "path": "skills/teardown/assets/worker.js",
-          "sha": "cf92570cf5176281de6142c242c1e6eb882ad399",
-          "mode": "100644",
-          "size": 439
-        },
-        {
-          "path": "skills/teardown/exploded-views.md",
-          "sha": "98a277f7a624ed42f107bf83efb23e01ca033425",
-          "mode": "100644",
-          "size": 3032
-        },
-        {
-          "path": "skills/teardown/geometry-library.md",
-          "sha": "01e20eba5c30dbba80131dd7fd98814815f2fade",
-          "mode": "100644",
-          "size": 13316
-        },
-        {
-          "path": "skills/teardown/geometry.md",
-          "sha": "4c80bdc3a498e4bfcc88936c52117fdde10d81e6",
-          "mode": "100644",
-          "size": 8848
-        },
-        {
-          "path": "skills/teardown/preview-page.md",
-          "sha": "b1757913c1057e717e61f0a955d715f471603aa6",
-          "mode": "100644",
-          "size": 8081
-        },
-        {
-          "path": "skills/teardown/scripts/build-viewer.cjs",
-          "sha": "d8bd07d71dc6aaa4991d17ee20a7f459a50b1cc5",
-          "mode": "100644",
-          "size": 2262
-        },
-        {
-          "path": "skills/teardown/scripts/check-viewer.cjs",
-          "sha": "5cbbe0b4c283c23ed6c5d6ee365dd12a8ddd2898",
-          "mode": "100644",
-          "size": 5819
-        },
-        {
-          "path": "skills/teardown/scripts/commands.cjs",
-          "sha": "373fa2cdfd3767075f1048395868b936d942192f",
-          "mode": "100644",
-          "size": 554
-        },
-        {
-          "path": "skills/teardown/scripts/config.cjs",
-          "sha": "60cf644aa0221ab65ec058bf416c31bdeaef049a",
-          "mode": "100644",
-          "size": 2039
-        },
-        {
-          "path": "skills/teardown/scripts/proof.cjs",
-          "sha": "870ada48f36a4b6a5b183d14b285c883b48b0921",
-          "mode": "100644",
-          "size": 10632
-        },
-        {
-          "path": "skills/teardown/scripts/test-flipbook.cjs",
-          "sha": "145838e28b5c0c104dde2746686aac693ffe54a0",
-          "mode": "100644",
-          "size": 2868
-        },
-        {
-          "path": "skills/teardown/scripts/test-geometry.cjs",
-          "sha": "bf3be08f3ff06e420f0f86e55eb6351c128785da",
-          "mode": "100644",
-          "size": 27177
-        },
-        {
-          "path": "skills/teardown/scripts/test-render-queue.cjs",
-          "sha": "18a93718443a7393da935ccec167b587ca39af05",
-          "mode": "100644",
-          "size": 4559
-        },
-        {
-          "path": "skills/teardown/scripts/test-theme.cjs",
-          "sha": "e7651ce2663b2a4905ab398c94d01c57b3a6cda8",
-          "mode": "100644",
-          "size": 3208
-        },
-        {
-          "path": "skills/teardown/scripts/test-viewer-builder.cjs",
-          "sha": "b0fe3086cc890ec34da94b69b78ca40f0c365596",
-          "mode": "100644",
-          "size": 3729
-        },
-        {
-          "path": "skills/teardown/sheet-and-svg.md",
-          "sha": "427b5ca29132a14b187491b1e5082649db0338ac",
-          "mode": "100644",
-          "size": 6288
-        },
-        {
-          "path": "skills/teardown/verification.md",
-          "sha": "c669992ea7610916e56f82468502b48693f5afee",
-          "mode": "100644",
-          "size": 4896
-        },
-        {
-          "path": "skills/teardown/viewer-assets.md",
-          "sha": "4acc11b7db508867ffb12a417a5d833271f504a9",
-          "mode": "100644",
-          "size": 7141
-        },
-        {
-          "path": "skills/teardown/views-and-annotations.md",
-          "sha": "352d658f269e8ce1bcb11a7127509ef934fece43",
-          "mode": "100644",
-          "size": 3405
+          "size": 2339
         },
         {
           "path": "skills/variant/SKILL.md",
-          "sha": "45c3a5491800a6808433cf8452812c519578c404",
+          "sha": "1441f2af12b7cafaf13953e57e74cf56af4eabeb",
           "mode": "100644",
-          "size": 6848
+          "size": 6443
         },
         {
           "path": "skills/variant/agents/openai.yaml",
